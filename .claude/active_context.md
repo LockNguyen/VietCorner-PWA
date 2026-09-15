@@ -22,7 +22,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] Initialize system architecture guardrails (CLAUDE.md, active_context.md, architecture.md)
 - [x] Step 0: App shell (Next 16.3.5, Node 24.19.0). Build passes. Verified at mobile size: `/` → `/groups`, tabs switch, manifest served, service worker active.
 - [x] Step 1: `auth`: email one-time-code login (Gmail SMTP for the MVP). QA passed. The Confirm signup template also needs `{{ .Token }}` so new users get one email.
-- [~] Step 2: `chat`: local QA passed (live messages, push with tab closed, notification tap opens group). Remaining: deploy to Vercel, then QA on a real iPhone (Home Screen) + Android with the app closed.
+- [~] Step 2: `chat`: deployed to https://vietcorners.netlify.app and working. Live checks passed. Remaining: QA on a real iPhone (Home Screen) + Android with the app closed.
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 - [ ] Step 4: `assistant`: record → Whisper → retrieve chunks → Llama → speak
 
@@ -49,6 +49,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Chat: no private groups, no "load older messages", and the shared-device subscription edge case (see architecture 6.2).
 
 ## ➡️ Next 3 Micro-Steps
-1. Pushed `main` to `LockNguyen/VietCorner-PWA`. Netlify site: https://vietcorners.netlify.app. Confirm the deploy succeeded.
-2. Verify on the live URL: logged-out redirect, `/api/chat/messages` returns 401 JSON, sw.js + manifest load, then user sign-in + live chat.
+- Chat gaps: Realtime doesn't replay missed messages after a phone sleeps (ChatRoom should refetch when it becomes visible again), no rate limit on sending, no mute.
+
+1. Push the best-effort-push + send-error fix (committed locally, needs user OK to deploy).
+2. Fix the stale chat after the phone sleeps: refetch messages on `visibilitychange`.
 3. Phone QA: iPhone (Share → Add to Home Screen → open → turn on notifications) + Android. Close the apps, send from another account, confirm the notification and that tapping it opens the group.

@@ -3,7 +3,9 @@ import type { Message } from "../types";
 import { notifyGroup } from "./notifyGroup";
 
 // Saves a message as the signed-in user, then pushes it to the other group members.
-// `supabase` must be the user's own client, so RLS rejects non-members.
+// Permission check: there is no `if (isMember)` here on purpose. `supabase` is the user's own client,
+// so the database enforces the "Members post as themselves" policy in schema.sql. A non-member's insert
+// fails with "violates row-level security policy". Don't swap in the admin client, which would skip that check.
 export async function sendMessage(
   supabase: SupabaseClient,
   input: { groupId: string; body: string },
@@ -16,6 +18,12 @@ export async function sendMessage(
 
   if (error) throw new Error(error.message);
 
-  await notifyGroup(message);
+  // Push is best-effort. The message is already saved, so a push failure must not report "send failed".
+  // Otherwise the user retries and posts a duplicate.
+  try {
+    await notifyGroup(message);
+  } catch (error) {
+    console.error("notifyGroup failed", error);
+  }
   return message;
 }

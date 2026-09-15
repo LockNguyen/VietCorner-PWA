@@ -14,8 +14,14 @@ export default function EnableNotificationsButton() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setStatus("unsupported");
     if (Notification.permission === "denied") return setStatus("blocked");
 
-    // If already subscribed, save again on every open. Why: subscriptions can change or be deleted
-    // server-side, and this keeps the database current without the user doing anything.
+    // Runs every time the app opens. Asks the browser: "does this device already have a push subscription?"
+    // - Yes → save it to the database again (upsert, so no duplicates) and show "on".
+    //   Why re-save: our server can only push to subscriptions stored in the database. The row may be
+    //   missing (deleted after a 410, a different user signed in, the DB was reset) or the browser may have
+    //   silently replaced the subscription. Re-saving on each open repairs this without the user noticing.
+    // - No → show the "Turn on notifications" button. We can't subscribe automatically:
+    //   the permission prompt must come from a tap.
+    // `serviceWorker.ready` waits until sw.js is active, because subscriptions belong to the service worker.
     navigator.serviceWorker.ready
       .then((registration) => registration.pushManager.getSubscription())
       .then((subscription) => (subscription ? save(subscription) : setStatus("off")));

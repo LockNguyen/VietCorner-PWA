@@ -7,7 +7,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Feature | Folder | Status |
 |---|---|---|
 | Login (auth) | `src/features/auth/` | Built, QA passed (email code, reload, sign out) |
-| Group chat + push | `src/features/chat/` | Local QA passed (live messages, push with tab closed, tap opens group). Phone QA pending. |
+| Group chat + push | `src/features/chat/` | Deployed + working on https://vietcorners.netlify.app. Phone QA pending. |
 | English/Vietnamese | `src/features/i18n/` | Not built |
 | Voice AI assistant (RAG) | `src/features/assistant/` | Not built |
 
@@ -180,6 +180,15 @@ Each feature follows this template: **Purpose → Files → Data → Flow → Ex
 4. `notifyGroup` → push service (Apple/Google/Mozilla) → the device's service worker → `showNotification`.
 5. Tap notification → `/groups/<id>`.
 
+**How "real time" works (two delivery paths)**
+| App state | Path | Technology |
+|---|---|---|
+| Chat screen open | Supabase Realtime | The browser keeps a **WebSocket** to Supabase. Postgres logical replication streams new `messages` rows → Realtime checks RLS per subscriber → sends the row. |
+| App closed or in background | Web Push | Our server → push service (FCM for Chrome/Android, Apple's service for Safari/iOS) → OS wakes `sw.js` → notification. |
+
+- There's no WebRTC. WebRTC is for peer-to-peer audio/video. Chat is client ↔ server, so a WebSocket is the standard tool.
+- `push`, `notificationclick`, `self.registration.showNotification`, and `pushManager.subscribe` are standard **W3C web APIs** (Push API, Notifications API, Service Worker API), built into Chrome, Safari, and Firefox. We only choose what happens inside each handler.
+
 **Flow: turn on notifications**
 Tap button → permission prompt → browser creates a subscription (endpoint + keys) tied to our VAPID public key → saved in `push_subscriptions`.
 
@@ -203,6 +212,21 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 - **Why the sender's email is checked in RLS:** without it, someone calling Supabase directly could post as someone else.
 - `notifyGroup` runs before the route responds. Why: serverless functions can stop right after the response. Cost: sending feels slower in big groups.
 - The message list loads only the newest 50. There's no "load older" yet.
+- **Send failures:** network down or a 401/403 → error shown and the text goes back in the box. Push failure after the message is saved → logged only, and the request still returns 201. Why: reporting failure would make users resend and create duplicates.
+- **Non-members can't post:** there's no membership `if` in TypeScript on purpose. The route uses the user's client, so the `"Members post as themselves"` RLS policy rejects the insert (403). The same policy blocks direct calls to Supabase with the anon key.
+- **Known gap: missed messages after a disconnect.** Realtime doesn't replay. If a phone sleeps or the WebSocket drops, messages sent meanwhile don't appear until the page reloads. Their push notifications still arrive.
+- **Known gap: no rate limiting** on `POST /api/chat/messages`, so a signed-in user could spam a group.
+- **Known gap: every message pushes every member.** No mute and no grouping of notifications yet.
+
+**Limits** (free tiers; verify current numbers)
+| Limit | Where | Our usage |
+|---|---|---|
+| Realtime concurrent connections (~200 on free) | Supabase | One per open chat screen |
+| Database size (~500 MB free) | Supabase | Text messages are tiny |
+| Push payload ~4 KB | Push services | Body ≤ 2000 chars + email fits |
+| Function timeout (~10 s default for synchronous functions) | Netlify | Send ~300 ms. Big groups make push fan-out slower. |
+| Project pauses after ~7 idle days | Supabase free | Pause → no login, chat, or push |
+| ~500 emails/day | Gmail SMTP | One per sign-in |
 
 **How to remove:** delete `src/features/chat/`, `src/app/groups/`, `src/app/api/chat/`, and `src/lib/supabase/admin.ts`. Remove the `CHAT` lines in `public/sw.js`, remove the Groups tab, and change `HOME_PATH` in `refreshSession.ts`. Run the drop SQL at the bottom of `schema.sql`. Remove the push env vars.
 
@@ -243,7 +267,9 @@ Not built.
 **Deploy (Netlify + GitHub):**
 1. Push the repo to a private GitHub repo.
 2. Netlify → Add new project → Import from GitHub. It detects Next.js automatically (build `npm run build`), so no `netlify.toml` is needed.
-3. Netlify → Project configuration → Environment variables: add every variable in §8. Mark `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` as secret.
+3. Netlify → Project configuration → Environment variables: add every variable in §8. Mark **only** `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` as "Contains secret values".
+   - Never mark `NEXT_PUBLIC_*` vars as secret. Why: Next.js copies them into the built code on purpose, so Netlify's secret scanner finds them there and fails the build ("Secrets scanning found secrets in build").
+   - Never disable secret scanning. It's what catches a leaked service role key.
 4. Use the same VAPID keys as local. Why: subscriptions are tied to the public key, and new keys would break existing subscriptions.
 5. Every push to `main` redeploys.
 
@@ -256,3 +282,4 @@ Not built.
 - 2026-09-14: Auth QA passed. Documented that the Confirm signup template also needs `{{ .Token }}`.
 - 2026-09-14: Step 2 chat: schema + RLS, groups/join, realtime ChatRoom, message API route, web push (subscribe, fan-out, expiry cleanup), sw.js push handlers. The proxy no longer redirects `/api/*`.
 - 2026-09-14: Added root `loading.tsx` (instant feedback on dynamic navigation). Documented iOS closed-app push behavior.
+- 2026-09-14: Deployed to Netlify. Verified live: `/groups` logged out → 307 `/login`, API → 401 JSON, sw.js + manifest 200. Push made best-effort (no false "send failed"). ChatRoom handles network errors. Documented real-time paths, limits, and known gaps.

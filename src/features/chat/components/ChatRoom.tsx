@@ -42,13 +42,16 @@ export default function ChatRoom({ groupId, myUserId, initialMessages }: Props) 
     setError("");
 
     // Goes through our API (not straight to Supabase) because sending also triggers push notifications.
-    const response = await fetch("/api/chat/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupId, body }),
-    });
-    if (!response.ok) {
-      setError((await response.json()).error);
+    try {
+      const response = await fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ groupId, body }),
+      });
+      if (!response.ok) throw new Error((await response.json()).error);
+    } catch (error) {
+      // Covers server errors (401/403) and no network (fetch throws). Put the text back so nothing is lost.
+      setError((error as Error).message);
       setDraft(body);
     }
   }
