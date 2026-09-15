@@ -13,7 +13,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Auth + DB: Supabase (email magic link, Postgres, pgvector)
 - Push: Web Push API + service worker + `web-push` (VAPID keys)
 - AI: Groq (Whisper speech-to-text, Llama answers); browser `speechSynthesis` for spoken replies
-- Hosting: Vercel (HTTPS required for push/PWA testing on phones)
+- Hosting: Netlify via GitHub auto-deploy (HTTPS required for push/PWA testing on phones)
 - Workflow: one feature at a time, dev → QA on real phones → next
 - UI reference: top title bar, bottom tab bar, list rows (thumbnail + title + subtitle + chevron). MVP tabs: Groups, Assistant, Settings.
 - Critical Files/Modules: `src/app/layout.tsx`, `src/components/TabBar.tsx`, `public/sw.js`, `src/app/manifest.ts`
@@ -39,7 +39,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Not yet tested on a real phone. Needs an HTTPS deploy (Vercel) before chat push QA.
 
 - Supabase free projects pause after ~7 days without activity, which breaks login and push until the project is restored. Real launch needs a paid plan or a keep-alive. (Verify the current policy.)
-- Vercel Hobby is for non-commercial use only. Confirm this is OK for a church app before launch.
+- Netlify runs Next.js 16 through an adapter. Verify the proxy redirect, API routes, and Realtime after the first deploy.
 - Supabase default SMTP allows only a few emails per hour. Real users need custom SMTP (Resend) before launch.
 - The tab bar still shows on `/login`. Harmless (tabs redirect back), so it's left alone to avoid coupling the shell to auth.
 
@@ -49,6 +49,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Chat: no private groups, no "load older messages", and the shared-device subscription edge case (see architecture 6.2).
 
 ## ➡️ Next 3 Micro-Steps
-1. Commit Step 2 (local QA passed).
-2. Choose a deploy path (GitHub + Vercel import, or Vercel CLI). The user owns the account login and enters env vars in the Vercel dashboard.
-3. Deploy to Vercel (user creates the account and enters env vars in the dashboard), then QA push on a real iPhone (Home Screen) + Android with the app closed.
+1. Pushed `main` to `LockNguyen/VietCorner-PWA`. Netlify site: https://vietcorners.netlify.app. Confirm the deploy succeeded.
+2. Verify on the live URL: logged-out redirect, `/api/chat/messages` returns 401 JSON, sw.js + manifest load, then user sign-in + live chat.
+3. Phone QA: iPhone (Share → Add to Home Screen → open → turn on notifications) + Android. Close the apps, send from another account, confirm the notification and that tapping it opens the group.

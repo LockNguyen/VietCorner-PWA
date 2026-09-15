@@ -19,7 +19,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Auth + database | Supabase (Postgres, pgvector) | Login, data, and vector search in one free service |
 | Push | Web Push + service worker (`web-push`) | Standard, free, works while the app is closed |
 | AI | Groq (Whisper, Llama) | Free tier |
-| Hosting | Vercel | Free HTTPS, which push requires |
+| Hosting | Netlify (deploys from GitHub) | Free HTTPS (push requires it). Free tier allows commercial use. |
 
 ### Key Decisions
 | Decision | Why | Trade-off |
@@ -32,6 +32,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Send messages through an API route, not straight to Supabase | Sending must also trigger push, which needs secrets | One extra hop per message |
 | Service role (admin) client for push fan-out | RLS correctly hides other users' subscriptions | A powerful key on the server. Used in exactly one file. |
 | Supabase Realtime for live chat | Serverless can't hold WebSockets; Realtime respects RLS | Another moving part; enabled per table |
+| Netlify over Vercel | Free tier allows commercial use (Vercel Hobby doesn't). Git push auto-deploys. | Next.js runs through Netlify's adapter, which can lag new Next versions, so verify `proxy.ts` + route handlers after each Next upgrade. The code uses no host-specific APIs, so switching hosts is cheap. |
 | Open Join (any user can join any group) | Easiest way to test with 2 phones | No private groups yet |
 
 ## 3. Folder Map
@@ -237,7 +238,14 @@ Not built.
    - Authentication → Emails → **SMTP Settings**: enable custom SMTP. This is required before templates can be edited. MVP option: Gmail SMTP (`smtp.gmail.com`, port 587, Gmail app password). SMTP credentials live only in the Supabase dashboard, never in this repo.
    - Authentication → Email Templates: add `{{ .Token }}` to **both** templates. **Confirm signup** is sent on a new user's first sign-in, and **Magic Link** on every later sign-in.
 4. `npm install`, then `npm run dev` → http://localhost:3000. Run `npm run build` to type-check.
-Deploy: not set up yet.
+**Live URL:** https://vietcorners.netlify.app (GitHub: `LockNguyen/VietCorner-PWA`, branch `main`)
+
+**Deploy (Netlify + GitHub):**
+1. Push the repo to a private GitHub repo.
+2. Netlify → Add new project → Import from GitHub. It detects Next.js automatically (build `npm run build`), so no `netlify.toml` is needed.
+3. Netlify → Project configuration → Environment variables: add every variable in §8. Mark `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` as secret.
+4. Use the same VAPID keys as local. Why: subscriptions are tied to the public key, and new keys would break existing subscriptions.
+5. Every push to `main` redeploys.
 
 ## 10. Change Log
 - 2026-09-14: Created harness files (CLAUDE.md, active_context.md, architecture.md).
