@@ -37,6 +37,7 @@ features/<name>/
 
 ## Context Management
 - Prioritize reading `.claude/active_context.md` for current state before asking questions.
+- Deferred work goes in `.claude/backlog.md` (format: Why → What → Trade-offs → Done when). Don't build backlog items unless the user moves one into `active_context.md`.
 - NEVER read files outside the immediate scope of the current task.
 
 ## Code Output Rules

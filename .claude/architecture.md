@@ -91,6 +91,15 @@ app/**/page.tsx ──► components ──► hooks ──► api.ts ──► 
 | Supabase RLS policies | Database | Yes | **The real boundary.** The public anon key can call Supabase directly, so only RLS stops reading other users' data. |
 
 - Editing browser code can't skip server checks or RLS. It can only break that user's own UI.
+
+**How Supabase decides what a browser can reach** (three gates, checked in order):
+1. **Exposed schema:** the REST/Realtime API only serves the `public` schema. `auth.users` isn't reachable at all.
+2. **Grants:** which operations a role may attempt (`anon` = not signed in, `authenticated` = signed in, `service_role` = our server's secret key). Set in each feature's `schema.sql`.
+3. **RLS policies:** which rows that role sees or writes. RLS on with no matching policy → nothing.
+- A "server-only" table is one with no `anon`/`authenticated` grants or policies. Only the `service_role` key (never in the browser) can use it.
+- A table in `public` **without RLS** would be fully readable with the anon key. Every table must enable RLS (the Supabase dashboard's Security Advisor flags misses).
+- **Verified 2026-09-15:** anon-key REST requests (as an attacker, not signed in) to `groups`, `group_members`, `messages`, and `push_subscriptions` all return `[]`, and `users` returns "table not found". Blocked reads are empty, not errors.
+- The only browser → Supabase calls are in `features/*/api.ts`. Moving to API-only access is backlog item B1 (`.claude/backlog.md`).
 - Env vars with `NEXT_PUBLIC_` are shipped to the browser, so they're public. Secrets never get that prefix.
 
 ## 5. App Shell
@@ -325,3 +334,4 @@ Not built.
 - 2026-09-14: Deployed to Netlify. Verified live: `/groups` logged out → 307 `/login`, API → 401 JSON, sw.js + manifest 200. Push made best-effort (no false "send failed"). ChatRoom handles network errors. Documented real-time paths, limits, and known gaps.
 - 2026-09-15: Fixed chat not updating when opened from a notification (Realtime joined before the auth token loaded). Added refetch on subscribe/visible, instant own-message display, and id-based dedupe. Added the RLS authorization decision.
 - 2026-09-15: Restructured auth + chat into the standard feature shape (`api.ts`, `hooks/`, `components/`, `server/queries.ts`). ChatRoom split into `useChatMessages` + `MessageList` + `MessageForm`. Removed `GroupChat.tsx`. Pages now load data. No behavior change.
+- 2026-09-15: Restructure QA passed and deployed. Documented Supabase exposure gates + anon-key probe results. Added `.claude/backlog.md`.
