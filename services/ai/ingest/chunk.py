@@ -11,6 +11,9 @@ Common pitfalls:
   - overlap >= size means the window never moves forward (infinite loop). Reject it.
   - Emitting a final window that only repeats words already covered by the previous one.
   - Resetting chunk_index per page instead of per document, which creates duplicate ids.
+Questions:
+  - Why not chunk by each paragraph (or half if it exceeds a max length)?
+  - Overlap so we don't break a sentence apart in two different chunks. But chunks never cross pages. What if a sentence cross pages?
 """
 
 from config import CHUNK_OVERLAP_WORDS, CHUNK_WORDS
@@ -30,8 +33,26 @@ def split_with_overlap(words: list[str], size: int, overlap: int) -> list[list[s
          Stop after appending the window whose end (start + size) is >= len(words).
       4. Return [] for an empty word list.
     """
-    raise NotImplementedError("M1: implement split_with_overlap")
+    if overlap >= size or size <= 0:
+        raise ValueError("'overlap' must be greater than 0 and less than 'size'. Otherwise, the chunking sliding window never moves forward.")
 
+    if len(words) == 0:
+        return []
+
+    splits = []
+    start = 0
+    step = size - overlap
+
+    while True:
+        splits.append(words[start : start + size])
+
+        # Stop if this is the last window (already covers up everything up to 'end')
+        if start + size >= len(words):
+            break
+        
+        start += step
+
+    return splits
 
 def chunk_pages(pages: list[Page], size: int = CHUNK_WORDS, overlap: int = CHUNK_OVERLAP_WORDS) -> list[Chunk]:
     """Turn pages into chunks, numbering chunk_index 0, 1, 2, ... across each document.
@@ -42,4 +63,17 @@ def chunk_pages(pages: list[Page], size: int = CHUNK_WORDS, overlap: int = CHUNK
       3. For each window: Chunk(document, page_number, chunk_index=next index, text=" ".join(window)).
       4. Return all chunks in order.
     """
-    raise NotImplementedError("M1: implement chunk_pages")
+    chunks = []
+    chunk_indices = {}
+    for page in pages:
+        if page.document not in chunk_indices:
+            chunk_indices[page.document] = 0
+
+        words = page.text.split()
+        windows = split_with_overlap(words, size, overlap)
+        for window in windows:
+            chunks.append(Chunk(document=page.document, page_number=page.page_number, chunk_index=chunk_indices[page.document], text=" ".join(window)))
+            chunk_indices[page.document] += 1
+
+    return chunks
+    

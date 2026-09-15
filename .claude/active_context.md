@@ -30,13 +30,16 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [ ] **Step 4: `assistant`** (Python AI service `services/ai` on an Oracle VM + web feature). Course: `services/ai/README.md`
   - [x] M0 scaffold: config, domain types, ★ stubs with concept headers, tests, README (Claude)
   - [ ] M0 user setup: Python 3.12 + venv + `pip install`, `pytest` runs, PDFs in `data/`, Groq key, start the Oracle account
-  - [ ] M1 extract + chunk · [ ] M2 embeddings · [ ] M3 eval bake-off · [ ] M4 pgvector + ingest
+  - [x] M1 extract + chunk (12/12 tests pass; real PDF: 288 pages, text layer OK, no OCR needed, 533 chunks)
+  - [ ] M2 embeddings · [ ] M3 eval bake-off · [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
 ## ⚠️ Known Constraints & Debt
 - iOS push requires iOS 16.4+, Add to Home Screen, and a user tap to grant permission.
 - Embeddings: self-hosted; the model is chosen in M3 (e5-base vs bge-m3 vs Vietnamese_Embedding). `EMBEDDING_DIM` and `schema.sql` wait for that result.
+- **The corpus is English-only** (T-Net course, 288 pages, 0 Vietnamese characters), so the real requirement is cross-language retrieval: Vietnamese question → English passage. M3 questions should be mostly Vietnamese about English content, and a Vietnamese-only fine-tuned model may score worse than a cross-lingual one. M5's prompt must answer in the question's language from English sources.
+- Slide-style pages: 203 embedded images and 12 chunks under 20 words (min 8). Tiny chunks add retrieval noise. Options to test in M3: drop chunks under N words, or merge short pages.
 - **Mentor mode:** never implement `TODO(M#)` bodies unless the user asks (CLAUDE.md).
 - Python 3.12.10 installed (user scope, `%LOCALAPPDATA%\Programs\Python\Python312`; not on PATH in old terminals). `services/ai/.venv` created, requirements installed (torch 2.14, sentence-transformers 6.0.1, pymupdf 1.28.2).
 - Installed the Microsoft Visual C++ Redistributable (it was missing, so PyMuPDF/torch DLLs failed to load). `pytest` verified: 32 fast tests collected, 2 pass (provided code), 30 fail only on ★ stubs (NotImplementedError + "write SYSTEM_PROMPT"). The first run takes ~2 min (cold torch import), later runs ~8 s. A harmless Starlette/httpx deprecation warning appears in test_api.
@@ -48,6 +51,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Everything else deferred is in `.claude/backlog.md`.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: install Python 3.12, create a venv in `services/ai`, `pip install -r requirements.txt`, and run `pytest` (all fail with NotImplementedError = to-do list).
-2. User: put the church PDFs in `services/ai/data/`, create the Groq key, and start the Oracle Cloud signup.
-3. User implements M1 (`normalize_text`, `extract_pages`, `split_with_overlap`, `chunk_pages`), then says "review M1".
+1. User implements M2 (`load_model` is provided; write `embed_passages`, `embed_query` in `rag/embeddings.py`), then `pytest -m slow` (first run downloads ~2 GB).
+2. User: create the Groq key and start the Oracle Cloud signup (needed in M5/M6).
+3. M3: write 30+ eval questions against the real course PDF, then the bake-off.

@@ -30,7 +30,9 @@ def normalize_text(text: str) -> str:
       2. Collapse every run of whitespace (spaces, tabs, newlines) into one space. Hint: " ".join(text.split())
       3. Return the result (split/join already trims both ends).
     """
-    raise NotImplementedError("M1: implement normalize_text")
+    nfc_text = unicodedata.normalize("NFC", text)
+    collapsed_text = " ".join(nfc_text.split())
+    return collapsed_text
 
 
 def extract_pages(pdf_path: Path) -> list[Page]:
@@ -43,4 +45,11 @@ def extract_pages(pdf_path: Path) -> list[Page]:
       4. Skip pages whose cleaned text is empty (blank or scanned pages).
       5. Build Page(document=pdf_path.name, page_number=index + 1, text=cleaned).
     """
-    raise NotImplementedError("M1: implement extract_pages")
+    with pymupdf.open(pdf_path) as pdf:
+        pages = []
+        for index, page in enumerate(pdf):
+            raw_text = page.get_text("text")
+            cleaned_text = normalize_text(raw_text)
+            if cleaned_text:  # Skip empty pages
+                pages.append(Page(document=pdf_path.name, page_number=index + 1, text=cleaned_text))
+    return pages
