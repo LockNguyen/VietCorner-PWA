@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const LOGIN_PATH = "/login";
 const HOME_PATH = "/groups";
 
-// Called by src/proxy.ts before every page request.
+// Called by src/proxy.ts before every request.
 // 1) Refreshes the login cookie so users stay signed in.
 // 2) Sends logged-out users to /login, and logged-in users away from it.
 export async function refreshSession(request: NextRequest) {

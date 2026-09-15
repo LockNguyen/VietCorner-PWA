@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { sendLoginCode, verifyLoginCode } from "../api";
 
-// Two steps: 1) enter email → Supabase emails a code. 2) type the code → signed in.
-// The first login also creates the account.
+// Two steps: 1) enter email → a code is emailed. 2) type the code → signed in.
 // Why a typed code instead of a clicked link: on iPhone, email links open in Safari,
 // which does not share its login with the app installed on the Home Screen.
 export default function LoginForm() {
@@ -15,21 +14,27 @@ export default function LoginForm() {
   const [codeSent, setCodeSent] = useState(false);
   const [error, setError] = useState("");
 
-  async function sendCode(event: React.FormEvent) {
+  async function handleSendCode(event: React.FormEvent) {
     event.preventDefault();
     setError("");
-    const { error } = await createClient().auth.signInWithOtp({ email });
-    if (error) setError(error.message);
-    else setCodeSent(true);
+    try {
+      await sendLoginCode(email);
+      setCodeSent(true);
+    } catch (error) {
+      setError((error as Error).message);
+    }
   }
 
-  async function verifyCode(event: React.FormEvent) {
+  async function handleVerifyCode(event: React.FormEvent) {
     event.preventDefault();
     setError("");
-    const { error } = await createClient().auth.verifyOtp({ email, token: code, type: "email" });
-    if (error) return setError(error.message);
-    router.replace("/groups");
-    router.refresh(); // re-run the proxy so it sees the new login cookie
+    try {
+      await verifyLoginCode(email, code);
+      router.replace("/groups");
+      router.refresh(); // re-run the proxy so it sees the new login cookie
+    } catch (error) {
+      setError((error as Error).message);
+    }
   }
 
   const inputClass = "w-full rounded border p-3 text-lg";
@@ -38,14 +43,14 @@ export default function LoginForm() {
   return (
     <div className="space-y-4 p-4">
       {!codeSent ? (
-        <form onSubmit={sendCode} className="space-y-4">
+        <form onSubmit={handleSendCode} className="space-y-4">
           <label className="block text-lg">Email</label>
           <input type="email" required autoComplete="email" value={email}
             onChange={(e) => setEmail(e.target.value)} className={inputClass} />
           <button className={buttonClass}>Send me a code</button>
         </form>
       ) : (
-        <form onSubmit={verifyCode} className="space-y-4">
+        <form onSubmit={handleVerifyCode} className="space-y-4">
           <label className="block text-lg">Enter the code sent to {email}</label>
           <input inputMode="numeric" required autoComplete="one-time-code" value={code}
             onChange={(e) => setCode(e.target.value.trim())} className={inputClass} />

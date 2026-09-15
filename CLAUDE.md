@@ -6,12 +6,28 @@ This is an MVP to prove 3 features are possible. It is not a finished product.
 - A CS graduate must understand the whole codebase in one day.
 - Pick the simplest, most conventional solution. No clever abstractions, no premature generalization, no extra libraries unless required.
 - Build the feature, not the polish. Ugly UI is fine.
-- **Feature isolation:** each feature lives in its own `src/features/<name>/` folder (UI, server code, SQL, README). Removing a feature = delete its folder + a few marked lines elsewhere. Code in one feature never imports from another feature's internals.
+- **Feature isolation:** each feature lives in its own `src/features/<name>/` folder (see Feature Shape). Removing a feature = delete its folder + a few marked lines elsewhere. Code in one feature never imports from another feature's internals.
 - Removable features: `auth`, `chat` (groups + push), `i18n`, `assistant` (voice + RAG).
 - Obvious names, small files, one job per file. Comment *why*, not *what*.
 - If a change would couple features or add complexity, stop and propose a simpler option first.
 - **Thin routes:** `route.ts` files only parse input, verify the user, call a plain function in `src/features/<name>/server/`, and return JSON. Those server functions never import Next.js APIs, so they can move to a separate backend unchanged.
 - **Where writes go:** reads and simple writes go straight from the browser to Supabase, protected by RLS. Writes with side effects (push, AI calls) or that need secrets go through an API route.
+
+## Feature Shape (every feature looks the same)
+```
+features/<name>/
+  README.md · schema.sql (tables + RLS) · types.ts
+  api.ts          ALL browser → backend calls for the feature (Supabase direct + our /api routes)
+  hooks/          client state + effects (only when a component has real logic)
+  components/     UI only: props in, JSX out, events call hooks/api
+  server/
+    queries.ts    ALL server-side reads (called by pages)
+    <action>.ts   server logic called by route handlers
+```
+- One-way dependencies: `app/` pages → components → hooks → `api.ts` → Supabase / route → `server/*` → Postgres + RLS.
+- **Pages load data, components render.** A page creates the Supabase server client, calls `server/queries.ts`, and passes props.
+- `@/lib/supabase/*` may only be imported by `api.ts`, `server/*`, and `src/app/**` pages/routes. Never by components or hooks.
+- Every change has one obvious home. A new backend call goes in `api.ts`, sync or state logic in a hook, markup in a component. If a fix spreads across layers, stop and restructure.
 
 ## Security Rules (never trust the browser)
 - Browser code can be read and edited by anyone. Security checks only count when they run on a server or in the database.

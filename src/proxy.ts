@@ -1,7 +1,7 @@
 // Next.js runs this before matching requests. Only used by the auth feature.
 // To remove login: delete this file (and src/features/auth, src/app/login).
 import type { NextRequest } from "next/server";
-import { refreshSession } from "@/features/auth/refreshSession";
+import { refreshSession } from "@/features/auth/server/refreshSession";
 
 export function proxy(request: NextRequest) {
   return refreshSession(request);

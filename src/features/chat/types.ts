@@ -5,6 +5,9 @@ export type Group = {
   name: string;
 };
 
+// A group plus whether the signed-in user is a member (built in server/queries.ts).
+export type GroupWithMembership = Group & { joined: boolean };
+
 export type Message = {
   id: number;
   group_id: string;

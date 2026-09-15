@@ -1,20 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { joinGroup } from "../api";
 
-// Joining has no side effects, so it writes straight to Supabase. RLS only allows joining as yourself.
 export default function JoinButton({ groupId }: { groupId: string }) {
   const router = useRouter();
 
-  async function join() {
-    const { error } = await createClient().from("group_members").insert({ group_id: groupId });
-    if (error) alert(error.message);
-    else router.refresh();
+  async function handleClick() {
+    try {
+      await joinGroup(groupId);
+      router.refresh(); // reload the page's server data so the group turns into a link
+    } catch (error) {
+      alert((error as Error).message);
+    }
   }
 
   return (
-    <button onClick={join} className="rounded bg-blue-500 px-4 py-1 text-white">
+    <button onClick={handleClick} className="rounded bg-blue-500 px-4 py-1 text-white">
       Join
     </button>
   );

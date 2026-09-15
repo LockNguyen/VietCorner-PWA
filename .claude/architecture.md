@@ -34,6 +34,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Service role (admin) client for push fan-out | RLS correctly hides other users' subscriptions | A powerful key on the server. Used in exactly one file. |
 | Supabase Realtime for live chat | Serverless can't hold WebSockets; Realtime respects RLS | Another moving part; enabled per table |
 | Netlify over Vercel | Free tier allows commercial use (Vercel Hobby doesn't). Git push auto-deploys. | Next.js runs through Netlify's adapter, which can lag new Next versions, so verify `proxy.ts` + route handlers after each Next upgrade. The code uses no host-specific APIs, so switching hosts is cheap. |
+| Layered feature shape: `api.ts` / `hooks/` / `components/` / `server/` | Every change has one predictable home. Data access is listed in one file per side (browser: `api.ts`, server: `server/queries.ts`). Components can be read without knowing Supabase. | More, smaller files. Some queries exist on both sides (e.g. the latest messages in `api.ts` and `server/queries.ts`). |
 | Open Join (any user can join any group) | Easiest way to test with 2 phones | No private groups yet |
 
 ## 3. Folder Map
@@ -49,8 +50,35 @@ public/         sw.js, icons/
 
 ## 4. Rules of the Codebase
 - Features never import each other's internals.
-- `src/app` pages only wire features together.
-- Each feature folder contains: `components/`, `server/`, `schema.sql`, `README.md` (only the parts it needs).
+- `src/app` pages load data (via `server/queries.ts`) and compose feature components. Nothing else.
+
+### Feature shape (identical for every feature)
+```
+features/<name>/
+  README.md, schema.sql, types.ts
+  api.ts          ALL browser → backend calls (Supabase direct + our /api routes)
+  hooks/          client state + effects
+  components/     UI only: props in, JSX out
+  server/
+    queries.ts    ALL server-side reads, called by pages
+    <action>.ts   server logic, called by route handlers
+```
+**Layers (dependencies point one way):**
+```
+app/**/page.tsx ──► components ──► hooks ──► api.ts ──► Supabase (RLS)
+      │                                        └──────► app/api/**/route.ts ──► server/<action>.ts ──► Supabase
+      └──► server/queries.ts ──► Supabase (RLS)
+```
+| Question | Where to look |
+|---|---|
+| What can the browser ask the backend for? | `features/<name>/api.ts` |
+| What does a page read on the server? | `features/<name>/server/queries.ts` |
+| How does state or sync behave (refetch, retries, permissions flow)? | `features/<name>/hooks/*` |
+| What does it look like? | `features/<name>/components/*` |
+| Who is allowed to do it? | `features/<name>/schema.sql` (RLS policies) |
+
+- `@/lib/supabase/*` is imported only by `api.ts`, `server/*`, and `src/app/**`, never by components or hooks. Check: search `lib/supabase` under `components/` and `hooks/` and expect zero hits.
+- `server/*` functions receive the Supabase client as an argument, so they never import Next.js.
 - Reads and simple writes go from the browser straight to Supabase (RLS protects them). Writes with side effects or secrets go through `src/app/api/**/route.ts`.
 - `route.ts` files stay thin: parse → verify user → call `features/<name>/server/*` → return JSON. Server functions don't import Next.js, so moving a feature to a separate backend means copying `server/` and changing the fetch URL.
 
@@ -75,7 +103,7 @@ public/         sw.js, icons/
 | `src/app/manifest.ts` | Served at `/manifest.webmanifest`. Name, icons, `display: standalone`, `start_url: /groups`. |
 | `src/app/page.tsx` | `/` redirects to `/groups`. |
 | `src/app/loading.tsx` | "Loading…" shown immediately while any page renders. Why: pages that read cookies are dynamic, and Next.js doesn't prefetch dynamic routes. Without it, a tap shows no feedback until the server responds, and users tap again. |
-| `src/app/{groups,assistant,settings}/page.tsx` | One page per tab. Each page only composes feature components. |
+| `src/app/{groups,assistant,settings}/page.tsx` | One page per tab. Loads data via feature `server/queries.ts` and composes feature components. |
 | `src/components/TabBar.tsx` | Bottom navigation. The `TABS` array is the only list of tabs. |
 | `src/components/PageHeader.tsx` | Sticky title bar. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` in the browser. |
@@ -111,12 +139,14 @@ Each feature follows this template: **Purpose → Files → Data → Flow → Ex
 | `src/lib/supabase/client.ts` | Supabase client for browser code (shared, not auth-only). |
 | `src/lib/supabase/server.ts` | Supabase client for server code. Reads the login cookie (shared). |
 | `src/proxy.ts` | Next.js proxy (formerly "middleware"). Calls `refreshSession` on every non-static request. |
-| `src/features/auth/refreshSession.ts` | Refreshes the session cookie. Logged out + not on `/login` → redirect to `/login` (except `/api/*`, which returns 401 JSON itself). Logged in + on `/login` → redirect to `/groups`. |
-| `src/features/auth/LoginForm.tsx` | Step 1: `signInWithOtp({ email })`. Step 2: `verifyOtp({ email, token, type: "email" })`. |
-| `src/features/auth/AccountSection.tsx` | Server component: "Signed in as …" + `SignOutButton`. |
-| `src/features/auth/SignOutButton.tsx` | `signOut()` → `/login`. |
-| `src/app/login/page.tsx` | Route that renders `LoginForm`. |
-| `src/app/settings/page.tsx` | Renders `AccountSection` (lines marked `AUTH`). |
+| `features/auth/api.ts` | Browser calls: `sendLoginCode(email)` (`signInWithOtp`), `verifyLoginCode(email, code)` (`verifyOtp`, type `email`), `signOut()`. |
+| `features/auth/server/queries.ts` | `getCurrentUser(supabase)`. |
+| `features/auth/server/refreshSession.ts` | Refreshes the session cookie. Logged out + not on `/login` → redirect to `/login` (except `/api/*`, which returns 401 JSON itself). Logged in + on `/login` → redirect to `/groups`. |
+| `features/auth/components/LoginForm.tsx` | Email step → code step. Calls `api.ts`. |
+| `features/auth/components/AccountSection.tsx` | Props `email`: "Signed in as …" + `SignOutButton`. |
+| `features/auth/components/SignOutButton.tsx` | `api.signOut()` → `/login`. |
+| `src/app/login/page.tsx` | Renders `LoginForm`. |
+| `src/app/settings/page.tsx` | `getCurrentUser` → `AccountSection` (lines marked `AUTH`). |
 
 **Data:** Supabase's built-in `auth.users` table. No custom tables. The session lives in `sb-*` cookies (400-day max age, renewed on each visit).
 
@@ -155,16 +185,22 @@ Each feature follows this template: **Purpose → Files → Data → Flow → Ex
 | File | Job |
 |---|---|
 | `src/features/chat/schema.sql` | Tables, grants, RLS policies, Realtime publication, seed groups. Run once in the Supabase SQL Editor. |
-| `src/features/chat/types.ts` | `Group` and `Message` row types. |
-| `components/GroupList.tsx` | Server component. All groups: joined ones link to the chat, others show `JoinButton`. |
-| `components/JoinButton.tsx` | Inserts into `group_members` straight to Supabase (RLS: only as yourself). |
-| `components/EnableNotificationsButton.tsx` | Asks permission → `pushManager.subscribe` (VAPID public key) → upserts into `push_subscriptions`. Re-saves on every open. |
-| `components/GroupChat.tsx` | Server component. Loads the group, the newest 50 messages, and the current user → `ChatRoom`. |
-| `components/ChatRoom.tsx` | Client. Waits for the auth token → Realtime subscription. Refetches on subscribe and when the page becomes visible. Send form → `POST /api/chat/messages`. `mergeMessages` removes duplicates from all sources. |
+| `src/features/chat/types.ts` | `Group`, `GroupWithMembership`, `Message`. |
+| `api.ts` | **Every browser call:** `getLatestMessages`, `sendMessage` (POST `/api/chat/messages`), `joinGroup`, `savePushSubscription`, `subscribeToNewMessages` (waits for the auth token, then opens the Realtime channel; returns an unsubscribe function). |
+| `hooks/useChatMessages.ts` | **The whole sync strategy:** initial messages, Realtime inserts, refetch on (re)connect, refetch when visible, own sent message → `mergeMessages` (dedupe by id). Returns `{ messages, send }`. |
+| `hooks/usePushNotifications.ts` | Push state (`unsupported/blocked/off/on/error`). Re-saves an existing subscription on every open. `enable()` asks permission → `pushManager.subscribe` → `savePushSubscription`. |
+| `components/ChatRoom.tsx` | `useChatMessages` → `MessageList` + `MessageForm`. |
+| `components/MessageList.tsx` | Bubbles (mine blue/right, others gray/left) + auto-scroll. |
+| `components/MessageForm.tsx` | Draft + error. Restores the text if sending fails. |
+| `components/GroupList.tsx` | Props `groups`. Joined → link, otherwise `JoinButton`. |
+| `components/JoinButton.tsx` | `api.joinGroup` → `router.refresh()`. |
+| `components/EnableNotificationsButton.tsx` | Renders the `usePushNotifications` status. |
+| `server/queries.ts` | `getGroups(supabase)` (with a `joined` flag), `getChatRoom(supabase, groupId)` → `{ group, messages, userId }` or `null`. |
 | `server/sendMessage.ts` | Inserts the message with the **user's** client (RLS checks membership) → `notifyGroup`. |
 | `server/notifyGroup.ts` | **Admin** client: other members → their subscriptions → `web-push` each. Deletes subscriptions that return 404/410. |
 | `src/app/api/chat/messages/route.ts` | Thin route: verify user (401) → validate (400) → `sendMessage` (403 on RLS failure) → 201. |
-| `src/app/groups/page.tsx`, `src/app/groups/[groupId]/page.tsx` | Routes that compose the components above. |
+| `src/app/groups/page.tsx` | `getGroups` → `EnableNotificationsButton` + `GroupList`. |
+| `src/app/groups/[groupId]/page.tsx` | `getChatRoom` (`notFound()` if null) → `PageHeader` + `ChatRoom`. |
 | `src/lib/supabase/admin.ts` | Service role client (`server-only`). Currently used only by `notifyGroup`. |
 | `public/sw.js` (`CHAT` lines) | `push` → show notification. `notificationclick` → open `/groups/<id>`. |
 
@@ -175,9 +211,9 @@ Each feature follows this template: **Purpose → Files → Data → Flow → Ex
 - `push_subscriptions(endpoint PK, user_id, subscription jsonb)`. One row per device.
 
 **Flow: send a message**
-1. `ChatRoom` → `POST /api/chat/messages { groupId, body }`.
+1. `MessageForm` → `useChatMessages.send` → `api.sendMessage` → `POST /api/chat/messages { groupId, body }`.
 2. Route verifies the user → `sendMessage` inserts as that user. RLS rejects non-members and faked senders.
-3. Realtime broadcasts the new row → every open `ChatRoom` in that group appends it, including the sender's.
+3. The route returns the saved message → the sender's `useChatMessages` adds it right away. Realtime broadcasts the row to every open chat in that group, and the sender's copy is deduped.
 4. `notifyGroup` → push service (Apple/Google/Mozilla) → the device's service worker → `showNotification`.
 5. Tap notification → `/groups/<id>`.
 
@@ -208,16 +244,17 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 - **iOS:** push only works in a Home Screen app on iOS 16.4+, and the permission prompt only appears after a tap. That's why this is a button, not automatic.
 - **Installed iPhone app, fully closed:** iOS wakes our service worker to show the push. The app doesn't need to be open or recently used, and it survives reboots. It stops if the user deletes the Home Screen icon, turns off notifications in Settings, or clears Safari website data. Those cases return 410, so the row gets cleaned up.
 - **Every push must show a notification.** Why: Safari revokes the subscription if the service worker receives pushes without displaying them. `sw.js` always calls `showNotification`.
-- **Push needs HTTPS** (localhost is allowed). Test on phones through the Vercel deploy.
+- **Push needs HTTPS** (localhost is allowed). Test on phones through the Netlify deploy.
 - **Expired subscriptions:** the push service returns 404/410 → row deleted. The device re-subscribes the next time the app is opened with permission granted.
 - **Shared device:** the endpoint belongs to the first user who saved it. If a different user signs in on that device, the upsert fails RLS. Rare for this MVP.
 - **Why the sender's email is checked in RLS:** without it, someone calling Supabase directly could post as someone else.
 - `notifyGroup` runs before the route responds. Why: serverless functions can stop right after the response. Cost: sending feels slower in big groups.
 - The message list loads only the newest 50. There's no "load older" yet.
+- An unknown group ID shows Next's 404 page, but the HTTP status is 200. Why: `loading.tsx` starts streaming the response before `getChatRoom` returns null, and a streamed status can't change. Harmless for an app; it would matter for SEO.
 - **Send failures:** network down or a 401/403 → error shown and the text goes back in the box. Push failure after the message is saved → logged only, and the request still returns 201. Why: reporting failure would make users resend and create duplicates.
 - **Non-members can't post:** there's no membership `if` in TypeScript on purpose. The route uses the user's client, so the `"Members post as themselves"` RLS policy rejects the insert (403). The same policy blocks direct calls to Supabase with the anon key.
-- **Missed messages (Realtime doesn't replay).** `ChatRoom` refetches the newest 50 in three cases: when the channel reaches `SUBSCRIBED` (first join and every reconnect), when the page becomes visible again (phone wakes, app returns to foreground), and after our own send (we add the API's response). `mergeMessages` removes duplicates by id.
-- **Cold-start race (fixed 2026-09-15).** Opening the app from a notification loads the chat page first. The login token loads asynchronously, and `channel.subscribe()` read it before it was ready, so the channel joined as an **anonymous** user. RLS then hid every message silently: no errors, no updates, not even your own. Switching tabs and back "fixed" it because the token was loaded by then. Fix: `await supabase.realtime.setAuth()` before subscribing.
+- **Missed messages (Realtime doesn't replay).** `hooks/useChatMessages.ts` refetches the newest 50 in three cases: when the channel reaches `SUBSCRIBED` (first join and every reconnect), when the page becomes visible again (phone wakes, app returns to foreground), and after our own send (we add the API's response). `mergeMessages` removes duplicates by id.
+- **Cold-start race (fixed 2026-09-15).** Opening the app from a notification loads the chat page first. The login token loads asynchronously, and `channel.subscribe()` read it before it was ready, so the channel joined as an **anonymous** user. RLS then hid every message silently: no errors, no updates, not even your own. Switching tabs and back "fixed" it because the token was loaded by then. Fix: `subscribeToNewMessages` in `api.ts` awaits `supabase.realtime.setAuth()` before joining.
 - **Known gap: no rate limiting** on `POST /api/chat/messages`, so a signed-in user could spam a group.
 - **Known gap: every message pushes every member.** No mute and no grouping of notifications yet.
 
@@ -231,7 +268,7 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 | Project pauses after ~7 idle days | Supabase free | Pause → no login, chat, or push |
 | ~500 emails/day | Gmail SMTP | One per sign-in |
 
-**How to remove:** delete `src/features/chat/`, `src/app/groups/`, `src/app/api/chat/`, and `src/lib/supabase/admin.ts`. Remove the `CHAT` lines in `public/sw.js`, remove the Groups tab, and change `HOME_PATH` in `refreshSession.ts`. Run the drop SQL at the bottom of `schema.sql`. Remove the push env vars.
+**How to remove:** delete `src/features/chat/`, `src/app/groups/`, `src/app/api/chat/`, and `src/lib/supabase/admin.ts`. Remove the `CHAT` lines in `public/sw.js`, remove the Groups tab, and change `HOME_PATH` in `features/auth/server/refreshSession.ts`. Run the drop SQL at the bottom of `schema.sql`. Remove the push env vars.
 
 ### 6.3 i18n
 Not built.
@@ -253,7 +290,7 @@ Not built.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `src/lib/supabase/*`, `refreshSession.ts` | Supabase project URL. Stored in `.env.local` (gitignored). |
 | `SUPABASE_SERVICE_ROLE_KEY` | `src/lib/supabase/admin.ts` | **Secret.** Bypasses RLS. Server only. |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `EnableNotificationsButton`, `notifyGroup` | Identifies our server to push services. Public. |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | `hooks/usePushNotifications.ts`, `notifyGroup` | Identifies our server to push services. Public. |
 | `VAPID_PRIVATE_KEY` | `notifyGroup` | **Secret.** Signs pushes. If it changes, every existing subscription stops working. |
 | `VAPID_SUBJECT` | `notifyGroup` | `mailto:` contact for push services. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `src/lib/supabase/*`, `refreshSession.ts` | Public anon key. Safe in the browser because row-level security protects the data. |
@@ -287,3 +324,4 @@ Not built.
 - 2026-09-14: Added root `loading.tsx` (instant feedback on dynamic navigation). Documented iOS closed-app push behavior.
 - 2026-09-14: Deployed to Netlify. Verified live: `/groups` logged out → 307 `/login`, API → 401 JSON, sw.js + manifest 200. Push made best-effort (no false "send failed"). ChatRoom handles network errors. Documented real-time paths, limits, and known gaps.
 - 2026-09-15: Fixed chat not updating when opened from a notification (Realtime joined before the auth token loaded). Added refetch on subscribe/visible, instant own-message display, and id-based dedupe. Added the RLS authorization decision.
+- 2026-09-15: Restructured auth + chat into the standard feature shape (`api.ts`, `hooks/`, `components/`, `server/queries.ts`). ChatRoom split into `useChatMessages` + `MessageList` + `MessageForm`. Removed `GroupChat.tsx`. Pages now load data. No behavior change.
