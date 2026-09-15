@@ -49,8 +49,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Chat: no private groups, no "load older messages", and the shared-device subscription edge case (see architecture 6.2).
 
 ## ➡️ Next 3 Micro-Steps
-- Chat gaps: Realtime doesn't replay missed messages after a phone sleeps (ChatRoom should refetch when it becomes visible again), no rate limit on sending, no mute.
+- Chat gaps: no rate limit on sending, no mute, no automated RLS tests (e.g. a non-member insert must fail).
 
-1. Push the best-effort-push + send-error fix (committed locally, needs user OK to deploy).
-2. Fix the stale chat after the phone sleeps: refetch messages on `visibilitychange`.
+1. User retests on iPhone: open from a notification → messages (own + others) appear live. Also: app backgrounded for a few minutes → returns showing new messages.
+2. Add an RLS test script (non-member insert/select must fail) so authorization isn't "silent".
 3. Phone QA: iPhone (Share → Add to Home Screen → open → turn on notifications) + Android. Close the apps, send from another account, confirm the notification and that tapping it opens the group.

@@ -29,6 +29,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Email one-time code instead of magic link | iOS Home Screen apps don't share cookies with Safari | Users type a code (a bit harder for elderly users) |
 | Groq for AI | Free, fast Whisper + Llama | No embeddings API, so a second service is needed for RAG |
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen + iOS 16.4+ |
+| Authorization lives in Postgres RLS, not in TypeScript `if`s | Browsers query Supabase directly, so the database is the only check that covers every path (browser, API, anon key) | Silent: blocked reads return empty rather than an error. Postgres/Supabase-specific (`auth.uid()`), so a non-RLS database would need all authorization moved into server code, and all data access moved behind the API. Needs automated RLS tests. |
 | Send messages through an API route, not straight to Supabase | Sending must also trigger push, which needs secrets | One extra hop per message |
 | Service role (admin) client for push fan-out | RLS correctly hides other users' subscriptions | A powerful key on the server. Used in exactly one file. |
 | Supabase Realtime for live chat | Serverless can't hold WebSockets; Realtime respects RLS | Another moving part; enabled per table |
@@ -159,7 +160,7 @@ Each feature follows this template: **Purpose → Files → Data → Flow → Ex
 | `components/JoinButton.tsx` | Inserts into `group_members` straight to Supabase (RLS: only as yourself). |
 | `components/EnableNotificationsButton.tsx` | Asks permission → `pushManager.subscribe` (VAPID public key) → upserts into `push_subscriptions`. Re-saves on every open. |
 | `components/GroupChat.tsx` | Server component. Loads the group, the newest 50 messages, and the current user → `ChatRoom`. |
-| `components/ChatRoom.tsx` | Client. Realtime subscription for new messages, plus a send form → `POST /api/chat/messages`. |
+| `components/ChatRoom.tsx` | Client. Waits for the auth token → Realtime subscription. Refetches on subscribe and when the page becomes visible. Send form → `POST /api/chat/messages`. `mergeMessages` removes duplicates from all sources. |
 | `server/sendMessage.ts` | Inserts the message with the **user's** client (RLS checks membership) → `notifyGroup`. |
 | `server/notifyGroup.ts` | **Admin** client: other members → their subscriptions → `web-push` each. Deletes subscriptions that return 404/410. |
 | `src/app/api/chat/messages/route.ts` | Thin route: verify user (401) → validate (400) → `sendMessage` (403 on RLS failure) → 201. |
@@ -200,6 +201,7 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 - iPhone in Safari (not installed): the button area says to Add to Home Screen.
 - `POST /api/chat/messages` while logged out → `401 {"error":"Not signed in"}` (JSON, not a redirect).
 - Measured in dev (2026-09-14): opening a group takes 100–600 ms. "Loading…" shows instantly. 20 rapid taps, including double-taps, always landed on the right page with no hangs. Server: proxy ~5 ms, page 110–360 ms (Supabase queries), sending a message 250–370 ms (includes push). JS heap stayed ~16 MB (no leak).
+- Opening a group URL directly (like a notification tap) → Realtime subscribes, then refetches the messages once (~1.3 s after load in dev). Returning to the tab (`visibilitychange`) → another refetch. Verified in the preview on 2026-09-15.
 - Dev only: the first visit to a route after a code change adds ~0.5 s+ for compiling. The Next.js "Rendering/Compiling" badge is a dev tool and doesn't exist in production.
 
 **Edge cases**
@@ -214,7 +216,8 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 - The message list loads only the newest 50. There's no "load older" yet.
 - **Send failures:** network down or a 401/403 → error shown and the text goes back in the box. Push failure after the message is saved → logged only, and the request still returns 201. Why: reporting failure would make users resend and create duplicates.
 - **Non-members can't post:** there's no membership `if` in TypeScript on purpose. The route uses the user's client, so the `"Members post as themselves"` RLS policy rejects the insert (403). The same policy blocks direct calls to Supabase with the anon key.
-- **Known gap: missed messages after a disconnect.** Realtime doesn't replay. If a phone sleeps or the WebSocket drops, messages sent meanwhile don't appear until the page reloads. Their push notifications still arrive.
+- **Missed messages (Realtime doesn't replay).** `ChatRoom` refetches the newest 50 in three cases: when the channel reaches `SUBSCRIBED` (first join and every reconnect), when the page becomes visible again (phone wakes, app returns to foreground), and after our own send (we add the API's response). `mergeMessages` removes duplicates by id.
+- **Cold-start race (fixed 2026-09-15).** Opening the app from a notification loads the chat page first. The login token loads asynchronously, and `channel.subscribe()` read it before it was ready, so the channel joined as an **anonymous** user. RLS then hid every message silently: no errors, no updates, not even your own. Switching tabs and back "fixed" it because the token was loaded by then. Fix: `await supabase.realtime.setAuth()` before subscribing.
 - **Known gap: no rate limiting** on `POST /api/chat/messages`, so a signed-in user could spam a group.
 - **Known gap: every message pushes every member.** No mute and no grouping of notifications yet.
 
@@ -283,3 +286,4 @@ Not built.
 - 2026-09-14: Step 2 chat: schema + RLS, groups/join, realtime ChatRoom, message API route, web push (subscribe, fan-out, expiry cleanup), sw.js push handlers. The proxy no longer redirects `/api/*`.
 - 2026-09-14: Added root `loading.tsx` (instant feedback on dynamic navigation). Documented iOS closed-app push behavior.
 - 2026-09-14: Deployed to Netlify. Verified live: `/groups` logged out → 307 `/login`, API → 401 JSON, sw.js + manifest 200. Push made best-effort (no false "send failed"). ChatRoom handles network errors. Documented real-time paths, limits, and known gaps.
+- 2026-09-15: Fixed chat not updating when opened from a notification (Realtime joined before the auth token loaded). Added refetch on subscribe/visible, instant own-message display, and id-based dedupe. Added the RLS authorization decision.
