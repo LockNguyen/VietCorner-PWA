@@ -21,7 +21,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 ## 📋 Current Session Task Breakdown
 - [x] Initialize system architecture guardrails (CLAUDE.md, active_context.md, architecture.md)
 - [x] Step 0: App shell (Next 16.3.5, Node 24.19.0). Build passes. Verified at mobile size: `/` → `/groups`, tabs switch, manifest served, service worker active.
-- [ ] Step 1: `auth`: Supabase magic-link login, persistent session
+- [x] Step 1: `auth`: email one-time-code login (Gmail SMTP for the MVP). QA passed. The Confirm signup template also needs `{{ .Token }}` so new users get one email.
 - [ ] Step 2: `chat`: groups, messages, push subscribe + send (QA on iPhone + Android)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 - [ ] Step 4: `assistant`: record → Whisper → retrieve chunks → Llama → speak
@@ -38,7 +38,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Git 2.55 installed, repo on `main`. One commit per completed step. `.env.local` is gitignored.
 - Not yet tested on a real phone. Needs an HTTPS deploy (Vercel) before chat push QA.
 
+- Supabase free projects pause after ~7 days without activity, which breaks login and push until the project is restored. Real launch needs a paid plan or a keep-alive. (Verify the current policy.)
+- Vercel Hobby is for non-commercial use only. Confirm this is OK for a church app before launch.
+- Supabase default SMTP allows only a few emails per hour. Real users need custom SMTP (Resend) before launch.
+- The tab bar still shows on `/login`. Harmless (tabs redirect back), so it's left alone to avoid coupling the shell to auth.
+
 ## ➡️ Next 3 Micro-Steps
-1. BLOCKED on user: create a Supabase project, enable Email (magic link) auth, add `http://localhost:3000/**` to redirect URLs, and fill in `.env.local`.
-2. Packages installed (`@supabase/supabase-js`, `@supabase/ssr`). Next: add `src/lib/supabase/{client,server}.ts`.
-3. Build `src/features/auth/` (login form, callback route, sign-out) and gate pages, then QA with a real email.
+1. User: add `{{ .Token }}` to the Confirm signup template, then retest with a `+` alias email (expect a single code email).
+2. Step 2 (chat): install `server-only`, then generate VAPID keys (`npx web-push generate-vapid-keys`).
+3. Step 2 (chat): write `src/features/chat/schema.sql` (groups, group_members, messages, push_subscriptions + RLS) and have the user run it in the Supabase SQL editor.
