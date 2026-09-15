@@ -1,0 +1,27 @@
+# VietCorner AI service. Install inside a virtual environment: pip install -r requirements.txt
+
+# PDF text extraction (M1)
+pymupdf>=1.24
+
+# Embeddings (M2-M3): sentence-transformers pulls in PyTorch (CPU build is fine)
+sentence-transformers>=3.0
+numpy>=1.26
+
+# Vector database access (M4): Postgres driver + pgvector type support
+psycopg[binary]>=3.1
+pgvector>=0.3
+
+# LLM + speech-to-text (M5-M6)
+groq>=0.9
+
+# HTTP API (M6)
+fastapi>=0.110
+uvicorn[standard]>=0.29
+python-multipart>=0.0.9   # needed by FastAPI to receive uploaded audio files
+
+# Configuration
+python-dotenv>=1.0
+
+# Tests
+pytest>=8.0
+httpx>=0.27               # used by FastAPI's TestClient

@@ -29,6 +29,17 @@ features/<name>/
 - `@/lib/supabase/*` may only be imported by `api.ts`, `server/*`, and `src/app/**` pages/routes. Never by components or hooks.
 - Every change has one obvious home. A new backend call goes in `api.ts`, sync or state logic in a hook, markup in a component. If a fix spreads across layers, stop and restructure.
 
+## Mentor Mode (assistant feature + `services/ai`)
+- The user is learning AI engineering by handwriting this feature. Claude scaffolds (files, signatures, types, module header, TODO steps, tests) and reviews. **Claude never writes the body of a function marked `TODO(M#)` unless the user explicitly asks.**
+- Review = run that milestone's tests and checkpoint, explain each issue (what's wrong, why, how to fix), and let the user apply fixes.
+- AI code standards:
+  - Every module header is *What it does → Concept → Why this design → Inputs/Outputs → Common pitfalls*.
+  - Keep a pure core, thin I/O functions, and recipe-style orchestrators.
+  - Constants live only in `services/ai/config.py`, each with a why.
+  - Use dependency injection so code is testable.
+  - No RAG frameworks.
+- `services/` holds separately deployed, non-Next.js services. Each has its own README, requirements, and tests.
+
 ## Security Rules (never trust the browser)
 - Browser code can be read and edited by anyone. Security checks only count when they run on a server or in the database.
 - Every API route verifies the user itself. The proxy redirect is for convenience, not protection.

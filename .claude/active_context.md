@@ -26,13 +26,21 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] Step 2: `chat`: groups, live messages, push. Deployed; iPhone notification tap → live chat confirmed.
 - [x] Restructure auth + chat into the standard feature shape. QA passed, deployed (`feba5d6`).
 - [x] Backlog created (`.claude/backlog.md`).
-- [ ] **Next: plan the next step in Plan Mode** (Step 3 `i18n` or Step 4 `assistant`)
+- [x] Planned Step 4 in Plan Mode (mentor mode: Claude scaffolds, user implements ★ functions, Claude reviews)
+- [ ] **Step 4: `assistant`** (Python AI service `services/ai` on an Oracle VM + web feature). Course: `services/ai/README.md`
+  - [x] M0 scaffold: config, domain types, ★ stubs with concept headers, tests, README (Claude)
+  - [ ] M0 user setup: Python 3.12 + venv + `pip install`, `pytest` runs, PDFs in `data/`, Groq key, start the Oracle account
+  - [ ] M1 extract + chunk · [ ] M2 embeddings · [ ] M3 eval bake-off · [ ] M4 pgvector + ingest
+  - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
-- [ ] Step 4: `assistant`: record → Whisper → retrieve chunks → Llama → speak
 
 ## ⚠️ Known Constraints & Debt
 - iOS push requires iOS 16.4+, Add to Home Screen, and a user tap to grant permission.
-- **Open decision (Step 4):** Groq has no embeddings API. Options: Supabase built-in `gte-small` (Edge Function, free) or transformers.js in Node.
+- Embeddings: self-hosted; the model is chosen in M3 (e5-base vs bge-m3 vs Vietnamese_Embedding). `EMBEDDING_DIM` and `schema.sql` wait for that result.
+- **Mentor mode:** never implement `TODO(M#)` bodies unless the user asks (CLAUDE.md).
+- Python 3.12.10 installed (user scope, `%LOCALAPPDATA%\Programs\Python\Python312`; not on PATH in old terminals). `services/ai/.venv` created, requirements installed (torch 2.14, sentence-transformers 6.0.1, pymupdf 1.28.2).
+- Installed the Microsoft Visual C++ Redistributable (it was missing, so PyMuPDF/torch DLLs failed to load). `pytest` verified: 32 fast tests collected, 2 pass (provided code), 30 fail only on ★ stubs (NotImplementedError + "write SYSTEM_PROMPT"). The first run takes ~2 min (cold torch import), later runs ~8 s. A harmless Starlette/httpx deprecation warning appears in test_api.
+- Oracle A1 capacity/card verification risk. Fallback: run the service on the PC + Cloudflare Tunnel.
 - Browser SpeechRecognition is unreliable in iOS home-screen PWAs, so use MediaRecorder + server-side Whisper instead.
 - Vietnamese `speechSynthesis` voices vary by device; verify during Step 4 QA.
 - Netlify synchronous functions time out at ~10 s. Voice pipeline must fit.
@@ -40,6 +48,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Everything else deferred is in `.claude/backlog.md`.
 
 ## ➡️ Next 3 Micro-Steps
-1. Enter Plan Mode and choose the next feature step (i18n vs. assistant).
-2. Write the plan using the standard feature shape (`features/<name>/api.ts`, `hooks/`, `components/`, `server/`, `schema.sql`).
-3. Get approval, then build → QA → commit + push.
+1. User: install Python 3.12, create a venv in `services/ai`, `pip install -r requirements.txt`, and run `pytest` (all fail with NotImplementedError = to-do list).
+2. User: put the church PDFs in `services/ai/data/`, create the Groq key, and start the Oracle Cloud signup.
+3. User implements M1 (`normalize_text`, `extract_pages`, `split_with_overlap`, `chunk_pages`), then says "review M1".

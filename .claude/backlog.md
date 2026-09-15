@@ -61,5 +61,14 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 - Confirm Netlify plan limits (function timeout, bandwidth).
 - Real `VAPID_SUBJECT` contact owned by the church.
 
+## B11. Real-time voice with LiveKit Agents (assistant M9)
+**Why:** conversational voice (streaming, interruptions, sub-second turns) instead of push-to-talk. **What:** a Python LiveKit agent that calls `rag.answer.answer_question` as a tool, with our API minting room tokens. **Trade-offs:** + natural conversation, built-in monitoring. − a long-running agent worker, a vendor, and Vietnamese streaming STT/TTS plugin costs. **Done when:** a latency table vs. M7 push-to-talk measurements exists and the iPhone conversation works.
+
+## B12. Better retrieval: reranker + hybrid search
+**Why:** the top-k from one embedding model can miss exact terms (names, numbers). **What:** add bge-m3 sparse (keyword-like) scores and/or a cross-encoder reranker (e.g. bge-reranker-v2-m3) on the top 20. **Done when:** Recall@5 / MRR improve in `evaluation/results.md` at an acceptable latency.
+
+## B13. Answer-quality evaluation
+**Why:** retrieval metrics don't measure whether the final answer is correct and properly cited. **What:** a graded set (question → expected facts), with automatic checks for citations and "not found" behavior, run in CI. **Done when:** a score per model/prompt version is tracked.
+
 ## B10. Correct 404 status for unknown groups (low)
 **Why:** `loading.tsx` streaming makes `notFound()` return HTTP 200. **What:** validate the group before streaming (e.g. a route-level check). Only matters for SEO.
