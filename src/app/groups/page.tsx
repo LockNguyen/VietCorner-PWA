@@ -1,10 +1,13 @@
 import PageHeader from "@/components/PageHeader";
+import EnableNotificationsButton from "@/features/chat/components/EnableNotificationsButton";
+import GroupList from "@/features/chat/components/GroupList";
 
 export default function GroupsPage() {
   return (
     <>
       <PageHeader title="Groups" />
-      <p className="p-4 text-gray-500">Group chat goes here (Step 2).</p>
+      <EnableNotificationsButton />
+      <GroupList />
     </>
   );
 }

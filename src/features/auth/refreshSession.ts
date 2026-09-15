@@ -31,8 +31,10 @@ export async function refreshSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const isLoggedIn = Boolean(data?.claims);
   const isOnLoginPage = request.nextUrl.pathname.startsWith(LOGIN_PATH);
+  // API routes answer 401 themselves. A redirect would hand fetch() an HTML page instead of JSON.
+  const isApi = request.nextUrl.pathname.startsWith("/api/");
 
-  if (!isLoggedIn && !isOnLoginPage) return redirectTo(request, LOGIN_PATH);
+  if (!isLoggedIn && !isOnLoginPage && !isApi) return redirectTo(request, LOGIN_PATH);
   if (isLoggedIn && isOnLoginPage) return redirectTo(request, HOME_PATH);
   return response;
 }

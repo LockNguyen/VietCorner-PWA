@@ -22,7 +22,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] Initialize system architecture guardrails (CLAUDE.md, active_context.md, architecture.md)
 - [x] Step 0: App shell (Next 16.3.5, Node 24.19.0). Build passes. Verified at mobile size: `/` → `/groups`, tabs switch, manifest served, service worker active.
 - [x] Step 1: `auth`: email one-time-code login (Gmail SMTP for the MVP). QA passed. The Confirm signup template also needs `{{ .Token }}` so new users get one email.
-- [ ] Step 2: `chat`: groups, messages, push subscribe + send (QA on iPhone + Android)
+- [~] Step 2: `chat`: local QA passed (live messages, push with tab closed, notification tap opens group). Remaining: deploy to Vercel, then QA on a real iPhone (Home Screen) + Android with the app closed.
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 - [ ] Step 4: `assistant`: record → Whisper → retrieve chunks → Llama → speak
 
@@ -44,6 +44,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The tab bar still shows on `/login`. Harmless (tabs redirect back), so it's left alone to avoid coupling the shell to auth.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: add `{{ .Token }}` to the Confirm signup template, then retest with a `+` alias email (expect a single code email).
-2. Step 2 (chat): install `server-only`, then generate VAPID keys (`npx web-push generate-vapid-keys`).
-3. Step 2 (chat): write `src/features/chat/schema.sql` (groups, group_members, messages, push_subscriptions + RLS) and have the user run it in the Supabase SQL editor.
+- Diagnosed the "stuck rendering" report: no server hang or memory leak (logs + 20-run rapid-click test). Cause: no `loading.tsx` (no feedback on dynamic routes) plus dev-mode compiling. Fixed with `src/app/loading.tsx`.
+- Perf idea for later: the page calls `getUser()` (a network call) even though the proxy already validated the session. Could switch to `getClaims()`.
+- Chat: no private groups, no "load older messages", and the shared-device subscription edge case (see architecture 6.2).
+
+## ➡️ Next 3 Micro-Steps
+1. Commit Step 2 (local QA passed).
+2. Choose a deploy path (GitHub + Vercel import, or Vercel CLI). The user owns the account login and enters env vars in the Vercel dashboard.
+3. Deploy to Vercel (user creates the account and enters env vars in the dashboard), then QA push on a real iPhone (Home Screen) + Android with the app closed.

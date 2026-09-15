@@ -11,6 +11,7 @@ This is an MVP to prove 3 features are possible. It is not a finished product.
 - Obvious names, small files, one job per file. Comment *why*, not *what*.
 - If a change would couple features or add complexity, stop and propose a simpler option first.
 - **Thin routes:** `route.ts` files only parse input, verify the user, call a plain function in `src/features/<name>/server/`, and return JSON. Those server functions never import Next.js APIs, so they can move to a separate backend unchanged.
+- **Where writes go:** reads and simple writes go straight from the browser to Supabase, protected by RLS. Writes with side effects (push, AI calls) or that need secrets go through an API route.
 
 ## Security Rules (never trust the browser)
 - Browser code can be read and edited by anyone. Security checks only count when they run on a server or in the database.
