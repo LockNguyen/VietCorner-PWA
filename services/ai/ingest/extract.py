@@ -45,11 +45,11 @@ def extract_pages(pdf_path: Path) -> list[Page]:
       4. Skip pages whose cleaned text is empty (blank or scanned pages).
       5. Build Page(document=pdf_path.name, page_number=index + 1, text=cleaned).
     """
+    pages = []
     with pymupdf.open(pdf_path) as pdf:
-        pages = []
         for index, page in enumerate(pdf):
             raw_text = page.get_text("text")
             cleaned_text = normalize_text(raw_text)
             if cleaned_text:  # Skip empty pages
                 pages.append(Page(document=pdf_path.name, page_number=index + 1, text=cleaned_text))
-        return pages
+    return pages

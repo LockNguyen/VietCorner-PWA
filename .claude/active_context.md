@@ -32,7 +32,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] M0 user setup: Python 3.12 + venv + `pip install`, `pytest` runs, PDFs in `data/`, Groq key, start the Oracle account
   - [x] M1 extract + chunk (12/12 tests pass; real PDF: 288 pages, text layer OK, no OCR needed, 533 chunks)
   - [x] M2 embeddings (3/3 slow tests; query p50 132 ms / p95 142 ms; 533 chunks embedded in 423 s = one-time ingest cost)
-  - [ ] M3 eval bake-off · [ ] M4 pgvector + ingest
+  - [~] M3 eval set written by Claude: `evaluation/questions.jsonl`, 41 questions (33 answerable with
+        multi-page labels, 8 unanswerable/wrong-premise). Baseline with bge-m3, page-level, TOP_K=5:
+        Recall@5 0.73 (vi 0.65 / en 1.00), MRR 0.56. User still writes metrics.py + run_eval.py.
+  - [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
@@ -41,6 +44,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Embeddings: self-hosted; the model is chosen in M3 (e5-base vs bge-m3 vs Vietnamese_Embedding). `EMBEDDING_DIM` and `schema.sql` wait for that result.
 - **The corpus is English-only** (T-Net course, 288 pages, 0 Vietnamese characters), so the real requirement is cross-language retrieval: Vietnamese question → English passage. M3 questions should be mostly Vietnamese about English content, and a Vietnamese-only fine-tuned model may score worse than a cross-lingual one. M5's prompt must answer in the question's language from English sources.
 - Slide-style pages: 203 embedded images and 12 chunks under 20 words (min 8). Tiny chunks add retrieval noise. Options to test in M3: drop chunks under N words, or merge short pages.
+- **A similarity threshold alone cannot separate answerable from unanswerable questions.** Measured on the eval set:
+  best-chunk score is 0.53-0.67 for answerable questions and up to 0.61 for unanswerable ones, so the ranges overlap.
+  M5 must lean on the prompt rule ("answer only from the sources, otherwise say you don't know"), with `SIMILARITY_FLOOR`
+  as a coarse guard around 0.45-0.50, not as the decision.
+- **Vietnamese/English gap is measurable:** English twins hit 1.00 Recall@5, their Vietnamese versions 0.65. Report per language.
 - **Calibrate `SIMILARITY_FLOOR` (0.35 is too low).** Measured with bge-m3 on the course PDF: best match 0.57-0.65, median chunk 0.37-0.50. An unrelated question would still clear 0.35, so "I do not know" would never trigger. Pick the value from the score distribution in M3/M5.
 - Vietnamese questions score lower than English ones on this English corpus (best ~0.57-0.59 vs 0.65): the cross-lingual gap is real but retrieval still finds the right pages.
 - Chunks repeat page headers/footers ("T-Net International www.tnetwork.com"). Stripping repeated boilerplate is a possible M3 experiment.
@@ -55,6 +63,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Everything else deferred is in `.claude/backlog.md`.
 
 ## ➡️ Next 3 Micro-Steps
-1. M3: user writes 30+ questions in `evaluation/questions.jsonl` (mostly Vietnamese asking about the English course), then implements `evaluation/metrics.py` + `evaluation/run_eval.py`.
+1. M3: user reviews the page labels in `evaluation/questions.jsonl` (they are the ground truth), then implements `evaluation/metrics.py` + `evaluation/run_eval.py` and runs the bake-off.
 2. User: create the Groq key and start the Oracle Cloud signup (needed in M5/M6).
 3. After the bake-off: Claude writes `schema.sql` with the winning model vector size for M4.

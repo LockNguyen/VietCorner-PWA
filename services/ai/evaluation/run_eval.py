@@ -38,8 +38,9 @@ RESULTS_PATH = SERVICE_ROOT / "evaluation" / "results.md"
 class EvalQuestion:
     question: str
     language: str  # "vi" or "en". Lets the report break results down by language.
-    document: str  # where the answer is
-    page_number: int
+    document: str | None  # None when the documents cannot answer the question
+    pages: tuple[int, ...]  # every page that answers it; empty for unanswerable questions
+    note: str = ""  # why the question is tricky, or why it is unanswerable
 
 
 @dataclass(frozen=True)
@@ -47,15 +48,19 @@ class ModelResult:
     model_name: str
     recall_at_k: float
     mrr: float
+    recall_by_language: dict[str, float]  # {"vi": ..., "en": ...}: an average hides a weak language
+    max_unanswerable_similarity: float  # highest score reached by a question with no answer.
+    #                                     SIMILARITY_FLOOR must sit above this and below the answerable scores.
     p50_query_ms: float
     p95_query_ms: float
 
 
 def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
-    """Read one JSON object per line (see questions.example.jsonl).
+    """Read one JSON object per line (see evaluation/questions.jsonl).
 
     TODO(M3): for each non-blank line: data = json.loads(line); EvalQuestion(data["question"], data["language"],
-              data["document"], data["page"]).
+              data["document"], tuple(data["pages"]), data.get("note", "")).
+    Unanswerable questions have "document": null and "pages": []. Keep them: they set the similarity floor.
     """
     raise NotImplementedError("M3: implement load_questions")
 
@@ -82,10 +87,14 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
       3. For each question: time embed_query with time.perf_counter() -> latency list;
          ranked = rank_chunks(np.array(vector), chunk_matrix, chunks, TOP_K);
          ranked_ids = [location_id(c.document, c.page_number) for c in ranked]
-         relevant = {location_id(q.document, q.page_number)}
-         collect recall_at_k(ranked_ids, relevant, TOP_K) and reciprocal_rank(ranked_ids, relevant)
-      4. Return ModelResult(model_name, mean recall, mean reciprocal rank,
-                            np.percentile(latencies, 50), np.percentile(latencies, 95))
+      4. For ANSWERABLE questions (question.pages is not empty):
+         relevant = {location_id(question.document, page) for page in question.pages}
+         collect recall_at_k(ranked_ids, relevant, TOP_K) and reciprocal_rank(ranked_ids, relevant).
+         Also collect the recall per language, so a good English average can't hide weak Vietnamese.
+      5. For UNANSWERABLE questions: record the best similarity (chunk_matrix @ query_vector).max().
+         The highest of these is max_unanswerable_similarity.
+      6. Return ModelResult(...) with the means, the per-language recalls, that maximum,
+         np.percentile(latencies, 50) and np.percentile(latencies, 95).
     """
     raise NotImplementedError("M3: implement evaluate_model")
 
@@ -93,9 +102,9 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
 def write_report(results: list[ModelResult], path: Path = RESULTS_PATH) -> None:
     """Write a Markdown table, best MRR first, e.g.
 
-        | Model | Recall@5 | MRR | p50 query ms | p95 query ms |
-        |---|---|---|---|---|
-        | BAAI/bge-m3 | 0.93 | 0.81 | 120 | 180 |
+        | Model | Recall@5 | Recall vi | Recall en | MRR | max sim (unanswerable) | p50 ms | p95 ms |
+        |---|---|---|---|---|---|---|---|
+        | BAAI/bge-m3 | 0.73 | 0.65 | 1.00 | 0.56 | 0.61 | 132 | 142 |
 
     TODO(M3): sort results by mrr descending, build the lines, path.write_text("\\n".join(lines), encoding="utf-8").
     """
@@ -109,6 +118,7 @@ def main() -> None:
       1. questions = load_questions()
       2. chunks = chunk_pages([page for pdf in sorted(DATA_DIR.glob("*.pdf")) for page in extract_pages(pdf)])
       3. results = [evaluate_model(name, chunks, questions) for name in CANDIDATE_MODELS]
+         Call load_model.cache_clear() after each model: three of them held in memory at once is several GB.
       4. write_report(results); print the table.
     """
     raise NotImplementedError("M3: implement main")

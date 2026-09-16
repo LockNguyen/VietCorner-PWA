@@ -45,7 +45,6 @@ def embed_passages(texts: list[str], model_name: str = EMBEDDING_MODEL) -> list[
     _, passage_prefix = prefixes_for(model_name)
     vectors = model.encode([passage_prefix + t for t in texts], normalize_embeddings=True)
     return vectors.tolist()
-        
 
 
 def embed_query(text: str, model_name: str = EMBEDDING_MODEL) -> list[float]:

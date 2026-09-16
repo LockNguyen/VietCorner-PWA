@@ -63,8 +63,8 @@ Each chapter: **Goal · Concepts · You write · Checkpoint · Stretch.**
 ### M3: Evaluation before optimization
 - **Goal:** choose the embedding model with evidence from YOUR documents.
 - **Concepts:** Recall@k, MRR, latency percentiles, writing realistic test questions.
-- **You write:** `evaluation/metrics.py`, `evaluation/run_eval.py`, and `evaluation/questions.jsonl` (30+ questions in the format of `questions.example.jsonl`; mix Vietnamese, English, and cross-language).
-- **Checkpoint:** `python -m evaluation.run_eval` writes `evaluation/results.md` comparing the 3 models in `config.CANDIDATE_MODELS`. The winner and its numbers go into architecture.md Key Decisions.
+- **You write:** `evaluation/metrics.py` and `evaluation/run_eval.py`. `evaluation/questions.jsonl` is already written: 41 real questions (34 Vietnamese, 7 English twins, 8 unanswerable or wrong-premise ones), each labelled with every page that answers it. Review and correct the labels; they are your ground truth.
+- **Checkpoint:** `python -m evaluation.run_eval` writes `evaluation/results.md` comparing the 3 models in `config.CANDIDATE_MODELS`, with recall per language and the highest similarity reached by an unanswerable question (that number sets `SIMILARITY_FLOOR`). The winner and its numbers go into architecture.md Key Decisions.
 - **Stretch:** sweep `CHUNK_WORDS` (150 / 300 / 500) for the winning model.
 
 ### M4: The vector database
