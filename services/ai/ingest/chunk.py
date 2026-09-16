@@ -34,7 +34,7 @@ def split_with_overlap(words: list[str], size: int, overlap: int) -> list[list[s
       4. Return [] for an empty word list.
     """
     if overlap >= size or size <= 0:
-        raise ValueError("'overlap' must be greater than 0 and less than 'size'. Otherwise, the chunking sliding window never moves forward.")
+        raise ValueError("'overlap' must be less than 'size', and 'sỉze' must be greater than 0. Otherwise, the chunking sliding window never moves forward.")
 
     if len(words) == 0:
         return []
@@ -65,6 +65,7 @@ def chunk_pages(pages: list[Page], size: int = CHUNK_WORDS, overlap: int = CHUNK
     """
     chunks = []
     chunk_indices = {}
+    
     for page in pages:
         if page.document not in chunk_indices:
             chunk_indices[page.document] = 0
@@ -72,8 +73,8 @@ def chunk_pages(pages: list[Page], size: int = CHUNK_WORDS, overlap: int = CHUNK
         words = page.text.split()
         windows = split_with_overlap(words, size, overlap)
         for window in windows:
-            chunks.append(Chunk(document=page.document, page_number=page.page_number, chunk_index=chunk_indices[page.document], text=" ".join(window)))
+            chunks.append(Chunk(document=page.document, page_number=page.page_number,
+                                chunk_index=chunk_indices[page.document], text=" ".join(window)))
             chunk_indices[page.document] += 1
 
     return chunks
-    

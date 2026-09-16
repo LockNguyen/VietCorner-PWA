@@ -41,6 +41,8 @@ The Next.js app calls this service from its server (never from the browser) with
 3. Create a Groq API key (console.groq.com) → `GROQ_API_KEY` in `.env`.
 4. Start creating the Oracle Cloud Always Free account (needed in M6; approval can take time).
 
+**Windows note:** printing Vietnamese can fail with `UnicodeEncodeError: charmap`, because the console uses an old code page. Force UTF-8 output: `$env:PYTHONIOENCODING="utf-8"` (PowerShell) or `export PYTHONIOENCODING=utf-8` (Git Bash).
+
 ## Chapters
 Each chapter: **Goal · Concepts · You write · Checkpoint · Stretch.**
 

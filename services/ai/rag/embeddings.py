@@ -41,7 +41,11 @@ def embed_passages(texts: list[str], model_name: str = EMBEDDING_MODEL) -> list[
          (encode batches internally and returns a NumPy array of shape (len(texts), dim))
       3. Return vectors.tolist() (plain Python lists are easy to store and send as JSON).
     """
-    raise NotImplementedError("M2: implement embed_passages")
+    model = load_model(model_name)
+    _, passage_prefix = prefixes_for(model_name)
+    vectors = model.encode([passage_prefix + t for t in texts], normalize_embeddings=True)
+    return vectors.tolist()
+        
 
 
 def embed_query(text: str, model_name: str = EMBEDDING_MODEL) -> list[float]:
@@ -50,4 +54,7 @@ def embed_query(text: str, model_name: str = EMBEDDING_MODEL) -> list[float]:
     TODO(M2): same as embed_passages, but with the query prefix and a single text.
       Hint: model.encode(query_prefix + text, normalize_embeddings=True).tolist()
     """
-    raise NotImplementedError("M2: implement embed_query")
+    model = load_model(model_name)
+    query_prefix, _ = prefixes_for(model_name)
+    vector = model.encode(query_prefix + text, normalize_embeddings=True)
+    return vector.tolist()

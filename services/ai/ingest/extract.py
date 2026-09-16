@@ -52,4 +52,4 @@ def extract_pages(pdf_path: Path) -> list[Page]:
             cleaned_text = normalize_text(raw_text)
             if cleaned_text:  # Skip empty pages
                 pages.append(Page(document=pdf_path.name, page_number=index + 1, text=cleaned_text))
-    return pages
+        return pages
