@@ -54,7 +54,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         DECIDED: stop tuning retrieval now; build M4-M5 and judge on real answers. Revisit after the Vietnamese
         PDFs arrive, or if a configuration reaches ~0.90 AUC. Both decisions recorded in architecture.md.
         Experiments queued in backlog B14.
-  - [ ] M4 pgvector + ingest
+  - [x] M4 pgvector + ingest: 533 chunks in Supabase (288 pages, indexes 0-532, 0 duplicates). Re-ingestion is
+        idempotent. Database top-5 identical to the in-memory top-5 for the questions checked (parity proven).
+        Latency: embed 166 ms p50, Supabase vector search 67 ms p50 (includes the network round trip).
+        Tools: `pytest -m db` (tests/test_store.py, throwaway document) and `python -m evaluation.check_database`.
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
@@ -85,9 +88,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Everything else deferred is in `.claude/backlog.md`.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run `src/features/assistant/schema.sql` in the Supabase SQL editor, then add `DATABASE_URL`
-   (Supabase → Database → Connection string → Session pooler, IPv4) to `services/ai/.env`.
-2. M4: user implements `rag/store.py` (`replace_document_chunks`, `search_chunks`) and `ingest/run_ingest.py`,
-   then `python -m ingest.run_ingest` (~7 min: it embeds all 533 chunks) and checks that a second run
-   leaves the row count unchanged.
-3. User: create the Groq key and start the Oracle Cloud signup (needed in M5/M6).
+1. User: fix the two M4 issues from the review (one connection for the whole ingest run; insert the
+   `document` parameter rather than `item.chunk.document`).
+2. M5: user writes `rag/prompt.py` (including SYSTEM_PROMPT), `rag/generate.py`, `rag/answer.py`, then
+   `pytest tests/test_prompt.py tests/test_answer.py` and `python -m rag.answer "..."`.
+   Needs `GROQ_API_KEY` and `GROQ_CHAT_MODEL` in `services/ai/.env`.
+3. User: start the Oracle Cloud signup (needed in M6).
