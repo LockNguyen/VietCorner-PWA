@@ -33,8 +33,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] M1 extract + chunk (12/12 tests pass; real PDF: 288 pages, text layer OK, no OCR needed, 533 chunks)
   - [x] M2 embeddings (3/3 slow tests; query p50 132 ms / p95 142 ms; 533 chunks embedded in 423 s = one-time ingest cost)
   - [~] M3 eval set written by Claude: `evaluation/questions.jsonl`, 41 questions (33 answerable with
-        multi-page labels, 8 unanswerable/wrong-premise). Baseline with bge-m3, page-level, TOP_K=5:
-        Recall@5 0.73 (vi 0.65 / en 1.00), MRR 0.56. User still writes metrics.py + run_eval.py.
+        multi-page labels, 8 unanswerable/wrong-premise). Measured with the user's code via
+        `python -m evaluation.explain --all` (bge-m3, page level, TOP_K=5):
+        hit@5 0.73 (any gold page in the top 5) but Recall@5 0.54 (fraction of gold pages found,
+        which is the definition in metrics.py); vi 0.49 / en 0.73. MRR unreliable until reciprocal_rank
+        is fixed (it iterates a set, losing order). CORRECTION: the "0.73 baseline" quoted earlier was
+        hit@5, not Recall@5 as stated.
   - [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
@@ -48,6 +52,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   best-chunk score is 0.53-0.67 for answerable questions and up to 0.61 for unanswerable ones, so the ranges overlap.
   M5 must lean on the prompt rule ("answer only from the sources, otherwise say you don't know"), with `SIMILARITY_FLOOR`
   as a coarse guard around 0.45-0.50, not as the decision.
+- **Decide the headline retrieval metric.** `recall_at_k` scores the *fraction* of gold pages found, so a question
+  labelled with 6 gold pages can never exceed 5/6 in a top-5 run: the score then measures my labelling, not the model.
+  Either report hit@k (any gold page found) alongside it, or trim gold labels to the minimal pages that answer.
 - **Vietnamese/English gap is measurable:** English twins hit 1.00 Recall@5, their Vietnamese versions 0.65. Report per language.
 - **Calibrate `SIMILARITY_FLOOR` (0.35 is too low).** Measured with bge-m3 on the course PDF: best match 0.57-0.65, median chunk 0.37-0.50. An unrelated question would still clear 0.35, so "I do not know" would never trigger. Pick the value from the score distribution in M3/M5.
 - Vietnamese questions score lower than English ones on this English corpus (best ~0.57-0.59 vs 0.65): the cross-lingual gap is real but retrieval still finds the right pages.

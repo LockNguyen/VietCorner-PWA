@@ -28,7 +28,7 @@ from domain import Chunk
 from evaluation.metrics import location_id, recall_at_k, reciprocal_rank
 from ingest.chunk import chunk_pages
 from ingest.extract import extract_pages
-from rag.embeddings import embed_passages, embed_query
+from rag.embeddings import embed_passages, embed_query, load_model
 
 QUESTIONS_PATH = SERVICE_ROOT / "evaluation" / "questions.jsonl"
 RESULTS_PATH = SERVICE_ROOT / "evaluation" / "results.md"
@@ -41,6 +41,10 @@ class EvalQuestion:
     document: str | None  # None when the documents cannot answer the question
     pages: tuple[int, ...]  # every page that answers it; empty for unanswerable questions
     note: str = ""  # why the question is tricky, or why it is unanswerable
+
+    @property
+    def is_answerable(self) -> bool:
+        return bool(self.pages)
 
 
 @dataclass(frozen=True)
@@ -62,7 +66,16 @@ def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
               data["document"], tuple(data["pages"]), data.get("note", "")).
     Unanswerable questions have "document": null and "pages": []. Keep them: they set the similarity floor.
     """
-    raise NotImplementedError("M3: implement load_questions")
+    eval_questions = []
+
+    with open(path, "r", encoding="utf-8") as file:
+        for line in file:
+            data = json.loads(line)
+            eval_questions.append(EvalQuestion(data["question"], data["language"],
+                                               data["document"], tuple(data["pages"]),
+                                               data.get("note", "")))
+
+    return eval_questions
 
 
 def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list[Chunk], k: int) -> list[Chunk]:
@@ -75,7 +88,9 @@ def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list
       2. best = np.argsort(-scores)[:k]                  (indices of the highest scores first)
       3. Return [chunks[i] for i in best]
     """
-    raise NotImplementedError("M3: implement rank_chunks")
+    cosine_similarity_scores = chunk_matrix @ query_vector
+    best_chunks_indices = np.argsort(-cosine_similarity_scores)[:k]
+    return [chunks[i] for i in best_chunks_indices]
 
 
 def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQuestion]) -> ModelResult:
@@ -96,32 +111,109 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
       6. Return ModelResult(...) with the means, the per-language recalls, that maximum,
          np.percentile(latencies, 50) and np.percentile(latencies, 95).
     """
-    raise NotImplementedError("M3: implement evaluate_model")
+    chunk_matrix = np.array(embed_passages([chunk.text for chunk in chunks], model_name))
+
+    embed_query("warm up", model_name)
+
+    latencies = []
+    recall_at_k_scores = []
+    reciprocal_rank_scores = []
+    recall_by_language = {}
+    max_unanswerable_similarity = 0
+
+    for question in questions:
+        start_time = time.perf_counter()
+        query_vector = embed_query(question.question, model_name)
+        end_time = time.perf_counter()
+        latencies.append((end_time - start_time) * 1000)
+        
+        ranked_chunks = rank_chunks(np.array(query_vector), chunk_matrix, chunks, TOP_K)
+        ranked_pages_ids = [location_id(chunk.document, chunk.page_number) for chunk in ranked_chunks]
+
+        # Answerable questions
+        if question.document is not None and len(question.pages) > 0:
+            relevant_pages_ids = {location_id(question.document, page) for page in question.pages}
+
+            # Measure recall overall
+            recall_at_k_score = recall_at_k(ranked_pages_ids, relevant_pages_ids, TOP_K)
+            recall_at_k_scores.append(recall_at_k_score)
+
+            # Measure RR overall
+            reciprocal_rank_score = reciprocal_rank(ranked_pages_ids, relevant_pages_ids)
+            reciprocal_rank_scores.append(reciprocal_rank_score)
+
+            # Measure recall by language
+            recall_by_language.setdefault(question.language, []).append(recall_at_k_score)
+
+        # Unanswerable questions
+        else:
+            max_unanswerable_similarity = max(max_unanswerable_similarity, (chunk_matrix @ query_vector).max())
+
+    if len(recall_at_k_scores) == 0 or len(reciprocal_rank_scores) == 0:
+        raise ValueError("The question set has no answerable questions, so there is no Recall@k or MRR score.")
+
+    recall_by_language = {language: sum(recall_scores) / len(recall_scores) for language, recall_scores in recall_by_language.items()}
+
+    return ModelResult(model_name=model_name,
+                       recall_at_k=sum(recall_at_k_scores) / len(recall_at_k_scores),
+                       mrr=sum(reciprocal_rank_scores) / len(reciprocal_rank_scores),
+                       recall_by_language=recall_by_language,
+                       max_unanswerable_similarity=max_unanswerable_similarity,
+                       p50_query_ms=np.percentile(latencies, 50),
+                       p95_query_ms=np.percentile(latencies, 95))
+            
+
+def format_report(results: list[ModelResult]) -> str:
+    """Render the comparison as Markdown, best MRR first. Pure function: no file I/O, so it is easy to test."""
+    lines = [
+        "# Embedding model comparison",
+        "",
+        f"Question set: `evaluation/questions.jsonl`. Retrieval is scored at page level, top {TOP_K}.",
+        "",
+        f"| Model | Recall@{TOP_K} | Recall vi | Recall en | MRR | max sim (unanswerable) | p50 ms | p95 ms |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+
+    for result in sorted(results, key=lambda result: result.mrr, reverse=True):
+        recall_vi = result.recall_by_language.get("vi", 0.0)
+        recall_en = result.recall_by_language.get("en", 0.0)
+        lines.append(
+            f"| {result.model_name} | {result.recall_at_k:.2f} | {recall_vi:.2f} | {recall_en:.2f} "
+            f"| {result.mrr:.2f} | {result.max_unanswerable_similarity:.2f} "
+            f"| {result.p50_query_ms:.0f} | {result.p95_query_ms:.0f} |"
+        )
+
+    lines += [
+        "",
+        "**Reading this table:** choose by MRR and Recall, then check the language columns, because an average can",
+        "hide a weak language. `max sim (unanswerable)` is the highest similarity reached by a question the documents",
+        "cannot answer, so `SIMILARITY_FLOOR` must sit above it or the assistant will answer questions it should refuse.",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def write_report(results: list[ModelResult], path: Path = RESULTS_PATH) -> None:
-    """Write a Markdown table, best MRR first, e.g.
-
-        | Model | Recall@5 | Recall vi | Recall en | MRR | max sim (unanswerable) | p50 ms | p95 ms |
-        |---|---|---|---|---|---|---|---|
-        | BAAI/bge-m3 | 0.73 | 0.65 | 1.00 | 0.56 | 0.61 | 132 | 142 |
-
-    TODO(M3): sort results by mrr descending, build the lines, path.write_text("\\n".join(lines), encoding="utf-8").
-    """
-    raise NotImplementedError("M3: implement write_report")
+    """Save the report next to the question set. Commit it: decisions should cite numbers."""
+    path.write_text(format_report(results), encoding="utf-8")
 
 
 def main() -> None:
-    """Recipe: load data once, evaluate every candidate model, write the report.
+    """Recipe: load the data once, score every candidate model, write the report."""
+    questions = load_questions()
+    chunks = chunk_pages([page for pdf_path in sorted(DATA_DIR.glob("*.pdf")) for page in extract_pages(pdf_path)])
+    print(f"{len(questions)} questions | {len(chunks)} chunks | {len(CANDIDATE_MODELS)} models", flush=True)
 
-    TODO(M3):
-      1. questions = load_questions()
-      2. chunks = chunk_pages([page for pdf in sorted(DATA_DIR.glob("*.pdf")) for page in extract_pages(pdf)])
-      3. results = [evaluate_model(name, chunks, questions) for name in CANDIDATE_MODELS]
-         Call load_model.cache_clear() after each model: three of them held in memory at once is several GB.
-      4. write_report(results); print the table.
-    """
-    raise NotImplementedError("M3: implement main")
+    results = []
+    for model_name in CANDIDATE_MODELS:
+        print(f"evaluating {model_name} ...", flush=True)
+        results.append(evaluate_model(model_name, chunks, questions))
+        # Each model holds 1-2 GB of weights. Drop it before loading the next one.
+        load_model.cache_clear()
+
+    write_report(results)
+    print(format_report(results))
+    print(f"saved to {RESULTS_PATH}")
 
 
 if __name__ == "__main__":

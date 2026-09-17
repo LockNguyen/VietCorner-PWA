@@ -23,12 +23,19 @@ def location_id(document: str, page_number: int) -> str:
 def recall_at_k(ranked_ids: list[str], relevant_ids: set[str], k: int) -> float:
     """Fraction of relevant_ids found among the first k ranked_ids.
 
+    relevant_ids: ground truth.
+    ranked_ids: ranked by cosine similarity after retrieved.
+
     TODO(M3):
       1. If relevant_ids is empty, raise ValueError (a question must have an expected answer location).
       2. found = relevant_ids & set(ranked_ids[:k])
       3. Return len(found) / len(relevant_ids)
     """
-    raise NotImplementedError("M3: implement recall_at_k")
+    if len(relevant_ids) == 0:
+        raise ValueError("A question must have an expected answer location.")
+
+    found = set(ranked_ids[:k]) & relevant_ids
+    return len(found) / len(relevant_ids)
 
 
 def reciprocal_rank(ranked_ids: list[str], relevant_ids: set[str]) -> float:
@@ -36,4 +43,7 @@ def reciprocal_rank(ranked_ids: list[str], relevant_ids: set[str]) -> float:
 
     TODO(M3): loop with enumerate(ranked_ids, start=1); return 1 / position at the first id in relevant_ids.
     """
-    raise NotImplementedError("M3: implement reciprocal_rank")
+    for position, ranked_id in enumerate(set(ranked_ids), start=1):
+        if ranked_id in relevant_ids:
+            return 1 / position
+    return 0.0
