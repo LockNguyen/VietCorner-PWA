@@ -22,12 +22,21 @@ from domain import Chunk, EmbeddedChunk, RetrievedChunk
 
 def connect() -> psycopg.Connection:
     """Open a Postgres connection that understands the pgvector type."""
+    # Fail loudly: with an empty string psycopg quietly falls back to localhost and times out there,
+    # which looks like a network problem instead of a missing setting.
+    if not DATABASE_URL:
+        raise RuntimeError(
+            "DATABASE_URL is empty. Copy Supabase's 'Session pooler' connection string into services/ai/.env"
+        )
+
     connection = psycopg.connect(DATABASE_URL)
     register_vector(connection)
     return connection
 
 
-def replace_document_chunks(connection: psycopg.Connection, document: str, embedded: list[EmbeddedChunk]) -> None:
+def replace_document_chunks(
+    connection: psycopg.Connection, document: str, embedded: list[EmbeddedChunk]
+) -> None:
     """Replace all stored chunks of one document (idempotent re-ingestion).
 
     TODO(M4):
@@ -37,10 +46,32 @@ def replace_document_chunks(connection: psycopg.Connection, document: str, embed
          VALUES (%s, %s, %s, %s, %s). Pass numpy.array(item.embedding) for the vector parameter.
          (cursor.executemany is a tidy way to insert many rows.)
     """
-    raise NotImplementedError("M4: implement replace_document_chunks")
+    with connection.transaction():
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM document_chunks WHERE document = %s", (document,))
+
+        replacement_chunks = [
+            (
+                item.chunk.document,
+                item.chunk.page_number,
+                item.chunk.chunk_index,
+                item.chunk.text,
+                np.array(item.embedding),
+            )
+            for item in embedded
+        ]
+
+        cursor.executemany(
+            "INSERT INTO document_chunks "
+            "(document, page_number, chunk_index, text, embedding) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            replacement_chunks,
+        )
 
 
-def search_chunks(connection: psycopg.Connection, query_embedding: list[float], k: int = TOP_K) -> list[RetrievedChunk]:
+def search_chunks(
+    connection: psycopg.Connection, query_embedding: list[float], k: int = TOP_K
+) -> list[RetrievedChunk]:
     """Return the k chunks closest to the query, most similar first.
 
     TODO(M4):
@@ -49,4 +80,28 @@ def search_chunks(connection: psycopg.Connection, query_embedding: list[float], 
          (pass numpy.array(query_embedding) twice, then k)
       2. Map each row to RetrievedChunk(chunk=Chunk(...), similarity=float(row similarity)).
     """
-    raise NotImplementedError("M4: implement search_chunks")
+    cursor = connection.cursor()
+
+    query_vector = np.array(query_embedding)
+    rows = cursor.execute(
+        """
+        SELECT document, page_number, chunk_index, text, 1 - (embedding <=> %s) AS similarity
+        FROM document_chunks
+        ORDER BY embedding <=> %s
+        LIMIT %s
+        """,
+        (query_vector, query_vector, k),
+    ).fetchall()
+
+    return [
+        RetrievedChunk(
+            chunk=Chunk(
+                document=document,
+                page_number=page_number,
+                chunk_index=chunk_index,
+                text=text,
+            ),
+            similarity=float(similarity),
+        )
+        for document, page_number, chunk_index, text, similarity in rows
+    ]
