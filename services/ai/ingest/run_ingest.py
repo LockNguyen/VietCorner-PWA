@@ -22,17 +22,6 @@ from rag.store import connect, replace_document_chunks
 
 def ingest_all() -> None:
     """Ingest every PDF in DATA_DIR.
-
-    TODO(M4):
-      1. pdf_paths = sorted(DATA_DIR.glob("*.pdf")). If empty, print where to put PDFs and return.
-      2. Open one database connection with rag.store.connect().
-      3. For each pdf_path:
-           pages    = extract_pages(pdf_path)
-           chunks   = chunk_pages(pages)
-           vectors  = embed_passages([chunk.text for chunk in chunks])
-           embedded = [EmbeddedChunk(chunk, vector) for chunk, vector in zip(chunks, vectors)]
-           replace_document_chunks(connection, pdf_path.name, embedded)
-           print(f"{pdf_path.name}: {len(pages)} pages -> {len(chunks)} chunks")
     """
     pdf_paths = sorted(DATA_DIR.glob("*.pdf"))
 

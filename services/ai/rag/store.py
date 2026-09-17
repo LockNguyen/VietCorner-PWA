@@ -38,13 +38,6 @@ def replace_document_chunks(
     connection: psycopg.Connection, document: str, embedded: list[EmbeddedChunk]
 ) -> None:
     """Replace all stored chunks of one document (idempotent re-ingestion).
-
-    TODO(M4):
-      1. `with connection.transaction():` so the delete and inserts succeed or fail together.
-      2. DELETE FROM document_chunks WHERE document = %s
-      3. For each item: INSERT INTO document_chunks (document, page_number, chunk_index, text, embedding)
-         VALUES (%s, %s, %s, %s, %s). Pass numpy.array(item.embedding) for the vector parameter.
-         (cursor.executemany is a tidy way to insert many rows.)
     """
     with connection.transaction():
         cursor = connection.cursor()
@@ -73,12 +66,6 @@ def search_chunks(
     connection: psycopg.Connection, query_embedding: list[float], k: int = TOP_K
 ) -> list[RetrievedChunk]:
     """Return the k chunks closest to the query, most similar first.
-
-    TODO(M4):
-      1. SELECT document, page_number, chunk_index, text, 1 - (embedding <=> %s) AS similarity
-         FROM document_chunks ORDER BY embedding <=> %s LIMIT %s
-         (pass numpy.array(query_embedding) twice, then k)
-      2. Map each row to RetrievedChunk(chunk=Chunk(...), similarity=float(row similarity)).
     """
     cursor = connection.cursor()
 
