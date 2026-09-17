@@ -23,12 +23,11 @@ from pathlib import Path
 
 import numpy as np
 
-from config import CANDIDATE_MODELS, DATA_DIR, SERVICE_ROOT, TOP_K
+from config import CANDIDATE_MODELS, SERVICE_ROOT, TOP_K
 from domain import Chunk, RetrievedChunk
+from evaluation.corpus import load_chunk_vectors, load_chunks
 from evaluation.metrics import location_id, recall_at_k, reciprocal_rank
-from ingest.chunk import chunk_pages
-from ingest.extract import extract_pages
-from rag.embeddings import embed_passages, embed_query, load_model
+from rag.embeddings import embed_query, load_model
 
 QUESTIONS_PATH = SERVICE_ROOT / "evaluation" / "questions.jsonl"
 RESULTS_PATH = SERVICE_ROOT / "evaluation" / "results.md"
@@ -67,6 +66,10 @@ def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
     with open(path, "r", encoding="utf-8") as file:
         for line in file:
             data = json.loads(line)
+
+            if data["pages"] and data["document"] is None:
+                raise ValueError("If pages are specified, then the document must also be specified.")
+            
             eval_questions.append(EvalQuestion(data["question"], data["language"],
                                                data["document"], tuple(data["pages"]),
                                                data.get("note", "")))
@@ -74,7 +77,7 @@ def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
 
 
 def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list[Chunk], k: int) -> list[RetrievedChunk]:
-    """Return the k chunks most similar to the query.
+    """Return the k chunks most similar to the query with their similarity score.
 
     Vectors are normalized, so cosine similarity = dot product: scores = chunk_matrix @ query_vector.
     """
@@ -86,7 +89,7 @@ def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list
 def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQuestion]) -> ModelResult:
     """Score one model.
     """
-    chunk_matrix = np.array(embed_passages([chunk.text for chunk in chunks], model_name))
+    chunk_matrix = load_chunk_vectors(chunks, model_name)  # cached per model, see evaluation/corpus.py
 
     embed_query("warm up", model_name)
 
@@ -94,7 +97,7 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
     recall_at_k_scores = []
     reciprocal_rank_scores = []
     recall_by_language = {}
-    max_unanswerable_similarity = 0.0
+    max_unanswerable_similarities = []
 
     for question in questions:
         start_time = time.perf_counter()
@@ -103,18 +106,19 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
         latencies.append((end_time - start_time) * 1000)
         
         ranked_chunks = rank_chunks(np.array(query_vector), chunk_matrix, chunks, TOP_K)
-        ranked_pages_ids = [location_id(ranked_chunk.chunk.document, ranked_chunk.chunk.page_number) for ranked_chunk in ranked_chunks]
+        ranked_page_ids = [location_id(retrieved.chunk.document, retrieved.chunk.page_number) for retrieved in ranked_chunks]
 
         # Answerable questions
         if question.is_answerable:
-            relevant_pages_ids = {location_id(str(question.document), page) for page in question.pages}
+            relevant_page_ids = {location_id(str(question.document), page) for page in question.pages}
 
             # Measure recall overall
-            recall_at_k_score = recall_at_k(ranked_pages_ids, relevant_pages_ids, TOP_K)
+            recall_at_k_score = recall_at_k(ranked_page_ids, relevant_page_ids, TOP_K)
             recall_at_k_scores.append(recall_at_k_score)
 
             # Measure RR overall
-            reciprocal_rank_score = reciprocal_rank(ranked_pages_ids, relevant_pages_ids)
+            unique_page_ids = list(dict.fromkeys(ranked_page_ids))
+            reciprocal_rank_score = reciprocal_rank(unique_page_ids, relevant_page_ids)
             reciprocal_rank_scores.append(reciprocal_rank_score)
 
             # Measure recall by language
@@ -124,7 +128,7 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
         else:
             # Max similarity score within the retrieved chunks for an unanswerable
             # question is simply the highest ranked chunk's similarity score.
-            max_unanswerable_similarity = max(max_unanswerable_similarity, ranked_chunks[0].similarity)
+            max_unanswerable_similarities.append(ranked_chunks[0].similarity)
 
     if len(recall_at_k_scores) == 0 or len(reciprocal_rank_scores) == 0:
         raise ValueError("The question set has no answerable questions, so there is no Recall@k or MRR score.")
@@ -136,7 +140,7 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
                        recall_at_k=sum(recall_at_k_scores) / len(recall_at_k_scores),
                        mrr=sum(reciprocal_rank_scores) / len(reciprocal_rank_scores),
                        recall_by_language=mean_recall_by_language,
-                       max_unanswerable_similarity=max_unanswerable_similarity,
+                       max_unanswerable_similarity=max(max_unanswerable_similarities),
                        p50_query_ms=np.percentile(latencies, 50),
                        p95_query_ms=np.percentile(latencies, 95))
             
@@ -179,7 +183,7 @@ def write_report(results: list[ModelResult], path: Path = RESULTS_PATH) -> None:
 def main() -> None:
     """Recipe: load the data once, score every candidate model, write the report."""
     questions = load_questions()
-    chunks = chunk_pages([page for pdf_path in sorted(DATA_DIR.glob("*.pdf")) for page in extract_pages(pdf_path)])
+    chunks = load_chunks()
     print(f"{len(questions)} questions | {len(chunks)} chunks | {len(CANDIDATE_MODELS)} models", flush=True)
 
     results = []

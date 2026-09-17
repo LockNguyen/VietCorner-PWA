@@ -70,5 +70,30 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 ## B13. Answer-quality evaluation
 **Why:** retrieval metrics don't measure whether the final answer is correct and properly cited. **What:** a graded set (question → expected facts), with automatic checks for citations and "not found" behavior, run in CI. **Done when:** a score per model/prompt version is tracked.
 
+## B14. Retrieval experiments (M3 stretch, ordered by expected payoff)
+**Why:** the first bake-off gave Recall@5 0.54 at best, and most of the loss is in Vietnamese questions against an
+English-only corpus. Each experiment below is measured with the same question set, so results are comparable.
+Chunk vectors are cached per model in `evaluation/.cache`; changing chunk settings invalidates the cache
+(~7 min per model to rebuild on CPU).
+
+| # | Experiment | Why it should help | Cost |
+|---|---|---|---|
+| 1 | **Add the Vietnamese translations of the PDFs** | Removes the cross-language step entirely for covered documents; vi Recall is the weakest number we have | Ingest + relabel gold pages for the vi documents |
+| 2 | **Strip repeated page headers/footers** ("T-Net International www.tnetwork.com") | Boilerplate dilutes every chunk vector | 1 function + re-embed |
+| 3 | **Sentence-boundary chunking** instead of fixed word windows | Chunks stop mid-sentence today, splitting the idea the question asks about | 1 function + re-embed |
+| 4 | **Chunk size sweep** (150 / 300 / 500 words) | 300 was a guess; the best size is corpus-specific | 3 configs x 7 min per model |
+| 5 | **Verify gold labels from retrieved chunks** (`explain.py --review`) | Some "misses" may be mislabelled ground truth, which caps every score | Manual review of 33 questions |
+| 6 | **Reranker on the top 20** (bge-reranker-v2-m3) | Cross-encoders usually add a lot of MRR; cost is a second model | See B12 |
+
+**Done when:** `evaluation/results.md` shows the winning configuration with numbers per language, and the
+choice is recorded in architecture.md Key Decisions.
+
+## B15. Per-language retrieval (only if English use grows)
+**Why:** e5-base scores en 0.85 vs bge-m3's 0.73, so routing English questions to a different model would help them.
+**What:** detect the question language, keep one vector set per model, route. **Trade-offs:** two models resident on a
+4 GB-RAM VM, two vector columns of different dimensions, and language detection fails on the code-switched
+Vietnamese-plus-English wording church members actually use. **Done when:** English questions measurably improve
+without hurting Vietnamese ones.
+
 ## B10. Correct 404 status for unknown groups (low)
 **Why:** `loading.tsx` streaming makes `notFound()` return HTTP 200. **What:** validate the group before streaming (e.g. a route-level check). Only matters for SEO.

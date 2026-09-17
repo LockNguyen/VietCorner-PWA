@@ -39,6 +39,13 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         which is the definition in metrics.py); vi 0.49 / en 0.73. MRR unreliable until reciprocal_rank
         is fixed (it iterates a set, losing order). CORRECTION: the "0.73 baseline" quoted earlier was
         hit@5, not Recall@5 as stated.
+  - [x] M3 bake-off run by the user (41 questions, page-level, TOP_K=5, Recall = fraction of gold pages):
+        | model | Recall@5 | vi | en | MRR | max sim (unanswerable) | p50 ms |
+        | bge-m3 | 0.54 | 0.49 | 0.73 | 0.56 | 0.61 | 127 |
+        | AITeamVN/Vietnamese_Embedding | 0.52 | 0.43 | 0.83 | 0.44 | 0.46 | 114 |
+        | intfloat/multilingual-e5-base | 0.44 | 0.33 | 0.85 | 0.36 | 0.81 | 49 |
+        NOTE: max-sim values are NOT comparable across models (each model has its own similarity scale).
+        Compare separation (answerable vs unanswerable) within a model instead. Experiments: backlog B14.
   - [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle

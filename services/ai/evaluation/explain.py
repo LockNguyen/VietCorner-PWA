@@ -23,30 +23,12 @@ import sys
 
 import numpy as np
 
-from config import CHUNK_OVERLAP_WORDS, CHUNK_WORDS, DATA_DIR, EMBEDDING_MODEL, SERVICE_ROOT, TOP_K
+from config import CHUNK_OVERLAP_WORDS, CHUNK_WORDS, EMBEDDING_MODEL, TOP_K
 from domain import Chunk
+from evaluation.corpus import load_chunk_vectors, load_chunks
 from evaluation.metrics import location_id, recall_at_k, reciprocal_rank
 from evaluation.run_eval import EvalQuestion, load_questions, rank_chunks
-from ingest.chunk import chunk_pages
-from ingest.extract import extract_pages
-from rag.embeddings import embed_passages, embed_query
-
-CACHE_DIR = SERVICE_ROOT / "evaluation" / ".cache"
-
-
-def load_corpus() -> tuple[list[Chunk], np.ndarray]:
-    """Chunk every PDF and embed the chunks once, caching the vectors on disk."""
-    chunks = chunk_pages([page for pdf_path in sorted(DATA_DIR.glob("*.pdf")) for page in extract_pages(pdf_path)])
-    CACHE_DIR.mkdir(exist_ok=True)
-    cache_path = CACHE_DIR / f"{EMBEDDING_MODEL.replace('/', '_')}_{len(chunks)}.npy"
-
-    if cache_path.exists():
-        return chunks, np.load(cache_path)
-
-    print(f"embedding {len(chunks)} chunks once (a few minutes), caching in {cache_path.name} ...", flush=True)
-    vectors = np.array(embed_passages([chunk.text for chunk in chunks]))
-    np.save(cache_path, vectors)
-    return chunks, vectors
+from rag.embeddings import embed_query
 
 
 def explain_one(question: EvalQuestion, chunks: list[Chunk], chunk_matrix: np.ndarray) -> None:
@@ -71,13 +53,14 @@ def explain_one(question: EvalQuestion, chunks: list[Chunk], chunk_matrix: np.nd
     gold_pages = set(question.pages)
     print(f"\n[3] top {TOP_K} chunks (rank_chunks), * marks a page in the gold answer:")
     print(f"    {'rank':<5}{'page':<7}{'chunk':<7}{'sim':<8}text")
-    for rank, chunk in enumerate(ranked_chunks, start=1):
+    for rank, retrieved in enumerate(ranked_chunks, start=1):
+        chunk = retrieved.chunk
         marker = "*" if chunk.page_number in gold_pages else " "
-        similarity = float(chunk_matrix[chunks.index(chunk)] @ query_vector)
-        print(f"  {marker} {rank:<5}{chunk.page_number:<7}{chunk.chunk_index:<7}{similarity:<8.3f}{chunk.text[:60]}")
+        print(f"  {marker} {rank:<5}{chunk.page_number:<7}{chunk.chunk_index:<7}"
+              f"{retrieved.similarity:<8.3f}{chunk.text[:60]}")
 
     # --- Step 4: chunks become page ids -------------------------------------------------------------
-    ranked_page_ids = [location_id(chunk.document, chunk.page_number) for chunk in ranked_chunks]
+    ranked_page_ids = [location_id(r.chunk.document, r.chunk.page_number) for r in ranked_chunks]
     short = [page_id.split("#")[-1] for page_id in ranked_page_ids]
     print(f"\n[4] ranked_page_ids (order matters, duplicates kept): pages {short}")
     if not question.is_answerable:
@@ -114,8 +97,8 @@ def explain_all(questions: list[EvalQuestion], chunks: list[Chunk], chunk_matrix
         query_vector = np.array(embed_query(question.question))
         similarities = chunk_matrix @ query_vector
         ranked_chunks = rank_chunks(query_vector, chunk_matrix, chunks, TOP_K)
-        ranked_page_ids = [location_id(chunk.document, chunk.page_number) for chunk in ranked_chunks]
-        top_pages = [chunk.page_number for chunk in ranked_chunks]
+        ranked_page_ids = [location_id(r.chunk.document, r.chunk.page_number) for r in ranked_chunks]
+        top_pages = [r.chunk.page_number for r in ranked_chunks]
         best_similarity = float(similarities.max())
 
         if not question.is_answerable:
@@ -151,7 +134,8 @@ def explain_all(questions: list[EvalQuestion], chunks: list[Chunk], chunk_matrix
 
 def main(argv: list[str]) -> None:
     questions = load_questions()
-    chunks, chunk_matrix = load_corpus()
+    chunks = load_chunks()
+    chunk_matrix = load_chunk_vectors(chunks)
 
     if not argv:
         print(__doc__)
