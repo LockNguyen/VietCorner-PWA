@@ -45,7 +45,14 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         | AITeamVN/Vietnamese_Embedding | 0.52 | 0.43 | 0.83 | 0.44 | 0.46 | 114 |
         | intfloat/multilingual-e5-base | 0.44 | 0.33 | 0.85 | 0.36 | 0.81 | 49 |
         NOTE: max-sim values are NOT comparable across models (each model has its own similarity scale).
-        Compare separation (answerable vs unanswerable) within a model instead. Experiments: backlog B14.
+        Separation measured instead (AUC = chance an answerable question outscores an unanswerable one):
+        | model | AUC | Cohen's d | answerable mean | unanswerable mean | answerable below max unanswerable |
+        | bge-m3 | 0.64 | 0.50 | 0.593 | 0.566 | 20 of 33 |
+        | Vietnamese_Embedding | 0.71 | 0.97 | 0.472 | 0.429 | 15 of 33 |
+        | e5-base | 0.71 | 0.84 | 0.806 | 0.788 | 17 of 33 |
+        => No model separates well enough to gate on a threshold (0.5 = coin flip). This confirms that M5's
+        prompt must do the refusing. bge-m3 recommended for ranking quality (MRR 0.56, vi Recall 0.49),
+        accepting that it has the weakest separation. Awaiting the user's decision. Experiments: backlog B14.
   - [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
