@@ -9,7 +9,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Login (auth) | `src/features/auth/` | Built, QA passed (email code, reload, sign out) |
 | Group chat + push | `src/features/chat/` | Deployed + working on https://vietcorners.netlify.app. Phone QA pending. |
 | English/Vietnamese | `src/features/i18n/` | Not built |
-| Voice AI assistant (RAG) | `services/ai/` (Python) + `src/features/assistant/` (planned) | In progress: M0 scaffolded (see §6.4) |
+| Voice AI assistant (RAG) | `services/ai/` (Python) + `src/features/assistant/` (planned) | In progress: M1-M3 done, model chosen (see §6.4). M4 next. |
 
 ## 2. Tech Stack
 | Layer | Choice | Why |

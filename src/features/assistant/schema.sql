@@ -11,6 +11,8 @@
 -- pgvector adds the `vector` column type and the distance operators. On Supabase you can also enable it
 -- from Database → Extensions. It lives in the `extensions` schema, which is on the default search path.
 create extension if not exists vector with schema extensions;
+-- If your project already has pgvector in another schema, the qualified type names below will fail.
+-- In that case drop the "extensions." prefixes and use `vector(1024)` / `vector_cosine_ops`.
 
 -- 2. Table -----------------------------------------------------------------------------------------
 create table public.document_chunks (
