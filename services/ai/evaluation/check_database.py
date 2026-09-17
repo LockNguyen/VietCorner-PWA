@@ -63,6 +63,10 @@ def compare_with_memory(connection, question_count: int | None) -> None:
     chunks = load_chunks()
     chunk_matrix = load_chunk_vectors(chunks)
 
+    # Warm up first: the very first call also loads the model, which would otherwise
+    # be charged to question 0 (5.8 s instead of 0.16 s).
+    embed_query("warm up")
+
     print(f"\nmodel {EMBEDDING_MODEL} | top {TOP_K} | {len(questions)} questions")
     print(f"\n{'#':<4}{'embed ms':<10}{'search ms':<11}{'database pages':<26}{'in-memory pages':<26}match")
     print("-" * 100)
