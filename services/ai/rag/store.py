@@ -37,58 +37,63 @@ def connect() -> psycopg.Connection:
 def replace_document_chunks(
     connection: psycopg.Connection, document: str, embedded: list[EmbeddedChunk]
 ) -> None:
-    """Replace all stored chunks of one document (idempotent re-ingestion).
-    """
-    with connection.transaction():
-        cursor = connection.cursor()
-        cursor.execute("DELETE FROM document_chunks WHERE document = %s", (document,))
-
-        replacement_chunks = [
-            (
-                item.chunk.document,
-                item.chunk.page_number,
-                item.chunk.chunk_index,
-                item.chunk.text,
-                np.array(item.embedding),
-            )
-            for item in embedded
-        ]
-
-        cursor.executemany(
-            "INSERT INTO document_chunks "
-            "(document, page_number, chunk_index, text, embedding) "
-            "VALUES (%s, %s, %s, %s, %s)",
-            replacement_chunks,
+    """Replace all stored chunks of one document (idempotent re-ingestion)."""
+    if len(embedded) == 0:
+        raise ValueError(
+            "The 'embedded' list is empty. Operation aborted to prevent wiping "
+            "the document '{document}''s chunks without any replacement."
         )
+
+    with connection.transaction():
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM document_chunks WHERE document = %s", (document,)
+            )
+
+            replacement_chunks = [
+                (
+                    document,
+                    item.chunk.page_number,
+                    item.chunk.chunk_index,
+                    item.chunk.text,
+                    np.array(item.embedding),
+                )
+                for item in embedded
+            ]
+
+            cursor.executemany(
+                "INSERT INTO document_chunks "
+                "(document, page_number, chunk_index, text, embedding) "
+                "VALUES (%s, %s, %s, %s, %s)",
+                replacement_chunks,
+            )
 
 
 def search_chunks(
     connection: psycopg.Connection, query_embedding: list[float], k: int = TOP_K
 ) -> list[RetrievedChunk]:
-    """Return the k chunks closest to the query, most similar first.
-    """
-    cursor = connection.cursor()
+    """Return the k chunks closest to the query, most similar first."""
+    with connection.cursor() as cursor:
+        query_vector = np.array(query_embedding)
+        rows = cursor.execute(
+            """
+          SELECT document, page_number, chunk_index, text, 1 - (embedding <=> %s) AS similarity
+          FROM document_chunks
+          ORDER BY embedding <=> %s
+          LIMIT %s
+          """,
+            (query_vector, query_vector, k),
+        ).fetchall()
 
-    query_vector = np.array(query_embedding)
-    rows = cursor.execute(
-        """
-        SELECT document, page_number, chunk_index, text, 1 - (embedding <=> %s) AS similarity
-        FROM document_chunks
-        ORDER BY embedding <=> %s
-        LIMIT %s
-        """,
-        (query_vector, query_vector, k),
-    ).fetchall()
-
-    return [
-        RetrievedChunk(
-            chunk=Chunk(
-                document=document,
-                page_number=page_number,
-                chunk_index=chunk_index,
-                text=text,
-            ),
-            similarity=float(similarity),
-        )
-        for document, page_number, chunk_index, text, similarity in rows
-    ]
+        return [
+            RetrievedChunk(
+                chunk=Chunk(
+                    document=document,
+                    page_number=page_number,
+                    chunk_index=chunk_index,
+                    text=text,
+                ),
+                similarity=float(similarity),
+            )
+            for document, page_number, chunk_index, text, similarity in rows
+        ]

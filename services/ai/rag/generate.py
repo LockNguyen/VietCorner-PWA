@@ -10,18 +10,36 @@ Common pitfalls:
   - Not setting a timeout: a slow provider would exceed the web app's ~10 s budget.
 """
 
-from config import GENERATION_TEMPERATURE, GROQ_API_KEY, GROQ_CHAT_MODEL, MAX_ANSWER_TOKENS
+from typing import List, cast
 
-GENERATION_TIMEOUT_SECONDS = 8  # why: leaves room within Netlify's ~10 s request limit for embedding + search.
+from config import (
+    GENERATION_TEMPERATURE,
+    GROQ_API_KEY,
+    GROQ_CHAT_MODEL,
+    MAX_ANSWER_TOKENS,
+)
+from groq import Groq
+from groq.types.chat import ChatCompletionMessageParam
+
+GENERATION_TIMEOUT_SECONDS = (
+    8  # why: leaves room within Netlify's ~10 s request limit for embedding + search.
+)
 
 
-def generate_answer(messages: list[dict[str, str]]) -> str:
-    """Call the Groq chat model and return the answer text.
+def generate_answer(messages: list[dict[str, str]], model_name: str = GROQ_CHAT_MODEL) -> str:
+    """Call a Groq chat model and return the answer text. `model_name` defaults to the configured one."""
+    # Should lru_cache this like the embedding models as well?
+    client = Groq(api_key=GROQ_API_KEY, timeout=GENERATION_TIMEOUT_SECONDS)
+    response = client.chat.completions.create(
+        model=model_name,
+        messages=cast(List[ChatCompletionMessageParam], messages),
+        temperature=GENERATION_TEMPERATURE,
+        max_tokens=MAX_ANSWER_TOKENS,
+    )
 
-    TODO(M5):
-      1. from groq import Groq; client = Groq(api_key=GROQ_API_KEY, timeout=GENERATION_TIMEOUT_SECONDS)
-      2. response = client.chat.completions.create(model=GROQ_CHAT_MODEL, messages=messages,
-                                                   temperature=GENERATION_TEMPERATURE, max_tokens=MAX_ANSWER_TOKENS)
-      3. Return response.choices[0].message.content.strip()
-    """
-    raise NotImplementedError("M5: implement generate_answer")
+    answer = response.choices[0].message.content
+
+    if answer is None:
+        return "I am sorry, but I was unable to generate an answer."
+
+    return answer.strip()

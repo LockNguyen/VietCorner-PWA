@@ -29,7 +29,9 @@ NOT_FOUND_TEXT = (
 )
 
 
-def search_with_new_connection(query_embedding: list[float], k: int = TOP_K) -> list[RetrievedChunk]:
+def search_with_new_connection(
+    query_embedding: list[float], k: int = TOP_K
+) -> list[RetrievedChunk]:
     """Default search step: open a connection, search, close. (Connection pooling is a stretch exercise.)"""
     from rag.store import connect, search_chunks
 
@@ -44,26 +46,53 @@ def answer_question(
     search: Callable[[list[float]], list[RetrievedChunk]] = search_with_new_connection,
     generate: Callable[[list[dict[str, str]]], str] = generate_answer,
 ) -> Answer:
-    """Answer a question from the documents.
+    """Answer a question from the documents."""
+    timings = {}
 
-    TODO(M5):
-      1. timings = {}. Around each step, measure with time.perf_counter() and store milliseconds:
-         timings["embed_ms"], timings["search_ms"], and (if called) timings["generate_ms"].
-      2. query_vector = embed(question)
-      3. chunks = search(query_vector)
-      4. relevant = [c for c in chunks if c.similarity >= SIMILARITY_FLOOR]
-      5. If relevant is empty: return Answer(NOT_FOUND_TEXT, [], timings). Do NOT call generate.
-      6. text = generate(build_prompt(question, relevant))
-      7. sources = [Source(c.chunk.document, c.chunk.page_number, c.similarity) for c in relevant]
-         (Keep the same order as the prompt, so citation [1] is sources[0].)
-      8. Return Answer(text, sources, timings).
-    """
-    raise NotImplementedError("M5: implement answer_question")
+    start_time = time.perf_counter()
+    query_vector = embed(question)
+    end_time = time.perf_counter()
+    timings["embed_ms"] = (end_time - start_time) * 1000
+
+    start_time = time.perf_counter()
+    chunks = search(query_vector)
+    end_time = time.perf_counter()
+    timings["search_ms"] = (end_time - start_time) * 1000
+
+    relevant = [chunk for chunk in chunks if chunk.similarity >= SIMILARITY_FLOOR]
+    if not relevant:
+        return Answer(NOT_FOUND_TEXT, [], timings)
+
+    start_time = time.perf_counter()
+    text = generate(build_prompt(question, relevant))
+    end_time = time.perf_counter()
+    timings["generate_ms"] = (end_time - start_time) * 1000
+
+    sources = [
+        Source(
+            retrieved.chunk.document, retrieved.chunk.page_number, retrieved.similarity
+        )
+        for retrieved in relevant
+    ]
+
+    return Answer(text, sources, timings)
 
 
-if __name__ == "__main__":
-    result = answer_question(" ".join(sys.argv[1:]))
+def print_answer(question: str) -> None:
+    """Ask one question and print the answer, its sources and its timings. Used by the CLI and by hand."""
+    result = answer_question(question)
     print(result.text, "\n")
     for number, source in enumerate(result.sources, start=1):
         print(f"[{number}] {source.document}, page {source.page_number} (similarity {source.similarity:.2f})")
-    print("\n", {name: round(ms) for name, ms in result.timings.items()})
+    print("\n", {name: round(milliseconds) for name, milliseconds in result.timings.items()})
+
+
+def main(argv: list[str]) -> None:
+    if not argv:
+        print('Usage: python -m rag.answer "your question"')
+        return
+    print_answer(" ".join(argv))
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

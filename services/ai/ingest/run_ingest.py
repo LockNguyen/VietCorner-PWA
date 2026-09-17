@@ -21,24 +21,24 @@ from rag.store import connect, replace_document_chunks
 
 
 def ingest_all() -> None:
-    """Ingest every PDF in DATA_DIR.
-    """
+    """Ingest every PDF in DATA_DIR."""
     pdf_paths = sorted(DATA_DIR.glob("*.pdf"))
 
     if len(pdf_paths) == 0:
         raise ValueError(
-            "There are no PDFs to process. Please put them in the /data folder."
+            "There are no PDFs to process. Please put them in the services/ai/data folder."
         )
 
-    for pdf_path in pdf_paths:
-        pages = extract_pages(pdf_path)
-        chunks = chunk_pages(pages)
-        vectors = embed_passages([chunk.text for chunk in chunks])
-        embedded = [
-            EmbeddedChunk(chunk, vector) for chunk, vector in zip(chunks, vectors)
-        ]
-        replace_document_chunks(connect(), pdf_path.name, embedded)
-        print(f"{pdf_path.name}: {len(pages)} pages -> {len(chunks)} chunks")
+    with connect() as connection:
+        for pdf_path in pdf_paths:
+            pages = extract_pages(pdf_path)
+            chunks = chunk_pages(pages)
+            vectors = embed_passages([chunk.text for chunk in chunks])
+            embedded = [
+                EmbeddedChunk(chunk, vector) for chunk, vector in zip(chunks, vectors)
+            ]
+            replace_document_chunks(connection, pdf_path.name, embedded)
+            print(f"{pdf_path.name}: {len(pages)} pages -> {len(chunks)} chunks")
 
 
 if __name__ == "__main__":

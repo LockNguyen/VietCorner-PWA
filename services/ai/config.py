@@ -44,6 +44,10 @@ SIMILARITY_FLOOR = 0.35  # why: if even the best chunk scores below this, the do
 
 # --- Generation (M5) ---------------------------------------------------------------------------------
 GROQ_CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "")
+
+# Compared by evaluation/compare_models.py. Fill in the ids you want to test, or pass them on the
+# command line. Check console.groq.com for the current list: ids are retired without notice.
+CANDIDATE_CHAT_MODELS: list[str] = []
 GENERATION_TEMPERATURE = 0.1  # why: factual policy answers. Low randomness means the same question gets the same answer.
 MAX_ANSWER_TOKENS = 400  # why: answers are spoken aloud to elderly users, so they should be short.
 
