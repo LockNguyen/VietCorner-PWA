@@ -43,11 +43,43 @@ SIMILARITY_FLOOR = 0.35  # why: if even the best chunk scores below this, the do
 #                          question, so we answer "I don't know" instead of letting the LLM guess. Tune with eval.
 
 # --- Generation (M5) ---------------------------------------------------------------------------------
-GROQ_CHAT_MODEL = os.getenv("GROQ_CHAT_MODEL", "")
+# Chat providers, rotated by rag/providers.py. A provider with no key (or no model id) in .env is skipped,
+# so adding one means pasting two lines into .env, not editing code. They all speak the OpenAI chat format.
+# Model ids are retired without notice: check each provider's console when one starts erroring.
+CHAT_PROVIDERS = [
+    {
+        "name": "groq",
+        "base_url": "https://api.groq.com/openai/v1",
+        "api_key": os.getenv("GROQ_API_KEY", ""),
+        "model": os.getenv("GROQ_CHAT_MODEL", ""),
+    },
+    {
+        "name": "gemini",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta/openai/",
+        "api_key": os.getenv("GEMINI_API_KEY", ""),
+        "model": os.getenv("GEMINI_CHAT_MODEL", ""),
+    },
+    {
+        "name": "openrouter",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key": os.getenv("OPENROUTER_API_KEY", ""),
+        "model": os.getenv("OPENROUTER_CHAT_MODEL", ""),
+    },
+    {
+        "name": "openrouter-2",  # a second free model on the same key: more budget, one more line
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key": os.getenv("OPENROUTER_API_KEY", ""),
+        "model": os.getenv("OPENROUTER_CHAT_MODEL_2", ""),
+    },
+    {
+        "name": "cerebras",
+        "base_url": "https://api.cerebras.ai/v1",
+        "api_key": os.getenv("CEREBRAS_API_KEY", ""),
+        "model": os.getenv("CEREBRAS_CHAT_MODEL", ""),
+    },
+]
+PROVIDER_COOLDOWN_SECONDS = 60  # why: free limits are measured per minute, so a minute of rest usually clears one.
 
-# Compared by evaluation/compare_models.py. Fill in the ids you want to test, or pass them on the
-# command line. Check console.groq.com for the current list: ids are retired without notice.
-CANDIDATE_CHAT_MODELS: list[str] = []
 GENERATION_TEMPERATURE = 0.1  # why: factual policy answers. Low randomness means the same question gets the same answer.
 MAX_ANSWER_TOKENS = 400  # why: answers are spoken aloud to elderly users, so they should be short.
 

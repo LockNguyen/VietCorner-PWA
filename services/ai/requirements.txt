@@ -11,7 +11,9 @@ numpy>=1.26
 psycopg[binary]>=3.1
 pgvector>=0.3
 
-# LLM + speech-to-text (M5-M6)
+# LLM (M5): one OpenAI-compatible client serves Groq, Gemini, OpenRouter, Cerebras...
+openai>=1.40
+# Speech-to-text (M6) still uses Groq's own SDK for audio uploads
 groq>=0.9
 
 # HTTP API (M6)

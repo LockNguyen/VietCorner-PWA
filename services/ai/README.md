@@ -108,4 +108,6 @@ Wrap `answer_question` as a tool in a LiveKit voice agent, then compare its late
 | Evaluate models | `python -m evaluation.run_eval` |
 | Ingest PDFs | `python -m ingest.run_ingest` |
 | Ask from the terminal | `python -m rag.answer "your question"` |
+| Compare chat providers | `python -m evaluation.compare_models` → `evaluation/answers/<timestamp>.md` |
+| Inspect the database | `python -m evaluation.check_database` |
 | Run the API | `uvicorn api.main:app --reload` → http://127.0.0.1:8000/docs |

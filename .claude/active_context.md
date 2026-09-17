@@ -77,12 +77,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - **Calibrate `SIMILARITY_FLOOR` (0.35 is too low).** Measured with bge-m3 on the course PDF: best match 0.57-0.65, median chunk 0.37-0.50. An unrelated question would still clear 0.35, so "I do not know" would never trigger. Pick the value from the score distribution in M3/M5.
 - Vietnamese questions score lower than English ones on this English corpus (best ~0.57-0.59 vs 0.65): the cross-lingual gap is real but retrieval still finds the right pages.
 - Chunks repeat page headers/footers ("T-Net International www.tnetwork.com"). Stripping repeated boilerplate is a possible M3 experiment.
-- **OPEN DECISION: LLM provider.** Groq free tier is 8,000 tokens/minute, and one answer costs ~2,400 input
-  tokens (TOP_K=5) + up to 400 output, so ~2.8 questions/minute. Measured per TOP_K: 1 -> 5.6/min, 3 -> 3.3/min,
-  5 -> 2.8/min, so trimming context alone does not solve it. Fine for a few real users, painful for eval sweeps
-  (25 requests = ~70k tokens = ~9 minutes of budget). Alternatives to evaluate: OpenRouter (many models, one key),
-  Google AI Studio (much higher free TPM), Cerebras. `rag/generate.py` is the only file that knows the provider,
-  and the OpenAI-compatible ones are a base_url + key swap.
+- **DECIDED: chat providers rotate.** One answer costs ~2,400 input tokens (TOP_K=5) + up to 400 output, so
+  Groq's 8,000 tokens/minute allows ~2.8 questions/minute; trimming context barely helps (TOP_K=1 -> 5.6/min).
+  `rag/providers.py` now cycles across every provider that has a key in `.env` (Groq, Gemini, OpenRouter x2,
+  Cerebras are pre-wired) and rests one for 60 s when it reports a rate limit. `rag/generate.py` uses one
+  OpenAI-compatible client for all of them; `speech/transcribe.py` still uses Groq's own SDK for audio.
+  Smoke-tested end to end with Groq. Add keys to get more headroom.
 - **Mentor mode:** never implement `TODO(M#)` bodies unless the user asks (CLAUDE.md).
 - Python 3.12.10 installed (user scope, `%LOCALAPPDATA%\Programs\Python\Python312`; not on PATH in old terminals). `services/ai/.venv` created, requirements installed (torch 2.14, sentence-transformers 6.0.1, pymupdf 1.28.2).
 - Installed the Microsoft Visual C++ Redistributable (it was missing, so PyMuPDF/torch DLLs failed to load). `pytest` verified: 32 fast tests collected, 2 pass (provided code), 30 fail only on ★ stubs (NotImplementedError + "write SYSTEM_PROMPT"). The first run takes ~2 min (cold torch import), later runs ~8 s. A harmless Starlette/httpx deprecation warning appears in test_api.
