@@ -34,12 +34,6 @@ def prefixes_for(model_name: str) -> tuple[str, str]:
 
 def embed_passages(texts: list[str], model_name: str = EMBEDDING_MODEL) -> list[list[float]]:
     """Embed document chunks. Returns one normalized vector per text, in the same order.
-
-    TODO(M2):
-      1. model = load_model(model_name); _, passage_prefix = prefixes_for(model_name)
-      2. vectors = model.encode([passage_prefix + t for t in texts], normalize_embeddings=True)
-         (encode batches internally and returns a NumPy array of shape (len(texts), dim))
-      3. Return vectors.tolist() (plain Python lists are easy to store and send as JSON).
     """
     model = load_model(model_name)
     _, passage_prefix = prefixes_for(model_name)
@@ -49,9 +43,6 @@ def embed_passages(texts: list[str], model_name: str = EMBEDDING_MODEL) -> list[
 
 def embed_query(text: str, model_name: str = EMBEDDING_MODEL) -> list[float]:
     """Embed one user question. Returns one normalized vector.
-
-    TODO(M2): same as embed_passages, but with the query prefix and a single text.
-      Hint: model.encode(query_prefix + text, normalize_embeddings=True).tolist()
     """
     model = load_model(model_name)
     query_prefix, _ = prefixes_for(model_name)

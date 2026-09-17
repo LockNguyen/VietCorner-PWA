@@ -24,11 +24,6 @@ def normalize_text(text: str) -> str:
     """Return text in Unicode NFC form with whitespace collapsed to single spaces and trimmed.
 
     Example: "Tình  nguyện\\n\\nviên " -> "Tình nguyện viên"
-
-    TODO(M1):
-      1. Normalize to NFC with unicodedata.normalize("NFC", text).
-      2. Collapse every run of whitespace (spaces, tabs, newlines) into one space. Hint: " ".join(text.split())
-      3. Return the result (split/join already trims both ends).
     """
     nfc_text = unicodedata.normalize("NFC", text)
     collapsed_text = " ".join(nfc_text.split())
@@ -37,13 +32,6 @@ def normalize_text(text: str) -> str:
 
 def extract_pages(pdf_path: Path) -> list[Page]:
     """Return one Page per non-empty PDF page, with normalized text.
-
-    TODO(M1):
-      1. Open the file: `with pymupdf.open(pdf_path) as pdf:`
-      2. Loop with enumerate(pdf) to get each page and its 0-based index.
-      3. Get raw text with page.get_text("text"), then clean it with normalize_text().
-      4. Skip pages whose cleaned text is empty (blank or scanned pages).
-      5. Build Page(document=pdf_path.name, page_number=index + 1, text=cleaned).
     """
     pages = []
     with pymupdf.open(pdf_path) as pdf:

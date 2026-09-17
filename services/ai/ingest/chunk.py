@@ -25,13 +25,6 @@ def split_with_overlap(words: list[str], size: int, overlap: int) -> list[list[s
 
     Example: 10 words, size=4, overlap=1 -> windows start at 0, 3, 6 -> [w0..w3], [w3..w6], [w6..w9]
     Stop as soon as a window reaches the last word. Never emit a window that adds nothing new.
-
-    TODO(M1):
-      1. If overlap >= size (or size <= 0), raise ValueError with a helpful message.
-      2. step = size - overlap
-      3. For start = 0, step, 2*step, ...: append words[start : start + size].
-         Stop after appending the window whose end (start + size) is >= len(words).
-      4. Return [] for an empty word list.
     """
     if overlap >= size or size <= 0:
         raise ValueError("'overlap' must be less than 'size', and 'sỉze' must be greater than 0. Otherwise, the chunking sliding window never moves forward.")
@@ -56,12 +49,6 @@ def split_with_overlap(words: list[str], size: int, overlap: int) -> list[list[s
 
 def chunk_pages(pages: list[Page], size: int = CHUNK_WORDS, overlap: int = CHUNK_OVERLAP_WORDS) -> list[Chunk]:
     """Turn pages into chunks, numbering chunk_index 0, 1, 2, ... across each document.
-
-    TODO(M1):
-      1. Keep a counter per document (a dict: document -> next chunk_index).
-      2. For each page: words = page.text.split(), then windows = split_with_overlap(words, size, overlap).
-      3. For each window: Chunk(document, page_number, chunk_index=next index, text=" ".join(window)).
-      4. Return all chunks in order.
     """
     chunks = []
     chunk_indices = {}

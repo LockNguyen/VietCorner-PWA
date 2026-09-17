@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 
 from config import CANDIDATE_MODELS, DATA_DIR, SERVICE_ROOT, TOP_K
-from domain import Chunk
+from domain import Chunk, RetrievedChunk
 from evaluation.metrics import location_id, recall_at_k, reciprocal_rank
 from ingest.chunk import chunk_pages
 from ingest.extract import extract_pages
@@ -61,10 +61,6 @@ class ModelResult:
 
 def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
     """Read one JSON object per line (see evaluation/questions.jsonl).
-
-    TODO(M3): for each non-blank line: data = json.loads(line); EvalQuestion(data["question"], data["language"],
-              data["document"], tuple(data["pages"]), data.get("note", "")).
-    Unanswerable questions have "document": null and "pages": []. Keep them: they set the similarity floor.
     """
     eval_questions = []
 
@@ -74,42 +70,21 @@ def load_questions(path: Path = QUESTIONS_PATH) -> list[EvalQuestion]:
             eval_questions.append(EvalQuestion(data["question"], data["language"],
                                                data["document"], tuple(data["pages"]),
                                                data.get("note", "")))
-
     return eval_questions
 
 
-def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list[Chunk], k: int) -> list[Chunk]:
+def rank_chunks(query_vector: np.ndarray, chunk_matrix: np.ndarray, chunks: list[Chunk], k: int) -> list[RetrievedChunk]:
     """Return the k chunks most similar to the query.
 
     Vectors are normalized, so cosine similarity = dot product: scores = chunk_matrix @ query_vector.
-
-    TODO(M3):
-      1. scores = chunk_matrix @ query_vector            (shape: [number_of_chunks])
-      2. best = np.argsort(-scores)[:k]                  (indices of the highest scores first)
-      3. Return [chunks[i] for i in best]
     """
     cosine_similarity_scores = chunk_matrix @ query_vector
-    best_chunks_indices = np.argsort(-cosine_similarity_scores)[:k]
-    return [chunks[i] for i in best_chunks_indices]
+    best_chunk_indices = np.argsort(-cosine_similarity_scores)[:k]
+    return [RetrievedChunk(chunks[i], cosine_similarity_scores[i].item()) for i in best_chunk_indices]
 
 
 def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQuestion]) -> ModelResult:
     """Score one model.
-
-    TODO(M3):
-      1. chunk_matrix = np.array(embed_passages([c.text for c in chunks], model_name))
-      2. Warm up: embed_query("warm up", model_name)
-      3. For each question: time embed_query with time.perf_counter() -> latency list;
-         ranked = rank_chunks(np.array(vector), chunk_matrix, chunks, TOP_K);
-         ranked_ids = [location_id(c.document, c.page_number) for c in ranked]
-      4. For ANSWERABLE questions (question.pages is not empty):
-         relevant = {location_id(question.document, page) for page in question.pages}
-         collect recall_at_k(ranked_ids, relevant, TOP_K) and reciprocal_rank(ranked_ids, relevant).
-         Also collect the recall per language, so a good English average can't hide weak Vietnamese.
-      5. For UNANSWERABLE questions: record the best similarity (chunk_matrix @ query_vector).max().
-         The highest of these is max_unanswerable_similarity.
-      6. Return ModelResult(...) with the means, the per-language recalls, that maximum,
-         np.percentile(latencies, 50) and np.percentile(latencies, 95).
     """
     chunk_matrix = np.array(embed_passages([chunk.text for chunk in chunks], model_name))
 
@@ -119,7 +94,7 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
     recall_at_k_scores = []
     reciprocal_rank_scores = []
     recall_by_language = {}
-    max_unanswerable_similarity = 0
+    max_unanswerable_similarity = 0.0
 
     for question in questions:
         start_time = time.perf_counter()
@@ -128,11 +103,11 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
         latencies.append((end_time - start_time) * 1000)
         
         ranked_chunks = rank_chunks(np.array(query_vector), chunk_matrix, chunks, TOP_K)
-        ranked_pages_ids = [location_id(chunk.document, chunk.page_number) for chunk in ranked_chunks]
+        ranked_pages_ids = [location_id(ranked_chunk.chunk.document, ranked_chunk.chunk.page_number) for ranked_chunk in ranked_chunks]
 
         # Answerable questions
-        if question.document is not None and len(question.pages) > 0:
-            relevant_pages_ids = {location_id(question.document, page) for page in question.pages}
+        if question.is_answerable:
+            relevant_pages_ids = {location_id(str(question.document), page) for page in question.pages}
 
             # Measure recall overall
             recall_at_k_score = recall_at_k(ranked_pages_ids, relevant_pages_ids, TOP_K)
@@ -147,17 +122,20 @@ def evaluate_model(model_name: str, chunks: list[Chunk], questions: list[EvalQue
 
         # Unanswerable questions
         else:
-            max_unanswerable_similarity = max(max_unanswerable_similarity, (chunk_matrix @ query_vector).max())
+            # Max similarity score within the retrieved chunks for an unanswerable
+            # question is simply the highest ranked chunk's similarity score.
+            max_unanswerable_similarity = max(max_unanswerable_similarity, ranked_chunks[0].similarity)
 
     if len(recall_at_k_scores) == 0 or len(reciprocal_rank_scores) == 0:
         raise ValueError("The question set has no answerable questions, so there is no Recall@k or MRR score.")
 
-    recall_by_language = {language: sum(recall_scores) / len(recall_scores) for language, recall_scores in recall_by_language.items()}
+    mean_recall_by_language = {language: sum(recall_scores) / len(recall_scores)
+                               for language, recall_scores in recall_by_language.items()}
 
     return ModelResult(model_name=model_name,
                        recall_at_k=sum(recall_at_k_scores) / len(recall_at_k_scores),
                        mrr=sum(reciprocal_rank_scores) / len(reciprocal_rank_scores),
-                       recall_by_language=recall_by_language,
+                       recall_by_language=mean_recall_by_language,
                        max_unanswerable_similarity=max_unanswerable_similarity,
                        p50_query_ms=np.percentile(latencies, 50),
                        p95_query_ms=np.percentile(latencies, 95))

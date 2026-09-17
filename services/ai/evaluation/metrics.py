@@ -8,6 +8,10 @@ Concept:       Retrieval quality is measured BEFORE the LLM, because the LLM can
                  3rd -> 0.33, none -> 0). Averaged over questions it's MRR, which rewards ranking the
                  right passage first.
 Why this design: Pure functions over location ids ("document#page"), independent of any model or database.
+                 We also use compare pages (ids) retrieved against the ground truth pages because pages don't move.
+                 Otherwise, if we compared chunk ids against ground truth chunk ids, then we'd need to recalculate
+                 chunk ids everytime we redefine how many words a chunk is. Cons: a page hit can be the wrong half
+                 of the right page, but that's a coarseness we accept for stability.
 Inputs/Outputs: ranked ids + relevant ids -> float in [0, 1].
 Common pitfalls:
   - Counting duplicates: several chunks from the same page can appear in the top k. Count a page once.
@@ -22,14 +26,11 @@ def location_id(document: str, page_number: int) -> str:
 
 def recall_at_k(ranked_ids: list[str], relevant_ids: set[str], k: int) -> float:
     """Fraction of relevant_ids found among the first k ranked_ids.
+    In other words, among the top k ranked pages that came up, how
+    many of them appear are the golden/ground truth pages?
 
-    relevant_ids: ground truth.
-    ranked_ids: ranked by cosine similarity after retrieved.
-
-    TODO(M3):
-      1. If relevant_ids is empty, raise ValueError (a question must have an expected answer location).
-      2. found = relevant_ids & set(ranked_ids[:k])
-      3. Return len(found) / len(relevant_ids)
+    relevant_ids: golden/ground truth pages.
+    ranked_ids: pages ranked by cosine similarity after they are retrieved.
     """
     if len(relevant_ids) == 0:
         raise ValueError("A question must have an expected answer location.")
@@ -40,10 +41,8 @@ def recall_at_k(ranked_ids: list[str], relevant_ids: set[str], k: int) -> float:
 
 def reciprocal_rank(ranked_ids: list[str], relevant_ids: set[str]) -> float:
     """1 / (1-based position of the first relevant id), or 0.0 if none is relevant.
-
-    TODO(M3): loop with enumerate(ranked_ids, start=1); return 1 / position at the first id in relevant_ids.
     """
-    for position, ranked_id in enumerate(set(ranked_ids), start=1):
+    for position, ranked_id in enumerate(ranked_ids, start=1):
         if ranked_id in relevant_ids:
             return 1 / position
     return 0.0
