@@ -88,6 +88,27 @@ Chunk vectors are cached per model in `evaluation/.cache`; changing chunk settin
 **Done when:** `evaluation/results.md` shows the winning configuration with numbers per language, and the
 choice is recorded in architecture.md Key Decisions.
 
+## B16. Multi-hop and structure-aware retrieval
+**Why:** questions that need two separate places in the book fail today ("Ông Watson với ông Garrison nói gì khác
+nhau?" needs p.29 and p.63). One question vector can only point at one region of meaning, so a single similarity
+search can never assemble two distant ideas. The user's instinct ("a table of contents or a mind map") is the
+standard answer to this.
+
+**What (cheapest first):**
+1. **Section-aware chunks.** Carry the heading path (Part / Session / Chapter) into each chunk's text and metadata.
+   Retrieval then matches on topic structure, not just wording, and answers can cite "Session 8".
+2. **Parent-document retrieval.** Search small chunks, but send the LLM the surrounding section. Precision of a
+   small chunk, context of a big one.
+3. **Query decomposition.** Ask the LLM to split a multi-hop question into sub-questions, retrieve for each, and
+   merge the evidence. Costs one extra LLM call per question.
+4. **A concept index (the "mind map").** Extract entities and concepts (Watson, Garrison, Person of Peace, CPM) with
+   the pages they appear on, and use it to expand retrieval to the neighbourhood of a named concept.
+5. **GraphRAG-style summaries** if 1-4 are not enough: build a graph of concepts and communities. Heaviest option.
+
+**Trade-offs:** each step adds an ingestion step or an LLM call. Measure each against `questions.jsonl`; question 25
+is the canonical multi-hop failure and question 6 (six steps) the canonical "spread across pages" failure.
+**Done when:** the multi-hop questions retrieve both required pages, with no regression in the rest of the set.
+
 ## B15. Per-language retrieval (only if English use grows)
 **Why:** e5-base scores en 0.85 vs bge-m3's 0.73, so routing English questions to a different model would help them.
 **What:** detect the question language, keep one vector set per model, route. **Trade-offs:** two models resident on a
