@@ -50,9 +50,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         | bge-m3 | 0.64 | 0.50 | 0.593 | 0.566 | 20 of 33 |
         | Vietnamese_Embedding | 0.71 | 0.97 | 0.472 | 0.429 | 15 of 33 |
         | e5-base | 0.71 | 0.84 | 0.806 | 0.788 | 17 of 33 |
-        => No model separates well enough to gate on a threshold (0.5 = coin flip). This confirms that M5's
-        prompt must do the refusing. bge-m3 recommended for ranking quality (MRR 0.56, vi Recall 0.49),
-        accepting that it has the weakest separation. Awaiting the user's decision. Experiments: backlog B14.
+        => DECIDED: bge-m3 (best ranking; separation is unusable on every model, so it costs nothing to give up).
+        DECIDED: stop tuning retrieval now; build M4-M5 and judge on real answers. Revisit after the Vietnamese
+        PDFs arrive, or if a configuration reaches ~0.90 AUC. Both decisions recorded in architecture.md.
+        Experiments queued in backlog B14.
   - [ ] M4 pgvector + ingest
   - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
@@ -84,6 +85,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Everything else deferred is in `.claude/backlog.md`.
 
 ## ➡️ Next 3 Micro-Steps
-1. M3: user reviews the page labels in `evaluation/questions.jsonl` (they are the ground truth), then implements `evaluation/metrics.py` + `evaluation/run_eval.py` and runs the bake-off.
-2. User: create the Groq key and start the Oracle Cloud signup (needed in M5/M6).
-3. After the bake-off: Claude writes `schema.sql` with the winning model vector size for M4.
+1. User: run `src/features/assistant/schema.sql` in the Supabase SQL editor, then add `DATABASE_URL`
+   (Supabase → Database → Connection string → Session pooler, IPv4) to `services/ai/.env`.
+2. M4: user implements `rag/store.py` (`replace_document_chunks`, `search_chunks`) and `ingest/run_ingest.py`,
+   then `python -m ingest.run_ingest` (~7 min: it embeds all 533 chunks) and checks that a second run
+   leaves the row count unchanged.
+3. User: create the Groq key and start the Oracle Cloud signup (needed in M5/M6).
