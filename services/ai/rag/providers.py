@@ -21,7 +21,14 @@ from dataclasses import dataclass, field
 
 from config import CHAT_PROVIDERS, PROVIDER_COOLDOWN_SECONDS
 
-RATE_LIMIT_MARKERS = ("429", "rate limit", "rate_limit", "quota", "resource exhausted", "too many requests")
+RATE_LIMIT_MARKERS = (
+    "429",
+    "rate limit",
+    "rate_limit",
+    "quota",
+    "resource exhausted",
+    "too many requests",
+)
 
 
 @dataclass(frozen=True)
@@ -60,7 +67,9 @@ class ProviderPool:
     providers: list[Provider]
     call: Callable[[Provider, list[dict[str, str]]], str]
     cooldown_seconds: float = PROVIDER_COOLDOWN_SECONDS
-    now: Callable[[], float] = time.monotonic  # injected so tests can move time without sleeping
+    now: Callable[[], float] = (
+        time.monotonic
+    )  # injected so tests can move time without sleeping
     _next_index: int = 0
     _resting_until: dict[str, float] = field(default_factory=dict)
     _disabled: set[str] = field(default_factory=set)
@@ -69,11 +78,16 @@ class ProviderPool:
     def generate(self, messages: list[dict[str, str]]) -> str:
         """Try providers in turn until one answers. Raises RuntimeError only when all of them failed."""
         if not self.providers:
-            raise RuntimeError("No chat providers configured. Add a key to .env (see config.CHAT_PROVIDERS).")
+            raise RuntimeError(
+                "No chat providers configured. Add a key to .env (see config.CHAT_PROVIDERS)."
+            )
 
         failures: list[str] = []
-        for offset in range(len(self.providers)):
-            provider = self.providers[(self._next_index + offset) % len(self.providers)]
+
+        for curr_provider_index in range(len(self.providers)):
+            provider = self.providers[
+                (curr_provider_index + self._next_index) % len(self.providers)
+            ]
             if provider.name in self._disabled:
                 continue
             if self._resting_until.get(provider.name, 0.0) > self.now():
@@ -85,16 +99,22 @@ class ProviderPool:
             except Exception as error:
                 if is_rate_limit(error):
                     # Rest this provider, then try the next one immediately: that is the whole point of the pool.
-                    self._resting_until[provider.name] = self.now() + self.cooldown_seconds
+                    self._resting_until[provider.name] = (
+                        self.now() + self.cooldown_seconds
+                    )
                     failures.append(f"{provider.name}: rate limited")
                 else:
                     # A bad model id or a rejected key will not fix itself, so stop asking this one.
                     self._disabled.add(provider.name)
-                    failures.append(f"{provider.name}: {type(error).__name__}: {error}"[:120])
+                    failures.append(
+                        f"{provider.name}: {type(error).__name__}: {error}"[:120]
+                    )
                 continue
 
             # Start the next request one provider further along, so load spreads instead of piling on the first.
-            self._next_index = (self._next_index + offset + 1) % len(self.providers)
+            self._next_index = (curr_provider_index + self._next_index + 1) % len(
+                self.providers
+            )
             self.last_provider_name = provider.name
             return answer
 

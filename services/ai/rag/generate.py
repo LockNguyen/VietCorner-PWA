@@ -20,13 +20,17 @@ from openai import OpenAI
 from config import GENERATION_TEMPERATURE, MAX_ANSWER_TOKENS
 from rag.providers import Provider, ProviderPool, load_providers
 
-GENERATION_TIMEOUT_SECONDS = 20  # why: a rotation retry still has to fit the caller's patience; tune per host.
+GENERATION_TIMEOUT_SECONDS = (
+    20  # why: a rotation retry still has to fit the caller's patience; tune per host.
+)
 
 
 @lru_cache(maxsize=None)
 def client_for(base_url: str, api_key: str) -> OpenAI:
     """One HTTP client per endpoint, so the TLS connection is reused between questions."""
-    return OpenAI(base_url=base_url, api_key=api_key, timeout=GENERATION_TIMEOUT_SECONDS)
+    return OpenAI(
+        base_url=base_url, api_key=api_key, timeout=GENERATION_TIMEOUT_SECONDS
+    )
 
 
 def call_provider(provider: Provider, messages: list[dict[str, str]]) -> str:
@@ -38,7 +42,11 @@ def call_provider(provider: Provider, messages: list[dict[str, str]]) -> str:
         max_tokens=MAX_ANSWER_TOKENS,
     )
     answer = response.choices[0].message.content
-    return answer.strip() if answer else "I am sorry, but I was unable to generate an answer."
+    return (
+        answer.strip()
+        if answer
+        else "I am sorry, but I was unable to generate an answer (error code 1)."
+    )
 
 
 @lru_cache(maxsize=1)
@@ -47,7 +55,9 @@ def default_pool() -> ProviderPool:
     return ProviderPool(providers=load_providers(), call=call_provider)
 
 
-def generate_answer(messages: list[dict[str, str]], provider: Provider | None = None) -> str:
+def generate_answer(
+    messages: list[dict[str, str]], provider: Provider | None = None
+) -> str:
     """Answer text from a chat model.
 
     provider=None  -> rotate across every configured provider, skipping rate-limited ones (normal use).
