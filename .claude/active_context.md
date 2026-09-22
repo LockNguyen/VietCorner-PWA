@@ -105,11 +105,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Supabase free projects pause after ~7 idle days (backlog B9).
 - Everything else deferred is in `.claude/backlog.md`.
   - [x] M6 final review (2026-09-22): 69 fast + 3 db tests; allowlist deploy verified from 17 files; committed.
-  - [ ] M6 deploy: user creates the Space, adds secrets, runs `python -m deploy.push_to_space <user>/<space>`.
+  - [ ] M6 deploy: HF Docker Spaces need a paid plan (2026-09-22). Interim: container on the PC + Tailscale Funnel.
 - `evaluation/questions.jsonl` + `answers/` are local only now (gitignored): back them up; they are still in git
   history before 2026-09-22 (a history rewrite would remove them from GitHub; not done).
 
 ## ➡️ Next 3 Micro-Steps
-1. User: create the Space, add secrets, push with the script; check `/health`, 401 without token, `/ask` with token.
-2. Measure on the Space: cold start after sleep, `/ask` latency on 2 vCPUs.
+1. User: run the container detached with `--restart unless-stopped`, install Tailscale, `tailscale funnel --bg 8000`.
+2. Test the public URL (`/health`, 401, `/ask`) from the phone's mobile data (not home Wi-Fi).
 3. M7: voice UI in `src/features/assistant/` (Claude: routes + UI; user: `useVoiceRecorder.ts`, `useAssistant.ts`).
