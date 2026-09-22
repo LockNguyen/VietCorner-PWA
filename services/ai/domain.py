@@ -1,7 +1,7 @@
 """
 What it does:  Defines the data that flows through the RAG pipeline, one type per stage.
 Concept:       A RAG pipeline is a series of transformations:
-                   PDF -> Page -> Chunk -> EmbeddedChunk -> (stored) -> RetrievedChunk -> Answer
+                   PDF -> Page -> Chunk -> EmbeddedChunk -> (stored) -> RetrievedChunk -> Generation -> Answer
                Naming each stage makes every function signature tell you where it sits in the pipeline.
 Why this design: Frozen dataclasses are plain, typed, immutable records. No framework, easy to print and test.
                The file is named domain.py, not types.py, because a local "types.py" would shadow Python's
@@ -58,10 +58,23 @@ class Source:
     similarity: float
 
 
+@dataclass(frozen=True)
+class Generation:
+    """What the chat model wrote, and which provider wrote it.
+
+    Returned (never stored on the shared ProviderPool) so that two simultaneous requests can't read each
+    other's provider name.
+    """
+
+    text: str
+    provider: str  # config.CHAT_PROVIDERS name, e.g. "groq" or "openrouter-2"
+
+
 @dataclass
 class Answer:
     """The final result of answer_question(). timings are in milliseconds per stage."""
 
     text: str
+    provider: str  # who wrote the text; "" when we refused before calling any LLM
     sources: list[Source]
     timings: dict[str, float] = field(default_factory=dict)

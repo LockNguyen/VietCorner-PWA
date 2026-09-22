@@ -27,7 +27,7 @@ def split_with_overlap(words: list[str], size: int, overlap: int) -> list[list[s
     Stop as soon as a window reaches the last word. Never emit a window that adds nothing new.
     """
     if overlap >= size or size <= 0:
-        raise ValueError("'overlap' must be less than 'size', and 'sỉze' must be greater than 0. Otherwise, the chunking sliding window never moves forward.")
+        raise ValueError("'overlap' must be less than 'size', and 'size' must be greater than 0. Otherwise, the chunking sliding window never moves forward.")
 
     if len(words) == 0:
         return []

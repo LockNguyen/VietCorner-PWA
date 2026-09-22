@@ -1,10 +1,22 @@
+---
+# Hugging Face Space settings (read only by Hugging Face; GitHub shows them as a small table).
+# sdk: docker -> build the Dockerfile in this folder. app_port -> the port uvicorn listens on (EXPOSE 8000).
+title: VietCorner AI
+emoji: ⛪
+colorFrom: yellow
+colorTo: red
+sdk: docker
+app_port: 8000
+pinned: false
+---
+
 # VietCorner AI Service: a hands-on RAG course
 
 A small Python service that answers church members' questions from policy and training PDFs, in Vietnamese or English. You build it yourself, one milestone at a time.
 
 ```
 OFFLINE  PDF ─► extract_pages ─► chunk_pages ─► embed_passages ─► document_chunks (Postgres + pgvector)
-ONLINE   question ─► embed_query ─► search_chunks ─► build_prompt ─► generate_answer ─► Answer(text, sources, timings)
+ONLINE   question ─► embed_query ─► search_chunks ─► build_prompt ─► generate_answer ─► Answer(text, provider, sources, timings)
 ```
 
 The Next.js app calls this service from its server (never from the browser) with a shared token. Full system docs: `.claude/architecture.md` → 6.4 assistant.
@@ -24,7 +36,8 @@ The Next.js app calls this service from its server (never from the browser) with
 | `rag/` | Online: question → answer |
 | `speech/` | Voice → text |
 | `api/` | HTTP endpoints for the web app |
-| `evaluation/` | Measure which embedding model works best on your documents |
+| `evaluation/` | Measure which embedding model works best on your documents. `questions.jsonl` and `answers/` are private: gitignored, on your PC only |
+| `deploy/` | `push_to_space.py`: uploads only the files the Docker image needs to the Hugging Face Space |
 | `tests/` | One test file per module. `sample_pdf.py` generates a bilingual test PDF |
 
 ## M0: Setup
@@ -83,9 +96,9 @@ Each chapter: **Goal · Concepts · You write · Checkpoint · Stretch.**
 
 ### M6: Serving and deploying
 - **Goal:** run the pipeline as an always-on HTTPS service.
-- **Concepts:** model serving, bearer tokens, constant-time comparison, health checks, systemd, reverse proxy + TLS (Caddy), firewalls.
-- **You write:** `speech/transcribe.py`, `api/main.py`. Deploy on the Oracle VM (Claude guides and provides `deploy/` files).
-- **Checkpoint:** `pytest tests/test_api.py` passes. From your PC: `curl https://<vm-ip>.sslip.io/health` → ok, `/ask` without a token → 401, with a token → answer. The service comes back after a VM reboot.
+- **Concepts:** model serving, bearer tokens, constant-time comparison, health checks, containers (images, layers, build cache), baking models into images, run-time secrets. Later on the Oracle VM: reverse proxy + TLS (Caddy), firewalls.
+- **You write:** `speech/transcribe.py`, `api/main.py`. Claude provides the `Dockerfile` + `.dockerignore`. Deploy to a Hugging Face Space now, the Oracle VM later (same image).
+- **Checkpoint:** `pytest tests/test_api.py` passes. `curl <url>/health` → ok, `/ask` without a token → 401, with a token → answer. Works for the local container and for the Space.
 
 ### M7: Voice in the app
 - **Goal:** ask aloud on an iPhone and hear the answer.
@@ -111,3 +124,6 @@ Wrap `answer_question` as a tool in a LiveKit voice agent, then compare its late
 | Compare chat providers | `python -m evaluation.compare_models` → `evaluation/answers/<timestamp>.md` |
 | Inspect the database | `python -m evaluation.check_database` |
 | Run the API | `uvicorn api.main:app --reload` → http://127.0.0.1:8000/docs |
+| Build the image | `docker build -t vietcorner-ai .` |
+| Run the image | `docker run --rm -p 8000:8000 --env-file .env vietcorner-ai` |
+| Deploy to the Space | `python -m deploy.push_to_space <user>/<space>` (add `--dry-run` to list the files first) |

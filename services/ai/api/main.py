@@ -5,28 +5,69 @@ Concept:       Model serving: the embedding model stays loaded in this long-runn
                shared secret in the Authorization header ("Bearer <SERVICE_TOKEN>").
 Why this design: Thin endpoints, the same rule as the web app's route.ts files: check the token -> call one
                pipeline function -> return JSON. Request/response shapes are Pydantic models, which
-               validate input and document the API at /docs.
-Inputs/Outputs: JSON / uploaded audio -> JSON.
+               validate input (and document the API at /docs when SHOW_API_DOCS=1).
+               Every route is a plain `def`: FastAPI runs it on a worker thread, so a slow network call
+               never freezes the other requests (see the sync decision in architecture.md).
+Inputs/Outputs: JSON / uploaded audio -> JSON. One log line per request (never the question text: it is private).
 Run locally:   uvicorn api.main:app --reload
 Common pitfalls:
-  - Comparing tokens with == (timing attacks). Use secrets.compare_digest.
+  - Comparing tokens with == (timing attacks). Use secrets.compare_digest, on bytes.
   - Loading the model on the first request (a slow first answer). Warm it up at startup.
+  - `async def` around a blocking call: it freezes every request until the call returns.
 """
 
+import logging
 import secrets
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from dataclasses import asdict
 
 from fastapi import Depends, FastAPI, Header, HTTPException, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from config import SERVICE_TOKEN
+from config import (
+    DB_CONNECT_TIMEOUT_SECONDS,
+    MAX_AUDIO_BYTES,
+    MAX_QUESTION_CHARS,
+    SERVICE_TOKEN,
+    SHOW_API_DOCS,
+)
 from rag.answer import answer_question
-from speech.transcribe import transcribe
+from rag.embeddings import embed_query
+from rag.providers import AllProvidersFailed
+from rag.store import connection_pool
+from speech.transcribe import SpeechUnavailable, transcribe
 
-app = FastAPI(title="VietCorner AI service")
+# Libraries log warnings only (at INFO, httpx prints every HTTP request we make); our own lines log at INFO.
+logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("vietcorner.api")
+log.setLevel(logging.INFO)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Runs once at startup (before `yield`) and once at shutdown (after it)."""
+    # Load bge-m3 and run one inference now, so the first real question doesn't pay ~4 s for it.
+    # Blocking inside async def is fine here because during startup there aren't any requests yet.
+    embed_query("warm up")
+    # Opening the pool doesn't wait for a connection, so a wrong DATABASE_URL would look healthy until the
+    # first question hung for 30 s. wait() makes startup fail right away instead.
+    connection_pool().wait(timeout=DB_CONNECT_TIMEOUT_SECONDS)
+    yield
+    connection_pool().close()  # shutdown: hand connections back to Supabase cleanly
+
+
+app = FastAPI(
+    title="VietCorner AI service",
+    lifespan=lifespan,
+    docs_url="/docs" if SHOW_API_DOCS else None,
+    redoc_url=None,
+    openapi_url="/openapi.json" if SHOW_API_DOCS else None,
+)
 
 
 class AskRequest(BaseModel):
-    question: str
+    question: str = Field(max_length=MAX_QUESTION_CHARS)  # too long -> FastAPI answers 422 by itself
 
 
 class SourceResponse(BaseModel):
@@ -37,6 +78,7 @@ class SourceResponse(BaseModel):
 
 class AskResponse(BaseModel):
     text: str
+    provider: str
     sources: list[SourceResponse]
     timings: dict[str, float]
 
@@ -46,14 +88,15 @@ class TranscribeResponse(BaseModel):
 
 
 def require_token(authorization: str | None = Header(default=None)) -> None:
-    """FastAPI dependency: allow the request only with "Authorization: Bearer <SERVICE_TOKEN>".
+    """FastAPI dependency: allow the request only with "Authorization: Bearer <SERVICE_TOKEN>"."""
+    expected = f"Bearer {SERVICE_TOKEN}"
 
-    TODO(M6):
-      1. expected = f"Bearer {SERVICE_TOKEN}"
-      2. If SERVICE_TOKEN is empty, or authorization is None, or not secrets.compare_digest(authorization, expected):
-         raise HTTPException(status_code=401, detail="Invalid or missing token")
-    """
-    raise NotImplementedError("M6: implement require_token")
+    if (
+        not SERVICE_TOKEN
+        or not authorization
+        or not secrets.compare_digest(authorization.encode(), expected.encode())
+    ):
+        raise HTTPException(status_code=401, detail="Invalid or missing token.")
 
 
 @app.get("/health")
@@ -64,24 +107,49 @@ def health() -> dict[str, str]:
 
 @app.post("/ask", dependencies=[Depends(require_token)])
 def ask(request: AskRequest) -> AskResponse:
-    """Answer a text question.
+    """Answer a text question."""
+    question = request.question.strip()
 
-    TODO(M6):
-      1. question = request.question.strip(). If empty: raise HTTPException(400, "question is required")
-      2. answer = answer_question(question)
-      3. Return AskResponse(text=answer.text, sources=[SourceResponse(**vars(s)) for s in answer.sources],
-                            timings=answer.timings)
-    """
-    raise NotImplementedError("M6: implement ask")
+    if not question:
+        raise HTTPException(status_code=400, detail="Question is required.")
+
+    try:
+        answer = answer_question(question)
+    except AllProvidersFailed as error:
+        log.warning("ask 503 chars=%d reasons=%s", len(question), error)
+        # Temporary (rate limits): tell the caller to retry, instead of a 500 that looks like a bug.
+        raise HTTPException(
+            status_code=503, detail="All AI providers are busy. Try again in a minute."
+        )
+
+    timings = " ".join(f"{name}={value:.0f}" for name, value in answer.timings.items())
+    log.info("ask 200 provider=%s chars=%d sources=%d %s",
+             answer.provider or "(refused)", len(question), len(answer.sources), timings)
+    return AskResponse(
+        text=answer.text,
+        provider=answer.provider,
+        sources=[SourceResponse(**asdict(source)) for source in answer.sources],
+        timings=answer.timings,
+    )
 
 
 @app.post("/transcribe", dependencies=[Depends(require_token)])
-async def transcribe_audio(audio: UploadFile) -> TranscribeResponse:
-    """Transcribe an uploaded recording (multipart form field named "audio").
+def transcribe_audio(audio: UploadFile) -> TranscribeResponse:
+    """Transcribe an uploaded recording (multipart form field named "audio")."""
+    # Read one byte past the limit: enough to know it's too big, without reading a huge file.
+    data = audio.file.read(MAX_AUDIO_BYTES + 1)
+    if not data:
+        raise HTTPException(status_code=400, detail="Audio is empty.")
+    if len(data) > MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="Audio is too large.")
 
-    TODO(M6):
-      1. data = await audio.read()
-      2. text = transcribe(data, audio.filename or "recording.webm")
-      3. Return TranscribeResponse(text=text)
-    """
-    raise NotImplementedError("M6: implement transcribe_audio")
+    try:
+        text = transcribe(audio=data, filename=audio.filename or "recording.webm")
+    except SpeechUnavailable as error:
+        log.warning("transcribe 503 bytes=%d reason=%s", len(data), error)
+        raise HTTPException(
+            status_code=503, detail="Speech recognition is busy. Try again in a minute."
+        )
+
+    log.info("transcribe 200 bytes=%d transcript_chars=%d", len(data), len(text))
+    return TranscribeResponse(text=text)

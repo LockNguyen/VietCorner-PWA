@@ -58,7 +58,22 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         idempotent. Database top-5 identical to the in-memory top-5 for the questions checked (parity proven).
         Latency: embed 166 ms p50, Supabase vector search 67 ms p50 (includes the network round trip).
         Tools: `pytest -m db` (tests/test_store.py, throwaway document) and `python -m evaluation.check_database`.
-  - [ ] M5 RAG answer · [ ] M6 API + Oracle deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
+  - [x] M5 RAG answer + provider rotation (`rag/providers.py`).
+  - [~] M6: user wrote `api/main.py` + `speech/transcribe.py` (test_api 6/6, 39 fast tests pass). Review 2026-09-21
+        found: non-ASCII token -> 500 (compare str, not bytes); async /transcribe blocks the event loop; no model
+        warm-up; Groq client per call with no timeout. Claude added `services/ai/Dockerfile` + `.dockerignore` +
+        Space front matter. DECIDED: interim host = Hugging Face Space (no card for Oracle yet), same image later on Oracle.
+  - [x] M6 provider attribution: `Generation(text, provider)` returned by the pool, `Answer.provider`, `/ask` returns
+        `provider`. 40 fast tests pass; live `python -m rag.answer` prints "answered by: groq".
+        Found: `.env` comments after values corrupt keys under `docker --env-file` (Groq key was broken in the container,
+        so the pool disabled Groq there). User must fix `.env` lines GROQ_API_KEY and CEREBRAS_CHAT_MODEL.
+  - [x] M6 review fixes applied (45 fast tests; server + Docker verified: ready in 12-16 s, embed ~120 ms,
+        search ~250 ms, Groq answers in the container).
+  - [x] Review items 1-2 drafted by Claude (uncommitted, 60 fast tests): 7 s request deadline + 4 s per provider on
+        background threads; ProviderBusy/ProviderBroken. Live: stuck OpenRouter model cut at 4.0 s (was 110 s).
+  - [x] Review items 3-13 done (65 fast tests; real-server checks: fail-fast on a bad DATABASE_URL, one clean log
+        line per request, /docs off by default). OpenRouter set to nex-agi/nex-n2.5-mini:free after a 15-model test.
+  - [ ] M6 deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
 ## ⚠️ Known Constraints & Debt
@@ -68,35 +83,33 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - Slide-style pages: 203 embedded images and 12 chunks under 20 words (min 8). Tiny chunks add retrieval noise. Options to test in M3: drop chunks under N words, or merge short pages.
 - **A similarity threshold alone cannot separate answerable from unanswerable questions.** Measured on the eval set:
   best-chunk score is 0.53-0.67 for answerable questions and up to 0.61 for unanswerable ones, so the ranges overlap.
-  M5 must lean on the prompt rule ("answer only from the sources, otherwise say you don't know"), with `SIMILARITY_FLOOR`
-  as a coarse guard around 0.45-0.50, not as the decision.
+  Refusal comes from the prompt. `SIMILARITY_FLOOR` stays 0.35 as a gibberish guard (re-measured 2026-09-21 on the
+  database: real 0.41-0.75, unanswerable 0.51-0.61, off-topic 0.33-0.50).
 - **Decide the headline retrieval metric.** `recall_at_k` scores the *fraction* of gold pages found, so a question
   labelled with 6 gold pages can never exceed 5/6 in a top-5 run: the score then measures my labelling, not the model.
   Either report hit@k (any gold page found) alongside it, or trim gold labels to the minimal pages that answer.
 - **Vietnamese/English gap is measurable:** English twins hit 1.00 Recall@5, their Vietnamese versions 0.65. Report per language.
-- **Calibrate `SIMILARITY_FLOOR` (0.35 is too low).** Measured with bge-m3 on the course PDF: best match 0.57-0.65, median chunk 0.37-0.50. An unrelated question would still clear 0.35, so "I do not know" would never trigger. Pick the value from the score distribution in M3/M5.
 - Vietnamese questions score lower than English ones on this English corpus (best ~0.57-0.59 vs 0.65): the cross-lingual gap is real but retrieval still finds the right pages.
 - Chunks repeat page headers/footers ("T-Net International www.tnetwork.com"). Stripping repeated boilerplate is a possible M3 experiment.
-- **DECIDED: chat providers rotate.** One answer costs ~2,400 input tokens (TOP_K=5) + up to 400 output, so
-  Groq's 8,000 tokens/minute allows ~2.8 questions/minute; trimming context barely helps (TOP_K=1 -> 5.6/min).
-  `rag/providers.py` now cycles across every provider that has a key in `.env` (Groq, Gemini, OpenRouter x2,
-  Cerebras are pre-wired) and rests one for 60 s when it reports a rate limit. `rag/generate.py` uses one
-  OpenAI-compatible client for all of them; `speech/transcribe.py` still uses Groq's own SDK for audio.
-  Smoke-tested end to end with Groq. Add keys to get more headroom.
+- **DECIDED: chat providers are primary + fallbacks** (2026-09-22, replaced taking turns). One answer costs ~2,400
+  input tokens, so Groq's 8,000 tokens/minute allows ~2.8 questions/minute; the next provider in `CHAT_PROVIDERS`
+  answers while Groq rests. Failing providers rest 60 s doubling to 15 min. Gemini was overloaded on 2026-09-22
+  (47-60 s, 503 "high demand"), so only `groq-2` (GROQ_CHAT_MODEL_2=openai/gpt-oss-20b) covered for Groq.
 - **Mentor mode:** never implement `TODO(M#)` bodies unless the user asks (CLAUDE.md).
 - Python 3.12.10 installed (user scope, `%LOCALAPPDATA%\Programs\Python\Python312`; not on PATH in old terminals). `services/ai/.venv` created, requirements installed (torch 2.14, sentence-transformers 6.0.1, pymupdf 1.28.2).
 - Installed the Microsoft Visual C++ Redistributable (it was missing, so PyMuPDF/torch DLLs failed to load). `pytest` verified: 32 fast tests collected, 2 pass (provided code), 30 fail only on ★ stubs (NotImplementedError + "write SYSTEM_PROMPT"). The first run takes ~2 min (cold torch import), later runs ~8 s. A harmless Starlette/httpx deprecation warning appears in test_api.
-- Oracle A1 capacity/card verification risk. Fallback: run the service on the PC + Cloudflare Tunnel.
+- Oracle needs a credit card (not available yet): the service runs on a free Hugging Face Space meanwhile. A public Space sleeps after long inactivity (slow first request). Fallback for QA: PC + Cloudflare Tunnel.
 - Browser SpeechRecognition is unreliable in iOS home-screen PWAs, so use MediaRecorder + server-side Whisper instead.
 - Vietnamese `speechSynthesis` voices vary by device; verify during Step 4 QA.
 - Netlify synchronous functions time out at ~10 s. Voice pipeline must fit.
 - Supabase free projects pause after ~7 idle days (backlog B9).
 - Everything else deferred is in `.claude/backlog.md`.
+  - [x] M6 final review (2026-09-22): 69 fast + 3 db tests; allowlist deploy verified from 17 files; committed.
+  - [ ] M6 deploy: user creates the Space, adds secrets, runs `python -m deploy.push_to_space <user>/<space>`.
+- `evaluation/questions.jsonl` + `answers/` are local only now (gitignored): back them up; they are still in git
+  history before 2026-09-22 (a history rewrite would remove them from GitHub; not done).
 
 ## ➡️ Next 3 Micro-Steps
-1. User: fix the two M4 issues from the review (one connection for the whole ingest run; insert the
-   `document` parameter rather than `item.chunk.document`).
-2. M5: user writes `rag/prompt.py` (including SYSTEM_PROMPT), `rag/generate.py`, `rag/answer.py`, then
-   `pytest tests/test_prompt.py tests/test_answer.py` and `python -m rag.answer "..."`.
-   Needs `GROQ_API_KEY` and `GROQ_CHAT_MODEL` in `services/ai/.env`.
-3. User: start the Oracle Cloud signup (needed in M6).
+1. User: create the Space, add secrets, push with the script; check `/health`, 401 without token, `/ask` with token.
+2. Measure on the Space: cold start after sleep, `/ask` latency on 2 vCPUs.
+3. M7: voice UI in `src/features/assistant/` (Claude: routes + UI; user: `useVoiceRecorder.ts`, `useAssistant.ts`).

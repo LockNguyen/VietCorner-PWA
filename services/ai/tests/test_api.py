@@ -4,7 +4,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.main as main
+from config import MAX_QUESTION_CHARS
 from domain import Answer, Source
+from rag.providers import AllProvidersFailed
+from speech.transcribe import SpeechUnavailable
 
 AUTH = {"Authorization": "Bearer test-token"}
 
@@ -12,8 +15,20 @@ AUTH = {"Authorization": "Bearer test-token"}
 @pytest.fixture
 def client(monkeypatch: pytest.MonkeyPatch) -> TestClient:
     monkeypatch.setattr(main, "SERVICE_TOKEN", "test-token")
-    monkeypatch.setattr(main, "answer_question", lambda question: Answer("Yes [1].", [Source("doc.pdf", 2, 0.9)], {"embed_ms": 1.0}))
-    monkeypatch.setattr(main, "transcribe", lambda audio, filename: "xin chào")
+    monkeypatch.setattr(
+        main,
+        "answer_question",
+        lambda question: Answer(
+            "Yes [1].", "fake-llm-model", [Source("doc.pdf", 2, 0.9)], {"embed_ms": 1.0}
+        ),
+    )
+
+    def fake_transcribe(audio: bytes, filename: str) -> str:
+        assert isinstance(audio, bytes), "the route must pass the recording's bytes"
+        return "xin chào"
+
+    monkeypatch.setattr(main, "transcribe", fake_transcribe)
+
     return TestClient(main.app)
 
 
@@ -26,20 +41,27 @@ def test_ask_rejects_a_missing_token(client):
 
 
 def test_ask_rejects_a_wrong_token(client):
-    response = client.post("/ask", json={"question": "hi"}, headers={"Authorization": "Bearer wrong"})
+    response = client.post(
+        "/ask", json={"question": "hi"}, headers={"Authorization": "Bearer wrong"}
+    )
     assert response.status_code == 401
 
 
 def test_ask_rejects_a_blank_question(client):
-    assert client.post("/ask", json={"question": "   "}, headers=AUTH).status_code == 400
+    assert (
+        client.post("/ask", json={"question": "   "}, headers=AUTH).status_code == 400
+    )
 
 
 def test_ask_returns_the_answer_with_sources_and_timings(client):
-    response = client.post("/ask", json={"question": "Do volunteers need a check?"}, headers=AUTH)
+    response = client.post(
+        "/ask", json={"question": "Do volunteers need a check?"}, headers=AUTH
+    )
 
     assert response.status_code == 200
     assert response.json() == {
         "text": "Yes [1].",
+        "provider": "fake-llm-model",
         "sources": [{"document": "doc.pdf", "page_number": 2, "similarity": 0.9}],
         "timings": {"embed_ms": 1.0},
     }
@@ -51,3 +73,41 @@ def test_transcribe_returns_the_text_of_an_uploaded_recording(client):
 
     assert response.status_code == 200
     assert response.json() == {"text": "xin chào"}
+
+
+def test_ask_rejects_a_token_with_non_ascii_characters(client):
+    headers = {"Authorization": "Bearer é".encode("latin-1")}
+    assert client.post("/ask", json={"question": "hi"}, headers=headers).status_code == 401
+
+
+def test_ask_rejects_a_question_that_is_too_long(client):
+    too_long = "x" * (MAX_QUESTION_CHARS + 1)
+    assert client.post("/ask", json={"question": too_long}, headers=AUTH).status_code == 422
+
+
+def test_ask_says_try_again_when_every_provider_is_busy(client, monkeypatch):
+    def busy(question):
+        raise AllProvidersFailed("groq: rate limited")
+
+    monkeypatch.setattr(main, "answer_question", busy)
+    assert client.post("/ask", json={"question": "hi"}, headers=AUTH).status_code == 503
+
+
+def test_transcribe_rejects_empty_audio(client):
+    files = {"audio": ("question.webm", b"", "audio/webm")}
+    assert client.post("/transcribe", files=files, headers=AUTH).status_code == 400
+
+
+def test_transcribe_rejects_audio_that_is_too_large(client, monkeypatch):
+    monkeypatch.setattr(main, "MAX_AUDIO_BYTES", 10)
+    files = {"audio": ("question.webm", b"x" * 11, "audio/webm")}
+    assert client.post("/transcribe", files=files, headers=AUTH).status_code == 413
+
+
+def test_transcribe_says_try_again_when_whisper_is_busy(client, monkeypatch):
+    def busy(audio, filename):
+        raise SpeechUnavailable("rate limited")
+
+    monkeypatch.setattr(main, "transcribe", busy)
+    files = {"audio": ("question.webm", b"fake audio bytes", "audio/webm")}
+    assert client.post("/transcribe", files=files, headers=AUTH).status_code == 503

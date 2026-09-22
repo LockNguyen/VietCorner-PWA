@@ -8,3 +8,7 @@ data/
 
 # vector cache for evaluation/explain.py (regenerated on demand)
 evaluation/.cache/
+
+# Private: questions naming real people and answers drawn from the church PDFs. Kept on this PC only.
+evaluation/questions.jsonl
+evaluation/answers/

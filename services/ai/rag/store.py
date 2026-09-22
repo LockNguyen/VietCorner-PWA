@@ -12,26 +12,46 @@ Common pitfalls:
   - Forgetting register_vector(connection), which makes Python lists fail to convert to `vector`.
 """
 
+from functools import lru_cache
+
 import numpy as np
 import psycopg
+from psycopg_pool import ConnectionPool
 from pgvector.psycopg import register_vector
 
-from config import DATABASE_URL, TOP_K
+from config import DATABASE_URL, DB_POOL_MAX_SIZE, TOP_K
 from domain import Chunk, EmbeddedChunk, RetrievedChunk
 
 
-def connect() -> psycopg.Connection:
-    """Open a Postgres connection that understands the pgvector type."""
+def require_database_url() -> str:
+    """DATABASE_URL, or a clear error if it is missing."""
     # Fail loudly: with an empty string psycopg quietly falls back to localhost and times out there,
     # which looks like a network problem instead of a missing setting.
     if not DATABASE_URL:
         raise RuntimeError(
             "DATABASE_URL is empty. Copy Supabase's 'Session pooler' connection string into services/ai/.env"
         )
+    return DATABASE_URL
 
-    connection = psycopg.connect(DATABASE_URL)
+
+def connect() -> psycopg.Connection:
+    """Open one Postgres connection that understands the pgvector type. For scripts that run once and exit."""
+    connection = psycopg.connect(require_database_url())
     register_vector(connection)
     return connection
+
+
+@lru_cache(maxsize=1)
+def connection_pool() -> ConnectionPool:
+    """Open connections kept between requests (the API). One-off scripts keep using connect()."""
+    return ConnectionPool(
+        require_database_url(),
+        min_size=1,
+        max_size=DB_POOL_MAX_SIZE,
+        configure=register_vector,  # runs once per new connection, like connect() does
+        check=ConnectionPool.check_connection,  # the server may have closed an idle connection: test it before use
+        open=True,
+    )
 
 
 def replace_document_chunks(
@@ -40,8 +60,8 @@ def replace_document_chunks(
     """Replace all stored chunks of one document (idempotent re-ingestion)."""
     if len(embedded) == 0:
         raise ValueError(
-            "The 'embedded' list is empty. Operation aborted to prevent wiping "
-            "the document '{document}''s chunks without any replacement."
+            f"The 'embedded' list is empty. Operation aborted to prevent wiping "
+            f"the chunks of '{document}' without any replacement."
         )
 
     with connection.transaction():

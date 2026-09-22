@@ -18,7 +18,7 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Styling | Tailwind | Styles live next to the markup |
 | Auth + database | Supabase (Postgres, pgvector) | Login, data, and vector search in one free service |
 | Push | Web Push + service worker (`web-push`) | Standard, free, works while the app is closed |
-| AI | Python service (`services/ai`, FastAPI) on an Oracle Cloud Always Free VM: self-hosted embeddings + Groq (Whisper, chat) | AI ecosystem is Python. A warm process holds the model. Free. |
+| AI | Python service (`services/ai`, FastAPI) shipped as a Docker image: a Hugging Face Space for now, an Oracle Cloud Always Free VM later. Self-hosted embeddings + free chat providers + Groq Whisper | AI ecosystem is Python. A warm process holds the model. Free. |
 | Hosting | Netlify (deploys from GitHub) | Free HTTPS (push requires it). Free tier allows commercial use. |
 
 ### Key Decisions
@@ -37,9 +37,13 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Layered feature shape: `api.ts` / `hooks/` / `components/` / `server/` | Every change has one predictable home. Data access is listed in one file per side (browser: `api.ts`, server: `server/queries.ts`). Components can be read without knowing Supabase. | More, smaller files. Some queries exist on both sides (e.g. the latest messages in `api.ts` and `server/queries.ts`). |
 | Separate Python AI service holds the whole RAG core (not Next.js) | Models need a warm process and 1–2 GB RAM (impossible in serverless). Python is the AI ecosystem. One RAG implementation reusable by a future LiveKit agent. | A second deployable to operate (VM, systemd, TLS). One more network hop. |
 | **bge-m3 is the embedding model** (M3 bake-off, 41 questions) | Best at the job our users need: Vietnamese question → English page. vi Recall@5 0.49 (vs 0.43 / 0.33) and MRR 0.56 (vs 0.44 / 0.36) | It has the **weakest** answerable/unanswerable separation (AUC 0.64 vs 0.71). Accepted, because 0.71 is unusable as a gate anyway: on every model ~half of the real questions score below the highest unanswerable one. Revisit only if some configuration reaches ~0.90 AUC. |
-| **Chat providers are config, and requests rotate across them** | Every free tier caps tokens per minute (Groq: 8,000, which is ~2.8 questions/minute at ~2.4k tokens each). Several free tiers rotated together rarely throttle. All of them speak the OpenAI chat format, so they differ only by base URL, key and model id. | One more moving part (`rag/providers.py`), and answers can come from different models run to run, so quality varies unless the pool is pinned. Comparisons pin the provider explicitly. |
-| **Refusal comes from the prompt, not from `SIMILARITY_FLOOR`** | Measured: no model separates answerable from unanswerable questions well enough to threshold (AUC 0.64-0.71, 0.5 = coin flip) | The floor stays as a coarse guard (~0.45-0.50 for bge-m3). Correct refusal now depends on prompt wording, which makes answer-quality tests (backlog B13) more important. |
+| **Chat providers are config, asked in order of preference (primary + fallbacks)** | Every free tier caps tokens per minute (Groq: 8,000, ~2.8 questions/minute at ~2.4k tokens each), so the fastest provider (first in `CHAT_PROVIDERS`) answers until it throttles, then the next one does. All speak the OpenAI chat format, so they differ only by base URL, key and model id. Replaced taking turns on 2026-09-22: a request that started at two slow providers ran out of time before reaching healthy Groq (503). A provider that keeps failing rests 60 s, 2, 4, 8, then 15 min; one success resets it. | The fallbacks' own quotas go unused while the primary is healthy. A fallback is only as good as its provider: with Gemini overloaded (2026-09-22) only `groq-2` (a second Groq model, rate-limited separately) could cover for Groq. Comparisons still pin the provider. |
+| **Refusal comes from the prompt, not from `SIMILARITY_FLOOR`** | Measured: no model separates answerable from unanswerable questions well enough to threshold (AUC 0.64-0.71, 0.5 = coin flip) | The floor stays at 0.35 as a gibberish guard only (measured 2026-09-21: real questions' best match 0.41-0.75, unanswerable 0.51-0.61, off-topic 0.33-0.50; 0.45 would already refuse a real question and catch no unanswerable one). Correct refusal depends on prompt wording, which makes answer-quality tests (backlog B13) more important. |
 | **Stop tuning retrieval at Recall@5 0.54; build M4-M5 first** | Retrieval metrics are a proxy; answers are the product. An LLM often answers correctly from partial evidence, and the biggest lever (Vietnamese translations of the PDFs) is not available yet | We ship the first end-to-end pipeline with known-imperfect retrieval. Experiments are queued in backlog B14 and will be re-measured against the same question set. |
+| **The AI service ships as one Docker image; hosted on a free Hugging Face Space until the Oracle VM exists** | Oracle needs a credit card we don't have yet. A Space is free with 16 GB RAM (bge-m3 needs ~3 GB). The image, not the host, is the unit we move: the same Dockerfile runs locally, on the Space, and on the VM. bge-m3 is baked into the image so cold starts don't re-download 2.3 GB. | The Space is public (only the bearer token protects it) and sleeps after long inactivity, so the first request after a sleep is slow. Image is ~3-4 GB. CPU only, so embedding is slower than on the dev PC's GPU. |
+| **LLM calls get a real deadline by running on a background thread** (`generate.background_calls`) and the pool stops waiting at `min(time left of 7 s, 4 s)` | An HTTP timeout is not a deadline (it resets on every byte). A sync call can't be cancelled, only abandoned, and this keeps the sync design. The 4 s cap stops one stuck provider from using the whole budget. | An abandoned call keeps its thread until the provider replies (bounded by `GENERATION_WORKERS` = 8 threads). A slow provider costs one user ~4 s once a minute until it is replaced in `.env`. |
+| **The AI service is synchronous (plain `def` + FastAPI's thread pool), not async** | Throughput is capped by the free LLM tiers (a few questions per minute per provider) and by CPU-bound embedding on 2 vCPUs, never by threads: async would add no speed. Sync code works with every library, needs no `await` chain through the whole codebase, and can't freeze the server with one forgotten blocking call. | Each waiting request holds a thread (FastAPI's pool is 40 by default, raisable in one line). Shared state such as `ProviderPool` can be touched by two threads at once, so per-request results must be returned, never read back from a shared attribute. Revisit only if measured traffic has hundreds of requests waiting at once on paid, unthrottled APIs. |
+| **Load bge-m3 from its official `pytorch_model.bin`, not a `.safetensors` copy** | BAAI publishes only `.bin`. A `.safetensors` copy exists only as an unmerged bot pull request (#130), and loading weights the authors never approved is a supply-chain risk. Measured on the dev PC: identical vectors (max difference 0.0), and `.safetensors` loaded no faster (3.3-5.1 s vs 2.2-2.4 s). The `.bin` code-execution risk is closed by torch >= 2.6 (`torch.load` reads tensors only; the image has 2.14). `DISABLE_SAFETENSORS_CONVERSION=1` in the Dockerfile stops transformers from downloading the unused copy. | Relies on torch staying >= 2.6. Revisit if we switch to a model that publishes `.safetensors` (transformers then uses it automatically) or run several workers (`.safetensors` can share one copy of the weights in memory). |
 | Self-hosted open embedding model, chosen by measured eval (M3) | Learning goal + no per-call cost. Decided by Recall@5/MRR on our own PDFs, not leaderboards. | We run and monitor the model. CPU latency must be measured. |
 | No RAG framework (no LangChain/LlamaIndex) | Every stage is visible, testable code, which suits a teaching codebase | We hand-write what frameworks provide (chunking, retries, integrations) |
 | Test PDF generated by `tests/sample_pdf.py`, not committed | No binaries or private church data in git. The test document is readable code. | Tests need PyMuPDF to generate it |
@@ -55,7 +59,7 @@ src/
   proxy.ts      Runs before each request (auth only)
 public/         sw.js, icons/
 services/
-  ai/           Python AI service (RAG + speech), deployed separately to an Oracle VM. See its README.
+  ai/           Python AI service (RAG + speech), deployed separately as a Docker image. See its README.
 ```
 
 ## 4. Rules of the Codebase
@@ -98,7 +102,7 @@ app/**/page.tsx ──► components ──► hooks ──► api.ts ──► 
 | Client Components (`"use client"`) | User's browser | **No**: anyone can read or edit it | Nothing. UX only. |
 | `src/proxy.ts` | Server | Yes | Redirects only (UX). Not the security boundary. |
 | Server Components, `route.ts` | Server | Yes | Each route checks the user itself. Holds secrets. |
-| AI service (`services/ai`, Oracle VM) | Server | Yes | Accepts requests only with `Bearer SERVICE_TOKEN` (known only to the Next.js server). Holds `DATABASE_URL` + `GROQ_API_KEY`. Browsers never see its URL or token. |
+| AI service (`services/ai`, Docker: HF Space → Oracle VM) | Server | Yes | Accepts requests only with `Bearer SERVICE_TOKEN` (known only to the Next.js server). Holds `DATABASE_URL` + `GROQ_API_KEY`. Browsers never see its URL or token. |
 | Supabase RLS policies | Database | Yes | **The real boundary.** The public anon key can call Supabase directly, so only RLS stops reading other users' data. |
 
 - Editing browser code can't skip server checks or RLS. It can only break that user's own UI.
@@ -303,27 +307,29 @@ Not built.
 OFFLINE (PC)  PDF → extract_pages → chunk_pages → embed_passages → replace_document_chunks → document_chunks (pgvector)
 ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) → AI service /transcribe, /ask (bearer token)
               answer_question: embed_query → search_chunks → [refuse if best < SIMILARITY_FLOOR] → build_prompt → generate_answer
-              ← { text, sources, timings } → phone speaks the answer (speechSynthesis) + shows sources
+              ← { text, provider, sources, timings } → phone speaks the answer (speechSynthesis) + shows sources
 ```
 
 **Files (services/ai)**
 | File | Job | Milestone |
 |---|---|---|
 | `config.py` | All constants/settings with reasons (chunk size, TOP_K, SIMILARITY_FLOOR, models, secrets) | — |
-| `domain.py` | `Page`, `Chunk`, `EmbeddedChunk`, `RetrievedChunk`, `Source`, `Answer`. Named `domain.py` because `types.py` would shadow Python's built-in `types` module. | — |
+| `domain.py` | `Page`, `Chunk`, `EmbeddedChunk`, `RetrievedChunk`, `Source`, `Generation` (answer text + the provider that wrote it), `Answer`. Named `domain.py` because `types.py` would shadow Python's built-in `types` module. | — |
 | `ingest/extract.py` | `normalize_text` (NFC + whitespace), `extract_pages` (PyMuPDF, skips blank pages, 1-based pages) | M1 |
 | `ingest/chunk.py` | `split_with_overlap`, `chunk_pages` (word windows, never across pages) | M1 |
 | `rag/embeddings.py` | `load_model` (cached), `embed_passages`, `embed_query` (normalized, per-model prefixes) | M2 |
 | `evaluation/metrics.py`, `run_eval.py` | Recall@k, reciprocal rank. In-memory model bake-off → `evaluation/results.md` | M3 |
-| `evaluation/questions.jsonl` | 41 labelled questions (33 answerable with the pages that answer them, 8 unanswerable/wrong-premise). The ground truth every number depends on. | M3 |
+| `evaluation/questions.jsonl` | **Private, gitignored (local only since 2026-09-22):** 41 labelled questions (33 answerable with the pages that answer them, 8 unanswerable/wrong-premise). The ground truth every number depends on. | M3 |
 | `evaluation/corpus.py` | Chunks + embeddings with a per-model disk cache (`evaluation/.cache`, gitignored). Cache key = model + chunk count + chunk size + overlap. | M3 |
 | `evaluation/explain.py` | Traces one question (or all) through the pipeline printing every intermediate value: `--index N`, `--all`, or a typed question. The fastest way to understand or debug retrieval. | M3 |
 | `src/features/assistant/schema.sql` | `document_chunks` + HNSW index. Server-only table: RLS on with no policies, no grants. | M4 |
-| `rag/store.py`, `ingest/run_ingest.py` | pgvector SQL save/search. Idempotent per-document ingestion. | M4 |
+| `rag/store.py`, `ingest/run_ingest.py` | pgvector SQL save/search. Idempotent per-document ingestion. `connection_pool()` (psycopg-pool, `DB_POOL_MAX_SIZE`, connection checked before use) serves the API: search 1,179 ms → ~250 ms. Scripts keep `connect()`. | M4, M6 |
 | `rag/prompt.py`, `generate.py`, `answer.py` | Grounded prompt with numbered sources, chat completion, the recipe with dependency injection + timings | M5 |
-| `rag/providers.py` | The provider list (name, base URL, key, model) and the pool that rotates across them, resting any that reports a rate limit and dropping any whose error will not fix itself. | M5 |
+| `rag/providers.py`, `rag/generate.py` | The provider list and the pool that asks them in order of preference within one time budget, resting failing ones for longer each time (`PROVIDER_MAX_COOLDOWN_SECONDS`). `generate.py` translates SDK errors into the pool's own `ProviderBusy` (rest) / `ProviderBroken` (drop) and enforces the per-call cutoff on a background thread; the pool never parses error text. | M5, M6 |
 | `evaluation/compare_models.py` | Asks several providers the same questions over identical retrieved evidence; writes `evaluation/answers/<timestamp>.md`. | M5 |
-| `speech/transcribe.py`, `api/main.py` | Groq Whisper. FastAPI `/health`, `/ask`, `/transcribe` with bearer token. | M6 |
+| `speech/transcribe.py`, `api/main.py` | Groq Whisper (one cached client, `TRANSCRIBE_TIMEOUT_SECONDS`, no retries). FastAPI `/health`, `/ask`, `/transcribe` with bearer token, input limits, 503 on `AllProvidersFailed`, and a `lifespan` that warms the model and opens the DB pool. All routes are plain `def` (see the sync decision). | M6 |
+| `deploy/push_to_space.py` | Uploads the allowlisted files to the Space (`--dry-run` lists them). | M6 |
+| `Dockerfile`, `.dockerignore` | Image = Python 3.12 slim + CPU-only torch + requirements + bge-m3 baked in (`HF_HOME=/models`, then `HF_HUB_OFFLINE=1`; `DISABLE_SAFETENSORS_CONVERSION=1` stops transformers from downloading a second, unused 2.2 GB copy of the weights) + code, run as uid 1000 on port 8000. `.dockerignore` keeps `.env`, `data/` and `.venv/` out of the image. `README.md` front matter (`sdk: docker`, `app_port: 8000`) configures the Space. | M6 |
 | `tests/` | One test file per module. `sample_pdf.py` generates a bilingual 4-page PDF (page 3 blank). Markers: `slow` (model), `db`. | — |
 
 **Model choice (M3, measured on 41 real questions, page-level, top 5)**
@@ -349,14 +355,24 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 | Grounding | Requiring the LLM to answer only from the provided sources, with citations |
 | Hallucination | A fluent answer not supported by the sources |
 
-**Failure behavior** *(planned)*
-| Situation | Behavior |
-|---|---|
-| Best chunk similarity < `SIMILARITY_FLOOR` | Bilingual "not found" answer. The LLM is not called. |
-| AI service down / timeout | Web app shows "assistant unavailable" |
-| Missing or wrong service token | 401 |
-| Empty transcript | "Didn't catch that, please try again" |
-| LLM exceeds 8 s | Error (fits Netlify's ~10 s limit) |
+**Failure behavior** (AI service, M6; web-app rows arrive in M7)
+| Situation | Behavior | Why |
+|---|---|---|
+| Best chunk similarity < `SIMILARITY_FLOOR` | Bilingual "not found" answer, `provider: ""`. The LLM is not called. | Faster, and nothing to hallucinate from |
+| Missing, wrong, or non-ASCII token | 401 | Tokens are compared as bytes, so odd characters can't crash the check |
+| Blank question | 400 | |
+| Question over `MAX_QUESTION_CHARS` | 422 (Pydantic) | Caps token cost and abuse |
+| Empty audio / audio over `MAX_AUDIO_BYTES` | 400 / 413 | Reads at most limit+1 bytes, never a huge file |
+| Every chat provider resting or disabled | 503 "try again in a minute" (`AllProvidersFailed`) | Temporary, unlike config errors, which stay 500 |
+| Provider is busy: 429, 408, 409, 5xx, timeout, network error | `ProviderBusy`: rested 60 s, doubling on each failure in a row up to 15 min; the next provider in the list answers | Temporary trouble must not remove a provider from a server that runs for weeks |
+| Provider is broken: 400, 401, 403, 404 | `ProviderBroken`: disabled until restart | A wrong key or model id won't fix itself |
+| Any other exception inside a call | Crashes the request (500) | It's a bug in our code; don't disguise it as a provider problem |
+| Slow or stuck provider | Cut off after `PROVIDER_TIMEOUT_SECONDS` (4 s), then rested; the whole request stops at `GENERATION_DEADLINE_SECONDS` (7 s) → 503 | The HTTP timeout only limits gaps between bytes; OpenRouter's keep-alive bytes let one request run 110 s. Measured after the fix: cut off at 4.0 s. |
+| Transcription: Whisper rate limit, timeout, network, 5xx | 503 "try again" (`SpeechUnavailable`) | Temporary; a rejected Groq key stays a 500 because it's our mistake |
+| Prompt: the answer depends on the situation | The model states the conditions from the sources; it never asks the user a question | Each `/ask` is independent: there is no conversation for the user's reply to join |
+| Startup | Loads bge-m3, runs one embedding, then waits up to `DB_CONNECT_TIMEOUT_SECONDS` (10 s) for a database connection. A wrong `DATABASE_URL` makes the server exit (verified: `PoolTimeout`, "Application startup failed"). `/health` answering means ready (~12-18 s). | Fail at deploy time, not on the first question |
+| Logging | One line per request from `vietcorner.api` (status, provider, question length, timings); libraries log warnings only. The question text is never logged. | Enough to find which provider wrote a bad answer; church members' questions stay private |
+| `/docs`, `/openapi.json` | 404 unless `SHOW_API_DOCS=1` (set in the local `.env` only) | The public Space shouldn't hand strangers a map of the API |
 
 **How to remove:** delete `services/ai/` and `src/features/assistant/` (when built), the assistant routes and tab, the `document_chunks` table, and the AI env vars.
 
@@ -398,6 +414,14 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 4. Use the same VAPID keys as local. Why: subscriptions are tied to the public key, and new keys would break existing subscriptions.
 5. Every push to `main` redeploys.
 
+**Deploy the AI service (Docker → Hugging Face Space):**
+1. Local check: `docker build -t vietcorner-ai services/ai`, then `docker run --rm -p 8000:8000 --env-file services/ai/.env vietcorner-ai`, then `curl.exe http://localhost:8000/health`.
+2. huggingface.co → New Space → SDK **Docker** (Blank), hardware **CPU basic (free)**, visibility **Public**. Why public: a private Space demands a Hugging Face token in the same `Authorization` header our bearer token uses.
+3. Space → Settings → **Variables and secrets**: add each `services/ai/.env` value as a *secret*, except `SHOW_API_DOCS` (docs stay off on the public Space) and entries you don't use.
+4. Once: `hf auth login` (a Hugging Face token with **write** access). Then from `services/ai`: `python -m deploy.push_to_space <user>/<space>`.
+   Why a script, not `git subtree push`: a public Space shows its files **and their history** to anyone. The script uploads an allowlist (the Dockerfile, requirements, `config.py`, `domain.py`, `api/`, `rag/`, `speech/`: 17 files) with no history. `.env`, `data/`, `evaluation/` and `tests/` never leave the PC. Verified: the image builds and answers from those 17 files alone.
+5. The Space builds the image on Hugging Face's machines (no access to the local cache: first build ~10-15 min). URL: `https://<user>-<space>.hf.space`. A new module the server imports must be added to the allowlist, or the Space crashes at startup.
+
 ## 10. Change Log
 - 2026-09-14: Created harness files (CLAUDE.md, active_context.md, architecture.md).
 - 2026-09-14: Step 0 app shell: Next.js config, manifest, service worker, tab bar, 3 placeholder pages, icons.
@@ -412,3 +436,13 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 - 2026-09-15: Restructured auth + chat into the standard feature shape (`api.ts`, `hooks/`, `components/`, `server/queries.ts`). ChatRoom split into `useChatMessages` + `MessageList` + `MessageForm`. Removed `GroupChat.tsx`. Pages now load data. No behavior change.
 - 2026-09-15: Restructure QA passed and deployed. Documented Supabase exposure gates + anon-key probe results. Added `.claude/backlog.md`.
 - 2026-09-15: Step 4 M0: scaffolded `services/ai` (Python AI service: config, domain types, ★ stubs with concept headers, pytest suite with a generated bilingual PDF, README course M0–M9). Added mentor-mode rules and the assistant decisions.
+- 2026-09-21: M6 code reviewed. AI service containerized (`services/ai/Dockerfile`, `.dockerignore`, Space front matter in its README). Interim host: Hugging Face Space until the Oracle VM.
+- 2026-09-21: Dockerfile: disabled the automatic safetensors download (bge-m3 folder 4.3 → 2.2 GB, image 9.4 → 5.8 GB).
+- 2026-09-21: Key Decision: the AI service stays synchronous (thread pool), with the reasons and the revisit trigger.
+- 2026-09-21: Every answer now carries the provider that wrote it (`Generation` → `Answer.provider` → `/ask` JSON `provider`), returned instead of stored on the shared pool (fixes a cross-request race). `.env` rule: no comments after values (Docker's `--env-file` keeps them).
+- 2026-09-21: Decision: keep bge-m3's official `.bin` weights rather than a converted `.safetensors` (measured: same vectors, no faster load).
+- 2026-09-21: M6 fixes: input limits (422/400/413), 503 for busy providers, DB connection pool, startup warm-up wired into FastAPI, Groq client cached with timeout, SDK retries off. Image model folder 4.3 → 2.2 GB (`DISABLE_SAFETENSORS_CONVERSION`). Failure table rewritten with the known gaps.
+- 2026-09-21: Provider reliability: `ProviderBusy`/`ProviderBroken` instead of guessing from error text (a timeout no longer disables a provider forever); a real deadline (7 s per request, 4 s per provider) on background threads. `GENERATION_TIMEOUT_SECONDS` replaced by `GENERATION_DEADLINE_SECONDS`, `PROVIDER_TIMEOUT_SECONDS`, `GENERATION_WORKERS`. New `tests/test_generate.py`.
+- 2026-09-21: Review items 4-13: prompt no longer asks clarifying questions (one-shot API) and lost the Troublemakers rule; DB pool fails fast at startup; `/transcribe` 503 on Whisper trouble (`SpeechUnavailable`); one log line per request (no question text; libraries at WARNING); `SHOW_API_DOCS` flag; `SIMILARITY_FLOOR` kept at 0.35 on measured evidence; one `require_database_url()`; config `# why` comments moved above each constant; all `TODO(M#)` docstrings removed. New `tests/test_transcribe.py`. 65 fast tests.
+- 2026-09-22: Providers are asked in order of preference instead of taking turns (fix: a request starting at slow Gemini + OpenRouter ran out of time before reaching healthy Groq); failing providers rest longer each time (60 s → 15 min). Optional `groq-2` provider (`GROQ_CHAT_MODEL_2`). Verified live: Groq broken → groq-2 answered in 0.8-1.0 s.
+- 2026-09-22: Space deploy via `deploy/push_to_space.py` (allowlist, no history) instead of `git subtree push`. `evaluation/questions.jsonl` and `evaluation/answers/` untracked and gitignored (private; still in older git history). Empty model answers now fail over (`ProviderBusy`) instead of returning an English apology.

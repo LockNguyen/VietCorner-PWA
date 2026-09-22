@@ -1,0 +1,25 @@
+# What `COPY . .` in the Dockerfile must never see. Docker reads this before sending the folder to the builder,
+# so ignored files never leave your disk. Same idea as .gitignore, but a separate file with its own rules.
+
+# SECRETS. Baking .env into an image publishes your keys to anyone who can pull it (a public Space is public).
+# Secrets are passed at run time instead: --env-file locally, Space secrets on Hugging Face.
+.env
+
+# Private church PDFs. Ingestion runs on your PC; the server only reads the database.
+data/
+
+# Your Windows virtual environment: ~2 GB of Windows binaries that cannot run on Linux anyway.
+.venv/
+
+# Caches and generated files: rebuilt on demand, and they would break layer caching on every run.
+__pycache__/
+*.pyc
+.pytest_cache/
+evaluation/.cache/
+evaluation/answers/
+
+# Not needed to serve requests.
+tests/
+.git/
+Dockerfile
+.dockerignore

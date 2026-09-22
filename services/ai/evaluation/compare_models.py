@@ -35,7 +35,11 @@ from config import (
 )
 from domain import Answer, RetrievedChunk
 from evaluation.run_eval import EvalQuestion, load_questions
-from rag.answer import NOT_FOUND_TEXT, answer_question, search_with_new_connection
+from rag.answer import (
+    NOT_FOUND_TEXT,
+    answer_question,
+    search_with_pooled_connection,
+)
 from rag.embeddings import embed_query
 from rag.generate import generate_answer
 from rag.providers import Provider, load_providers
@@ -72,10 +76,15 @@ class Attempt:
 def retrieve(question_text: str) -> tuple[list[float], list[RetrievedChunk]]:
     """Embed and search once, so every provider sees identical evidence."""
     query_vector = embed_query(question_text)
-    return query_vector, search_with_new_connection(query_vector)
+    return query_vector, search_with_pooled_connection(query_vector)
 
 
-def ask(provider: Provider, question_text: str, query_vector: list[float], retrieved: list[RetrievedChunk]) -> Attempt:
+def ask(
+    provider: Provider,
+    question_text: str,
+    query_vector: list[float],
+    retrieved: list[RetrievedChunk],
+) -> Attempt:
     """Run the real pipeline with retrieval frozen and only the provider swapped."""
     start = time.perf_counter()
     try:
@@ -86,11 +95,20 @@ def ask(provider: Provider, question_text: str, query_vector: list[float], retri
             generate=partial(generate_answer, provider=provider),
         )
         return Attempt(provider, answer, "", time.perf_counter() - start)
-    except Exception as error:  # bad model id, rate limit, timeout: record it and keep going
-        return Attempt(provider, None, f"{type(error).__name__}: {error}"[:300], time.perf_counter() - start)
+    except (
+        Exception
+    ) as error:  # bad model id, rate limit, timeout: record it and keep going
+        return Attempt(
+            provider,
+            None,
+            f"{type(error).__name__}: {error}"[:300],
+            time.perf_counter() - start,
+        )
 
 
-def format_report(questions: list[EvalQuestion], attempts: dict[int, list[Attempt]]) -> str:
+def format_report(
+    questions: list[EvalQuestion], attempts: dict[int, list[Attempt]]
+) -> str:
     """Render the whole comparison as Markdown."""
     labels = [attempt.label for attempt in attempts[0]]
     lines = [
@@ -106,11 +124,19 @@ def format_report(questions: list[EvalQuestion], attempts: dict[int, list[Attemp
         "|---" * (len(labels) + 1) + "|",
     ]
     for index, question in enumerate(questions):
-        cells = [f"{attempt.outcome} ({attempt.seconds:.1f}s)" for attempt in attempts[index]]
-        lines.append(f"| #{index} {question.question[:40]}… | " + " | ".join(cells) + " |")
+        cells = [
+            f"{attempt.outcome} ({attempt.seconds:.1f}s)" for attempt in attempts[index]
+        ]
+        lines.append(
+            f"| #{index} {question.question[:40]}… | " + " | ".join(cells) + " |"
+        )
 
     for index, question in enumerate(questions):
-        expected = f"pages {list(question.pages)}" if question.is_answerable else "NO ANSWER in the documents"
+        expected = (
+            f"pages {list(question.pages)}"
+            if question.is_answerable
+            else "NO ANSWER in the documents"
+        )
         lines += [
             "",
             "---",
@@ -121,53 +147,76 @@ def format_report(questions: list[EvalQuestion], attempts: dict[int, list[Attemp
             f"- expected: {expected}",
             f"- note: {question.note}",
         ]
-        answered = next((attempt for attempt in attempts[index] if attempt.answer is not None), None)
-        if answered is not None and answered.answer is not None and answered.answer.sources:
+        answered = next(
+            (attempt for attempt in attempts[index] if attempt.answer is not None), None
+        )
+        if (
+            answered is not None
+            and answered.answer is not None
+            and answered.answer.sources
+        ):
             sources = ", ".join(
-                f"p.{source.page_number} ({source.similarity:.2f})" for source in answered.answer.sources
+                f"p.{source.page_number} ({source.similarity:.2f})"
+                for source in answered.answer.sources
             )
             lines.append(f"- retrieved pages (same for every provider): {sources}")
 
         for attempt in attempts[index]:
-            lines += ["", f"### {attempt.label} — {attempt.outcome}, {attempt.seconds:.1f}s"]
+            lines += [
+                "",
+                f"### {attempt.label} — {attempt.outcome}, {attempt.seconds:.1f}s",
+            ]
             if attempt.error:
                 lines.append(f"```\n{attempt.error}\n```")
                 continue
             assert attempt.answer is not None
             lines.append(attempt.answer.text)
             if attempt.answer.timings:
-                timings = ", ".join(f"{name} {value:.0f}ms" for name, value in attempt.answer.timings.items())
+                timings = ", ".join(
+                    f"{name} {value:.0f}ms"
+                    for name, value in attempt.answer.timings.items()
+                )
                 lines.append(f"\n_{timings}_")
 
     return "\n".join(lines) + "\n"
 
 
-def compare(providers: list[Provider], question_indexes: list[int], sleep_seconds: float) -> Path:
+def compare(
+    providers: list[Provider], question_indexes: list[int], sleep_seconds: float
+) -> Path:
     """Ask every provider every question, then write the report. Returns the file it wrote."""
     all_questions = load_questions()
     questions = [all_questions[index] for index in question_indexes]
     attempts: dict[int, list[Attempt]] = {}
 
-    print(f"{len(providers)} providers x {len(questions)} questions = {len(providers) * len(questions)} requests",
-          flush=True)
+    print(
+        f"{len(providers)} providers x {len(questions)} questions = {len(providers) * len(questions)} requests",
+        flush=True,
+    )
 
     for index, question in enumerate(questions):
         query_vector, retrieved = retrieve(question.question)
         pages = [chunk.chunk.page_number for chunk in retrieved]
-        print(f"\n#{index} {question.question[:60]}  retrieved pages {pages}", flush=True)
+        print(
+            f"\n#{index} {question.question[:60]}  retrieved pages {pages}", flush=True
+        )
 
         attempts[index] = []
         for provider in providers:
             attempt = ask(provider, question.question, query_vector, retrieved)
             if "rate" in attempt.error.lower() or "429" in attempt.error:
-                print(f"   {provider.name}: rate limited, waiting {RATE_LIMIT_BACKOFF_SECONDS:.0f}s and retrying",
-                      flush=True)
+                print(
+                    f"   {provider.name}: rate limited, waiting {RATE_LIMIT_BACKOFF_SECONDS:.0f}s and retrying",
+                    flush=True,
+                )
                 time.sleep(RATE_LIMIT_BACKOFF_SECONDS)
                 attempt = ask(provider, question.question, query_vector, retrieved)
 
             attempts[index].append(attempt)
-            print(f"   {attempt.label:<45}{attempt.outcome:<10}{attempt.seconds:5.1f}s {attempt.error[:60]}",
-                  flush=True)
+            print(
+                f"   {attempt.label:<45}{attempt.outcome:<10}{attempt.seconds:5.1f}s {attempt.error[:60]}",
+                flush=True,
+            )
             time.sleep(sleep_seconds)
 
     ANSWERS_DIR.mkdir(exist_ok=True)
@@ -193,9 +242,13 @@ def main(argv: list[str]) -> None:
 
     providers = load_providers()
     if wanted_names:
-        providers = [provider for provider in providers if provider.name in wanted_names]
+        providers = [
+            provider for provider in providers if provider.name in wanted_names
+        ]
     if not providers:
-        print("No providers configured. Add keys and model ids to .env (see config.CHAT_PROVIDERS).")
+        print(
+            "No providers configured. Add keys and model ids to .env (see config.CHAT_PROVIDERS)."
+        )
         return
 
     path = compare(providers, question_indexes, sleep_seconds)
