@@ -103,15 +103,18 @@ def default_pool() -> ProviderPool:
 
 
 def generate_answer(
-    messages: list[dict[str, str]], provider: Provider | None = None
+    messages: list[dict[str, str]],
+    provider: Provider | None = None,
+    *,
+    deadline_seconds: float | None = None,
 ) -> Generation:
     """The chat model's answer, labelled with the provider that wrote it.
 
     provider=None  -> rotate across every configured provider, skipping resting and broken ones (normal use).
     provider=given -> ask exactly that provider, so comparisons are not confused by failover.
+    deadline_seconds -> a shorter budget than config.GENERATION_DEADLINE_SECONDS, for callers in a hurry.
     """
+    seconds = deadline_seconds or GENERATION_DEADLINE_SECONDS
     if provider is not None:
-        return Generation(
-            call_provider(provider, messages, GENERATION_DEADLINE_SECONDS), provider.name
-        )
-    return default_pool().generate(messages)
+        return Generation(call_provider(provider, messages, seconds), provider.name)
+    return default_pool().generate(messages, seconds)

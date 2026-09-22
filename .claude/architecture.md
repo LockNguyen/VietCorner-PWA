@@ -36,6 +36,8 @@ A Progressive Web App (installable website) for a church community. Three indepe
 | Netlify over Vercel | Free tier allows commercial use (Vercel Hobby doesn't). Git push auto-deploys. | Next.js runs through Netlify's adapter, which can lag new Next versions, so verify `proxy.ts` + route handlers after each Next upgrade. The code uses no host-specific APIs, so switching hosts is cheap. |
 | Layered feature shape: `api.ts` / `hooks/` / `components/` / `server/` | Every change has one predictable home. Data access is listed in one file per side (browser: `api.ts`, server: `server/queries.ts`). Components can be read without knowing Supabase. | More, smaller files. Some queries exist on both sides (e.g. the latest messages in `api.ts` and `server/queries.ts`). |
 | Separate Python AI service holds the whole RAG core (not Next.js) | Models need a warm process and 1–2 GB RAM (impossible in serverless). Python is the AI ecosystem. One RAG implementation reusable by a future LiveKit agent. | A second deployable to operate (VM, systemd, TLS). One more network hop. |
+| **Follow-up questions are rewritten server-side before retrieval** | A search index has no memory: "Còn nhóm khác thì sao?" retrieves nothing. The service folds the last 4 turns into a standalone question (`rag/condense.py`). Server-side, so the eval scripts and any future client get the same behavior. Measured 2026-09-22: rules alone left the follow-up unchanged; one worked example in the prompt fixed it. | One extra LLM call per turn with history (~0.3-1 s, its own 2 s budget, falls back to the raw question) and roughly half the free-tier headroom. It can also narrow a question that already stood on its own. |
+| **The conversation lives in the browser's localStorage, keyed by user id** | The assistant stores nothing server-side, the cheapest way to keep members' questions private, and the chat survives closing the app. Keying by user is what keeps a shared family phone separate, so the auth feature needs no knowledge of the assistant. | A user's questions stay on that device after sign-out until they return and press "New chat"; nothing syncs between devices. |
 | **bge-m3 is the embedding model** (M3 bake-off, 41 questions) | Best at the job our users need: Vietnamese question → English page. vi Recall@5 0.49 (vs 0.43 / 0.33) and MRR 0.56 (vs 0.44 / 0.36) | It has the **weakest** answerable/unanswerable separation (AUC 0.64 vs 0.71). Accepted, because 0.71 is unusable as a gate anyway: on every model ~half of the real questions score below the highest unanswerable one. Revisit only if some configuration reaches ~0.90 AUC. |
 | **Chat providers are config, asked in order of preference (primary + fallbacks)** | Every free tier caps tokens per minute (Groq: 8,000, ~2.8 questions/minute at ~2.4k tokens each), so the fastest provider (first in `CHAT_PROVIDERS`) answers until it throttles, then the next one does. All speak the OpenAI chat format, so they differ only by base URL, key and model id. Replaced taking turns on 2026-09-22: a request that started at two slow providers ran out of time before reaching healthy Groq (503). A provider that keeps failing rests 60 s, 2, 4, 8, then 15 min; one success resets it. | The fallbacks' own quotas go unused while the primary is healthy. A fallback is only as good as its provider: with Gemini overloaded (2026-09-22) only `groq-2` (a second Groq model, rate-limited separately) could cover for Groq. Comparisons still pin the provider. |
 | **Refusal comes from the prompt, not from `SIMILARITY_FLOOR`** | Measured: no model separates answerable from unanswerable questions well enough to threshold (AUC 0.64-0.71, 0.5 = coin flip) | The floor stays at 0.35 as a gibberish guard only (measured 2026-09-21: real questions' best match 0.41-0.75, unanswerable 0.51-0.61, off-topic 0.33-0.50; 0.45 would already refuse a real question and catch no unanswerable one). Correct refusal depends on prompt wording, which makes answer-quality tests (backlog B13) more important. |
@@ -298,16 +300,18 @@ Tap button → permission prompt → browser creates a subscription (endpoint + 
 Not built.
 
 ### 6.4 assistant
-**Status:** M1-M3 done (extraction, chunking, embeddings, evaluation; model chosen). M4-M9 pending. Built by the user in mentor mode, milestones M1–M9 (see `services/ai/README.md`). Sections marked *(planned)* describe the target and are confirmed as milestones pass.
+**Status:** M1-M7 done (pipeline, database, RAG, HTTP service in Docker, chat UI with voice). M8-M9 pending. `services/ai` was built by the user in mentor mode (see its README). This branch (`m7-chat-assistant`) holds the chat-style M7 the user designed; `m7-voice-assistant` holds an earlier push-to-talk-only version.
 
 **Purpose:** Push-to-talk questions answered from church policy/training PDFs in Vietnamese or English, spoken back with sources.
 
-**Architecture** *(planned)*
+**Architecture**
 ```
 OFFLINE (PC)  PDF → extract_pages → chunk_pages → embed_passages → replace_document_chunks → document_chunks (pgvector)
 ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) → AI service /transcribe, /ask (bearer token)
               answer_question: embed_query → search_chunks → [refuse if best < SIMILARITY_FLOOR] → build_prompt → generate_answer
-              ← { text, provider, sources, timings } → phone speaks the answer (speechSynthesis) + shows sources
+              ← { text, provider, sources, timings } → chat bubble + sources; spoken answers are read aloud
+FOLLOW-UP     the last 4 turns travel with the question; condense_question rewrites "Còn nhóm khác thì sao?"
+              into a standalone question BEFORE embedding, because a search index has no memory
 ```
 
 **Files (services/ai)**
@@ -324,6 +328,7 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 | `evaluation/explain.py` | Traces one question (or all) through the pipeline printing every intermediate value: `--index N`, `--all`, or a typed question. The fastest way to understand or debug retrieval. | M3 |
 | `src/features/assistant/schema.sql` | `document_chunks` + HNSW index. Server-only table: RLS on with no policies, no grants. | M4 |
 | `rag/store.py`, `ingest/run_ingest.py` | pgvector SQL save/search. Idempotent per-document ingestion. `connection_pool()` (psycopg-pool, `DB_POOL_MAX_SIZE`, connection checked before use) serves the API: search 1,179 ms → ~250 ms. Scripts keep `connect()`. | M4, M6 |
+| `rag/condense.py` | Rewrites a follow-up into a standalone question from the last turns, with its own 2 s budget. Falls back to the user's words when the rewrite is empty, too long, or slow. | M7 |
 | `rag/prompt.py`, `generate.py`, `answer.py` | Grounded prompt with numbered sources, chat completion, the recipe with dependency injection + timings | M5 |
 | `rag/providers.py`, `rag/generate.py` | The provider list and the pool that asks them in order of preference within one time budget, resting failing ones for longer each time (`PROVIDER_MAX_COOLDOWN_SECONDS`). `generate.py` translates SDK errors into the pool's own `ProviderBusy` (rest) / `ProviderBroken` (drop) and enforces the per-call cutoff on a background thread; the pool never parses error text. | M5, M6 |
 | `evaluation/compare_models.py` | Asks several providers the same questions over identical retrieved evidence; writes `evaluation/answers/<timestamp>.md`. | M5 |
@@ -374,7 +379,34 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 | Logging | One line per request from `vietcorner.api` (status, provider, question length, timings); libraries log warnings only. The question text is never logged. | Enough to find which provider wrote a bad answer; church members' questions stay private |
 | `/docs`, `/openapi.json` | 404 unless `SHOW_API_DOCS=1` (set in the local `.env` only) | The public Space shouldn't hand strangers a map of the API |
 
-**How to remove:** delete `services/ai/` and `src/features/assistant/` (when built), the assistant routes and tab, the `document_chunks` table, and the AI env vars.
+**Files (web, `src/features/assistant/`)**
+| Layer | File | Job |
+|---|---|---|
+| Types | `types.ts` | `ChatMessage`, `Answer`, `Source`, `Turn`, `Recording`, `ErrorCause` |
+| Browser API | `api.ts` | The two backend calls; the only place HTTP failures become an `AssistantError` |
+| Failure policy | `errors.ts` | Cause → message + whether a retry could help. Keyed by cause, because "offline" and "timed out" have no status. |
+| Browser capability | `speech.ts` | Reads answers aloud: language from the text, iOS priming, citations stripped from the spoken copy |
+| Device storage | `storage.ts` | The conversation in localStorage, keyed by user id, capped at 50, never throws |
+| State | `hooks/useChatbotMessages.ts` | Conversation, persistence, one question at a time, manual retry with a growing wait |
+| State | `hooks/useVoiceQuestion.ts` | Record → transcribe → hand the text over (`onQuestion`) |
+| State | `hooks/useVoiceRecorder.ts` | The microphone only: format choice, permission, stopping the tracks |
+| UI | `components/` | `AssistantChat`, `MessageList`, `MessageBubble`, `Composer`, `VoiceButton` |
+| Server logic | `server/aiService.ts` | The only holder of `AI_SERVICE_URL`/`AI_SERVICE_TOKEN`: 9 s timeout, 503 → `AiServiceUnavailable` |
+| Server logic | `server/askQuestion.ts`, `server/transcribeAudio.ts` | One call each; no Next.js imports |
+| Routes | `src/app/api/assistant/{ask,transcribe}/route.ts` | Verify the user, validate input, map errors to 400/401/500/503 |
+| Tests | `*.test.ts` (Vitest, `npm test`) | The pure modules: error table, citation stripping, storage, backoff |
+
+**Expected behavior** (verified 2026-09-22 on the dev machine)
+- Logged out: `/assistant` → 307 `/login`; both routes → `401 {"error":"Not signed in"}`.
+- A typed question adds the user's bubble and a "…" bubble, then the answer with its pages.
+- A spoken question does the same and is read aloud; 🔊 replays any answer.
+- The conversation survives a reload, is stored per user id, and "New chat" clears screen, storage, pending retry and speech.
+- Service down → red bubble "Trợ lý đang bận…" with "Thử lại / Try again"; the link counts down (5 s, then 7 s…) and re-sends. Verified: failed twice while the container was stopped, then succeeded once it was back.
+- Measured: transcribe ~1 s, answer 0.6-1.2 s (embed ~160 ms, search ~270 ms, generate ~400-600 ms).
+- **Not verified on a real phone** (iOS mp4 recording, Vietnamese `speechSynthesis` voice, microphone over HTTPS).
+- **Known quality trade-off:** the rewrite uses the conversation even when a question already stands alone. Measured: "Do volunteers need a background check?", asked after a Come and See exchange, was rewritten to ask specifically about Come and See. Measure on the eval set before tuning.
+
+**How to remove:** delete `services/ai/` and `src/features/assistant/`, `src/app/api/assistant/`, reset `src/app/assistant/page.tsx` to a placeholder, drop the Assistant tab in `TabBar.tsx`, the `document_chunks` table, and the AI env vars.
 
 ## 7. Database
 | Table | Owner | Notes |
@@ -395,6 +427,8 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 | `VAPID_PRIVATE_KEY` | `notifyGroup` | **Secret.** Signs pushes. If it changes, every existing subscription stops working. |
 | `VAPID_SUBJECT` | `notifyGroup` | `mailto:` contact for push services. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `src/lib/supabase/*`, `refreshSession.ts` | Public anon key. Safe in the browser because row-level security protects the data. |
+| `AI_SERVICE_URL` | `features/assistant/server/aiService.ts` | Where the Python AI service listens (no trailing slash). Server only. |
+| `AI_SERVICE_TOKEN` | `features/assistant/server/aiService.ts` | **Secret.** The service's `SERVICE_TOKEN`. Anyone holding it can spend our AI quota. |
 
 ## 9. Setup & Deploy
 1. Install Node.js LTS (tested on 24.19.0).
@@ -449,3 +483,4 @@ ONLINE        Phone → Next.js /api/assistant/{transcribe,ask} (verify user) �
 - 2026-09-22: Providers are asked in order of preference instead of taking turns (fix: a request starting at slow Gemini + OpenRouter ran out of time before reaching healthy Groq); failing providers rest longer each time (60 s → 15 min). Optional `groq-2` provider (`GROQ_CHAT_MODEL_2`). Verified live: Groq broken → groq-2 answered in 0.8-1.0 s.
 - 2026-09-22: Space deploy via `deploy/push_to_space.py` (allowlist, no history) instead of `git subtree push`. `evaluation/questions.jsonl` and `evaluation/answers/` untracked and gitignored (private; still in older git history). Empty model answers now fail over (`ProviderBusy`) instead of returning an English apology.
 - 2026-09-22: Hugging Face Docker/Gradio Spaces now require a paid plan. Interim host: the dev PC's Docker container behind Tailscale Funnel (stable free HTTPS URL, no card).
+- 2026-09-22: M7 (chat design): assistant chat UI with typed and spoken questions, per-user localStorage history, manual retry with a growing wait, and server-side follow-up rewriting (`rag/condense.py`; `/ask` now takes `history`). Vitest added for the pure web modules. Verified end to end locally, including the failure and retry paths.

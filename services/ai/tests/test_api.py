@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 import api.main as main
-from config import MAX_QUESTION_CHARS
+from config import MAX_HISTORY_TURNS, MAX_QUESTION_CHARS
 from domain import Answer, Source
 from rag.providers import AllProvidersFailed
 from speech.transcribe import SpeechUnavailable
@@ -111,3 +111,28 @@ def test_transcribe_says_try_again_when_whisper_is_busy(client, monkeypatch):
     monkeypatch.setattr(main, "transcribe", busy)
     files = {"audio": ("question.webm", b"fake audio bytes", "audio/webm")}
     assert client.post("/transcribe", files=files, headers=AUTH).status_code == 503
+
+
+def test_ask_rewrites_a_follow_up_before_answering(client, monkeypatch):
+    asked = []
+    monkeypatch.setattr(main, "condense_question", lambda question, history: f"{question} (about {history[0].text})")
+    monkeypatch.setattr(main, "answer_question", lambda question: asked.append(question) or Answer(
+        "Yes [1].", "fake-llm-model", [Source("doc.pdf", 2, 0.9)], {"embed_ms": 1.0}
+    ))
+
+    response = client.post(
+        "/ask",
+        json={"question": "What about the other one?", "history": [{"role": "user", "text": "Come and See groups"}]},
+        headers=AUTH,
+    )
+
+    assert response.status_code == 200
+    assert asked == ["What about the other one? (about Come and See groups)"], "retrieval must see the rewrite"
+
+
+def test_ask_rejects_more_history_than_we_asked_for(client):
+    history = [{"role": "user", "text": "hi"}] * (MAX_HISTORY_TURNS + 1)
+
+    response = client.post("/ask", json={"question": "hi", "history": history}, headers=AUTH)
+
+    assert response.status_code == 422

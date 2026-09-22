@@ -93,8 +93,11 @@ class ProviderPool:
     _failures_in_a_row: dict[str, int] = field(default_factory=dict)
     _disabled: set[str] = field(default_factory=set)
 
-    def generate(self, messages: list[dict[str, str]]) -> Generation:
+    def generate(self, messages: list[dict[str, str]], deadline_seconds: float | None = None) -> Generation:
         """Ask providers in list order until one answers or the time budget runs out.
+
+        `deadline_seconds` lets a caller with less patience (the follow-up rewrite in rag/condense.py) shorten
+        the budget. It can never lengthen it: the web app's ~10 s limit is the real ceiling.
 
         Raises AllProvidersFailed (temporary: the API answers 503) listing every provider's reason.
         """
@@ -104,7 +107,7 @@ class ProviderPool:
             )
 
         failures: list[str] = []
-        deadline = self.now() + self.deadline_seconds
+        deadline = self.now() + min(deadline_seconds or self.deadline_seconds, self.deadline_seconds)
 
         for provider in self.providers:
             if provider.name in self._disabled:

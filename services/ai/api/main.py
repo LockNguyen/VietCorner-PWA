@@ -18,6 +18,7 @@ Common pitfalls:
 
 import logging
 import secrets
+from typing import Literal
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict
@@ -27,12 +28,15 @@ from pydantic import BaseModel, Field
 
 from config import (
     DB_CONNECT_TIMEOUT_SECONDS,
+    MAX_HISTORY_TURNS,
     MAX_AUDIO_BYTES,
     MAX_QUESTION_CHARS,
     SERVICE_TOKEN,
     SHOW_API_DOCS,
 )
+from domain import Turn
 from rag.answer import answer_question
+from rag.condense import condense_question
 from rag.embeddings import embed_query
 from rag.providers import AllProvidersFailed
 from rag.store import connection_pool
@@ -66,8 +70,17 @@ app = FastAPI(
 )
 
 
+class HistoryTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str = Field(max_length=MAX_QUESTION_CHARS)
+
+
 class AskRequest(BaseModel):
     question: str = Field(max_length=MAX_QUESTION_CHARS)  # too long -> FastAPI answers 422 by itself
+    # Earlier turns, oldest first. Only used to rewrite a follow-up into a standalone question (M7);
+    # the answer itself still comes from the documents alone. Sources are not sent back: they add tokens
+    # and say nothing about what "it" or "that group" meant.
+    history: list[HistoryTurn] = Field(default_factory=list, max_length=MAX_HISTORY_TURNS)
 
 
 class SourceResponse(BaseModel):
@@ -107,14 +120,19 @@ def health() -> dict[str, str]:
 
 @app.post("/ask", dependencies=[Depends(require_token)])
 def ask(request: AskRequest) -> AskResponse:
-    """Answer a text question."""
+    """Answer a text question, resolving a follow-up against the conversation it belongs to."""
     question = request.question.strip()
 
     if not question:
         raise HTTPException(status_code=400, detail="Question is required.")
 
+    # "Còn nhóm khác thì sao?" means nothing to a search index, so fold the conversation into the question
+    # first. With no history this returns the question unchanged and costs nothing.
+    history = [Turn(turn.role, turn.text) for turn in request.history]
+    searchable = condense_question(question, history)
+
     try:
-        answer = answer_question(question)
+        answer = answer_question(searchable)
     except AllProvidersFailed as error:
         log.warning("ask 503 chars=%d reasons=%s", len(question), error)
         # Temporary (rate limits): tell the caller to retry, instead of a 500 that looks like a bug.
@@ -123,8 +141,11 @@ def ask(request: AskRequest) -> AskResponse:
         )
 
     timings = " ".join(f"{name}={value:.0f}" for name, value in answer.timings.items())
-    log.info("ask 200 provider=%s chars=%d sources=%d %s",
-             answer.provider or "(refused)", len(question), len(answer.sources), timings)
+    # Log whether the rewrite changed the question: that is how we tell a bad follow-up answer from bad
+    # retrieval. The text itself is never logged, because church members' questions are private.
+    log.info("ask 200 provider=%s chars=%d history=%d rewritten=%s sources=%d %s",
+             answer.provider or "(refused)", len(question), len(history), searchable != question,
+             len(answer.sources), timings)
     return AskResponse(
         text=answer.text,
         provider=answer.provider,

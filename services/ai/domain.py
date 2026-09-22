@@ -59,6 +59,14 @@ class Source:
 
 
 @dataclass(frozen=True)
+class Turn:
+    """One earlier message of the conversation, used only to rewrite a follow-up question (M7)."""
+
+    role: str  # "user" or "assistant"
+    text: str
+
+
+@dataclass(frozen=True)
 class Generation:
     """What the chat model wrote, and which provider wrote it.
 

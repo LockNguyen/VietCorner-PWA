@@ -108,8 +108,14 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] M6 deploy: HF Docker Spaces need a paid plan (2026-09-22). Interim: container on the PC + Tailscale Funnel.
 - `evaluation/questions.jsonl` + `answers/` are local only now (gitignored): back them up; they are still in git
   history before 2026-09-22 (a history rewrite would remove them from GitHub; not done).
+  - [x] M7 (chat design, branch `m7-chat-assistant`): chat UI (typed + voice), localStorage history per user,
+        manual retry with a growing wait, follow-up rewriting in `services/ai/rag/condense.py` (`/ask` takes `history`).
+        81 pytest + 17 vitest tests. Verified live: answers, sources, reload persistence, new chat, 503 + retry,
+        and a voice question from a recorded WAV. Phone QA still open.
+  - [ ] Compare the two M7 branches (`m7-voice-assistant` = push-to-talk only) and decide what ships.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the container detached with `--restart unless-stopped`, install Tailscale, `tailscale funnel --bg 8000`.
-2. Test the public URL (`/health`, 401, `/ask`) from the phone's mobile data (not home Wi-Fi).
-3. M7: voice UI in `src/features/assistant/` (Claude: routes + UI; user: `useVoiceRecorder.ts`, `useAssistant.ts`).
+1. QA `m7-chat-assistant` on a real iPhone over the tunnel: mic permission, mp4 recording, Vietnamese voice.
+2. Measure the follow-up rewrite on the eval set: does it help retrieval, and how often does it narrow a
+   question that already stood alone?
+3. M8: docs/release; then Step 3 (i18n).

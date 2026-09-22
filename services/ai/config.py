@@ -125,6 +125,22 @@ PROVIDER_TIMEOUT_SECONDS = 4
 # its thread until the provider finishes, so allow a few spare ones.
 GENERATION_WORKERS = 8
 
+# --- Follow-up questions (M7) ------------------------------------------------------------------------
+# why: retrieval has no memory, so a follow-up ("what about the other group?") is rewritten into a
+# self-contained question before it is embedded. See rag/condense.py.
+
+# why: 2 turns of the user + 2 answers resolve almost every pronoun. More history costs tokens and invites
+# the rewrite to drift onto an older topic.
+MAX_HISTORY_TURNS = 4
+# why: only the gist of an earlier turn is needed to resolve a reference, and answers can be 400 tokens long.
+MAX_HISTORY_CHARS_PER_TURN = 400
+# why: a rewritten question is one sentence. Longer means the model explained itself instead of rewriting,
+# so we fall back to the user's own words.
+MAX_CONDENSED_QUESTION_CHARS = 300
+# why: this call sits BEFORE embedding, inside the same ~10 s budget. 2 s buys a rewrite from a healthy
+# provider; anything slower is not worth delaying the answer for.
+CONDENSE_DEADLINE_SECONDS = 2
+
 # --- Speech (M6) -------------------------------------------------------------------------------------
 # why: strongest Whisper for Vietnamese. Check the exact id in Groq's model list.
 WHISPER_MODEL = "whisper-large-v3"
