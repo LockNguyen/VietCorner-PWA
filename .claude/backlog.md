@@ -34,8 +34,8 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 
 ---
 
-## B2. Automated RLS / authorization tests
-**Why:** RLS failures are silent (blocked reads return `[]`). **What:** a script that, as anon, as a non-member, and as a member, tries select/insert on each table and asserts the expected result. **Done when:** `npm run test:rls` passes and fails if a policy is removed.
+## B2. Automated RLS / authorization tests — DONE 2026-09-29 (M8)
+**Why:** RLS failures are silent (blocked reads return `[]`). **Built:** `tests/rls.test.ts`, run with `npm run test:rls`. Creates two throwaway users, has one join a group and post, and asserts the other can neither read nor post; also covers `group_members`, `push_subscriptions`, the server-only `document_chunks`, and that `auth.users` is unreachable. **Still to do:** add a case for every new table (prayer requests, events, account settings).
 
 ## B3. Rate limit sending messages
 **Why:** a signed-in user can spam a group and trigger unlimited pushes. **What:** per-user limit in `POST /api/chat/messages` (e.g. 20/min, counted in Postgres). **Done when:** the 21st message in a minute returns 429.
@@ -118,3 +118,18 @@ without hurting Vietnamese ones.
 
 ## B10. Correct 404 status for unknown groups (low)
 **Why:** `loading.tsx` streaming makes `notFound()` return HTTP 200. **What:** validate the group before streaming (e.g. a route-level check). Only matters for SEO.
+
+## B17. Finish the `strings.ts` migration (chat + assistant)
+**Why:** i18n should swap one file per feature, not edit every component. `auth` is migrated as the worked example; `chat` (~29 strings) and `assistant` (~43) still have text inline. **What:** move their user-facing text into `features/<name>/strings.ts`, unchanged. **Trade-offs:** a large, mechanical diff; best done *as part of* the i18n step so the strings are touched once. **Done when:** no user-facing literal is left in a `components/` file of either feature.
+
+## B18. Shared UI kit (with the UI/UX revamp)
+**Why:** prayer requests, events and account settings will each need buttons, cards, fields and empty states. Inventing them per feature gives four different looks; building them now guesses at a design that hasn't been made. **What:** during the revamp, lift the repeated controls into `src/components/ui/`, keep them presentational, and let features import them. **Trade-offs:** shared UI is the one exception to feature isolation, so it must stay logic-free. **Done when:** every feature uses the same button, field and card, and none defines its own.
+
+## B19. Post-MVP features (planned, not scheduled)
+Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` with RLS, README, and a case in `tests/rls.test.ts`.
+| Feature | First questions to answer |
+|---|---|
+| Prayer requests + reminders | Who may read a request (group, whole church, leaders only)? Are reminders push (reuse chat's fan-out) or in-app? Can a request be anonymous? |
+| Schedule of studies and events | Who creates and cancels events? Does a cancellation notify attendees? Is it one shared calendar or per group? |
+| Account settings | Which fields are editable (display name, phone, email)? Changing an email means re-verifying it in Supabase. Where do notification preferences live (B4 overlaps)? |
+| UI/UX revamp | Bigger type and targets for elderly users; B18 is the vehicle. |

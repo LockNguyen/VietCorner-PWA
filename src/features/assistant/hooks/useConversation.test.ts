@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextRetrySeconds } from "./useChatbotMessages";
+import { nextRetrySeconds } from "./useConversation";
 
 describe("nextRetrySeconds", () => {
   it("waits two seconds longer after each failure", () => {

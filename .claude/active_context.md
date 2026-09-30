@@ -113,9 +113,26 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         81 pytest + 17 vitest tests. Verified live: answers, sources, reload persistence, new chat, 503 + retry,
         and a voice question from a recorded WAV. Phone QA still open.
   - [ ] Compare the two M7 branches (`m7-voice-assistant` = push-to-talk only) and decide what ships.
+  - [x] M7 phone QA passed (2026-09-29): mic permission, recording, spoken answer, persistence on a real iPhone.
+  - [x] M8 cleanup: feature detail moved from architecture.md into feature READMEs (auth, chat, assistant) and
+        `services/ai/README.md`; `docs/adding-a-feature.md` written (shape, RLS patterns, checklist);
+        `strings.ts` convention with auth migrated; `tests/rls.test.ts` + `npm run test:rls` (9 tests);
+        `useChatbotMessages` renamed `useConversation`; every page gets the user via `auth/server/queries`.
+- [ ] Step 3: `i18n` — the last MVP feature (en/vi strings + `{en, vi}` content + toggle). Start with B17.
+
+## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
+- B17 strings migration for chat + assistant (do it inside the i18n step).
+- B18 shared UI kit (do it inside the UI/UX revamp).
+- B19 post-MVP features: prayer requests + reminders, events schedule, account settings, UI revamp.
+- B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
+- B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
+- M9 (LiveKit real-time voice, B11) stays optional.
+- Oracle VM still pending a credit card; the AI service runs on the PC behind Tailscale Funnel until then.
+- The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. QA `m7-chat-assistant` on a real iPhone over the tunnel: mic permission, mp4 recording, Vietnamese voice.
-2. Measure the follow-up rewrite on the eval set: does it help retrieval, and how often does it narrow a
-   question that already stood alone?
-3. M8: docs/release; then Step 3 (i18n).
+1. Merge `m8-architecture-cleanup`, push, and confirm Netlify still deploys cleanly.
+2. Start Step 3 (i18n): plan the shape (`features/i18n/` + `strings.ts` per feature + a toggle), then migrate
+   chat and assistant strings as part of it (B17).
+3. Decide where the `{en, vi}` content in the database lives (which tables need translated columns) before
+   any new table is created, so prayer requests and events are designed bilingual from the start.

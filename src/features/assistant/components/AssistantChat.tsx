@@ -1,6 +1,6 @@
 "use client";
 
-import { useChatbotMessages } from "../hooks/useChatbotMessages";
+import { useConversation } from "../hooks/useConversation";
 import { useVoiceQuestion } from "../hooks/useVoiceQuestion";
 import * as speech from "../speech";
 import Composer from "./Composer";
@@ -12,7 +12,7 @@ type Props = { userId: string };
 // The assistant screen. Two hooks hold the state, four components render it.
 // A typed question is answered in writing; a spoken one is also read aloud.
 export default function AssistantChat({ userId }: Props) {
-  const chat = useChatbotMessages(userId);
+  const chat = useConversation(userId);
   const voice = useVoiceQuestion((question) => chat.send(question, { byVoice: true }));
 
   return (

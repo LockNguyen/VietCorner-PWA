@@ -127,3 +127,58 @@ Wrap `answer_question` as a tool in a LiveKit voice agent, then compare its late
 | Build the image | `docker build -t vietcorner-ai .` |
 | Run the image | `docker run --rm -p 8000:8000 --env-file .env vietcorner-ai` |
 | Deploy to the Space | `python -m deploy.push_to_space <user>/<space>` (add `--dry-run` to list the files first) |
+
+## Files
+Every module, and the one thing it is responsible for. The module header inside each file says *what it does →
+concept → why this design → inputs/outputs → common pitfalls*.
+
+| File | Job |
+|---|---|
+| `config.py` | Every constant and setting, each with the reason above it |
+| `domain.py` | The pipeline's data: `Page → Chunk → EmbeddedChunk → RetrievedChunk → Generation → Answer`, plus `Turn`, `Source` |
+| `ingest/extract.py` | `normalize_text` (NFC + whitespace), `extract_pages` (PyMuPDF, skips blank pages, 1-based) |
+| `ingest/chunk.py` | `split_with_overlap`, `chunk_pages` (word windows, never across pages) |
+| `ingest/run_ingest.py` | PDFs in `data/` → chunks → embeddings → database, idempotent per document |
+| `rag/embeddings.py` | `load_model` (cached), `embed_passages`, `embed_query` (normalized, per-model prefixes) |
+| `rag/store.py` | pgvector SQL: `replace_document_chunks`, `search_chunks`, `connect` (scripts), `connection_pool` (the API) |
+| `rag/condense.py` | Rewrites a follow-up into a standalone question from the last turns; falls back to the user's words |
+| `rag/prompt.py` | `SYSTEM_PROMPT` and the grounded prompt with numbered sources |
+| `rag/providers.py` | The provider list and the pool: preference order, `ProviderBusy` (rest, growing) vs `ProviderBroken` (drop), one deadline per request |
+| `rag/generate.py` | One OpenAI-compatible client for every provider; translates SDK errors; enforces the per-call cutoff on a background thread |
+| `rag/answer.py` | The recipe: embed → search → refuse or prompt → generate, with dependency injection and timings |
+| `speech/transcribe.py` | Whisper on Groq: one cached client, a timeout, `SpeechUnavailable` for temporary trouble |
+| `api/main.py` | FastAPI `/health`, `/ask`, `/transcribe`: bearer token, input limits, error mapping, startup warm-up |
+| `evaluation/` | `metrics.py`, `run_eval.py` (model bake-off → `results.md`), `corpus.py` (cached vectors), `explain.py` (trace one question), `check_database.py`, `compare_models.py` |
+| `deploy/push_to_space.py` | Uploads only the files the image needs to a Hugging Face Space (allowlist, no history) |
+| `Dockerfile`, `.dockerignore` | The image: CPU-only torch, bge-m3 baked in, offline at run time, non-root, port 8000 |
+| `tests/` | One file per module; `sample_pdf.py` generates a bilingual test PDF. Markers: `slow` (model), `db` (database) |
+
+## Failure behavior
+| Situation | Behavior | Why |
+|---|---|---|
+| Best chunk below `SIMILARITY_FLOOR` | Bilingual "not found", `provider: ""`, no LLM call | Faster, and nothing to hallucinate from |
+| Missing, wrong or non-ASCII token | 401 | Tokens are compared as bytes, so odd characters can't crash the check |
+| Blank question / too long | 400 / 422 | Caps token cost and abuse |
+| Empty or oversized audio | 400 / 413 | Reads at most limit+1 bytes, never a huge file |
+| Provider busy: 429, 408, 409, 5xx, timeout, network | `ProviderBusy`: rested 60 s, doubling to 15 min; the next provider answers | Temporary trouble must not remove a provider for weeks |
+| Provider broken: 400, 401, 403, 404 | `ProviderBroken`: disabled until restart | A wrong key or model id won't fix itself |
+| Model writes nothing | `ProviderBusy("empty answer")` → the next provider tries | Reasoning models can spend every token on hidden thinking |
+| Every provider resting or broken | 503 "try again in a minute" | Temporary, unlike a config error, which stays 500 |
+| Slow or stuck provider | Cut off at `PROVIDER_TIMEOUT_SECONDS` (4 s); the whole request stops at `GENERATION_DEADLINE_SECONDS` (7 s) | An HTTP timeout only limits gaps between bytes: one request ran 110 s before this |
+| Any other exception | 500 | It's our bug; don't disguise it as a provider problem |
+| Whisper rate limit, timeout, 5xx | 503 (`SpeechUnavailable`); a rejected key stays 500 | One is temporary, the other is our mistake |
+| Startup with a wrong `DATABASE_URL` | The server exits (`PoolTimeout`) | Fail at deploy time, not on the first question |
+| Logging | One line per request: status, provider, sizes, timings. Never the question text. | Church members' questions are private |
+
+## Glossary
+| Term | Meaning |
+|---|---|
+| Chunk | A small piece of a page (~300 words), embedded and retrieved on its own |
+| Embedding | A fixed-length list of numbers representing meaning; similar meaning → nearby vectors |
+| Cosine similarity | How closely two vectors point the same way (1 = identical). The dot product, for normalized vectors. |
+| HNSW | The graph index that makes nearest-neighbour search fast without comparing every row |
+| Recall@k | The fraction of the relevant pages found in the top k results |
+| MRR | Mean of 1/rank of the first relevant result: it rewards ranking the right page first |
+| Grounding | Requiring the model to answer only from the provided sources, with citations |
+| Hallucination | A fluent answer the sources do not support |
+| Condensing | Rewriting a follow-up question so it stands on its own before retrieval |

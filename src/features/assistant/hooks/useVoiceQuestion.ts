@@ -16,7 +16,7 @@ const NOT_HEARD = "Tôi chưa nghe rõ. Xin thử lại. / I didn't catch that, 
 
 // Turning speech into a question: hold the microphone, transcribe, hand the text to whoever asked.
 //
-// Why separate from useChatbotMessages: the conversation does not care where a question came from, and
+// Why separate from useConversation: the conversation does not care where a question came from, and
 // this hook does not care what happens to it afterwards. `onQuestion` is the seam between them.
 export function useVoiceQuestion(onQuestion: (question: string) => void) {
   const recorder = useVoiceRecorder();

@@ -14,7 +14,7 @@ Full docs: `.claude/architecture.md` → 6.4 assistant. The RAG pipeline itself 
 ## How one question flows
 ```
 type + Send ─┐
-             ├─► useChatbotMessages.send ─► api.askQuestion ─► /api/assistant/ask ─► server/askQuestion
+             ├─► useConversation.send ─► api.askQuestion ─► /api/assistant/ask ─► server/askQuestion
 tap 🎙️ ─► useVoiceQuestion ─► api.transcribeRecording ─► /api/assistant/transcribe ─► server/transcribeAudio
              │                                                                          │
              └────────────────────────── bubbles + sources ◄──────── AI service (rewrite → embed → search → answer)
@@ -29,7 +29,7 @@ tap 🎙️ ─► useVoiceQuestion ─► api.transcribeRecording ─► /api/a
 | Failure policy | `errors.ts` | Cause → message + whether a retry could help. One table, one decision. |
 | Browser capability | `speech.ts` | Reads an answer aloud: language from the text, iOS priming, citations stripped |
 | Device storage | `storage.ts` | The conversation in localStorage, keyed by user id, capped and crash-proof |
-| State | `hooks/useChatbotMessages.ts` | The conversation: send, retry with a growing wait, new chat, persistence |
+| State | `hooks/useConversation.ts` | The conversation: send, retry with a growing wait, new chat, persistence |
 | State | `hooks/useVoiceQuestion.ts` | Record → transcribe → hand over the text (`onQuestion`) |
 | State | `hooks/useVoiceRecorder.ts` | The microphone only: formats, permission, stopping the tracks |
 | UI | `components/` | `AssistantChat` (wires the hooks), `MessageList`, `MessageBubble`, `Composer`, `VoiceButton` |

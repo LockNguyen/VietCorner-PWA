@@ -27,7 +27,7 @@ const HISTORY_TURNS = 4;
 //
 // Why one hook: the message list, the in-flight question and the retry countdown are one piece of state.
 // Splitting them would mean three hooks reading each other's results. The components below it only render.
-export function useChatbotMessages(userId: string) {
+export function useConversation(userId: string) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [sending, setSending] = useState(false);
   const [countdown, setCountdown] = useState(0); // seconds left before a retry is sent, 0 when idle

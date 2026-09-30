@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { signOut } from "../api";
+import { STRINGS } from "../strings";
 
 export default function SignOutButton() {
   const router = useRouter();
@@ -14,7 +15,7 @@ export default function SignOutButton() {
 
   return (
     <button onClick={handleClick} className="rounded border p-3 text-red-600">
-      Sign out
+      {STRINGS.signOutButton}
     </button>
   );
 }

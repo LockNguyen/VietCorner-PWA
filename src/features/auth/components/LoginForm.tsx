@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sendLoginCode, verifyLoginCode } from "../api";
+import { STRINGS } from "../strings";
 
 // Two steps: 1) enter email → a code is emailed. 2) type the code → signed in.
 // Why a typed code instead of a clicked link: on iPhone, email links open in Safari,
@@ -44,19 +45,19 @@ export default function LoginForm() {
     <div className="space-y-4 p-4">
       {!codeSent ? (
         <form onSubmit={handleSendCode} className="space-y-4">
-          <label className="block text-lg">Email</label>
+          <label className="block text-lg">{STRINGS.emailLabel}</label>
           <input type="email" required autoComplete="email" value={email}
             onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-          <button className={buttonClass}>Send me a code</button>
+          <button className={buttonClass}>{STRINGS.sendCodeButton}</button>
         </form>
       ) : (
         <form onSubmit={handleVerifyCode} className="space-y-4">
-          <label className="block text-lg">Enter the code sent to {email}</label>
+          <label className="block text-lg">{STRINGS.codeSentTo(email)}</label>
           <input inputMode="numeric" required autoComplete="one-time-code" value={code}
             onChange={(e) => setCode(e.target.value.trim())} className={inputClass} />
-          <button className={buttonClass}>Sign in</button>
+          <button className={buttonClass}>{STRINGS.signInButton}</button>
           <button type="button" onClick={() => setCodeSent(false)} className="w-full p-2 text-blue-500">
-            Use a different email
+            {STRINGS.useAnotherEmail}
           </button>
         </form>
       )}
