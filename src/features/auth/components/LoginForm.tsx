@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sendLoginCode, verifyLoginCode } from "../api";
+import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 
 // Two steps: 1) enter email → a code is emailed. 2) type the code → signed in.
@@ -10,6 +11,7 @@ import { STRINGS } from "../strings";
 // which does not share its login with the app installed on the Home Screen.
 export default function LoginForm() {
   const router = useRouter();
+  const { t } = useLanguage(); // I18N
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
@@ -45,19 +47,19 @@ export default function LoginForm() {
     <div className="space-y-4 p-4">
       {!codeSent ? (
         <form onSubmit={handleSendCode} className="space-y-4">
-          <label className="block text-lg">{STRINGS.emailLabel}</label>
+          <label className="block text-lg">{t(STRINGS.emailLabel)}</label>
           <input type="email" required autoComplete="email" value={email}
             onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-          <button className={buttonClass}>{STRINGS.sendCodeButton}</button>
+          <button className={buttonClass}>{t(STRINGS.sendCodeButton)}</button>
         </form>
       ) : (
         <form onSubmit={handleVerifyCode} className="space-y-4">
-          <label className="block text-lg">{STRINGS.codeSentTo(email)}</label>
+          <label className="block text-lg">{t(STRINGS.codeSentTo)} {email}</label>
           <input inputMode="numeric" required autoComplete="one-time-code" value={code}
             onChange={(e) => setCode(e.target.value.trim())} className={inputClass} />
-          <button className={buttonClass}>{STRINGS.signInButton}</button>
+          <button className={buttonClass}>{t(STRINGS.signInButton)}</button>
           <button type="button" onClick={() => setCodeSent(false)} className="w-full p-2 text-blue-500">
-            {STRINGS.useAnotherEmail}
+            {t(STRINGS.useAnotherEmail)}
           </button>
         </form>
       )}

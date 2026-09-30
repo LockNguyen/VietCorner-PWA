@@ -11,7 +11,8 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Done, QA passed |
 | Group chat + push | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
-| English/Vietnamese | `src/features/i18n/` | — | Not built (next) |
+| English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
+| Admin dashboard | `src/features/admin/` | [admin](../src/features/admin/README.md) | Not built; decisions recorded |
 
 Planned after the MVP: i18n, prayer requests + reminders, a schedule of studies and events, account
 settings, and a UI/UX revamp. Each follows [docs/adding-a-feature.md](../docs/adding-a-feature.md).
@@ -121,9 +122,12 @@ RLS-aware); closed apps get Web Push through the service worker. Sending goes th
 must also fan out notifications with the service-role key. Tables: `groups`, `group_members`, `messages`,
 `push_subscriptions`.
 
-### 6.3 i18n → not built
-Next feature. Every feature keeps user-facing text in `strings.ts`, and i18n turns those values into
-`{ en, vi }` lookups plus a toggle. `auth` is already migrated; `chat` and `assistant` are backlog B17.
+### 6.3 i18n → [README](../src/features/i18n/README.md)
+Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
+The language is stored per user in `user_settings`, chosen on the login screen before the account exists
+(kept on the device, then adopted on first sign-in), and read once per page load in `layout.tsx` so the first
+paint is already right. Admin-written content (events) will be translated with `_en` / `_vi` columns instead.
+Table: `user_settings`.
 
 ### 6.4 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -141,6 +145,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | chat | Users manage their own rows; the admin client reads all to send pushes |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
+| `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 
 Every table is covered by `tests/rls.test.ts`.
 
@@ -197,6 +202,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Chat providers are config, asked in order of preference | Free tiers cap tokens per minute; the fastest answers until it throttles | Fallback quotas idle while the primary is healthy |
 | Follow-up questions are rewritten server-side before retrieval | A search index has no memory; one worked example in the prompt made a small model resolve "nhóm khác" | One extra LLM call per turn; it can narrow a question that already stood alone |
 | The assistant's conversation lives in localStorage, keyed by user id | Nothing server-side to leak, survives closing the app, keeps shared phones separate | Stays on the device after sign-out until "New chat"; no sync between devices |
+| **Fixed UI labels are translated in code; admin-written content is translated in the database** | Labels change only when a developer changes a screen, so a table would add caching, fallbacks and a deploy-free path nobody needs. Event titles are data an admin writes, so they get `_en`/`_vi` columns. | Two mechanisms to understand. A label fix needs a deploy. |
+| **The language is read on the server, then held in a client provider** | The first paint is already in the right language, and the toggle switches every label without a page fetch | `PageHeader` had to become a Client Component; a Server Component keeps the language it rendered with |
 | bge-m3 as the embedding model (measured, 41 questions) | Best at Vietnamese question → English page (vi Recall@5 0.49, MRR 0.56) | Weakest answerable/unanswerable separation, which no model does well enough to use |
 | Refusal comes from the prompt, not `SIMILARITY_FLOOR` | No model separates answerable from unanswerable (AUC 0.64–0.71) | The floor stays 0.35 as a gibberish guard; answer-quality tests matter more (B13) |
 | Load bge-m3's official `.bin` weights, not a converted `.safetensors` | The conversion is an unmerged bot PR; measured identical vectors and no faster load | Relies on torch ≥ 2.6, which the image has |

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { STRINGS } from "../strings";
 import type { ChatMessage } from "../types";
 import MessageBubble from "./MessageBubble";
 
@@ -14,6 +16,7 @@ type Props = {
 // The conversation, newest at the bottom, scrolled into view like any chat app.
 export default function MessageList({ messages, countdown, onRetry, onSpeak }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage(); // I18N
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView();
@@ -21,9 +24,7 @@ export default function MessageList({ messages, countdown, onRetry, onSpeak }: P
 
   if (messages.length === 0) {
     return (
-      <p className="p-4 text-center text-gray-500">
-        Hỏi tôi về tài liệu của hội thánh. / Ask me about the church documents.
-      </p>
+      <p className="p-4 text-center text-gray-500">{t(STRINGS.emptyState)}</p>
     );
   }
 

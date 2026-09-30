@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { askQuestion } from "../api";
-import { AssistantError, ERRORS } from "../errors";
+import { AssistantError } from "../errors";
 import * as speech from "../speech";
 import { clearMessages, loadMessages, saveMessages } from "../storage";
 import type { ChatMessage, ErrorCause, Turn } from "../types";
@@ -79,7 +79,9 @@ export function useConversation(userId: string) {
         setMessages((current) =>
           current.map((message) =>
             message.id === placeholderId
-              ? { ...message, text: ERRORS[cause].message, status: "error", errorCause: cause }
+              // The text is not stored: MessageBubble renders the message in the reader's current
+              // language, so switching language also switches an old error bubble.
+              ? { ...message, text: "", status: "error", errorCause: cause }
               : message,
           ),
         );

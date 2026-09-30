@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import { SHELL_STRINGS } from "@/components/strings";
 import AssistantChat from "@/features/assistant/components/AssistantChat";
 import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ export default async function AssistantPage() {
 
   return (
     <>
-      <PageHeader title="Assistant" />
+      <PageHeader title={SHELL_STRINGS.assistantTab} />
       <AssistantChat userId={user.id} />
     </>
   );

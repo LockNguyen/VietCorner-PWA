@@ -1,47 +1,52 @@
+import type { Text } from "@/features/i18n/types"; // I18N
 import type { ErrorCause } from "./types";
 
 // What each failure means to a user, and whether trying again could help.
 //
 // Keyed by cause rather than by HTTP status, because the two most common failures produce no status:
-// the phone is offline, or the request took too long. One table, so the wording and the retry policy
-// are decided in a single place.
-//
-// Bilingual for now, like the rest of the app. When the i18n feature lands (Step 3), these strings move
-// into the translation files and this table keeps only the keys.
+// the phone is offline, or the request took too long. One table, so the wording and the retry policy are
+// decided in a single place.
 
-export const ERRORS: Record<ErrorCause, { message: string; retryable: boolean }> = {
+export const ERRORS: Record<ErrorCause, { message: Text; retryable: boolean }> = {
   offline: {
-    message: "Không có kết nối mạng. / No internet connection.",
+    message: { en: "No internet connection.", vi: "Không có kết nối mạng." },
     retryable: true,
   },
   timeout: {
-    message: "Trợ lý trả lời quá lâu. / The assistant took too long to answer.",
+    message: { en: "The assistant took too long to answer.", vi: "Trợ lý trả lời quá lâu." },
     retryable: true,
   },
   busy: {
-    message: "Trợ lý đang bận. Xin thử lại sau một phút. / The assistant is busy. Try again in a minute.",
+    message: {
+      en: "The assistant is busy. Try again in a minute.",
+      vi: "Trợ lý đang bận. Xin thử lại sau một phút.",
+    },
     retryable: true,
   },
   server: {
-    message: "Trợ lý gặp sự cố. / The assistant had a problem.",
+    message: { en: "The assistant had a problem.", vi: "Trợ lý gặp sự cố." },
     retryable: true,
   },
   unauthorized: {
     // Retrying sends the same expired session, so the fix is signing in again, not trying again.
-    message: "Bạn cần đăng nhập lại. / Please sign in again.",
+    message: { en: "Please sign in again.", vi: "Bạn cần đăng nhập lại." },
     retryable: false,
   },
   invalid: {
     // The question was empty, too long, or the recording was unusable: the same request would fail again.
-    message: "Câu hỏi không hợp lệ. Xin thử lại bằng câu ngắn hơn. / That question couldn't be sent. Try a shorter one.",
+    message: {
+      en: "That question couldn't be sent. Try a shorter one.",
+      vi: "Câu hỏi không hợp lệ. Xin thử lại bằng câu ngắn hơn.",
+    },
     retryable: false,
   },
 };
 
 // The one error type the feature throws. `cause` is what the UI shows and decides retries from.
+// The message is looked up at render time, in the reader's language.
 export class AssistantError extends Error {
   constructor(readonly cause: ErrorCause) {
-    super(ERRORS[cause].message);
+    super(cause);
     this.name = "AssistantError";
   }
 }

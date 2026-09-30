@@ -1,6 +1,8 @@
 "use client";
 
+import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useConversation } from "../hooks/useConversation";
+import { STRINGS } from "../strings";
 import { useVoiceQuestion } from "../hooks/useVoiceQuestion";
 import * as speech from "../speech";
 import Composer from "./Composer";
@@ -12,6 +14,7 @@ type Props = { userId: string };
 // The assistant screen. Two hooks hold the state, four components render it.
 // A typed question is answered in writing; a spoken one is also read aloud.
 export default function AssistantChat({ userId }: Props) {
+  const { t } = useLanguage(); // I18N
   const chat = useConversation(userId);
   const voice = useVoiceQuestion((question) => chat.send(question, { byVoice: true }));
 
@@ -19,7 +22,7 @@ export default function AssistantChat({ userId }: Props) {
     <div className="flex h-[calc(100dvh-8rem)] flex-col">
       <div className="flex justify-end p-2">
         <button onClick={chat.newChat} className="rounded border px-3 py-1 text-sm">
-          Cuộc trò chuyện mới / New chat
+          {t(STRINGS.newChat)}
         </button>
       </div>
 
@@ -33,7 +36,7 @@ export default function AssistantChat({ userId }: Props) {
       </div>
 
       <div className="space-y-3 border-t p-4">
-        {voice.notice && <p className="text-center text-gray-500">{voice.notice}</p>}
+        {voice.notice && <p className="text-center text-gray-500">{t(voice.notice)}</p>}
         <div className="flex justify-center">
           <VoiceButton status={voice.status} recorderStatus={voice.recorderStatus} onToggle={voice.toggle} />
         </div>

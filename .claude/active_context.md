@@ -118,7 +118,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         `services/ai/README.md`; `docs/adding-a-feature.md` written (shape, RLS patterns, checklist);
         `strings.ts` convention with auth migrated; `tests/rls.test.ts` + `npm run test:rls` (9 tests);
         `useChatbotMessages` renamed `useConversation`; every page gets the user via `auth/server/queries`.
-- [ ] Step 3: `i18n` — the last MVP feature (en/vi strings + `{en, vi}` content + toggle). Start with B17.
+- [x] Step 3: `i18n` (branch `feature-i18n`): `user_settings` table, `{ en, vi }` strings in every feature,
+      `useLanguage().t`, toggle on login + settings, Vietnamese default, device choice adopted on first
+      sign-in. B17 done in the same pass (chat + assistant migrated). 20 vitest tests.
+      **Pending: the user must run `src/features/i18n/schema.sql` in Supabase before language persists.**
+- [ ] Next features in order: events → prayer requests → admin dashboard (decisions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
@@ -131,7 +135,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. Merge `m8-architecture-cleanup` (cleanup + skills + hooks), push, confirm Netlify deploys.
-2. Start Step 3 (i18n) with the `add-feature` skill; migrate chat and assistant strings as part of it (B17).
-3. Decide where `{en, vi}` content lives in the database before any new table is created, so prayer requests
-   and events are designed bilingual from the start.
+1. User: run `src/features/i18n/schema.sql` in Supabase, then `npm run test:rls` (13 tests) to confirm.
+2. QA the toggle on the phone: switch language, sign out and back in, confirm it follows the account.
+3. Start `events` (admin-created, `_en`/`_vi` columns, optional end time, weekly recurrence, cancellation push).

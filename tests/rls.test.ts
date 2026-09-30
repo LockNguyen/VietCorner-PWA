@@ -140,3 +140,35 @@ describe("auth.users", () => {
     expect(error).not.toBeNull();
   });
 });
+
+describe("user_settings (i18n)", () => {
+  it("is written and read back by its owner", async () => {
+    await alice.client.from("user_settings").upsert({ language: "en" }, { onConflict: "user_id" });
+    const { data } = await alice.client.from("user_settings").select("language").maybeSingle();
+
+    expect(data?.language).toBe("en");
+  });
+
+  it("is invisible to another user", async () => {
+    const { data } = await bob.client.from("user_settings").select("language");
+
+    expect(data).toEqual([]);
+  });
+
+  it("cannot be written on behalf of another user", async () => {
+    const { error } = await bob.client
+      .from("user_settings")
+      .insert({ user_id: alice.id, language: "en" });
+
+    expect(error?.message).toMatch(/row-level security/i);
+  });
+
+  it("rejects a language the app does not ship", async () => {
+    const { error } = await alice.client
+      .from("user_settings")
+      .upsert({ language: "fr" }, { onConflict: "user_id" });
+
+    expect(error).not.toBeNull(); // the check constraint, not the app, is what guarantees this
+  });
+});
+

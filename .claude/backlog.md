@@ -119,7 +119,7 @@ without hurting Vietnamese ones.
 ## B10. Correct 404 status for unknown groups (low)
 **Why:** `loading.tsx` streaming makes `notFound()` return HTTP 200. **What:** validate the group before streaming (e.g. a route-level check). Only matters for SEO.
 
-## B17. Finish the `strings.ts` migration (chat + assistant)
+## B17. Finish the `strings.ts` migration (chat + assistant) — DONE 2026-09-29 (i18n)
 **Why:** i18n should swap one file per feature, not edit every component. `auth` is migrated as the worked example; `chat` (~29 strings) and `assistant` (~43) still have text inline. **What:** move their user-facing text into `features/<name>/strings.ts`, unchanged. **Trade-offs:** a large, mechanical diff; best done *as part of* the i18n step so the strings are touched once. **Done when:** no user-facing literal is left in a `components/` file of either feature.
 
 ## B18. Shared UI kit (with the UI/UX revamp)

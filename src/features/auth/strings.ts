@@ -1,17 +1,16 @@
-// Every word this feature shows a user, in one place.
-//
-// Why: when the i18n feature lands, these values become { en, vi } lookups and no component changes.
-// Components import STRINGS instead of writing text inline. `codeSentTo` is a function because it takes
-// the email; that is the shape a translation lookup will have too.
-//
-// Until i18n exists, each value is the bilingual string the user sees today.
+import type { Text } from "@/features/i18n/types"; // I18N
 
+// Every word this feature shows a user, in both languages. Components read them through
+// `useLanguage().t`, so adding a language means editing this file, not the components.
 export const STRINGS = {
-  emailLabel: "Email",
-  sendCodeButton: "Gửi mã cho tôi / Send me a code",
-  codeSentTo: (email: string) => `Nhập mã đã gửi tới ${email} / Enter the code sent to ${email}`,
-  signInButton: "Đăng nhập / Sign in",
-  useAnotherEmail: "Dùng email khác / Use a different email",
-  signedInAs: "Đã đăng nhập / Signed in as",
-  signOutButton: "Đăng xuất / Sign out",
+  emailLabel: { en: "Email", vi: "Email" } satisfies Text,
+  sendCodeButton: { en: "Send me a code", vi: "Gửi mã cho tôi" } satisfies Text,
+  signInButton: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
+  useAnotherEmail: { en: "Use a different email", vi: "Dùng email khác" } satisfies Text,
+  signedInAs: { en: "Signed in as", vi: "Đã đăng nhập" } satisfies Text,
+  signOutButton: { en: "Sign out", vi: "Đăng xuất" } satisfies Text,
+  codeSentTo: {
+    en: "Enter the code sent to",
+    vi: "Nhập mã đã gửi tới",
+  } satisfies Text,
 };

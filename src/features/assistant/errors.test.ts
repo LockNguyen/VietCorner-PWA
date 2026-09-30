@@ -20,9 +20,10 @@ describe("causeForStatus", () => {
 });
 
 describe("the error table", () => {
-  it("has a bilingual message for every cause", () => {
+  it("has both languages for every cause", () => {
     for (const cause of ALL_CAUSES) {
-      expect(ERRORS[cause].message).toContain("/"); // Vietnamese / English
+      expect(ERRORS[cause].message.en).not.toBe("");
+      expect(ERRORS[cause].message.vi).not.toBe("");
     }
   });
 
@@ -37,10 +38,10 @@ describe("the error table", () => {
 });
 
 describe("AssistantError", () => {
-  it("carries the cause and the message the user will read", () => {
+  it("carries the cause, which is what the screen renders from", () => {
     const error = new AssistantError("busy");
 
     expect(error.cause).toBe("busy");
-    expect(error.message).toBe(ERRORS.busy.message);
+    expect(ERRORS[error.cause].message.vi).toMatch(/bận/);
   });
 });
