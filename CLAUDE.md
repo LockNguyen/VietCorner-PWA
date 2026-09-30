@@ -46,6 +46,13 @@ features/<name>/
 - Every Supabase table has Row Level Security (RLS) enabled with explicit policies. The anon key is public by design.
 - Secrets (AI keys, VAPID private key, service role key) go only in env vars without `NEXT_PUBLIC_`, and are read only in files that start with `import "server-only"`.
 
+## Skills and Hooks
+- `.claude/skills/` holds the working protocols: `add-feature`, `change-feature`, `database-change`,
+  `code-review`, `ai-service`, `verify-and-finish`, `debug`. Use the one that matches the task; the user can
+  also invoke it as `/<name>`.
+- `.claude/hooks/` is enforcement, not advice: a commit is blocked when the build or tests fail, and a turn is
+  blocked once when code changed with no update to the written record.
+
 ## Context Management
 - Prioritize reading `.claude/active_context.md` for current state before asking questions.
 - Deferred work goes in `.claude/backlog.md` (format: Why → What → Trade-offs → Done when). Don't build backlog items unless the user moves one into `active_context.md`.

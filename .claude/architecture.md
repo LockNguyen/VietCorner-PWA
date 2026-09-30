@@ -47,6 +47,8 @@ src/
 public/         sw.js (chat's push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
 docs/           adding-a-feature.md: the recipe every feature follows.
+.claude/skills/ One protocol per kind of work (add/change a feature, database, review, AI service, finish, debug).
+.claude/hooks/  Enforced checks: tests before a commit, docs before a turn ends.
 tests/          rls.test.ts: proves one user cannot read another's rows.
 ```
 Which file answers which question is in [docs/adding-a-feature.md](../docs/adding-a-feature.md) §4, and every
@@ -206,3 +208,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-09-21: M6: AI service containerized; provider reliability (busy vs broken, real deadlines, preference order); input limits; 503s; DB pool; startup warm-up and fail-fast; private per-request logging; `SHOW_API_DOCS`.
 - 2026-09-22: M7: assistant chat UI (typed + spoken), per-user localStorage history, manual retry with a growing wait, server-side follow-up rewriting (`rag/condense.py`). Vitest added. AI service hosted on the PC behind Tailscale Funnel after Hugging Face made Docker Spaces paid.
 - 2026-09-29: M7 phone QA passed. M8 cleanup: per-feature detail moved into feature READMEs (this file is system-level again), `docs/adding-a-feature.md` recipe with RLS patterns, `strings.ts` convention (auth migrated), automated RLS tests (`npm run test:rls`), `useChatbotMessages` renamed `useConversation`, pages get the user one way.
+- 2026-09-29: Added `.claude/skills/` (seven protocols) and `.claude/hooks/` (commit blocked on failing build or tests; turn blocked once when code changed without the written record). Skills are checklists; the hooks are what enforce.

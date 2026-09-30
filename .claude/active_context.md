@@ -131,8 +131,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. Merge `m8-architecture-cleanup`, push, and confirm Netlify still deploys cleanly.
-2. Start Step 3 (i18n): plan the shape (`features/i18n/` + `strings.ts` per feature + a toggle), then migrate
-   chat and assistant strings as part of it (B17).
-3. Decide where the `{en, vi}` content in the database lives (which tables need translated columns) before
-   any new table is created, so prayer requests and events are designed bilingual from the start.
+1. Merge `m8-architecture-cleanup` (cleanup + skills + hooks), push, confirm Netlify deploys.
+2. Start Step 3 (i18n) with the `add-feature` skill; migrate chat and assistant strings as part of it (B17).
+3. Decide where `{en, vi}` content lives in the database before any new table is created, so prayer requests
+   and events are designed bilingual from the start.
