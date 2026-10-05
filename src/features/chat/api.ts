@@ -30,12 +30,6 @@ export async function sendMessage(groupId: string, body: string): Promise<Messag
   return json;
 }
 
-// POST a membership: the signed-in user joins a group. RLS only allows joining as yourself.
-export async function joinGroup(groupId: string) {
-  const { error } = await createClient().from("group_members").insert({ group_id: groupId });
-  if (error) throw new Error(error.message);
-}
-
 // PUT this device's push subscription. Upsert keyed by endpoint, so there's one row per device.
 export async function savePushSubscription(subscription: PushSubscription) {
   const { error } = await createClient()

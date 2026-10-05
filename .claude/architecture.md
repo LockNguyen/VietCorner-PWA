@@ -9,6 +9,7 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Feature | Folder | README | Status |
 |---|---|---|---|
 | Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Done, QA passed |
+| Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. The sharing unit chat, events and prayer build on |
 | Group chat + push | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
@@ -60,6 +61,8 @@ feature README lists its own files.
 The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The rules that keep it honest:
 
 - **Features never import each other's internals.** Composition happens in `src/app/**`.
+- **`groups` is a foundation, not a leaf.** Chat, events and prayer depend on its two tables in their SQL
+  policies, never in TypeScript. `i18n` is the other foundation (`// I18N` imports).
 - **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`).
 - **Layers point one way:** page → components → hooks → `api.ts` → Supabase, and page → `server/queries.ts`;
   routes → `server/<action>.ts`.
@@ -118,10 +121,9 @@ Email + one-time code, because iPhone Home Screen apps don't share Safari's cook
 cookies for up to 400 days; `src/proxy.ts` refreshes them and redirects logged-out visitors. No tables of our own.
 
 ### 6.2 chat → [README](../src/features/chat/README.md)
-Groups, messages, and push that arrives months later. Live updates come from Supabase Realtime (WebSocket,
+Messages inside a group, and push that arrives months later. Live updates come from Supabase Realtime (WebSocket,
 RLS-aware); closed apps get Web Push through the service worker. Sending goes through an API route because it
-must also fan out notifications with the service-role key. Tables: `groups`, `group_members`, `messages`,
-`push_subscriptions`.
+must also fan out notifications with the service-role key. Tables: `messages`, `push_subscriptions`.
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -136,7 +138,12 @@ The church schedule. Four tables so a phone downloads only what it shows: `event
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
 excluded by the policy. Admin editing, the cancellation push and acting on reminders arrive with the admin
-feature. **This feature's policy reads chat's `group_members`** — the one place two features touch.
+feature. Its policy reads `group_members` from the `groups` feature.
+
+### 6.6 groups → [README](../src/features/groups/README.md)
+The church's groups and who joined which: `groups` and `group_members`, the list page and the Join button.
+Everything shared "with my group" (messages, group events, prayer requests) is decided by a membership check
+against these two tables inside an RLS policy, so the rule lives in one place.
 
 ### 6.5 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -149,8 +156,8 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | Table | Owner | Notes |
 |---|---|---|
 | `auth.users` | Supabase | Built in; one row per account, created on first sign-in |
-| `groups` | chat | Readable by any signed-in user; seeded by `schema.sql` |
-| `group_members` | chat | Users see and insert only their own rows |
+| `groups` | groups | Readable by any signed-in user; seeded by `schema.sql` |
+| `group_members` | groups | Users see and insert only their own rows |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | chat | Users manage their own rows; the admin client reads all to send pushes |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
@@ -216,7 +223,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Follow-up questions are rewritten server-side before retrieval | A search index has no memory; one worked example in the prompt made a small model resolve "nhóm khác" | One extra LLM call per turn; it can narrow a question that already stood alone |
 | The assistant's conversation lives in localStorage, keyed by user id | Nothing server-side to leak, survives closing the app, keeps shared phones separate | Stays on the device after sign-out until "New chat"; no sync between devices |
 | A weekly event is stored once and expanded in code, not copied per week | One row stays the truth; cancelling one week is a row in `event_cancellations`, and an endless weekly event never fills the table | The schedule only reaches 8 weeks ahead, and "what happens on 3 March" needs the expansion to run |
-| Events read chat's `group_members` for group-scoped visibility | Groups are the sharing unit for events and (next) prayer requests; duplicating membership would mean two truths | Features touch: removing chat breaks group events. Extracting a shared `groups` feature is backlog B20. |
+| `groups` is its own feature, and others depend on it only in SQL | Chat, events and prayer all share by group; one owner for membership means one truth and chat stays removable | `groups` cannot be removed while any of the three exists |
 | **Fixed UI labels are translated in code; admin-written content is translated in the database** | Labels change only when a developer changes a screen, so a table would add caching, fallbacks and a deploy-free path nobody needs. Event titles are data an admin writes, so they get `_en`/`_vi` columns. | Two mechanisms to understand. A label fix needs a deploy. |
 | **The language is read on the server, then held in a client provider** | The first paint is already in the right language, and the toggle switches every label without a page fetch | `PageHeader` had to become a Client Component; a Server Component keeps the language it rendered with |
 | bge-m3 as the embedding model (measured, 41 questions) | Best at Vietnamese question → English page (vi Recall@5 0.49, MRR 0.56) | Weakest answerable/unanswerable separation, which no model does well enough to use |
@@ -234,3 +241,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-05: events (members' schedule): four tables, weekly expansion with per-week cancellations, group or church-wide visibility in RLS, reminders invisible to members, seeds covering every edge case. Admin editing and the cancellation push wait for the admin feature.
 - 2026-10-05: events QA: the seed script failed because `created_by` defaulted to `auth.uid()`, which is null in the SQL Editor; `created_by` is now nullable with the reason recorded. i18n verified end to end against the real database (toggle → row written → server render in the stored language). Review fixes: `formatting.ts` for dates and times, `SerializedOccurrence` moved to `types.ts`, Escape and dialog semantics on the details panel. Timezone limitation recorded as B21.
 - 2026-10-05: events schedule verified against the seeds as a member and a non-member (results in the events README). Seed text reached the database corrupted because it was copied from PowerShell output; the file is correct, and the database-change skill now says to copy from the editor.
+- 2026-10-05: B20: `groups` and `group_members` moved out of chat into `src/features/groups/` (tables, list page, Join button). No database change. Chat keeps messages and push; events and prayer depend on groups, not on chat.

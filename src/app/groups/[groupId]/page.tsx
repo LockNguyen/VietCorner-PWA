@@ -1,17 +1,20 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
-import ChatRoom from "@/features/chat/components/ChatRoom";
-import { getChatRoom } from "@/features/chat/server/queries";
+import ChatRoom from "@/features/chat/components/ChatRoom"; // CHAT
+import { getChatRoom } from "@/features/chat/server/queries"; // CHAT
+import { getGroup } from "@/features/groups/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
+// A group's page is its chat. The group itself comes from `groups`, the conversation from `chat`.
 export default async function GroupPage({ params }: { params: Promise<{ groupId: string }> }) {
   const { groupId } = await params;
-  const room = await getChatRoom(await createClient(), groupId);
-  if (!room) notFound();
+  const supabase = await createClient();
+  const [group, room] = await Promise.all([getGroup(supabase, groupId), getChatRoom(supabase, groupId)]);
+  if (!group) notFound();
 
   return (
     <>
-      <PageHeader title={room.group.name} />
+      <PageHeader title={group.name} />
       <ChatRoom groupId={groupId} myUserId={room.userId} initialMessages={room.messages} />
     </>
   );

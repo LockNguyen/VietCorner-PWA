@@ -4,7 +4,6 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   messagePlaceholder: { en: "Message", vi: "Tin nhắn" } satisfies Text,
   sendButton: { en: "Send", vi: "Gửi" } satisfies Text,
-  joinButton: { en: "Join", vi: "Tham gia" } satisfies Text,
   notificationsOn: {
     en: "🔔 Notifications are on for this device.",
     vi: "🔔 Thiết bị này đã bật thông báo.",

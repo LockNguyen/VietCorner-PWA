@@ -1,8 +1,8 @@
 import PageHeader from "@/components/PageHeader";
 import { SHELL_STRINGS } from "@/components/strings";
-import EnableNotificationsButton from "@/features/chat/components/EnableNotificationsButton";
-import GroupList from "@/features/chat/components/GroupList";
-import { getGroups } from "@/features/chat/server/queries";
+import EnableNotificationsButton from "@/features/chat/components/EnableNotificationsButton"; // CHAT
+import GroupList from "@/features/groups/components/GroupList";
+import { getGroups } from "@/features/groups/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GroupsPage() {
@@ -11,7 +11,7 @@ export default async function GroupsPage() {
   return (
     <>
       <PageHeader title={SHELL_STRINGS.groupsTab} />
-      <EnableNotificationsButton />
+      <EnableNotificationsButton /> {/* CHAT */}
       <GroupList groups={groups} />
     </>
   );

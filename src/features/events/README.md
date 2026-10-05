@@ -43,8 +43,8 @@ the admin feature.
   "it was cancelled" mean different things to someone deciding whether to come.
 - **Visibility is in RLS, not in the query:** no group means church-wide, a group means its members only.
   Soft-deleted rows are excluded by the policy itself, so they are invisible even to a direct Supabase call.
-- **This feature reads chat's `group_members` table.** That is the one place the two touch, and it is why
-  removing chat breaks group-scoped events (see Remove). Extracting a shared `groups` feature is backlog B20.
+- **The policy reads `group_members`, which belongs to the `groups` feature.** That is a dependency in SQL
+  only: nothing here imports that folder. Run `features/groups/schema.sql` first.
 - **Times are stored as `timestamptz`** and rendered in the device's local time, which is right for one
   congregation in one place and wrong the day a group meets abroad.
 - **Known limitation: a cancelled week is matched by calendar date, computed in the server's timezone.**

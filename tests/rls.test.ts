@@ -54,7 +54,7 @@ beforeAll(async () => {
   [alice, bob] = await Promise.all([createTestUser("alice"), createTestUser("bob")]);
 
   const { data: group } = await admin.from("groups").select("id").limit(1).single();
-  if (!group) throw new Error("no groups: run features/chat/schema.sql first");
+  if (!group) throw new Error("no groups: run features/groups/schema.sql first");
   groupId = group.id;
 
   // Alice joins the group and posts; Bob stays outside it.

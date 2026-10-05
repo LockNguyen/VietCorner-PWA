@@ -1,20 +1,7 @@
--- CHAT feature schema. Run once in Supabase → SQL Editor.
+-- CHAT feature schema. Run once in Supabase → SQL Editor, after features/groups/schema.sql.
 -- Security: every table has RLS. Browsers can only see and write what the policies below allow.
 
 -- 1. Tables ---------------------------------------------------------------
-
-create table public.groups (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  created_at timestamptz not null default now()
-);
-
-create table public.group_members (
-  group_id uuid not null references public.groups (id) on delete cascade,
-  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  joined_at timestamptz not null default now(),
-  primary key (group_id, user_id)
-);
 
 create table public.messages (
   id bigint generated always as identity primary key,
@@ -38,28 +25,12 @@ create table public.push_subscriptions (
 -- 2. Permissions ----------------------------------------------------------
 -- Grants say which operations are possible at all; RLS policies then filter rows.
 
-grant select on public.groups to authenticated;
-grant select, insert on public.group_members to authenticated;
 grant select, insert on public.messages to authenticated;
 grant select, insert, update, delete on public.push_subscriptions to authenticated;
-grant all on public.groups, public.group_members, public.messages, public.push_subscriptions to service_role;
+grant all on public.messages, public.push_subscriptions to service_role;
 
-alter table public.groups enable row level security;
-alter table public.group_members enable row level security;
 alter table public.messages enable row level security;
 alter table public.push_subscriptions enable row level security;
-
-create policy "Signed-in users can see all groups"
-  on public.groups for select to authenticated
-  using (true);
-
-create policy "Users see their own memberships"
-  on public.group_members for select to authenticated
-  using (user_id = auth.uid());
-
-create policy "Users can join a group as themselves"
-  on public.group_members for insert to authenticated
-  with check (user_id = auth.uid());
 
 create policy "Members read their group's messages"
   on public.messages for select to authenticated
@@ -88,9 +59,5 @@ create policy "Users manage their own push subscriptions"
 
 alter publication supabase_realtime add table public.messages;
 
--- 4. Seed data --------------------------------------------------------------
-
-insert into public.groups (name) values ('Test Group'), ('Bible Study');
-
 -- To remove the feature, run:
--- drop table if exists public.messages, public.group_members, public.push_subscriptions, public.groups cascade;
+-- drop table if exists public.messages, public.push_subscriptions cascade;

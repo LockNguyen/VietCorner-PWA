@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { GroupWithMembership } from "../types";
 import JoinButton from "./JoinButton";
 
-// All groups. Joined groups open the chat; others show a Join button.
+// All groups. A joined group links to its page (`/groups/<id>`, where chat lives); others show a Join button.
 export default function GroupList({ groups }: { groups: GroupWithMembership[] }) {
   return (
     <ul>
