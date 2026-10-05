@@ -6,7 +6,8 @@ write it (admin feature, built next).
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
 
 ## Setup
-Run `schema.sql` in Supabase → SQL Editor. It creates four tables, their policies, and seed rows covering
+Run `schema.sql` in Supabase → SQL Editor. Copy it from the editor, not from terminal output: PowerShell
+garbles the Vietnamese seed text on the way to the clipboard. It creates four tables, their policies, and seed rows covering
 every case the list has to handle (see **Seed data** below).
 
 ## Files
@@ -69,6 +70,12 @@ the admin feature.
 - Group events show a small "Group event" badge and only appear for members of that group.
 - Tapping a row opens a panel with the full date, end time, location and description; tapping outside closes it.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
+
+Verified against the seeds on 2026-10-05 by running `getUpcomingSchedule` as real signed-in users:
+- A Bible Study member gets 20 dates, a non-member 12: the 8 missing ones are exactly the group's.
+- Only the second Bible study week is cancelled; the weeks around it are not.
+- The Vietnamese-only event shows its Vietnamese title to an English reader.
+- The past event and the soft-deleted one never come back, and `event_reminders` answers "permission denied".
 
 ## Not built yet (admin feature)
 Creating, editing and cancelling events; sending the push on cancellation; and acting on `event_reminders`,

@@ -121,10 +121,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] Step 3: `i18n` (branch `feature-i18n`): `user_settings` table, `{ en, vi }` strings in every feature,
       `useLanguage().t`, toggle on login + settings, Vietnamese default, device choice adopted on first
       sign-in. B17 done in the same pass (chat + assistant migrated). 20 vitest tests.
-      **Pending: the user must run `src/features/i18n/schema.sql` in Supabase before language persists.**
+      Schema applied and verified end to end (2026-10-05). Merged into `main` (approved by the user).
 - [x] events (branch `feature-events`): members' schedule, four tables, weekly expansion, cancellations,
       group vs church-wide RLS, reminders invisible to members, seeds for every edge case. 28 vitest tests.
-      **Pending: run `src/features/i18n/schema.sql` and `src/features/events/schema.sql` in Supabase.**
+      Schema applied; `npm run test:rls` 18/18. Schedule verified against the seeds as a member and a non-member
+      (README, Expected behavior). **Open: the Vietnamese seed text is stored corrupted** (pasted through
+      PowerShell); the user runs the repair block once. Not merged into `main` yet.
 - [ ] Next: prayer requests → admin dashboard (decisions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
@@ -138,7 +140,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run both schema files in Supabase (i18n, then events), then `npm run test:rls` (expect 22 green).
-2. Claude: QA the schedule against the seeds — grouping by day, a cancelled week, the Vietnamese-only
-   fallback, and that the soft-deleted and past rows never appear.
-3. Build prayer requests (group-scoped, author edits/deletes, anonymous flag, admin-configured reminders).
+1. User: run the events text repair block, answer the prayer-request questions, say whether `feature-events`
+   merges into `main`.
+2. Claude: build prayer requests on a new branch (group-scoped, author edits/deletes, anonymous flag,
+   reminder configuration table with no member grant).
+3. Then the admin dashboard (decisions in `src/features/admin/README.md`).

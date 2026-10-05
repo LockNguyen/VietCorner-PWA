@@ -34,3 +34,5 @@ Pick the pattern (full SQL in `docs/adding-a-feature.md` §3):
 ## 4. Applying it
 The user runs the SQL in the Supabase SQL Editor. Give them the exact block to paste, say which project and
 whether it is safe to re-run. Never assume a migration ran: verify with `npm run test:rls` or a query.
+Tell them to copy from the file open in the editor, never from terminal output: Windows PowerShell prints a
+UTF-8 file as mojibake, and Vietnamese seed text is then stored corrupted (events seeds, 2026-10-05).
