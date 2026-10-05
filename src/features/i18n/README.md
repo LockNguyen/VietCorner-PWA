@@ -19,7 +19,7 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | `user_settings(user_id, language)`, owner-only RLS |
-| Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `DEFAULT_LANGUAGE`, `isLanguage` |
+| Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `DEFAULT_LANGUAGE`, `LOCALES` (date formats), `isLanguage` |
 | Pure logic | `translate.ts` | `translate(text, language)`; falls back to the other language rather than showing nothing |
 | Text | `strings.ts` | This feature's own labels |
 | Browser API | `api.ts` | `saveLanguage` (upsert, RLS allows only your own row) |

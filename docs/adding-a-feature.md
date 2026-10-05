@@ -43,7 +43,7 @@ data has no `server/queries.ts`. **Do not create an empty file to satisfy the li
 ## 3. Write the RLS policies first
 
 Every table in `public` must have RLS enabled. A table without it is readable by anyone holding the anon
-key, which ships in the browser. Three patterns cover everything we have built so far:
+key, which ships in the browser. Four patterns cover everything we have built so far:
 
 ```sql
 -- Pattern A: rows that belong to one user (push_subscriptions, prayer requests, account settings)
@@ -65,7 +65,20 @@ create policy "Members read" on public.<table>
 -- Only the service role (never in the browser) can reach it.
 alter table public.<table> enable row level security;
 revoke all on public.<table> from anon, authenticated;
+
+-- Pattern D: a COLUMN some readers must not see (who wrote an anonymous prayer request).
+-- RLS filters rows, never columns. Give members no select on the table and let them read a view that
+-- leaves the column out. The view runs as its owner, so ITS where clause must do the membership check.
+revoke all on public.<table> from anon, authenticated;
+create view public.<table>_feed with (security_invoker = false) as
+  select id, body, case when is_anonymous then null else author_email end as author_email
+  from public.<table> t
+  where exists (select 1 from public.group_members m
+                where m.group_id = t.group_id and m.user_id = auth.uid());
+grant select on public.<table>_feed to authenticated;
 ```
+`features/prayer/schema.sql` is the worked example, including column grants (`grant insert (a, b)`) so a
+caller cannot send the columns that must come from the login token.
 
 Rules of thumb:
 - **`with check` guards writes, `using` guards reads.** An insert policy without `with check` lets a user
@@ -102,15 +115,16 @@ feature has more than one failure mode: a table of cause → message + whether a
 
 ```ts
 // features/<name>/strings.ts
+import type { Text } from "@/features/i18n/types"; // I18N
+
 export const STRINGS = {
-  sendButton: "Gửi / Send",
-  emptyState: "Chưa có gì ở đây. / Nothing here yet.",
+  sendButton: { en: "Send", vi: "Gửi" } satisfies Text,
+  emptyState: { en: "Nothing here yet.", vi: "Chưa có gì ở đây." } satisfies Text,
 };
 ```
 
-Components import `STRINGS` instead of writing text inline. Today the values are bilingual strings; when the
-i18n feature lands, this file becomes `{ en, vi }` lookups and **no component changes**. `auth` is the
-worked example; `chat` and `assistant` still have inline text and are migrated as part of i18n (backlog B17).
+Components read them with `const { t } = useLanguage()` and `t(STRINGS.sendButton)`, never inline text.
+A sentence with a number in it is a function returning a `Text` (`prayedForYou(count)` in `prayer`).
 
 ## 7. Tests
 

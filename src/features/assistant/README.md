@@ -3,7 +3,7 @@
 A chat with the church's documents: type a question or speak it, get an answer with the pages it came from.
 Spoken questions are also read back aloud. The conversation stays on the device.
 
-Full docs: `.claude/architecture.md` → 6.4 assistant. The RAG pipeline itself lives in `services/ai` (Python).
+Full docs: `.claude/architecture.md` → 6.7 assistant. The RAG pipeline itself lives in `services/ai` (Python).
 
 ## Setup
 1. Run the AI service: `docker run -d --restart unless-stopped -p 8000:8000 --env-file .env --name vc-ai vietcorner-ai`

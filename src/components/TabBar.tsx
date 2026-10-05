@@ -9,6 +9,7 @@ import { SHELL_STRINGS } from "./strings";
 const TABS = [
   { href: "/groups", label: SHELL_STRINGS.groupsTab, icon: "💬" },
   { href: "/events", label: SHELL_STRINGS.eventsTab, icon: "📅" },
+  { href: "/prayer", label: SHELL_STRINGS.prayerTab, icon: "🙏" },
   { href: "/assistant", label: SHELL_STRINGS.assistantTab, icon: "🎙️" },
   { href: "/settings", label: SHELL_STRINGS.settingsTab, icon: "⚙️" },
 ];

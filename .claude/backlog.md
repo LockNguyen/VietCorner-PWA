@@ -125,12 +125,10 @@ without hurting Vietnamese ones.
 ## B18. Shared UI kit (with the UI/UX revamp)
 **Why:** prayer requests, events and account settings will each need buttons, cards, fields and empty states. Inventing them per feature gives four different looks; building them now guesses at a design that hasn't been made. **What:** during the revamp, lift the repeated controls into `src/components/ui/`, keep them presentational, and let features import them. **Trade-offs:** shared UI is the one exception to feature isolation, so it must stay logic-free. **Done when:** every feature uses the same button, field and card, and none defines its own.
 
-## B19. Post-MVP features (planned, not scheduled)
+## B19. Post-MVP features (planned, not scheduled; events and prayer requests are built)
 Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` with RLS, README, and a case in `tests/rls.test.ts`.
 | Feature | First questions to answer |
 |---|---|
-| Prayer requests + reminders | Who may read a request (group, whole church, leaders only)? Are reminders push (reuse chat's fan-out) or in-app? Can a request be anonymous? |
-| Schedule of studies and events | Who creates and cancels events? Does a cancellation notify attendees? Is it one shared calendar or per group? |
 | Account settings | Which fields are editable (display name, phone, email)? Changing an email means re-verifying it in Supabase. Where do notification preferences live (B4 overlaps)? |
 | UI/UX revamp | Bigger type and targets for elderly users; B18 is the vehicle. |
 
@@ -139,3 +137,11 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 
 ## B21. Cancelled weeks are matched by calendar date, in the server's timezone
 **Why:** `event_cancellations.occurrence_date` is a `date`, and the expansion computes the occurrence's date with the server's clock (UTC on Netlify). For an evening event in a timezone behind UTC, the server's date is the next day, so an admin cancelling "Sunday" could fail to line up with the row members see. Harmless while the church and the server agree, wrong as soon as they don't. **What:** either store the cancelled occurrence as a `timestamptz` (exact instant, no date arithmetic), or store the church's timezone once and do all date maths in it. **Trade-offs:** the timestamp version is simplest but needs the admin page to send the exact occurrence; the timezone version is more work but also fixes day grouping for anyone travelling. **Done when:** cancelling the 19:00 Sunday occurrence lines up for a church at UTC-7, proven by a test with a fixed clock.
+
+**B21 grew on 2026-10-05:** the same missing "church timezone" also decides when `prayer_reminders.send_at` fires, and it is why a time rendered on the server (UTC on Netlify) can differ from the one the phone renders a moment later. Formatting every date with one explicit `timeZone` fixes all three: the server and the phone then print the same text.
+
+## B22. The prayer pause is enforced on the device only
+**Why:** decided 2026-10-05: the one-hour pause is stored locally and nothing about who prayed is kept in the database. So clearing storage, using a second device, or calling `pray_for_request` directly adds as many prayers as the caller likes, and "N people prayed for you" can be one person. **What:** if it is ever abused, a `prayer_request_prayers(request_id, user_id, prayed_at)` table with no member grant, written by the function, which refuses a second prayer inside the hour and lets the count mean distinct people. **Trade-offs:** stores who prayed for whom (private data, even if members never see it) and replaces a counter with rows. **Done when:** two calls inside an hour from the same account raise the count once, proven in `tests/rls.test.ts`.
+
+## B23. Tell the author when someone prays for them
+**Why:** today the author learns "3 people prayed for you" only by opening the Prayer tab and finding their own request. **What:** either a push to the author (reuses chat's fan-out, so praying would move from a database function to a route), or an "unseen" marker on the tab (needs a per-user "last seen" time). **Trade-offs:** a push per prayer is noise for a popular request, so it needs batching or B4's mute; the marker is quieter but adds state. **Done when:** an author who has not opened the tab knows they were prayed for.

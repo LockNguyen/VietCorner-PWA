@@ -10,7 +10,8 @@ This file records the decisions already made, so they are not re-litigated later
 | What admins can do | Remove any content, edit any event, delete any prayer request, and configure reminders. |
 | Deleting content | **Soft delete** (`deleted_at timestamptz`), never a hard delete. Accidental removal must be reversible, and the dashboard can show what was removed. |
 | Translations | Admins translate **content they create** (events) through the dashboard, via `_en` / `_vi` columns. Fixed UI labels stay in code (see the i18n README). |
-| Prayer reminders | Configured by admins only, **per group** — different groups may have different reminders. Members cannot set them. |
+| Prayer reminders | Configured by admins only, **per group** — different groups may have different reminders. Members cannot set them. A reminder is a scheduled push to the group. The table exists (`prayer_reminders(group_id, weekday, send_at)`, several per group, no member grant); nothing sends it until this feature adds the editor and a scheduler. |
+| Deleting a prayer request | The **author's** delete is permanent (decided 2026-10-05). An **admin's** is soft: set `prayer_requests.deleted_at`, and the `prayer_feed` view hides the row. |
 | Event cancellation | Admins can cancel a single occurrence or a recurring event permanently. Members get a push notification (reuses chat's fan-out). |
 | Page shape | `src/app/admin/page.tsx` composes admin components that each feature provides (`features/events/components/EventAdmin.tsx`, `features/prayer/components/PrayerAdmin.tsx`). `features/admin/` owns only the "is this user an admin" check and the page shell, so deleting a feature removes its admin section with it. |
 | UI | Simple and clear over dense: large targets, one action per row, a confirmation before anything destructive. |
@@ -20,6 +21,8 @@ This file records the decisions already made, so they are not re-litigated later
 - Does removing content notify its author?
 - Can an admin edit a member's prayer request text, or only hide it?
 - Is there an audit trail (who removed what, when), or is `deleted_at` enough?
+- Which timezone is "church local time"? `prayer_reminders.send_at` and event cancellations both need it (backlog B21).
+- Admins reach `prayer_requests` and both reminder tables with the service role today. Should they instead get RLS policies through the `admins` table, so the admin page can talk to Supabase directly like every other page?
 
 ## When it is built
 Follow `docs/adding-a-feature.md`, and note that **every table another feature adds must already carry

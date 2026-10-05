@@ -126,13 +126,21 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       group vs church-wide RLS, reminders invisible to members, seeds for every edge case. 28 vitest tests.
       Schema applied; `npm run test:rls` 18/18. Schedule verified against the seeds as a member and a non-member
       (README, Expected behavior). **Open: the Vietnamese seed text is stored corrupted** (pasted through
-      PowerShell); the user runs the repair block once. Not merged into `main` yet.
-- [ ] Next: prayer requests → admin dashboard (decisions in features/admin/README.md).
+      PowerShell); repaired by the user (verified 2026-10-05). Not merged into `main` yet.
+- [x] B20 (branch `feature-prayer`, off `feature-events`): `groups` + `group_members` moved from chat into
+      `src/features/groups/`. No database change. test:rls 18/18.
+- [x] prayer requests (branch `feature-prayer`): two tables, `prayer_feed` view for anonymity, `pray_for_request`,
+      Prayer tab (composer, 3-line cards, load on scroll, author's Answered/Delete), local one-hour pause.
+      40 vitest tests. Permissions proven by a 27-check dry run in a rolled-back transaction.
+      **Pending: the user runs `src/features/prayer/schema.sql`; then `npm run test:rls` (expect 29) and the
+      screen gets its first real QA. Nothing in the UI has been exercised yet.**
+- [ ] Next: admin dashboard (decisions and open questions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
 - B18 shared UI kit (do it inside the UI/UX revamp).
-- B19 post-MVP features: prayer requests + reminders, events schedule, account settings, UI revamp.
+- B19 post-MVP features still open: account settings, UI revamp.
+- B21 church timezone (cancelled weeks, reminder times, server vs phone rendering) · B22 prayer pause is device-only · B23 tell the author they were prayed for.
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
 - M9 (LiveKit real-time voice, B11) stays optional.
@@ -140,8 +148,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the events text repair block, answer the prayer-request questions, say whether `feature-events`
-   merges into `main`.
-2. Claude: build prayer requests on a new branch (group-scoped, author edits/deletes, anonymous flag,
-   reminder configuration table with no member grant).
-3. Then the admin dashboard (decisions in `src/features/admin/README.md`).
+1. User: run `src/features/prayer/schema.sql` in Supabase (copy from the editor), then `npm run test:rls`.
+2. Claude: QA the Prayer tab for real (post, anonymous, pray + pause across a reload, answered, delete,
+   load on scroll past 20) and record what was seen in the prayer README.
+3. Answer the admin open questions, then build the admin dashboard. Decide the church timezone (B21).

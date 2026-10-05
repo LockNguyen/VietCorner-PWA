@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import type { Text } from "@/features/i18n/types"; // I18N
+import type { Language, Text } from "@/features/i18n/types"; // I18N
+import { formatLongDate } from "../formatting";
 import { isoDate } from "../occurrences";
 import { STRINGS } from "../strings";
 import type { Occurrence, SerializedOccurrence } from "../types";
@@ -58,13 +59,9 @@ function groupByDay(occurrences: SerializedOccurrence[]): [string, Occurrence[]]
 }
 
 // "Today" and "Tomorrow" read faster than a date for the two days that matter most.
-function dayLabel(day: string, language: "en" | "vi", t: (text: Text) => string): string {
+function dayLabel(day: string, language: Language, t: (text: Text) => string): string {
   if (day === isoDate(new Date())) return t(STRINGS.today);
   if (day === isoDate(new Date(Date.now() + 24 * 60 * 60 * 1000))) return t(STRINGS.tomorrow);
 
-  return new Date(`${day}T12:00:00`).toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  return formatLongDate(new Date(`${day}T12:00:00`), language);
 }

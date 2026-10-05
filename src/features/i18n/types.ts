@@ -10,6 +10,10 @@ export type Text = { en: string; vi: string };
 // why: the congregation is Vietnamese. A user who has never chosen sees Vietnamese, not English.
 export const DEFAULT_LANGUAGE: Language = "vi";
 
+// The locale each language formats dates and times in. Here because every feature that shows a date needs
+// it, and two features must not disagree about how Vietnamese dates look.
+export const LOCALES: Record<Language, string> = { en: "en-US", vi: "vi-VN" };
+
 export function isLanguage(value: unknown): value is Language {
   return value === "en" || value === "vi";
 }

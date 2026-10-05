@@ -16,7 +16,7 @@ every case the list has to handle (see **Seed data** below).
 | Data | `schema.sql` | Four tables, grants, RLS, seeds, and the DROP statements |
 | Types | `types.ts` | `EventRow` (when), `EventText` (what it says), `ChurchEvent`, `Occurrence` (one date) |
 | Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule |
-| Pure logic | `formatting.ts` | Dates and times in the reader's language; the one place that knows the locale |
+| Pure logic | `formatting.ts` | Dates and times in the reader's language (the locale itself comes from i18n) |
 | Text | `strings.ts` | This feature's labels. Event titles are data, not labels. |
 | Server reads | `server/queries.ts` | `getUpcomingSchedule(supabase, language)` |
 | UI | `components/EventSchedule.tsx` | Groups the dates by day, opens the details panel |

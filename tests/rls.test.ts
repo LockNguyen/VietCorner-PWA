@@ -239,3 +239,138 @@ describe("events", () => {
   });
 });
 
+describe("prayer requests", () => {
+  // Alice and Bob share a second group here; Carol-style outsiders are played by Bob in Alice's first group,
+  // which he never joined. The admin client reads the truth the members are not allowed to see.
+  let sharedGroupId: string;
+  let namedId: string;
+  let anonymousId: string;
+  let outsideBobsGroupsId: string;
+
+  async function feedOf(user: TestUser) {
+    const { data, error } = await user.client.from("prayer_feed").select("*");
+    if (error) throw error;
+    return data;
+  }
+
+  async function prayerCount(requestId: string) {
+    const { data } = await admin.from("prayer_requests").select("prayer_count").eq("id", requestId).single();
+    return data?.prayer_count;
+  }
+
+  beforeAll(async () => {
+    const { data: other } = await admin.from("groups").select("id").neq("id", groupId).limit(1).single();
+    if (!other) throw new Error("needs two groups: run features/groups/schema.sql first");
+    sharedGroupId = other.id;
+    await alice.client.from("group_members").insert({ group_id: sharedGroupId });
+    await bob.client.from("group_members").insert({ group_id: sharedGroupId });
+
+    // Posted through the same door the app uses, so the grants and defaults are part of what is tested.
+    const posted = await Promise.all([
+      alice.client.from("prayer_requests").insert({ group_id: sharedGroupId, body: "named request" }),
+      alice.client
+        .from("prayer_requests")
+        .insert({ group_id: sharedGroupId, body: "anonymous request", is_anonymous: true }),
+      alice.client.from("prayer_requests").insert({ group_id: groupId, body: "not for bob" }),
+    ]);
+    const failed = posted.find((result) => result.error);
+    if (failed?.error) throw failed.error;
+
+    const { data: rows } = await admin.from("prayer_requests").select("id, body").eq("author_id", alice.id);
+    const idOf = (body: string) => {
+      const row = rows?.find((candidate) => candidate.body === body);
+      if (!row) throw new Error(`request "${body}" was not saved`);
+      return row.id as string;
+    };
+    [namedId, anonymousId, outsideBobsGroupsId] = [idOf("named request"), idOf("anonymous request"), idOf("not for bob")];
+  }, 60_000);
+
+  it("are read by members of the group, and nobody outside it", async () => {
+    const ids = (await feedOf(bob)).map((request) => request.id);
+
+    expect(ids).toContain(namedId);
+    expect(ids).not.toContain(outsideBobsGroupsId);
+  });
+
+  it("hide the author of an anonymous request from other members", async () => {
+    const feed = await feedOf(bob);
+    const anonymous = feed.find((request) => request.id === anonymousId);
+    const named = feed.find((request) => request.id === namedId);
+
+    expect(named?.author_email).toBe(alice.email);
+    expect(anonymous?.author_email).toBeNull();
+    expect(anonymous?.is_mine).toBe(false);
+    expect(JSON.stringify(anonymous)).not.toContain(alice.id); // no column carries the author's id
+  });
+
+  it("cannot be read from the table itself, which is where the author is stored", async () => {
+    const { data, error } = await bob.client.from("prayer_requests").select("author_id, author_email");
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
+  });
+
+  it("cannot be posted under someone else's name", async () => {
+    const { error } = await bob.client
+      .from("prayer_requests")
+      .insert({ group_id: sharedGroupId, body: "forged", author_id: alice.id });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("cannot be posted to a group the author never joined", async () => {
+    const { error } = await bob.client.from("prayer_requests").insert({ group_id: groupId, body: "intruder" });
+
+    expect(error).not.toBeNull();
+  });
+
+  it("count a prayer from a fellow member, and tell only the author", async () => {
+    await bob.client.rpc("pray_for_request", { request_id: namedId });
+
+    expect(await prayerCount(namedId)).toBe(1);
+    expect((await feedOf(alice)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
+    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBeNull();
+  });
+
+  it("do not count a prayer from outside the group, or from the author", async () => {
+    await bob.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
+    await alice.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
+
+    expect(await prayerCount(outsideBobsGroupsId)).toBe(0);
+  });
+
+  it("cannot have their count set directly", async () => {
+    const { error } = await alice.client.from("prayer_requests").update({ prayer_count: 1000 }).eq("id", namedId);
+
+    expect(error).not.toBeNull();
+    expect(await prayerCount(namedId)).toBe(1);
+  });
+
+  it("can be marked answered or deleted only by their author", async () => {
+    await bob.client.from("prayer_requests").update({ answered_at: new Date().toISOString() }).eq("id", namedId);
+    await bob.client.from("prayer_requests").delete().eq("id", namedId);
+    const { data: untouched } = await admin.from("prayer_requests").select("answered_at").eq("id", namedId).single();
+    expect(untouched).toEqual({ answered_at: null });
+
+    await alice.client.from("prayer_requests").update({ answered_at: new Date().toISOString() }).eq("id", namedId);
+    const { data: answered } = await admin.from("prayer_requests").select("answered_at").eq("id", namedId).single();
+    expect(answered?.answered_at).not.toBeNull();
+
+    await alice.client.from("prayer_requests").delete().eq("id", namedId);
+    const { data: gone } = await admin.from("prayer_requests").select("id").eq("id", namedId);
+    expect(gone).toEqual([]);
+  });
+
+  it("removed by an admin disappear from every member's feed", async () => {
+    await admin.from("prayer_requests").update({ deleted_at: new Date().toISOString() }).eq("id", anonymousId);
+
+    expect((await feedOf(alice)).map((request) => request.id)).not.toContain(anonymousId);
+  });
+
+  it("reminders never reach a member's device", async () => {
+    const { data, error } = await alice.client.from("prayer_reminders").select("weekday");
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
+  });
+});
