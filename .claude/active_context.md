@@ -132,15 +132,21 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] prayer requests (branch `feature-prayer`): two tables, `prayer_feed` view for anonymity, `pray_for_request`,
       Prayer tab (composer, 3-line cards, load on scroll, author's Answered/Delete), local one-hour pause.
       40 vitest tests. Permissions proven by a 27-check dry run in a rolled-back transaction.
-      **Pending: the user runs `src/features/prayer/schema.sql`; then `npm run test:rls` (expect 29) and the
-      screen gets its first real QA. Nothing in the UI has been exercised yet.**
+      Schema applied by the user; test:rls 29/29 (2026-10-05).
+- [x] push delivery extracted from chat into `src/features/push/` (`sendPush`). No database change.
+      Not re-tested on a real phone since the move.
+- [x] prayer, second pass (2026-10-06): Edit is back; answered requests leave the feed but stay in the table;
+      the count left the screen and became a push to the author (`/api/prayer/pray`); delete asks nothing;
+      "more…" is measured. Migration dry-run: 18/18 checks.
+      **Pending: the user runs the migration block (then test:rls expects 31; 4 fail until then), and signs
+      in at localhost:3000 in the Browser pane so Claude can exercise the screen. Then merge on the user's go.**
 - [ ] Next: admin dashboard (decisions and open questions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
 - B18 shared UI kit (do it inside the UI/UX revamp).
 - B19 post-MVP features still open: account settings, UI revamp.
-- B21 church timezone (cancelled weeks, reminder times, server vs phone rendering) · B22 prayer pause is device-only · B23 tell the author they were prayed for.
+- B21 church timezone (cancelled weeks, reminder times, server vs phone rendering) · B22 prayer pause is device-only.
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
 - M9 (LiveKit real-time voice, B11) stays optional.
@@ -148,7 +154,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run `src/features/prayer/schema.sql` in Supabase (copy from the editor), then `npm run test:rls`.
-2. Claude: QA the Prayer tab for real (post, anonymous, pray + pause across a reload, answered, delete,
-   load on scroll past 20) and record what was seen in the prayer README.
-3. Answer the admin open questions, then build the admin dashboard. Decide the church timezone (B21).
+1. User: run the prayer migration block in Supabase, then `npm run test:rls` (expect 31). Sign in at
+   localhost:3000 in the Browser pane.
+2. Claude: exercise the Prayer tab (post, anonymous, edit, answered, delete, pray + pause across a reload,
+   "more…", scroll past 20) and the Groups/Events tabs after the two extractions; record what was seen.
+3. On the user's go: merge `feature-events` and `feature-prayer` into `main`. Then a phone check of push
+   (chat message + "prayed for you"), then the admin dashboard.

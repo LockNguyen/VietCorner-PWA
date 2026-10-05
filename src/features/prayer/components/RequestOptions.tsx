@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 import type { PrayerRequest } from "../types";
+import RequestEditor from "./RequestEditor";
 
 type Props = {
   request: PrayerRequest;
   onAnswered: () => Promise<boolean>;
+  onEdit: (body: string) => Promise<boolean>;
   onDelete: () => Promise<boolean>;
   onClose: () => void;
 };
 
-// What an author can do with their own request: mark it answered, delete it, or change their mind.
-export default function RequestOptions({ request, onAnswered, onDelete, onClose }: Props) {
+// What an author can do with their own request: mark it answered, edit it, delete it, or change their mind.
+// One tap each, with no "are you sure?": the dialog itself is the second step after the X.
+export default function RequestOptions({ request, onAnswered, onEdit, onDelete, onClose }: Props) {
   const { t } = useLanguage(); // I18N
+  const [editing, setEditing] = useState(false);
 
   // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
   useEffect(() => {
@@ -31,11 +35,6 @@ export default function RequestOptions({ request, onAnswered, onDelete, onClose 
     onClose();
   }
 
-  // Deleting cannot be undone, so it is asked twice. Marking as answered is not asked: it destroys nothing.
-  function handleDelete() {
-    if (window.confirm(t(STRINGS.confirmDelete))) run(onDelete);
-  }
-
   return (
     <div className="fixed inset-0 z-10 flex items-end bg-black/40" onClick={onClose}>
       {/* Stops a tap inside the panel from closing it. */}
@@ -46,19 +45,25 @@ export default function RequestOptions({ request, onAnswered, onDelete, onClose 
         className="w-full space-y-3 rounded-t-lg bg-white p-4"
         onClick={(click) => click.stopPropagation()}
       >
-        <p className="line-clamp-2 text-gray-500">{request.body}</p>
-
-        {!request.answered_at && (
-          <button onClick={() => run(onAnswered)} className="w-full rounded bg-green-600 p-3 text-lg text-white">
-            ✓ {t(STRINGS.markAnswered)}
-          </button>
+        {editing ? (
+          <RequestEditor body={request.body} onSave={(body) => run(() => onEdit(body))} onCancel={onClose} />
+        ) : (
+          <>
+            <p className="line-clamp-2 text-gray-500">{request.body}</p>
+            <button onClick={() => run(onAnswered)} className="w-full rounded bg-green-600 p-3 text-lg text-white">
+              ✓ {t(STRINGS.markAnswered)}
+            </button>
+            <button onClick={() => setEditing(true)} className="w-full rounded bg-blue-500 p-3 text-lg text-white">
+              {t(STRINGS.editRequest)}
+            </button>
+            <button onClick={() => run(onDelete)} className="w-full rounded bg-red-600 p-3 text-lg text-white">
+              {t(STRINGS.deleteRequest)}
+            </button>
+            <button onClick={onClose} className="w-full rounded border p-3 text-lg">
+              {t(STRINGS.cancel)}
+            </button>
+          </>
         )}
-        <button onClick={handleDelete} className="w-full rounded bg-red-600 p-3 text-lg text-white">
-          {t(STRINGS.deleteRequest)}
-        </button>
-        <button onClick={onClose} className="w-full rounded border p-3 text-lg">
-          {t(STRINGS.cancel)}
-        </button>
       </div>
     </div>
   );

@@ -324,18 +324,20 @@ describe("prayer requests", () => {
     expect(error).not.toBeNull();
   });
 
-  it("count a prayer from a fellow member, and tell only the author", async () => {
-    await bob.client.rpc("pray_for_request", { request_id: namedId });
+  it("count a prayer from a fellow member, and show the number to nobody", async () => {
+    const { data: counted } = await bob.client.rpc("pray_for_request", { request_id: namedId });
 
+    expect(counted).toBe(true);
     expect(await prayerCount(namedId)).toBe(1);
-    expect((await feedOf(alice)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
-    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBeNull();
+    // The author hears the number in a notification; no member can read it, not even the author.
+    expect((await feedOf(alice)).find((request) => request.id === namedId)).not.toHaveProperty("prayer_count");
   });
 
   it("do not count a prayer from outside the group, or from the author", async () => {
-    await bob.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
-    await alice.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
+    const { data: fromOutside } = await bob.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
+    const { data: fromAuthor } = await alice.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
 
+    expect([fromOutside, fromAuthor]).toEqual([false, false]); // false is what stops the server notifying
     expect(await prayerCount(outsideBobsGroupsId)).toBe(0);
   });
 
@@ -346,18 +348,36 @@ describe("prayer requests", () => {
     expect(await prayerCount(namedId)).toBe(1);
   });
 
-  it("can be marked answered or deleted only by their author", async () => {
+  it("can be edited by their author only, and only the words", async () => {
+    await bob.client.from("prayer_requests").update({ body: "defaced" }).eq("id", namedId);
+    await alice.client.from("prayer_requests").update({ body: "named request, edited" }).eq("id", namedId);
+    const { error: notTheWords } = await alice.client
+      .from("prayer_requests")
+      .update({ is_anonymous: true })
+      .eq("id", namedId);
+
+    expect((await feedOf(bob)).find((request) => request.id === namedId)?.body).toBe("named request, edited");
+    expect(notTheWords).not.toBeNull();
+  });
+
+  it("leave the feed when their author marks them answered, and stay in the database", async () => {
     await bob.client.from("prayer_requests").update({ answered_at: new Date().toISOString() }).eq("id", namedId);
-    await bob.client.from("prayer_requests").delete().eq("id", namedId);
-    const { data: untouched } = await admin.from("prayer_requests").select("answered_at").eq("id", namedId).single();
-    expect(untouched).toEqual({ answered_at: null });
+    expect((await feedOf(alice)).map((request) => request.id)).toContain(namedId); // Bob's call did nothing
 
     await alice.client.from("prayer_requests").update({ answered_at: new Date().toISOString() }).eq("id", namedId);
-    const { data: answered } = await admin.from("prayer_requests").select("answered_at").eq("id", namedId).single();
-    expect(answered?.answered_at).not.toBeNull();
+    const { data: kept } = await admin.from("prayer_requests").select("answered_at").eq("id", namedId).single();
 
-    await alice.client.from("prayer_requests").delete().eq("id", namedId);
-    const { data: gone } = await admin.from("prayer_requests").select("id").eq("id", namedId);
+    expect((await feedOf(alice)).map((request) => request.id)).not.toContain(namedId);
+    expect(kept?.answered_at).not.toBeNull(); // kept for the end-of-year look back
+  });
+
+  it("can be deleted for good by their author only", async () => {
+    await bob.client.from("prayer_requests").delete().eq("id", outsideBobsGroupsId);
+    const { data: stillThere } = await admin.from("prayer_requests").select("id").eq("id", outsideBobsGroupsId);
+    expect(stillThere).toHaveLength(1);
+
+    await alice.client.from("prayer_requests").delete().eq("id", outsideBobsGroupsId);
+    const { data: gone } = await admin.from("prayer_requests").select("id").eq("id", outsideBobsGroupsId);
     expect(gone).toEqual([]);
   });
 

@@ -18,6 +18,7 @@ create table public.prayer_requests (
   is_anonymous boolean not null default false,
   -- How many times someone tapped "Pray". A number only: who prayed is never stored.
   prayer_count integer not null default 0,
+  -- An answered request leaves the feed but stays here, for an end-of-year look back at answered prayers.
   answered_at timestamptz,
   -- Set by an admin (admin feature). The author's own delete removes the row for good.
   deleted_at timestamptz,
@@ -45,7 +46,7 @@ grant all on public.prayer_requests, public.prayer_reminders to service_role;
 -- Column grants are what make the author unforgeable and unreadable:
 grant insert (group_id, body, is_anonymous) on public.prayer_requests to authenticated;
 grant select (id) on public.prayer_requests to authenticated; -- only so `where id = ...` works below
-grant update (answered_at) on public.prayer_requests to authenticated;
+grant update (body, answered_at) on public.prayer_requests to authenticated;
 grant delete on public.prayer_requests to authenticated;
 
 -- 3. Row Level Security ---------------------------------------------------
@@ -67,7 +68,7 @@ create policy "Members ask their own group for prayer" on public.prayer_requests
 create policy "Authors find their own requests" on public.prayer_requests
   for select to authenticated using (author_id = auth.uid());
 
-create policy "Authors mark their own requests answered" on public.prayer_requests
+create policy "Authors edit their own requests and mark them answered" on public.prayer_requests
   for update to authenticated using (author_id = auth.uid()) with check (author_id = auth.uid());
 
 create policy "Authors delete their own requests" on public.prayer_requests
@@ -87,15 +88,14 @@ select
   r.body,
   r.is_anonymous,
   r.created_at,
-  r.answered_at,
   -- Lets the app show the author their own controls without ever sending an author id.
   r.author_id = auth.uid() as is_mine,
-  case when r.is_anonymous then null else r.author_email end as author_email,
-  -- "Someone prayed for you" is for the person prayed for, nobody else.
-  case when r.author_id = auth.uid() then r.prayer_count end as prayer_count
+  case when r.is_anonymous then null else r.author_email end as author_email
+  -- `prayer_count` is deliberately absent: the author hears it in a notification, nobody reads it here.
 from public.prayer_requests r
 join public.groups g on g.id = r.group_id
 where r.deleted_at is null
+  and r.answered_at is null
   and exists (
     select 1 from public.group_members m
     where m.group_id = r.group_id and m.user_id = auth.uid()
@@ -107,18 +107,23 @@ grant select on public.prayer_feed to authenticated;
 -- 5. Praying for a request ------------------------------------------------
 -- Members cannot update `prayer_count` themselves (no grant), or one call could set it to a million.
 -- This function adds exactly one, and only for a request the caller can see and did not write.
-create function public.pray_for_request(request_id uuid) returns void
+-- It answers whether a prayer was counted, so the server notifies the author only when one was.
+create function public.pray_for_request(request_id uuid) returns boolean
 language sql security definer set search_path = '' as $$
-  update public.prayer_requests r
-  set prayer_count = r.prayer_count + 1
-  where r.id = request_id
-    and r.deleted_at is null
-    and r.answered_at is null
-    and r.author_id <> auth.uid()
-    and exists (
-      select 1 from public.group_members m
-      where m.group_id = r.group_id and m.user_id = auth.uid()
-    );
+  with counted as (
+    update public.prayer_requests r
+    set prayer_count = r.prayer_count + 1
+    where r.id = request_id
+      and r.deleted_at is null
+      and r.answered_at is null
+      and r.author_id <> auth.uid()
+      and exists (
+        select 1 from public.group_members m
+        where m.group_id = r.group_id and m.user_id = auth.uid()
+      )
+    returning 1
+  )
+  select exists (select 1 from counted);
 $$;
 
 revoke execute on function public.pray_for_request (uuid) from public, anon;

@@ -15,7 +15,7 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
 | Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Members' schedule built; admin editing comes with the admin feature |
-| Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven in a dry run. Schema not applied yet, screen not exercised |
+| Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven. The screen and a real notification are not exercised yet |
 | Admin dashboard | `src/features/admin/` | [admin](../src/features/admin/README.md) | Not built; decisions recorded |
 
 Still planned: the admin dashboard, account settings, and a UI/UX revamp. Each follows [docs/adding-a-feature.md](../docs/adding-a-feature.md).
@@ -155,10 +155,11 @@ against these two tables inside an RLS policy, so the rule lives in one place.
 
 ### 6.6 prayer → [README](../src/features/prayer/README.md)
 Requests shared inside a group, with or without the author's name. Members cannot read the table: they read
-the `prayer_feed` view, which leaves out who wrote an anonymous request and tells only the author how many
-times they were prayed for. Praying goes through the `pray_for_request` function, which adds exactly one.
-The one-hour pause between prayers is a timestamp on the device, not a timer. Tables: `prayer_requests`,
-`prayer_reminders` (admin configuration, no member grant, nothing sends them yet).
+the `prayer_feed` view, which leaves out who wrote an anonymous request. Praying goes through a route: the
+`pray_for_request` function adds exactly one, then the author is told by push ("N people prayed for you");
+the count is shown nowhere. The one-hour pause between prayers is a timestamp on the device, not a timer.
+Authors edit, delete, or mark a request answered; an answered one leaves the list but stays in the table.
+Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant, nothing sends them yet).
 
 ### 6.7 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -181,8 +182,8 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `event_reminders` | events | Admin configuration. **No grant to `authenticated`:** it never reaches a member's device. |
-| `prayer_requests` | prayer | Members insert (3 columns), mark their own answered, delete their own. **No read grant:** reading goes through the view. |
-| `prayer_feed` (view) | prayer | What members read: their groups' requests, without the author of an anonymous one. |
+| `prayer_requests` | prayer | Members insert (3 columns), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
+| `prayer_feed` (view) | prayer | What members read: their groups' unanswered requests, without the author of an anonymous one and without the count. |
 | `prayer_reminders` | prayer | Admin configuration, several per group. **No grant to `authenticated`.** |
 
 Every table is covered by `tests/rls.test.ts`.
@@ -244,6 +245,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A weekly event is stored once and expanded in code, not copied per week | One row stays the truth; cancelling one week is a row in `event_cancellations`, and an endless weekly event never fills the table | The schedule only reaches 8 weeks ahead, and "what happens on 3 March" needs the expansion to run |
 | Prayer requests are read through a view, never the table | RLS hides rows, not columns: a policy alone would let any member select the author of an "anonymous" request | A fourth pattern to know; the view runs with its owner's rights, so its `where` clause is the security and needs its own tests |
 | Prayers are a counter raised by a function; the pause between them is local | Who prayed is never stored, and nobody can write the number directly | "N people" can be one person several times; the pause does not stop a direct caller (B22) |
+| The author learns of a prayer by push only; the count is on no screen | A notification reaches someone who is not looking at the app, and a number on a card invites comparing requests | One push per prayer (no batching); an author without notifications is never told |
+| Answered requests leave the feed but are never deleted | The list stays about what still needs prayer; the history feeds an end-of-year look back | Marking as answered cannot be undone from the app |
 | A cooldown is a stored timestamp, not a running timer | Correct after the app was closed for hours; nothing to resume or leak | The button returns up to 30 s late (one shared clock tick) |
 | `groups` is its own feature, and others depend on it only in SQL | Chat, events and prayer all share by group; one owner for membership means one truth and chat stays removable | `groups` cannot be removed while any of the three exists |
 | **Fixed UI labels are translated in code; admin-written content is translated in the database** | Labels change only when a developer changes a screen, so a table would add caching, fallbacks and a deploy-free path nobody needs. Event titles are data an admin writes, so they get `_en`/`_vi` columns. | Two mechanisms to understand. A label fix needs a deploy. |
@@ -266,3 +269,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-05: B20: `groups` and `group_members` moved out of chat into `src/features/groups/` (tables, list page, Join button). No database change. Chat keeps messages and push; events and prayer depend on groups, not on chat.
 - 2026-10-05: prayer requests: `prayer_requests` + `prayer_feed` view (anonymity by column, not by UI), `pray_for_request`, `prayer_reminders`, the Prayer tab with paging on scroll and a local one-hour pause. `LOCALES` moved into i18n so events and prayer format dates the same way. Permissions proven by a 27-check dry run; the schema is not applied and the screen not exercised yet.
 - 2026-10-05: push delivery moved out of chat into `src/features/push/` (`sendPush`, the subscription table, the toggle, the `sw.js` handlers). No database change. Chat's `notifyGroup` now only decides who is told. Not re-tested on a real phone since the move.
+- 2026-10-06: prayer, second pass: authors can edit; answered requests leave the feed (kept in the table); the prayer count left the screen and became a push to the author through `POST /api/prayer/pray`; delete no longer asks; "more…" is measured instead of estimated. Needs the migration block (grant, view, function).

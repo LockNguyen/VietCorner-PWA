@@ -10,3 +10,10 @@ export async function getLanguage(supabase: SupabaseClient): Promise<Language | 
   const { data } = await supabase.from("user_settings").select("language").maybeSingle();
   return isLanguage(data?.language) ? data.language : null;
 }
+
+// Someone else's language, for text the server writes to them (a push notification). `admin` must be the
+// service-role client: RLS shows a user only their own row.
+export async function getLanguageOf(admin: SupabaseClient, userId: string): Promise<Language | null> {
+  const { data } = await admin.from("user_settings").select("language").eq("user_id", userId).maybeSingle();
+  return isLanguage(data?.language) ? data.language : null;
+}

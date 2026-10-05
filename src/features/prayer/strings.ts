@@ -23,18 +23,22 @@ export const STRINGS = {
   showLess: { en: "less", vi: "thu gọn" } satisfies Text,
   prayButton: { en: "🙏 Pray", vi: "🙏 Cầu nguyện" } satisfies Text,
   prayed: { en: "🙏 Prayed", vi: "🙏 Đã cầu nguyện" } satisfies Text,
-  answered: { en: "Answered", vi: "Đã được nhậm lời" } satisfies Text,
   manage: { en: "Options for this request", vi: "Tùy chọn cho lời xin này" } satisfies Text,
   loadingOlder: { en: "Loading…", vi: "Đang tải…" } satisfies Text,
 
   // The author's options
   markAnswered: { en: "Answered", vi: "Đã được nhậm lời" } satisfies Text,
+  editRequest: { en: "Edit", vi: "Sửa" } satisfies Text,
+  saveEdit: { en: "Save", vi: "Lưu" } satisfies Text,
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
-  confirmDelete: { en: "Delete this request for good?", vi: "Xóa hẳn lời xin cầu nguyện này?" } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
+
+  // The notification an author gets (server/notifyAuthor.ts)
+  notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };
 
-// A sentence with a number in it, so it is a function. English has a singular; Vietnamese does not.
+// The body of that notification. A sentence with a number in it, so it is a function. English has a
+// singular; Vietnamese does not. The number counts prayers: one person praying twice is "2 people".
 export function prayedForYou(count: number): Text {
   return {
     en: count === 1 ? "1 person prayed for you" : `${count} people prayed for you`,

@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
 import { FEED_COLUMNS, PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "./types";
 
-// Prayer API: every call the browser makes for this feature. All of it goes straight to Supabase; the
-// grants, policies, view and function in schema.sql decide what is allowed. Nothing here needs a secret
-// or causes a side effect, so there is no route.
+// Prayer API: every call the browser makes for this feature.
+// - Reads and the author's own writes go straight to Supabase. The grants, policies and view in schema.sql
+//   decide what is allowed.
+// - Praying goes through our API route, because it also notifies the author (needs secrets).
 
 // GET one page of requests, newest first. Pass the `created_at` of the oldest one on screen to get the
 // page after it; pass nothing for the newest page.
@@ -28,7 +29,13 @@ export async function createRequest(request: NewPrayerRequest): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-// PATCH my own request as answered. RLS ignores the call for anyone else's.
+// PATCH the words of my own request. RLS ignores the call for anyone else's.
+export async function editRequest(requestId: string, body: string): Promise<void> {
+  const { error } = await createClient().from("prayer_requests").update({ body }).eq("id", requestId);
+  if (error) throw new Error(error.message);
+}
+
+// PATCH my own request as answered, which takes it out of everyone's list. RLS ignores the call for anyone else's.
 export async function markAnswered(requestId: string): Promise<void> {
   const { error } = await createClient()
     .from("prayer_requests")
@@ -43,8 +50,12 @@ export async function deleteRequest(requestId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-// POST one prayer for someone else's request. The database adds exactly one to its count.
+// POST one prayer for someone else's request. The server counts it and tells the author.
 export async function prayFor(requestId: string): Promise<void> {
-  const { error } = await createClient().rpc("pray_for_request", { request_id: requestId });
-  if (error) throw new Error(error.message);
+  const response = await fetch("/api/prayer/pray", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestId }),
+  });
+  if (!response.ok) throw new Error((await response.json()).error);
 }

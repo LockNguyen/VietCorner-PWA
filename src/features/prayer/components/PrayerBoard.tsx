@@ -61,6 +61,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
         <RequestOptions
           request={managing}
           onAnswered={() => feed.answer(managing.id)}
+          onEdit={(body) => feed.edit(managing.id, body)}
           onDelete={() => feed.remove(managing.id)}
           onClose={() => setManaging(null)}
         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { createRequest, deleteRequest, getRequests, markAnswered, prayFor } from "../api";
+import { createRequest, deleteRequest, editRequest, getRequests, markAnswered, prayFor } from "../api";
 import { PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "../types";
 
 // The list of requests on screen, and everything that changes it.
@@ -16,6 +16,10 @@ export function usePrayerFeed(initialRequests: PrayerRequest[]) {
   const [failed, setFailed] = useState(false);
   // A ref, not state: reaching the bottom can fire twice before a re-render, and the second call must see it.
   const loadingOlder = useRef(false);
+
+  function takeOffScreen(requestId: string) {
+    setRequests((current) => current.filter((request) => request.id !== requestId));
+  }
 
   async function attempt(action: () => Promise<void>): Promise<boolean> {
     setFailed(false);
@@ -59,19 +63,25 @@ export function usePrayerFeed(initialRequests: PrayerRequest[]) {
         setHasMore(newest.length === PAGE_SIZE);
       }),
 
+    edit: (requestId: string, body: string) =>
+      attempt(async () => {
+        await editRequest(requestId, body);
+        setRequests((current) =>
+          current.map((request) => (request.id === requestId ? { ...request, body } : request)),
+        );
+      }),
+
+    // An answered request leaves the list for everyone. It stays in the database (schema.sql).
     answer: (requestId: string) =>
       attempt(async () => {
         await markAnswered(requestId);
-        const answeredAt = new Date().toISOString();
-        setRequests((current) =>
-          current.map((request) => (request.id === requestId ? { ...request, answered_at: answeredAt } : request)),
-        );
+        takeOffScreen(requestId);
       }),
 
     remove: (requestId: string) =>
       attempt(async () => {
         await deleteRequest(requestId);
-        setRequests((current) => current.filter((request) => request.id !== requestId));
+        takeOffScreen(requestId);
       }),
 
     pray: (requestId: string) => attempt(() => prayFor(requestId)),

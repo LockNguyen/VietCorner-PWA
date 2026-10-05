@@ -40,7 +40,7 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 ## B3. Rate limit sending messages
 **Why:** a signed-in user can spam a group and trigger unlimited pushes. **What:** per-user limit in `POST /api/chat/messages` (e.g. 20/min, counted in Postgres). **Done when:** the 21st message in a minute returns 429.
 
-## B4. Notification control (mute + grouping)
+## B4. Notification control (mute + grouping; prayer now sends one push per prayer too)
 **Why:** every message pushes every member, and elderly users may disable notifications entirely. **What:** a per-group mute flag. `sw.js` uses `tag: groupId` so repeated pushes replace each other. **Done when:** a muted member gets no push, and 5 messages show as 1 notification.
 
 ## B5. Private groups / invite-only joining
@@ -129,6 +129,7 @@ without hurting Vietnamese ones.
 Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` with RLS, README, and a case in `tests/rls.test.ts`.
 | Feature | First questions to answer |
 |---|---|
+| Answered prayers, looked back on ("Wrapped") | `prayer_requests.answered_at` already keeps them. Whose answered requests does a member see: their own, their group's? Do anonymous ones appear? When does it open? |
 | Account settings | Which fields are editable (display name, phone, email)? Changing an email means re-verifying it in Supabase. Where do notification preferences live (B4 overlaps)? |
 | UI/UX revamp | Bigger type and targets for elderly users; B18 is the vehicle. |
 
@@ -142,6 +143,3 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 
 ## B22. The prayer pause is enforced on the device only
 **Why:** decided 2026-10-05: the one-hour pause is stored locally and nothing about who prayed is kept in the database. So clearing storage, using a second device, or calling `pray_for_request` directly adds as many prayers as the caller likes, and "N people prayed for you" can be one person. **What:** if it is ever abused, a `prayer_request_prayers(request_id, user_id, prayed_at)` table with no member grant, written by the function, which refuses a second prayer inside the hour and lets the count mean distinct people. **Trade-offs:** stores who prayed for whom (private data, even if members never see it) and replaces a counter with rows. **Done when:** two calls inside an hour from the same account raise the count once, proven in `tests/rls.test.ts`.
-
-## B23. Tell the author when someone prays for them
-**Why:** today the author learns "3 people prayed for you" only by opening the Prayer tab and finding their own request. **What:** either a push to the author (reuses chat's fan-out, so praying would move from a database function to a route), or an "unseen" marker on the tab (needs a per-user "last seen" time). **Trade-offs:** a push per prayer is noise for a popular request, so it needs batching or B4's mute; the marker is quieter but adds state. **Done when:** an author who has not opened the tab knows they were prayed for.
