@@ -1,7 +1,7 @@
 -- CHAT feature schema. Run once in Supabase → SQL Editor, after features/groups/schema.sql.
 -- Security: every table has RLS. Browsers can only see and write what the policies below allow.
 
--- 1. Tables ---------------------------------------------------------------
+-- 1. Table ----------------------------------------------------------------
 
 create table public.messages (
   id bigint generated always as identity primary key,
@@ -14,23 +14,13 @@ create table public.messages (
 );
 create index messages_group_id_created_at on public.messages (group_id, created_at);
 
--- One row per device. The endpoint is a URL unique to that browser + app install.
-create table public.push_subscriptions (
-  endpoint text primary key,
-  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
-  subscription jsonb not null,
-  created_at timestamptz not null default now()
-);
-
 -- 2. Permissions ----------------------------------------------------------
 -- Grants say which operations are possible at all; RLS policies then filter rows.
 
 grant select, insert on public.messages to authenticated;
-grant select, insert, update, delete on public.push_subscriptions to authenticated;
-grant all on public.messages, public.push_subscriptions to service_role;
+grant all on public.messages to service_role;
 
 alter table public.messages enable row level security;
-alter table public.push_subscriptions enable row level security;
 
 create policy "Members read their group's messages"
   on public.messages for select to authenticated
@@ -50,14 +40,9 @@ create policy "Members post as themselves"
     )
   );
 
-create policy "Users manage their own push subscriptions"
-  on public.push_subscriptions for all to authenticated
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
-
 -- 3. Realtime: broadcast new messages to open chat screens (RLS still applies) --
 
 alter publication supabase_realtime add table public.messages;
 
 -- To remove the feature, run:
--- drop table if exists public.messages, public.push_subscriptions cascade;
+-- drop table if exists public.messages cascade;

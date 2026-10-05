@@ -5,7 +5,7 @@ self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
-// CHAT: show a notification when the server sends a push (payload built in features/chat/server/notifyGroup.ts).
+// PUSH: show a notification when the server sends a push (payload: features/push/types.ts).
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
@@ -17,7 +17,7 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// CHAT: tapping the notification opens the app on that group.
+// PUSH: tapping the notification opens the app at the page the sender chose.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   event.waitUntil(self.clients.openWindow(event.notification.data.url));

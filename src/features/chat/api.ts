@@ -30,14 +30,6 @@ export async function sendMessage(groupId: string, body: string): Promise<Messag
   return json;
 }
 
-// PUT this device's push subscription. Upsert keyed by endpoint, so there's one row per device.
-export async function savePushSubscription(subscription: PushSubscription) {
-  const { error } = await createClient()
-    .from("push_subscriptions")
-    .upsert({ endpoint: subscription.endpoint, subscription: subscription.toJSON() });
-  if (error) throw new Error(error.message);
-}
-
 // LIVE stream of new messages in a group. Returns a function that stops listening.
 // `onConnected` fires on the first join and again after every reconnect.
 export function subscribeToNewMessages(

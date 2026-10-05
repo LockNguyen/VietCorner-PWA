@@ -10,7 +10,8 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 |---|---|---|---|
 | Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Done, QA passed |
 | Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. The sharing unit chat, events and prayer build on |
-| Group chat + push | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
+| Group chat | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
+| Push delivery | `src/features/push/` | [push](../src/features/push/README.md) | Done (moved out of chat 2026-10-05; not re-tested on a phone since the move) |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
 | Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Members' schedule built; admin editing comes with the admin feature |
@@ -47,7 +48,7 @@ src/
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   proxy.ts      Runs before each request. Belongs to auth.
-public/         sw.js (chat's push handlers), icons, manifest output.
+public/         sw.js (push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
 docs/           adding-a-feature.md: the recipe every feature follows.
 .claude/skills/ One protocol per kind of work (add/change a feature, database, review, AI service, finish, debug).
@@ -61,8 +62,9 @@ feature README lists its own files.
 The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The rules that keep it honest:
 
 - **Features never import each other's internals.** Composition happens in `src/app/**`.
-- **`groups` is a foundation, not a leaf.** Chat, events and prayer depend on its two tables in their SQL
-  policies, never in TypeScript. `i18n` is the other foundation (`// I18N` imports).
+- **Three features are foundations, not leaves.** `groups`: chat, events and prayer depend on its two tables
+  in their SQL policies, never in TypeScript. `i18n` and `push` are imported directly, on lines marked
+  `// I18N` and `// PUSH`. A leaf feature never imports another leaf.
 - **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`),
   or the steps under **Remove** in its README.
 - **Layers point one way:** page → components → hooks → `api.ts` → Supabase, and page → `server/queries.ts`;
@@ -106,7 +108,7 @@ The empty installable app every feature plugs into.
 | `src/components/TabBar.tsx` | Bottom navigation. `TABS` is the only list of tabs. |
 | `src/components/PageHeader.tsx` | Sticky title bar |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
-| `public/sw.js` | Service worker. Activates immediately. Chat's push handlers are marked `CHAT`. |
+| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. |
 
 **Expected behavior:** `/` opens `/groups` (or `/login`); tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
@@ -122,9 +124,14 @@ Email + one-time code, because iPhone Home Screen apps don't share Safari's cook
 cookies for up to 400 days; `src/proxy.ts` refreshes them and redirects logged-out visitors. No tables of our own.
 
 ### 6.2 chat → [README](../src/features/chat/README.md)
-Messages inside a group, and push that arrives months later. Live updates come from Supabase Realtime (WebSocket,
-RLS-aware); closed apps get Web Push through the service worker. Sending goes through an API route because it
-must also fan out notifications with the service-role key. Tables: `messages`, `push_subscriptions`.
+Messages inside a group. Live updates come from Supabase Realtime (WebSocket, RLS-aware); members with the
+app closed are told by push. Sending goes through an API route because it must also notify, which needs the
+service-role key. Table: `messages`.
+
+### 6.8 push → [README](../src/features/push/README.md)
+Web Push delivery: the device's subscription, the toggle, the service-worker handlers, and
+`sendPush(userIds, notification)`. Chat and prayer decide who is told and what it says; this feature only
+delivers. Table: `push_subscriptions`.
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -167,7 +174,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `groups` | groups | Readable by any signed-in user; seeded by `schema.sql` |
 | `group_members` | groups | Users see and insert only their own rows |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
-| `push_subscriptions` | chat | Users manage their own rows; the admin client reads all to send pushes |
+| `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Soft-deleted rows hidden by the policy. |
@@ -186,9 +193,9 @@ Every table is covered by `tests/rls.test.ts`.
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/supabase/*` | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/supabase/*` | Public key; safe because RLS protects the data |
 | `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/admin.ts` | **Secret.** Bypasses RLS. Server only. |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | chat push | Identifies our server to push services |
-| `VAPID_PRIVATE_KEY` | `chat/server/notifyGroup.ts` | **Secret.** Changing it breaks every existing subscription. |
-| `VAPID_SUBJECT` | `chat/server/notifyGroup.ts` | `mailto:` contact for push services |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | push | Identifies our server to push services |
+| `VAPID_PRIVATE_KEY` | `push/server/sendPush.ts` | **Secret.** Changing it breaks every existing subscription. |
+| `VAPID_SUBJECT` | `push/server/sendPush.ts` | `mailto:` contact for push services |
 | `AI_SERVICE_URL` | `assistant/server/aiService.ts` | Where the AI service listens (no trailing slash). Server only. |
 | `AI_SERVICE_TOKEN` | `assistant/server/aiService.ts` | **Secret.** The service's `SERVICE_TOKEN`. |
 
@@ -222,7 +229,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Authorization in RLS, not TypeScript `if`s | Browsers query Supabase directly, so the database is the only check that covers every path | Blocked reads look empty rather than failing; needs the RLS tests |
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
-| Service-role client for push fan-out | RLS correctly hides other users' subscriptions | A powerful key on the server, used in exactly one file |
+| Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
+| Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
 | Netlify over Vercel | Free tier allows commercial use; git push deploys | Next runs through Netlify's adapter, so verify routes after a Next upgrade |
 | Layered feature shape (`api.ts` / `hooks` / `components` / `server`) | Every change has one predictable home | More, smaller files; some queries exist on both sides |
 | Feature detail lives in feature READMEs, not here | This file stayed readable while features doubled | Two places to update: this summary and the README |
@@ -257,3 +265,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-05: events schedule verified against the seeds as a member and a non-member (results in the events README). Seed text reached the database corrupted because it was copied from PowerShell output; the file is correct, and the database-change skill now says to copy from the editor.
 - 2026-10-05: B20: `groups` and `group_members` moved out of chat into `src/features/groups/` (tables, list page, Join button). No database change. Chat keeps messages and push; events and prayer depend on groups, not on chat.
 - 2026-10-05: prayer requests: `prayer_requests` + `prayer_feed` view (anonymity by column, not by UI), `pray_for_request`, `prayer_reminders`, the Prayer tab with paging on scroll and a local one-hour pause. `LOCALES` moved into i18n so events and prayer format dates the same way. Permissions proven by a 27-check dry run; the schema is not applied and the screen not exercised yet.
+- 2026-10-05: push delivery moved out of chat into `src/features/push/` (`sendPush`, the subscription table, the toggle, the `sw.js` handlers). No database change. Chat's `notifyGroup` now only decides who is told. Not re-tested on a real phone since the move.
