@@ -122,7 +122,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       `useLanguage().t`, toggle on login + settings, Vietnamese default, device choice adopted on first
       sign-in. B17 done in the same pass (chat + assistant migrated). 20 vitest tests.
       **Pending: the user must run `src/features/i18n/schema.sql` in Supabase before language persists.**
-- [ ] Next features in order: events → prayer requests → admin dashboard (decisions in features/admin/README.md).
+- [x] events (branch `feature-events`): members' schedule, four tables, weekly expansion, cancellations,
+      group vs church-wide RLS, reminders invisible to members, seeds for every edge case. 28 vitest tests.
+      **Pending: run `src/features/i18n/schema.sql` and `src/features/events/schema.sql` in Supabase.**
+- [ ] Next: prayer requests → admin dashboard (decisions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
@@ -135,6 +138,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run `src/features/i18n/schema.sql` in Supabase, then `npm run test:rls` (13 tests) to confirm.
-2. QA the toggle on the phone: switch language, sign out and back in, confirm it follows the account.
-3. Start `events` (admin-created, `_en`/`_vi` columns, optional end time, weekly recurrence, cancellation push).
+1. User: run both schema files in Supabase (i18n, then events), then `npm run test:rls` (expect 22 green).
+2. Claude: QA the schedule against the seeds — grouping by day, a cancelled week, the Vietnamese-only
+   fallback, and that the soft-deleted and past rows never appear.
+3. Build prayer requests (group-scoped, author edits/deletes, anonymous flag, admin-configured reminders).

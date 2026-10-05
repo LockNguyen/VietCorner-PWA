@@ -172,3 +172,70 @@ describe("user_settings (i18n)", () => {
   });
 });
 
+describe("events", () => {
+  // Alice is a member of the seeded group; Bob never joined it. The admin client stands in for the admin
+  // page, which does not exist yet.
+  let churchWideId: string;
+  let groupOnlyId: string;
+  let deletedId: string;
+
+  beforeAll(async () => {
+    const rows = [
+      { starts_at: new Date(Date.now() + 86_400_000).toISOString(), created_by: alice.id },
+      { starts_at: new Date(Date.now() + 86_400_000).toISOString(), created_by: alice.id, group_id: groupId },
+      {
+        starts_at: new Date(Date.now() + 86_400_000).toISOString(),
+        created_by: alice.id,
+        deleted_at: new Date().toISOString(),
+      },
+    ];
+    const { data, error } = await admin.from("events").insert(rows).select("id");
+    if (error || !data) throw error ?? new Error("could not seed events");
+    [churchWideId, groupOnlyId, deletedId] = data.map((row) => row.id);
+
+    await admin.from("event_texts").insert(
+      data.map((row) => ({ event_id: row.id, language: "en", title: `test ${row.id.slice(0, 8)}` })),
+    );
+    await admin.from("event_reminders").insert({ event_id: churchWideId, minutes_before: 60 });
+  }, 60_000);
+
+  afterAll(async () => {
+    await admin.from("events").delete().in("id", [churchWideId, groupOnlyId, deletedId]);
+  });
+
+  it("church-wide events are visible to every signed-in member", async () => {
+    const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
+
+    expect(data).toHaveLength(1);
+  });
+
+  it("a group's events are hidden from everyone outside that group", async () => {
+    const { data: forMember } = await alice.client.from("events").select("id").eq("id", groupOnlyId);
+    const { data: forOutsider } = await bob.client.from("events").select("id").eq("id", groupOnlyId);
+
+    expect(forMember).toHaveLength(1);
+    expect(forOutsider).toEqual([]);
+  });
+
+  it("a soft-deleted event is invisible, even queried directly", async () => {
+    const { data } = await alice.client.from("events").select("id").eq("id", deletedId);
+
+    expect(data).toEqual([]);
+  });
+
+  it("members cannot write events", async () => {
+    const { error } = await alice.client
+      .from("events")
+      .insert({ starts_at: new Date().toISOString() });
+
+    expect(error).not.toBeNull(); // no insert grant until the admin feature exists
+  });
+
+  it("reminders never reach a member's device", async () => {
+    const { data, error } = await alice.client.from("event_reminders").select("minutes_before");
+
+    expect(error ?? data).not.toBeNull();
+    expect(data ?? []).toEqual([]);
+  });
+});
+

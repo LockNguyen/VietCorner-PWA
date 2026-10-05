@@ -133,3 +133,6 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 | Schedule of studies and events | Who creates and cancels events? Does a cancellation notify attendees? Is it one shared calendar or per group? |
 | Account settings | Which fields are editable (display name, phone, email)? Changing an email means re-verifying it in Supabase. Where do notification preferences live (B4 overlaps)? |
 | UI/UX revamp | Bigger type and targets for elderly users; B18 is the vehicle. |
+
+## B20. Extract a shared `groups` feature
+**Why:** `groups` and `group_members` live in `chat`, but `events` already reads them for group-scoped visibility and prayer requests will too. Today removing chat would break both. **What:** move the two tables and their queries into `src/features/groups/`, leave chat owning only messages and push, and update the three READMEs plus the RLS policies that reference them. **Trade-offs:** touches working code and policies for a structural gain, so it is worth doing once prayer requests confirm the pattern — not before. **Done when:** no feature outside `groups/` owns membership, and each feature's README lists `groups` as a dependency instead of `chat`.

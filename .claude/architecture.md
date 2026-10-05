@@ -12,6 +12,7 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Group chat + push | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
+| Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Members' schedule built; admin editing comes with the admin feature |
 | Admin dashboard | `src/features/admin/` | [admin](../src/features/admin/README.md) | Not built; decisions recorded |
 
 Planned after the MVP: i18n, prayer requests + reminders, a schedule of studies and events, account
@@ -129,7 +130,15 @@ The language is stored per user in `user_settings`, chosen on the login screen b
 paint is already right. Admin-written content (events) will be translated with `_en` / `_vi` columns instead.
 Table: `user_settings`.
 
-### 6.4 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
+### 6.4 events → [README](../src/features/events/README.md)
+The church schedule. Four tables so a phone downloads only what it shows: `events` (when), `event_texts`
+(one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
+no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
+Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
+excluded by the policy. Admin editing, the cancellation push and acting on reminders arrive with the admin
+feature. **This feature's policy reads chat's `group_members`** — the one place two features touch.
+
+### 6.5 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
 aloud when the question was spoken. The web feature is thin; the RAG pipeline (ingest → embed → pgvector
 search → grounded answer, plus Whisper and follow-up rewriting) lives in `services/ai` and is reachable only
@@ -146,6 +155,10 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_subscriptions` | chat | Users manage their own rows; the admin client reads all to send pushes |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
+| `events` | events | When an event happens. Church-wide when `group_id` is null. Soft-deleted rows hidden by the policy. |
+| `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
+| `event_cancellations` | events | One skipped week of a recurring event. |
+| `event_reminders` | events | Admin configuration. **No grant to `authenticated`:** it never reaches a member's device. |
 
 Every table is covered by `tests/rls.test.ts`.
 
@@ -202,6 +215,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Chat providers are config, asked in order of preference | Free tiers cap tokens per minute; the fastest answers until it throttles | Fallback quotas idle while the primary is healthy |
 | Follow-up questions are rewritten server-side before retrieval | A search index has no memory; one worked example in the prompt made a small model resolve "nhóm khác" | One extra LLM call per turn; it can narrow a question that already stood alone |
 | The assistant's conversation lives in localStorage, keyed by user id | Nothing server-side to leak, survives closing the app, keeps shared phones separate | Stays on the device after sign-out until "New chat"; no sync between devices |
+| A weekly event is stored once and expanded in code, not copied per week | One row stays the truth; cancelling one week is a row in `event_cancellations`, and an endless weekly event never fills the table | The schedule only reaches 8 weeks ahead, and "what happens on 3 March" needs the expansion to run |
+| Events read chat's `group_members` for group-scoped visibility | Groups are the sharing unit for events and (next) prayer requests; duplicating membership would mean two truths | Features touch: removing chat breaks group events. Extracting a shared `groups` feature is backlog B20. |
 | **Fixed UI labels are translated in code; admin-written content is translated in the database** | Labels change only when a developer changes a screen, so a table would add caching, fallbacks and a deploy-free path nobody needs. Event titles are data an admin writes, so they get `_en`/`_vi` columns. | Two mechanisms to understand. A label fix needs a deploy. |
 | **The language is read on the server, then held in a client provider** | The first paint is already in the right language, and the toggle switches every label without a page fetch | `PageHeader` had to become a Client Component; a Server Component keeps the language it rendered with |
 | bge-m3 as the embedding model (measured, 41 questions) | Best at Vietnamese question → English page (vi Recall@5 0.49, MRR 0.56) | Weakest answerable/unanswerable separation, which no model does well enough to use |
@@ -216,3 +231,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-09-22: M7: assistant chat UI (typed + spoken), per-user localStorage history, manual retry with a growing wait, server-side follow-up rewriting (`rag/condense.py`). Vitest added. AI service hosted on the PC behind Tailscale Funnel after Hugging Face made Docker Spaces paid.
 - 2026-09-29: M7 phone QA passed. M8 cleanup: per-feature detail moved into feature READMEs (this file is system-level again), `docs/adding-a-feature.md` recipe with RLS patterns, `strings.ts` convention (auth migrated), automated RLS tests (`npm run test:rls`), `useChatbotMessages` renamed `useConversation`, pages get the user one way.
 - 2026-09-29: Added `.claude/skills/` (seven protocols) and `.claude/hooks/` (commit blocked on failing build or tests; turn blocked once when code changed without the written record). Skills are checklists; the hooks are what enforce.
+- 2026-10-05: events (members' schedule): four tables, weekly expansion with per-week cancellations, group or church-wide visibility in RLS, reminders invisible to members, seeds covering every edge case. Admin editing and the cancellation push wait for the admin feature.
