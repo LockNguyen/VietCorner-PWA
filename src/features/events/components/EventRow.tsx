@@ -1,6 +1,7 @@
 "use client";
 
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 import type { Occurrence } from "../types";
 
@@ -14,15 +15,11 @@ export default function EventRow({ occurrence, onOpen }: Props) {
   return (
     <li>
       <button onClick={onOpen} className="w-full rounded border p-3 text-left text-lg">
-        <span className="mr-2 text-gray-500">{time(startsAt, language)}</span>
+        <span className="mr-2 text-gray-500">{formatTime(startsAt, language)}</span>
         <span className={canceled ? "line-through" : ""}>{event.text.title}</span>
         {canceled && <span className="ml-2 text-red-600">({t(STRINGS.canceled)})</span>}
         {event.group_id && <span className="ml-2 text-sm text-gray-400">{t(STRINGS.groupOnly)}</span>}
       </button>
     </li>
   );
-}
-
-export function time(date: Date, language: string): string {
-  return date.toLocaleTimeString(language === "vi" ? "vi-VN" : "en-US", { hour: "numeric", minute: "2-digit" });
 }

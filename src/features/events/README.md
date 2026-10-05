@@ -15,6 +15,7 @@ every case the list has to handle (see **Seed data** below).
 | Data | `schema.sql` | Four tables, grants, RLS, seeds, and the DROP statements |
 | Types | `types.ts` | `EventRow` (when), `EventText` (what it says), `ChurchEvent`, `Occurrence` (one date) |
 | Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule |
+| Pure logic | `formatting.ts` | Dates and times in the reader's language; the one place that knows the locale |
 | Text | `strings.ts` | This feature's labels. Event titles are data, not labels. |
 | Server reads | `server/queries.ts` | `getUpcomingSchedule(supabase, language)` |
 | UI | `components/EventSchedule.tsx` | Groups the dates by day, opens the details panel |
@@ -45,6 +46,10 @@ the admin feature.
   removing chat breaks group-scoped events (see Remove). Extracting a shared `groups` feature is backlog B20.
 - **Times are stored as `timestamptz`** and rendered in the device's local time, which is right for one
   congregation in one place and wrong the day a group meets abroad.
+- **Known limitation: a cancelled week is matched by calendar date, computed in the server's timezone.**
+  For an evening event in a timezone behind UTC, the server's date can be the next day, and the cancellation
+  would not line up. Harmless while the church and the server agree; backlog B21 records the fix (store the
+  occurrence as a timestamp, or the church's timezone alongside it).
 
 ## Seed data (what each row proves)
 | Row | Case |

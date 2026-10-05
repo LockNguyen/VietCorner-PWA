@@ -21,7 +21,9 @@ create table public.events (
   repeat_until date,                      -- optional: null means it keeps repeating until cancelled
   canceled_at timestamptz,                -- the whole event is off, including future weeks
   deleted_at timestamptz,                 -- soft delete: admins can undo, members never see it
-  created_by uuid not null default auth.uid() references auth.users (id),
+  -- Null when nobody signed in created it: the seed rows below, and anything the system adds later.
+  -- `auth.uid()` is null outside a request (the SQL Editor), so a NOT NULL here makes seeding impossible.
+  created_by uuid default auth.uid() references auth.users (id),
   created_at timestamptz not null default now()
 );
 

@@ -1,9 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { formatLongDate, formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 import type { Occurrence } from "../types";
-import { time } from "./EventRow";
 
 type Props = { occurrence: Occurrence; onClose: () => void };
 
@@ -13,23 +14,34 @@ export default function EventDetails({ occurrence, onClose }: Props) {
   const { t, language } = useLanguage(); // I18N
   const { event, startsAt, endsAt, canceled } = occurrence;
 
+  // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
+  useEffect(() => {
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-10 flex items-end bg-black/40" onClick={onClose}>
       {/* Stops a tap inside the panel from closing it. */}
-      <div className="w-full rounded-t-lg bg-white p-4" onClick={(click) => click.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={event.text.title}
+        className="w-full rounded-t-lg bg-white p-4"
+        onClick={(click) => click.stopPropagation()}
+      >
         <h2 className="text-xl font-semibold">{event.text.title}</h2>
 
         {canceled && <p className="mt-1 text-red-600">{t(STRINGS.canceled)}</p>}
 
         <p className="mt-2 text-lg">
-          {startsAt.toLocaleDateString(language === "vi" ? "vi-VN" : "en-US", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          })}
+          {formatLongDate(startsAt, language)}
           {" · "}
-          {time(startsAt, language)}
-          {endsAt && ` – ${time(endsAt, language)}`}
+          {formatTime(startsAt, language)}
+          {endsAt && ` – ${formatTime(endsAt, language)}`}
         </p>
 
         {event.repeats_weekly && <p className="text-gray-500">{t(STRINGS.everyWeek)}</p>}

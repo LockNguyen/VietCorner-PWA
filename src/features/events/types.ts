@@ -28,3 +28,10 @@ export type Occurrence = {
   endsAt: Date | null;
   canceled: boolean;
 };
+
+// The same thing after crossing the server → client boundary, where a Date becomes a string.
+// The page serializes, `EventSchedule` revives: nothing else needs to know this shape exists.
+export type SerializedOccurrence = Omit<Occurrence, "startsAt" | "endsAt"> & {
+  startsAt: string;
+  endsAt: string | null;
+};
