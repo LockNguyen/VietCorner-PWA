@@ -25,6 +25,7 @@ with undo, cancel for good, each with a push); the Groups section (create, renam
 | Prayer reminders | A scheduled push to a group. Set by admins only, several per group (`prayer_reminders(group_id, weekday, send_at)` exists; nothing sends it yet). |
 | Church timezone | **`America/New_York`** (Winston-Salem, NC; 2026-10-06). Reminder times and event dates are in this timezone. Closes the question in backlog B21; the code change is still to do. |
 | Groups | Admins can create and rename groups (2026-10-06). |
+| Joining a group | **Needs an admin's approval** (2026-10-06, not built: backlog B5). Join creates a pending request shown on the Admin tab; only an admin approves it. |
 | Page shape | `src/app/admin/page.tsx` composes admin components that each feature provides (`features/events/components/EventAdmin.tsx`, `features/prayer/components/PrayerAdmin.tsx`). `features/admin/` owns only the page shell, so deleting a feature removes its admin section with it. |
 | UI | Simple and clear over dense: large targets, one action per row. |
 

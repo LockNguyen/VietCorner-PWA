@@ -43,8 +43,8 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 ## B4. Notification control (mute + grouping; a fixed one-minute pause per topic exists since 2026-10-06)
 **Why:** every message pushes every member, and elderly users may disable notifications entirely. **What:** a per-group mute flag. `sw.js` uses `tag: groupId` so repeated pushes replace each other. **Done when:** a muted member gets no push, and 5 messages show as 1 notification.
 
-## B5. Private groups / invite-only joining
-**Why:** anyone can join any group (MVP choice). **What:** admin role + invites. Tighten the `group_members` insert policy.
+## B5. Joining a group needs an admin's approval (decided 2026-10-06, not built)
+**Why:** anyone can join any group today, and joining opens its chat, events and prayer requests, so a group is not private. **What:** tapping Join creates a *pending request*; it appears on the Admin tab; only an admin approves it, and only then is the user a member. Planned shape: a separate `group_join_requests` table (so `group_members` keeps meaning "is a member" and no chat, events or prayer policy changes), members lose direct insert on `group_members`, and an `approve_join_request` function for holders of `groups.manage`. **Trade-offs:** every join waits on a person; without a notification to admins, requests sit unseen. **Done when:** a user who tapped Join sees "Pending", reads nothing of the group until approved, and the RLS tests prove a member cannot approve themselves.
 
 ## B6. Load older messages
 **Why:** only the newest 50 load. **What:** a "Load older" button → `getMessagesBefore(groupId, oldestId)`.
