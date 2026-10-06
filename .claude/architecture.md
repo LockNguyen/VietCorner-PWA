@@ -48,6 +48,7 @@ src/
   components/   App shell shared by every page (TabBar, PageHeader, ServiceWorkerRegister).
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
+  lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   proxy.ts      Runs before each request. Belongs to auth.
 public/         sw.js (push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
@@ -140,9 +141,11 @@ feature registers its own permission and brings its own section to `src/app/admi
 
 ### 6.8 push → [README](../src/features/push/README.md)
 Web Push delivery: the device's subscription, the toggle, the service-worker handlers, and
-`sendPush(userIds, notification)`. Chat and prayer decide who is told and what it says; this feature only
-delivers, at most one notification per user per topic (`chat:<group>`, `prayer`) per minute. Tables:
-`push_subscriptions`, `push_cooldowns` (server-only).
+`sendPush(userIds, notification)`. The sending feature decides who is told and what it says; this feature
+only delivers, at most one notification per user per topic (`chat:<group>`, `prayer`) per minute, or always
+when there is no topic. It also owns the scheduler's side: `POST /api/reminders/send` is called every 15
+minutes by a Supabase cron job, and `sendPushOnce` makes each reminder go out once. Tables:
+`push_subscriptions`, `push_cooldowns`, `push_sent_once` (the last two server-only).
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -192,16 +195,17 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `group_join_requests` | groups | Someone asked to join. Users insert and see their own; `groups.manage` sees all, declines (delete) and approves (function). |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
+| `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
-| `event_reminders` | events | Admin configuration. **No grant to `authenticated`:** it never reaches a member's device. |
+| `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
 | `prayer_requests` | prayer | Members insert (3 columns), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
 | `prayer_feed` (view) | prayer | What members read: their groups' unanswered requests, without the author of an anonymous one and without the count. |
-| `prayer_reminders` | prayer | Admin configuration, several per group. **No grant to `authenticated`.** |
+| `prayer_reminders` | prayer | A weekly nudge per group, several allowed. Read and written only with `prayer.reminders`. |
 
 Every table is covered by `tests/rls.test.ts`.
 
@@ -214,6 +218,7 @@ Every table is covered by `tests/rls.test.ts`.
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | push | Identifies our server to push services |
 | `VAPID_PRIVATE_KEY` | `push/server/sendPush.ts` | **Secret.** Changing it breaks every existing subscription. |
 | `VAPID_SUBJECT` | `push/server/sendPush.ts` | `mailto:` contact for push services |
+| `CRON_SECRET` | `app/api/reminders/send/route.ts` | **Secret.** What the Supabase cron job sends to prove it is the scheduler. Unset = the route refuses everyone. |
 | `AI_SERVICE_URL` | `assistant/server/aiService.ts` | Where the AI service listens (no trailing slash). Server only. |
 | `AI_SERVICE_TOKEN` | `assistant/server/aiService.ts` | **Secret.** The service's `SERVICE_TOKEN`. |
 
@@ -224,7 +229,7 @@ The AI service has its own settings in `services/ai/.env` (see `.env.example` th
 `npm install`, `npm run dev`. `npm run build` type-checks. `npm test`, `npm run test:rls`.
 
 **Web app (Netlify + GitHub):** import the repo; Next.js is detected, so no `netlify.toml`. Add every
-variable in §8; mark **only** `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PRIVATE_KEY` and `AI_SERVICE_TOKEN` as
+variable in §8; mark **only** `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PRIVATE_KEY`, `CRON_SECRET` and `AI_SERVICE_TOKEN` as
 "Contains secret values" — never a `NEXT_PUBLIC_*` one, because Next copies those into the build on purpose
 and the scanner would fail the build. Keep the same VAPID keys as local, or existing subscriptions break.
 Every push to `main` redeploys. Live: https://vietcorners.netlify.app
@@ -250,6 +255,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
+| Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
 | Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
 | Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
 | Netlify over Vercel | Free tier allows commercial use; git push deploys | Next runs through Netlify's adapter, so verify routes after a Next upgrade |
@@ -300,3 +306,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-06: events admin reworked to one "Edit event" panel: fields, next four dates with Cancel / Undo, and "Cancel this event permanently" (replaces Remove; members see it one more week). Cancellation and undo notifications carry no topic, so each arrives outside the one-minute pause.
 - 2026-10-06: prayer moderation put on hold (backlog B24): groups are meant to be private, so admins get no access to prayer requests until the pastor decides. No code changed.
 - 2026-10-06: joining a group needs approval (B5): `group_join_requests`, `approve_join_request`, members lose insert on `group_members`, "Waiting to join" in the Groups admin section, pushes to managers (on a request) and to the person (on approval).
+- 2026-10-06: reminders: event reminders (three choices, in the Edit panel) and weekly prayer reminders per group (Admin tab, `prayer.reminders`); `POST /api/reminders/send` behind `CRON_SECRET`, called every 15 minutes by a Supabase cron job; `push_sent_once` + `sendPushOnce`. `churchTime.ts` moved to `src/lib` (prayer uses it too).

@@ -37,6 +37,8 @@ export const STRINGS = {
   forWhomField: { en: "For", vi: "Dành cho" } satisfies Text,
   repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (không bắt buộc)" } satisfies Text,
 
+  remindersHeading: { en: "Remind members", vi: "Nhắc thành viên" } satisfies Text,
+
   // The notification members get (server/notifyScheduleChange.ts): "Cancelled: <when>" or "Back on: <when>"
   backOn: { en: "Back on", vi: "Diễn ra trở lại" } satisfies Text,
   untilFurtherNotice: { en: "until further notice", vi: "cho đến khi có thông báo mới" } satisfies Text,
@@ -47,4 +49,11 @@ export const PROBLEMS: Record<DraftProblem, Text> = {
   noTitle: { en: "Add a title in at least one language.", vi: "Xin nhập tên sự kiện bằng ít nhất một ngôn ngữ." },
   noStart: { en: "Choose when it starts.", vi: "Xin chọn thời điểm bắt đầu." },
   endsBeforeItStarts: { en: "The end must be after the start.", vi: "Giờ kết thúc phải sau giờ bắt đầu." },
+};
+
+// The reminder choices, by minutes before the event (REMINDER_CHOICES in types.ts).
+export const REMINDER_LABELS: Record<number, Text> = {
+  1440: { en: "1 day before", vi: "Trước 1 ngày" },
+  120: { en: "2 hours before", vi: "Trước 2 giờ" },
+  30: { en: "30 minutes before", vi: "Trước 30 phút" },
 };

@@ -41,6 +41,14 @@ export type SerializedOccurrence = Omit<Occurrence, "startsAt" | "endsAt"> & {
   endsAt: string | null;
 };
 
+// The `events` columns every read asks for, named once.
+export const EVENT_COLUMNS = "id, group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at";
+
+// How long before an event a reminder can be sent, in minutes.
+// why: a day to plan, two hours to get ready, thirty minutes to leave. Fixed choices instead of a number
+// box: nothing to mistype, and the scheduler's 15-minute run is fine enough for the shortest of them.
+export const REMINDER_CHOICES = [1440, 120, 30];
+
 // --- What the admin section works with ---------------------------------------------------------------
 
 // One of an event's next dates, ready to show and to cancel.
@@ -54,6 +62,7 @@ export type UpcomingDate = {
 export type ManagedEvent = EventRow & {
   texts: Partial<Record<Language, EventText>>;
   upcoming: UpcomingDate[];
+  reminderMinutes: number[]; // which of REMINDER_CHOICES are switched on
 };
 
 // What the event form holds. Times are church wall time ("YYYY-MM-DDTHH:mm", what a datetime-local input

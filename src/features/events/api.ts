@@ -5,7 +5,7 @@ import type { EventDraft } from "./types";
 
 // Events API: every call the browser makes for this feature. Members only read, and that happens on the
 // server (server/queries.ts), so everything here is an action of someone with the "events.manage" permission.
-// - Saving goes straight to Supabase. RLS in schema.sql refuses anyone without the permission.
+// - Saving, and choosing reminders, go straight to Supabase. RLS in schema.sql refuses anyone without the permission.
 // - Cancelling and undoing go through our API route, because they also notify members (needs secrets).
 
 // POST a new event, or PATCH an existing one when `eventId` is given, with its text in each language.
@@ -33,6 +33,16 @@ export async function saveEvent(draft: EventDraft, eventId?: string): Promise<vo
       : await supabase.from("event_texts").delete().eq("event_id", id).eq("language", language);
     if (error) throw new Error(error.message);
   }
+}
+
+// PUT or DELETE one reminder choice of an event ("30 minutes before"). Straight to Supabase: it only stores
+// the choice; the scheduler sends.
+export async function setReminder(eventId: string, minutesBefore: number, on: boolean): Promise<void> {
+  const reminders = createClient().from("event_reminders");
+  const { error } = on
+    ? await reminders.upsert({ event_id: eventId, minutes_before: minutesBefore }, { onConflict: "event_id,minutes_before" })
+    : await reminders.delete().eq("event_id", eventId).eq("minutes_before", minutesBefore);
+  if (error) throw new Error(error.message);
 }
 
 // POST a cancellation: one week when `occurrenceDate` (YYYY-MM-DD, church date) is given, otherwise the

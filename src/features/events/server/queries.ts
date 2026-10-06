@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Language } from "@/features/i18n/types";
-import { isoDate } from "../churchTime";
-import { occurrencesOf, upcomingOccurrences, WEEKS_AHEAD } from "../occurrences";
-import type { ChurchEvent, EventRow, EventText, ManagedEvent, Occurrence } from "../types";
+import { isoDate } from "@/lib/churchTime";
+import { isCanceled, startsOf, upcomingOccurrences, WEEKS_AHEAD } from "../occurrences";
+import { EVENT_COLUMNS, type ChurchEvent, type EventRow, type EventText, type ManagedEvent, type Occurrence } from "../types";
 
 // Server-side reads for this feature. The page creates the client and passes it in.
 //
@@ -12,8 +12,6 @@ import type { ChurchEvent, EventRow, EventText, ManagedEvent, Occurrence } from 
 // queries below filter `deleted_at` themselves; for members the policy already did.
 
 type TextRow = EventText & { event_id: string; language: Language };
-
-const EVENT_COLUMNS = "id, group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at";
 
 // why: enough to cancel next week or the one after without scrolling a long list per event.
 const DATES_SHOWN_TO_MANAGERS = 4;
@@ -60,28 +58,27 @@ export async function getManagedEvents(supabase: SupabaseClient, now = new Date(
   if (error || !rows?.length) return [];
 
   const ids = rows.map((row: EventRow) => row.id);
-  const [{ data: texts }, canceledDates] = await Promise.all([
+  const [{ data: texts }, { data: reminders }, canceledDates] = await Promise.all([
     supabase.from("event_texts").select("event_id, language, title, description, location").in("event_id", ids),
+    supabase.from("event_reminders").select("event_id, minutes_before").in("event_id", ids),
     cancellations(supabase, ids),
   ]);
 
   return (rows as EventRow[]).map((row) => {
     const ownTexts = ((texts ?? []) as TextRow[]).filter((text) => text.event_id === row.id);
-    // The expansion only needs the dates, so the text it carries along is left empty.
-    const dates = occurrencesOf(
-      { ...row, text: { title: "", description: null, location: null } },
-      canceledDates.get(row.id) ?? new Set(),
-      now,
-    );
+    const ownCancellations = canceledDates.get(row.id) ?? new Set();
 
     return {
       ...row,
       texts: Object.fromEntries(ownTexts.map(({ language, title, description, location }) => [language, { title, description, location }])),
-      upcoming: dates.slice(0, DATES_SHOWN_TO_MANAGERS).map((date) => ({
-        churchDate: isoDate(date.startsAt),
-        startsAt: date.startsAt.toISOString(),
-        canceled: date.canceled,
-      })),
+      upcoming: startsOf(row, now)
+        .slice(0, DATES_SHOWN_TO_MANAGERS)
+        .map((startsAt) => ({
+          churchDate: isoDate(startsAt),
+          startsAt: startsAt.toISOString(),
+          canceled: isCanceled(row, ownCancellations, startsAt),
+        })),
+      reminderMinutes: (reminders ?? []).filter((reminder) => reminder.event_id === row.id).map((reminder) => reminder.minutes_before),
     };
   });
 }

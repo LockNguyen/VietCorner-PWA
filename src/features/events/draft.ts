@@ -1,5 +1,5 @@
 import { LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
-import { toInstant, wallTime } from "./churchTime";
+import { toInstant, wallTime } from "@/lib/churchTime";
 import type { EventDraft, EventText, ManagedEvent } from "./types";
 
 // The event form's contents, and the two translations around it: a stored event → what the form shows,

@@ -159,13 +159,16 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [ ] admin slice 2 (prayer moderation): ON HOLD, backlog B24, waits on the pastor.
 - [x] join approval (branch `join-approval`): ask → pending → a manager approves or declines; three pushes.
       Dry run 17/17, build clean. **Pending: the join SQL block; test:rls expects 40.** Not exercised on screen.
-- [ ] admin slice 3: reminders (editors for event and prayer reminders) + the scheduler that sends them.
+- [x] admin slice 3: reminders (branch `join-approval`): event reminders (3 choices), weekly prayer reminders per
+      group, `/api/reminders/send` behind `CRON_SECRET`, send-once ledger. 69 unit tests, 15-check dry run.
+      **Pending: the reminders SQL block (test:rls expects 41 with the join block too); then, to actually send:
+      deploy, set `CRON_SECRET` on Netlify, run the cron SQL by hand.** No reminder has been seen arriving.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
 - B18 shared UI kit (do it inside the UI/UX revamp).
 - B19 post-MVP features still open: account settings, UI revamp.
-- B21 done for events; prayer reminder times still need church time · B22 prayer pause is device-only.
+- B22 prayer pause is device-only.
 - B24 prayer moderation on hold (pastor).
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
@@ -174,9 +177,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. Deploy and test what is built: push `main`, then a phone session with two accounts (chat push after the
-   move, the one-minute pause, "prayed for you", an event cancellation and its undo, the Admin tab).
-2. Admin slice 3: reminders, on branch `admin-reminders`. Open questions first: what a prayer reminder says,
-   who gets an event reminder, and how often the scheduler runs.
-3. User, with the pastor: who (if anyone) outside a group may read or hide its prayer requests (B24), and
-   whether joining a group should need an invitation (B5).
+1. User: run the join block and the reminders block; `npm run test:rls` (expect 41). Sign out and in (new
+   permission `prayer.reminders`).
+2. On the user's go: merge `join-approval`, push `main`, set `CRON_SECRET` on Netlify, run the cron SQL
+   (push/schema.sql section 5). Then the phone session: chat push, the pause, "prayed for you", a
+   cancellation and undo, a join request and approval, one event reminder, one prayer reminder.
+3. User, with the pastor: who (if anyone) outside a group may read or hide its prayer requests (B24).

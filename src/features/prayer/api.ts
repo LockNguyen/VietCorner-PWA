@@ -50,6 +50,20 @@ export async function deleteRequest(requestId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
+// POST a weekly reminder for a group ("Wednesdays at 19:00", church time). Needs "prayer.reminders".
+export async function addReminder(groupId: string, weekday: number, sendAt: string): Promise<void> {
+  const { error } = await createClient()
+    .from("prayer_reminders")
+    .insert({ group_id: groupId, weekday, send_at: sendAt });
+  if (error) throw new Error(error.message);
+}
+
+// DELETE a reminder. Needs "prayer.reminders".
+export async function removeReminder(reminderId: string): Promise<void> {
+  const { error } = await createClient().from("prayer_reminders").delete().eq("id", reminderId);
+  if (error) throw new Error(error.message);
+}
+
 // POST one prayer for someone else's request. The server counts it and tells the author.
 export async function prayFor(requestId: string): Promise<void> {
   const response = await fetch("/api/prayer/pray", {

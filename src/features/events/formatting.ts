@@ -1,5 +1,5 @@
 import { LOCALES, type Language } from "@/features/i18n/types"; // I18N
-import { CHURCH_TIME_ZONE } from "./churchTime";
+import { CHURCH_TIME_ZONE } from "@/lib/churchTime";
 
 // Dates and times as this congregation reads them. One place, because the list, the day headings and the
 // details panel must agree on what a date looks like.

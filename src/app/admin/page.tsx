@@ -8,6 +8,9 @@ import GroupAdmin from "@/features/groups/components/GroupAdmin";
 import { getGroups, getJoinRequests } from "@/features/groups/server/queries";
 import { MANAGE_GROUPS } from "@/features/groups/types";
 import { getMyPermissions } from "@/features/permissions/server/queries";
+import PrayerReminderAdmin from "@/features/prayer/components/PrayerReminderAdmin";
+import { getPrayerReminders } from "@/features/prayer/server/queries";
+import { MANAGE_PRAYER_REMINDERS } from "@/features/prayer/types";
 import { createClient } from "@/lib/supabase/server";
 
 // The admin page is a list of sections, one per thing that can be managed. Each feature brings its own
@@ -20,14 +23,18 @@ export default async function AdminPage() {
   // render, and every save would still be refused by the database.
   if (permissions.length === 0) notFound();
 
-  // Groups are read once: the Groups section edits them, and the event form offers them as "For".
+  // Groups are read once: the Groups section edits them, and the other sections offer them as a choice.
   const groups = await getGroups(supabase);
+  const groupChoices = groups.map(({ id, name }) => ({ id, name }));
 
   return (
     <>
       <PageHeader title={SHELL_STRINGS.adminTab} />
       {permissions.includes(MANAGE_EVENTS) && (
-        <EventAdmin events={await getManagedEvents(supabase)} groups={groups.map(({ id, name }) => ({ id, name }))} />
+        <EventAdmin events={await getManagedEvents(supabase)} groups={groupChoices} />
+      )}
+      {permissions.includes(MANAGE_PRAYER_REMINDERS) && (
+        <PrayerReminderAdmin reminders={await getPrayerReminders(supabase)} groups={groupChoices} />
       )}
       {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={groups} requests={await getJoinRequests(supabase)} />}
     </>

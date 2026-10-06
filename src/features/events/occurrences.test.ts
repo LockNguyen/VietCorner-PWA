@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isoDate, wallTime } from "./churchTime";
+import { isoDate, wallTime } from "@/lib/churchTime";
 import { occurrencesOf, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
 import type { ChurchEvent } from "./types";
 

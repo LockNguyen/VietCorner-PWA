@@ -5,7 +5,7 @@
 --   events              when it happens (structure only)
 --   event_texts         one row per language; a member fetches theirs, not both
 --   event_cancellations one skipped week of a recurring event
---   event_reminders     admin configuration; members have no grant on it at all
+--   event_reminders     admin configuration; no policy lets a member read it
 --
 -- Visibility: an event with no group is church-wide; an event with a group is for its members only.
 -- That policy reads `group_members`, which belongs to the groups feature.
@@ -52,7 +52,8 @@ create table public.event_reminders (
   event_id uuid not null references public.events (id) on delete cascade,
   -- How long before the event the push is sent. Admins configure it; members never read this table.
   minutes_before int not null check (minutes_before > 0),
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  unique (event_id, minutes_before) -- switching a choice on twice cannot send it twice
 );
 
 -- 2. Grants ---------------------------------------------------------------
@@ -63,6 +64,8 @@ grant select on public.events to authenticated;
 grant select on public.event_texts to authenticated;
 grant select on public.event_cancellations to authenticated;
 revoke all on public.event_reminders from anon, authenticated;
+grant select, delete on public.event_reminders to authenticated; -- managers only, by the policy in section 3
+grant insert (event_id, minutes_before) on public.event_reminders to authenticated;
 
 -- Supabase grants everything on a new table by default, so take the writes away first; then give back
 -- exactly what the admin page sends. `created_by` is not in the list: it comes from the login token.
@@ -140,7 +143,11 @@ create policy "Event managers cancel a single week, and undo it" on public.event
 
 insert into public.role_permissions (role, permission) values ('admin', 'events.manage');
 
--- event_reminders gets RLS with no policies at all: admin code will reach it with the service role.
+-- Members never read reminders: this is the table's only policy. The scheduler uses the service role.
+create policy "Event managers choose reminders" on public.event_reminders
+  for all to authenticated
+  using ((select public.has_permission('events.manage')))
+  with check ((select public.has_permission('events.manage')));
 
 -- 4. Seed data ------------------------------------------------------------
 -- Until the admin page exists, these rows are how the feature is exercised: one normal case and every

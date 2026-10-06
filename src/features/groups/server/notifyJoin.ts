@@ -1,7 +1,7 @@
 import "server-only";
-import { getLanguagesOf } from "@/features/i18n/server/queries"; // I18N
+import { splitByLanguage } from "@/features/i18n/server/queries"; // I18N
 import { translate } from "@/features/i18n/translate"; // I18N
-import { DEFAULT_LANGUAGE, LANGUAGES, type Text } from "@/features/i18n/types"; // I18N
+import { LANGUAGES, type Text } from "@/features/i18n/types"; // I18N
 import { getUserIdsWithPermission } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { sendPush } from "@/features/push/server/sendPush"; // PUSH
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -32,18 +32,15 @@ async function notify(
   body: Text,
   where: { url: string; topic?: string },
 ) {
-  const [{ data: group }, languageOf] = await Promise.all([
+  const [{ data: group }, readers] = await Promise.all([
     admin.from("groups").select("name").eq("id", groupId).single(),
-    getLanguagesOf(admin, userIds),
+    splitByLanguage(admin, userIds),
   ]);
   if (!group) return;
 
   await Promise.all(
     LANGUAGES.map((language) =>
-      sendPush(
-        userIds.filter((userId) => (languageOf.get(userId) ?? DEFAULT_LANGUAGE) === language),
-        { title: group.name, body: translate(body, language), ...where },
-      ),
+      sendPush(readers[language], { title: group.name, body: translate(body, language), ...where }),
     ),
   );
 }

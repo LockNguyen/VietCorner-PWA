@@ -33,6 +33,13 @@ export const STRINGS = {
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 
+  // Admin section: when each group is reminded to pray
+  remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
+  addReminder: { en: "Add reminder", vi: "Thêm lời nhắc" } satisfies Text,
+  removeReminder: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
+  // The notification a group gets at that time (server/sendDueReminders.ts). The group's name is the title.
+  timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
+
   // The notification an author gets (server/notifyAuthor.ts)
   notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };

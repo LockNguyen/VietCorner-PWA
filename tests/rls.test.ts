@@ -255,6 +255,18 @@ describe("push cooldowns (server-only)", () => {
     expect(claimError).not.toBeNull();
   });
 
+  it("keep the send-once ledger out of members' reach, and send each key once", async () => {
+    const key = `rls-test:${Date.now()}`;
+    const { error: readError } = await alice.client.from("push_sent_once").select("key");
+    const { error: claimError } = await alice.client.rpc("claim_push_once", { key });
+    const { data: first } = await admin.rpc("claim_push_once", { key });
+    const { data: second } = await admin.rpc("claim_push_once", { key });
+    await admin.from("push_sent_once").delete().eq("key", key);
+
+    expect([readError, claimError].every((error) => error !== null)).toBe(true);
+    expect([first, second]).toEqual([true, false]);
+  });
+
   it("give each user one turn per topic per pause", async () => {
     const claim = async (topic: string, pauseSeconds = 60) => {
       const { data, error } = await admin.rpc("claim_push_turns", {
@@ -439,11 +451,17 @@ describe("events", () => {
     expect(kept).toHaveLength(1); // kept in the database
   });
 
-  it("reminders never reach a member's device", async () => {
-    const { data, error } = await alice.client.from("event_reminders").select("minutes_before");
+  it("reminders are chosen by someone with events.manage, and never reach a member's device", async () => {
+    // The setup above stored one reminder with the service role, so "no rows" for Bob means hidden.
+    const { data: asMember } = await bob.client.from("event_reminders").select("minutes_before");
+    const { error: memberAdds } = await bob.client.from("event_reminders").insert({ event_id: churchWideId, minutes_before: 30 });
+    const { data: asManager } = await alice.client.from("event_reminders").select("minutes_before").eq("event_id", churchWideId);
+    const { error: managerAdds } = await alice.client.from("event_reminders").insert({ event_id: churchWideId, minutes_before: 30 });
 
-    expect(error ?? data).not.toBeNull();
-    expect(data ?? []).toEqual([]);
+    expect(asMember).toEqual([]);
+    expect(memberAdds).not.toBeNull();
+    expect(asManager).toEqual([{ minutes_before: 60 }]);
+    expect(managerAdds).toBeNull();
   });
 });
 
@@ -595,10 +613,26 @@ describe("prayer requests", () => {
     expect((await feedOf(alice)).map((request) => request.id)).not.toContain(anonymousId);
   });
 
-  it("reminders never reach a member's device", async () => {
-    const { data, error } = await alice.client.from("prayer_reminders").select("weekday");
+  it("reminders are set by someone with prayer.reminders, and never reach a member's device", async () => {
+    // Alice holds the admin role by now; the seeds put reminders in the table, so "no rows" means hidden.
+    const { data: asMember } = await bob.client.from("prayer_reminders").select("weekday");
+    const { error: memberAdds } = await bob.client
+      .from("prayer_reminders")
+      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
+    const { error: managerAdds } = await alice.client
+      .from("prayer_reminders")
+      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
+    const { data: removed } = await alice.client
+      .from("prayer_reminders")
+      .delete()
+      .eq("group_id", sharedGroupId)
+      .eq("weekday", 6)
+      .eq("send_at", "06:15")
+      .select("id");
 
-    expect(error).not.toBeNull();
-    expect(data).toBeNull();
+    expect(asMember).toEqual([]);
+    expect(memberAdds).not.toBeNull();
+    expect(managerAdds).toBeNull();
+    expect(removed).toHaveLength(1);
   });
 });

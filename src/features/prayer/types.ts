@@ -30,3 +30,16 @@ export const PAGE_SIZE = 20;
 
 // why: the database rejects anything longer (schema.sql); the composer stops the typing at the same number.
 export const MAX_BODY_LENGTH = 1000;
+
+// --- Reminders (admin configuration) ---------------------------------------------------------------------
+
+// The permission that lets someone set when groups are reminded to pray (schema.sql grants it to "admin").
+export const MANAGE_PRAYER_REMINDERS = "prayer.reminders";
+
+// One weekly nudge for one group (a row of `prayer_reminders`).
+export type PrayerReminder = {
+  id: string;
+  group_id: string;
+  weekday: number; // 0 = Sunday … 6 = Saturday
+  send_at: string; // "HH:MM:SS", church time
+};

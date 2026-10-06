@@ -16,14 +16,16 @@ every case the list has to handle (see **Seed data** below).
 |---|---|---|
 | Data | `schema.sql` | Four tables, grants, RLS (members read, managers write), seeds, and the DROP statements |
 | Types | `types.ts` | `EventRow`, `EventText`, `ChurchEvent`, `Occurrence`; for the admin section `ManagedEvent`, `EventDraft`, `MANAGE_EVENTS` |
-| Pure logic | `churchTime.ts` | The wall clock in Winston-Salem: `wallTime`, `isoDate`, `toInstant`, `addWeeks` |
 | Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule |
+| Pure logic | `reminders.ts` | `dueReminders`: which reminders of an event should go out now |
 | Pure logic | `formatting.ts` | Dates and times in the reader's language, always in church time |
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
-| Browser API | `api.ts` | `saveEvent`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
+| Browser API | `api.ts` | `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
 | Server reads | `server/queries.ts` | `getUpcomingSchedule` (members), `getManagedEvents` (admin section) |
 | Server logic | `server/changeSchedule.ts` | `cancelDate`, `restoreDate`, `cancelForGood`: each records the change as the **user**, then notifies |
+| Server logic | `server/sendDueReminders.ts` | Called by the scheduler: sends each due reminder once, per language |
+| Server logic | `server/audience.ts` | Who is told about an event: the group, or everyone with notifications on |
 | Server logic | `server/notifyScheduleChange.ts` | **Admin** client: who could see the event → one push per language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/events/cancel/route.ts` | POST cancels, DELETE undoes. Verify (401) → validate (400) → change (403 when refused) → 204 |
 | UI | `components/EventSchedule.tsx`, `EventRow.tsx`, `EventDetails.tsx` | The members' schedule: days, one line per date, the details panel |
@@ -31,6 +33,7 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventAdminRow.tsx` | One event in the list, with its "Edit event" button |
 | UI | `components/EventEditor.tsx` | The panel: the form, the next dates, the red button |
 | UI | `components/EventForm.tsx` | The fields, with English and Vietnamese side by side |
+| UI | `components/EventReminders.tsx` | Three ticks: 1 day, 2 hours, 30 minutes before |
 | UI | `components/EventDates.tsx` | The next four dates, each with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `TabBar.tsx` | The Events tab |
 | Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
@@ -41,7 +44,7 @@ every case the list has to handle (see **Seed data** below).
 | `events` | When it happens. Structure only, so the list query stays small |
 | `event_texts` | One row **per language**. A member downloads their own; a missing one falls back to the other |
 | `event_cancellations` | One skipped week of a recurring event. A row exists only when a week is called off |
-| `event_reminders` | Admin configuration. **No grant to `authenticated`**, so it never reaches a member's device. Not editable yet. |
+| `event_reminders` | Admin configuration: which reminders an event has. Only `events.manage` can read or write it, so it never reaches a member's device. |
 
 ## Decisions worth knowing
 - **A weekly event is stored once**, not copied per week. `occurrences.ts` expands it for the next 8 weeks,
@@ -53,8 +56,8 @@ every case the list has to handle (see **Seed data** below).
   Soft-deleted rows are excluded by the policy itself, so they are invisible even to a direct Supabase call.
 - **The policy reads `group_members`, which belongs to the `groups` feature.** That is a dependency in SQL
   only: nothing here imports that folder. A removed group's events disappear with it, for managers too.
-- **Every date and time is church time** (`America/New_York`), whatever the device or server. `churchTime.ts`
-  is the one file that knows the wall clock, so:
+- **Every date and time is church time** (`America/New_York`), whatever the device or server.
+  `src/lib/churchTime.ts` is the one file that knows the wall clock (shared with prayer), so:
   - a weekly event keeps its hour when the clocks change (a week is 167 or 169 hours twice a year);
   - a cancelled week is recorded and matched by the church's calendar date, not UTC's;
   - the server and a phone print the same words, and a member abroad still reads the hour to be at church.
@@ -71,6 +74,10 @@ every case the list has to handle (see **Seed data** below).
     (`DAYS_A_CANCELLED_EVENT_STAYS`), and then it is gone. The row is kept (`canceled_at`).
   Neither asks for confirmation. There is no separate Remove button; `deleted_at` still exists for hiding
   an event from everyone at once, by hand in the dashboard.
+- **Reminders are three fixed choices** (1 day, 2 hours, 30 minutes before), ticked in the Edit panel and
+  applied to every date of the event. A reminder is due from its moment for one hour and never after the
+  date has started; cancelled dates, cancelled events and removed groups get none. It reaches the same
+  people a cancellation would, in their language, once (the push README explains the clock and "once").
 - **Every cancellation is its own notification.** They carry no push topic, so the one-minute pause does not
   apply and one never replaces another: two dates called off in a minute are two notifications.
 - **Cancelling goes through a route** because it notifies. An update or delete that RLS forbids is not an
@@ -103,6 +110,10 @@ every case the list has to handle (see **Seed data** below).
   "New event" opens the same panel with the fields only.
 - Cancelled for good: gone from the admin list at once; on members' schedules struck through for a week,
   then absent (observed 2026-10-06 against the real database: cancelled 2 days ago shows, 8 days ago does not).
+- In the Edit panel, "Remind members" has three ticks; a tick saves at once and the panel stays open.
+  A new event has none until it is saved and opened again.
+- A ticked reminder arrives as the event's title and "Wednesday 14 October, 7:00 PM", up to 15 minutes
+  after its moment. **Not yet observed: needs the deployed site and the cron job.**
 - `POST /api/events/cancel` while signed out → `401 {"error":"Not signed in"}` (observed 2026-10-06).
 - A cancellation sends each member who could see the event one push in their language: the title, then
   "Cancelled: Wednesday 14 October, 7:00 PM", or "Cancelled: until further notice" for a whole weekly event.
@@ -118,8 +129,7 @@ Verified against the seeds on 2026-10-05 by running `getUpcomingSchedule` as rea
 - The past event and the soft-deleted one never come back, and `event_reminders` answers "permission denied".
 
 ## Not built yet
-Bringing back an event that was cancelled for good; and `event_reminders` (an editor, and a scheduler to act on them —
-Supabase `pg_cron` calling a route, as decided).
+Bringing back an event that was cancelled for good.
 
 ## Remove
 Delete this folder, `src/app/events/`, the Events tab in `TabBar.tsx` and `eventsTab` in

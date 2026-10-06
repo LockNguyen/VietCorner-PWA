@@ -63,6 +63,7 @@ describe("a stored event → what the form shows", () => {
       canceled_at: null,
       texts: { vi: { title: "Học Kinh Thánh", description: null, location: "Phòng 2" } },
       upcoming: [],
+      reminderMinutes: [],
     };
 
     const shown = draftOf(stored);

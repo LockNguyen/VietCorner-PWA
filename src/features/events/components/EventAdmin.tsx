@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { cancelEvent, restoreDate, saveEvent } from "../api";
+import { cancelEvent, restoreDate, saveEvent, setReminder } from "../api";
 import { STRINGS } from "../strings";
 import type { EventGroup, ManagedEvent } from "../types";
 import EventAdminRow from "./EventAdminRow";
@@ -22,7 +22,7 @@ export default function EventAdmin({ events, groups }: Props) {
   const [openOn, setOpenOn] = useState<string | "new" | null>(null);
   const [failed, setFailed] = useState(false);
   const openEvent = events.find((event) => event.id === openOn);
-  const eventId = openEvent?.id ?? ""; // the three cancel handlers are only reachable with an event open
+  const eventId = openEvent?.id ?? ""; // the handlers that use it are only reachable with an event open
 
   // Every action ends the same way: reload the page's server data, so the screen is what the database says.
   async function run(action: () => Promise<void>, { thenClose }: { thenClose: boolean }) {
@@ -63,6 +63,7 @@ export default function EventAdmin({ events, groups }: Props) {
           onSave={(draft) => run(() => saveEvent(draft, openEvent?.id), { thenClose: true })}
           onCancelDate={(churchDate) => run(() => cancelEvent(eventId, churchDate), { thenClose: false })}
           onRestoreDate={(churchDate) => run(() => restoreDate(eventId, churchDate), { thenClose: false })}
+          onSetReminder={(minutesBefore, on) => run(() => setReminder(eventId, minutesBefore, on), { thenClose: false })}
           onCancelForGood={() => run(() => cancelEvent(eventId), { thenClose: true })}
           onClose={() => setOpenOn(null)}
         />

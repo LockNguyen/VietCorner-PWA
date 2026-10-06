@@ -1,4 +1,5 @@
-// Church time: every date and time in this feature is the one on the wall in Winston-Salem.
+// Church time: every date and time the app schedules by is the one on the wall in Winston-Salem.
+// Shared by events (the schedule) and prayer (reminder times), which is why it lives in src/lib.
 //
 // The database stores an event as an instant (a point on the world's timeline). People think in wall time
 // ("Wednesday, 7 PM"). The two differ by an offset that changes twice a year, so "one week later" is not

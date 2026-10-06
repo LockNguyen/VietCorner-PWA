@@ -15,12 +15,14 @@ to run twice (plain `create`).
 |---|---|---|
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
 | Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH` |
+| Pure logic | `reminders.ts` | `isDue`: whether a group's weekly reminder should go out now (church time) |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`, `COOLDOWN_MS`: the one-hour pause, worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
 | Browser API | `api.ts` | `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
 | Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
+| Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to each due group's members, once, per language |
 | Server logic | `server/notifyAuthor.ts` | **Admin** client: the author and the count → `sendPush`, in the author's language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, posting, editing, answering, deleting, praying, one error flag |
@@ -33,6 +35,7 @@ to run twice (plain `create`).
 | UI | `components/RequestOptions.tsx` | The author's dialog: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The dialog's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
+| UI | `components/PrayerReminderAdmin.tsx` | The admin section: each group's weekly reminders, add and remove |
 | Shell | `src/app/prayer/page.tsx`, `TabBar.tsx`, `src/components/strings.ts` | The Prayer tab |
 
 ## How anonymity is guaranteed
@@ -72,6 +75,11 @@ And a small group can guess from timing or wording — no software fixes that.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
 - **"more…" appears when the text is measured to be clipped**, not guessed from its length.
+- **A prayer reminder is a weekly nudge to a group**, set by whoever holds `prayer.reminders`: a weekday and a
+  church-time hour, several per group. It says the group's name and "Time to pray together", in each
+  member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
+  per reminder. It reads no request, so it does not depend on who may see them (backlog B24).
+  Due from its time for one hour; a removed group gets none.
 - **The list does not update live.** It is what the server sent when the page opened, plus this member's own
   actions. Reopening the tab refreshes it.
 - **Requests are not translated**: members write them, and they are shown as written.
@@ -88,6 +96,9 @@ And a small group can guess from timing or wording — no software fixes that.
   gets a notification on their devices with notifications turned on.
 - Your own request has no Pray button and an X, which opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
+- Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
+  with Remove, and a row to add one. Adding the same reminder twice shows the error line.
+  **Not yet exercised on screen; no reminder has been seen arriving.**
 - Twenty requests load first; reaching the bottom loads twenty more until none are left.
 - `POST /api/prayer/pray` while signed out → `401 {"error":"Not signed in"}` (observed 2026-10-06).
 
@@ -108,8 +119,7 @@ real notification arriving on a phone.**
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
 ## Not built yet
-- **Admin feature:** sending the reminders in `prayer_reminders` (needs a scheduler and the church's
-  timezone, backlog B21), editing them, and removing a member's request (`deleted_at`).
+- **Moderation:** removing someone else's request (`deleted_at` exists; on hold, backlog B24).
 - **The end-of-year look back** at answered requests (backlog B19). The data is already being kept.
 
 ## Remove

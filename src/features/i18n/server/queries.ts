@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { isLanguage, type Language } from "../types";
+import { DEFAULT_LANGUAGE, isLanguage, type Language } from "../types";
 
 // Server-side reads for this feature. The page (or the root layout) creates the client and passes it in.
 
@@ -17,4 +17,13 @@ export async function getLanguage(supabase: SupabaseClient): Promise<Language | 
 export async function getLanguagesOf(admin: SupabaseClient, userIds: string[]): Promise<Map<string, Language>> {
   const { data } = await admin.from("user_settings").select("user_id, language").in("user_id", userIds);
   return new Map((data ?? []).filter((row) => isLanguage(row.language)).map((row) => [row.user_id, row.language]));
+}
+
+// The same users, sorted by the language to write to them in: what a sender needs to push one text per
+// language. Someone who never chose gets the default.
+export async function splitByLanguage(admin: SupabaseClient, userIds: string[]): Promise<Record<Language, string[]>> {
+  const chosen = await getLanguagesOf(admin, userIds);
+  const split: Record<Language, string[]> = { en: [], vi: [] };
+  for (const userId of userIds) split[chosen.get(userId) ?? DEFAULT_LANGUAGE].push(userId);
+  return split;
 }

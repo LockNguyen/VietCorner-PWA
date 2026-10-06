@@ -27,12 +27,12 @@ create table public.prayer_requests (
 create index prayer_requests_group_id_created_at on public.prayer_requests (group_id, created_at desc);
 
 -- Admin configuration: when a group is nudged to pray. A group can have several.
--- Nothing sends these yet; the admin feature adds the page that edits them and the scheduler that acts on them.
+-- Edited on the Admin tab by whoever holds "prayer.reminders"; sent by the scheduler (the push README).
 create table public.prayer_reminders (
   id uuid primary key default gen_random_uuid(),
   group_id uuid not null references public.groups (id) on delete cascade,
   weekday smallint not null check (weekday between 0 and 6), -- 0 = Sunday, as JavaScript and Postgres count
-  send_at time not null, -- church local time; which timezone that is gets decided with backlog B21
+  send_at time not null, -- church time (src/lib/churchTime.ts)
   created_at timestamptz not null default now(),
   unique (group_id, weekday, send_at)
 );
@@ -48,6 +48,9 @@ grant insert (group_id, body, is_anonymous) on public.prayer_requests to authent
 grant select (id) on public.prayer_requests to authenticated; -- only so `where id = ...` works below
 grant update (body, answered_at) on public.prayer_requests to authenticated;
 grant delete on public.prayer_requests to authenticated;
+
+grant select, delete on public.prayer_reminders to authenticated; -- reminder managers only, by the policy in section 3
+grant insert (group_id, weekday, send_at) on public.prayer_reminders to authenticated;
 
 -- 3. Row Level Security ---------------------------------------------------
 
@@ -74,7 +77,14 @@ create policy "Authors edit their own requests and mark them answered" on public
 create policy "Authors delete their own requests" on public.prayer_requests
   for delete to authenticated using (author_id = auth.uid());
 
--- prayer_reminders gets RLS with no policies at all: admin code will reach it with the service role.
+-- Reminders: whoever holds "prayer.reminders" sets when each group is nudged to pray. Members never read
+-- this table; the scheduler reads it with the service role.
+create policy "Prayer reminder managers set reminders" on public.prayer_reminders
+  for all to authenticated
+  using ((select public.has_permission('prayer.reminders')))
+  with check ((select public.has_permission('prayer.reminders')));
+
+insert into public.role_permissions (role, permission) values ('admin', 'prayer.reminders');
 
 -- 4. What members read ----------------------------------------------------
 -- RLS hides rows, not columns, so a policy alone could not keep `author_id` away from other members.

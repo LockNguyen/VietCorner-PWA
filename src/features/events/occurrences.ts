@@ -1,5 +1,5 @@
-import { addWeeks, isoDate } from "./churchTime";
-import type { ChurchEvent, Occurrence } from "./types";
+import { addWeeks, isoDate } from "@/lib/churchTime";
+import type { ChurchEvent, EventRow, Occurrence } from "./types";
 
 // Turning stored events into the dates a member sees.
 //
@@ -12,12 +12,10 @@ const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 // weekly event does not generate hundreds of rows nobody scrolls to.
 export const WEEKS_AHEAD = 8;
 
-// The dates `event` happens on between `from` and `from + WEEKS_AHEAD`, oldest first.
-// `canceledDates` holds the church's calendar dates (YYYY-MM-DD) of single weeks that were called off.
-export function occurrencesOf(event: ChurchEvent, canceledDates: Set<string>, from: Date): Occurrence[] {
+// When `event` starts, each time, between `from` and `from + WEEKS_AHEAD`, oldest first.
+export function startsOf(event: EventRow, from: Date): Date[] {
   const horizon = new Date(from.getTime() + WEEKS_AHEAD * MILLISECONDS_PER_WEEK);
   const first = new Date(event.starts_at);
-  const length = event.ends_at ? new Date(event.ends_at).getTime() - first.getTime() : null;
 
   const dates: Date[] = [];
   // Each week is counted from the first date, in church time, so the event keeps its hour on the wall
@@ -29,13 +27,24 @@ export function occurrencesOf(event: ChurchEvent, canceledDates: Set<string>, fr
     if (startsAt >= from) dates.push(startsAt);
     if (!event.repeats_weekly) break;
   }
+  return dates;
+}
 
-  return dates.map((startsAt) => ({
+// Whether the date starting at `startsAt` is off: the whole event called off, or just this week.
+// `canceledDates` holds the church's calendar dates (YYYY-MM-DD) of single weeks that were called off.
+export function isCanceled(event: EventRow, canceledDates: Set<string>, startsAt: Date): boolean {
+  return Boolean(event.canceled_at) || canceledDates.has(isoDate(startsAt));
+}
+
+// The same dates as the schedule shows them: with the event's text, its end, and whether each is off.
+export function occurrencesOf(event: ChurchEvent, canceledDates: Set<string>, from: Date): Occurrence[] {
+  const length = event.ends_at ? new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime() : null;
+
+  return startsOf(event, from).map((startsAt) => ({
     event,
     startsAt,
     endsAt: length === null ? null : new Date(startsAt.getTime() + length),
-    // The whole event called off, or just this week.
-    canceled: Boolean(event.canceled_at) || canceledDates.has(isoDate(startsAt)),
+    canceled: isCanceled(event, canceledDates, startsAt),
   }));
 }
 

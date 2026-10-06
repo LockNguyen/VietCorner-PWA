@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
-import { isoDate, toInstant } from "../churchTime";
+import { isoDate, toInstant } from "@/lib/churchTime";
 import { formatLongDate } from "../formatting";
 import { STRINGS } from "../strings";
 import type { Occurrence, SerializedOccurrence } from "../types";

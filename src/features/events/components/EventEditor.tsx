@@ -7,6 +7,7 @@ import { STRINGS } from "../strings";
 import type { EventDraft, EventGroup, ManagedEvent } from "../types";
 import EventDates from "./EventDates";
 import EventForm from "./EventForm";
+import EventReminders from "./EventReminders";
 
 type Props = {
   event: ManagedEvent | undefined; // undefined = a new event
@@ -15,15 +16,16 @@ type Props = {
   onSave: (draft: EventDraft) => void;
   onCancelDate: (churchDate: string) => void;
   onRestoreDate: (churchDate: string) => void;
+  onSetReminder: (minutesBefore: number, on: boolean) => void;
   onCancelForGood: () => void;
   onClose: () => void;
 };
 
 // The editor for one event, in a panel over the admin page: its fields, then (for an event that already
-// exists) its next dates with Cancel or Undo on each, and last the red button that calls the whole event
-// off for good. A new event has only the fields: there is nothing to cancel yet.
+// exists) its reminders, its next dates with Cancel or Undo on each, and last the red button that calls
+// the whole event off for good. A new event has only the fields: save it first, then open it again.
 export default function EventEditor(props: Props) {
-  const { event, groups, failed, onSave, onCancelDate, onRestoreDate, onCancelForGood, onClose } = props;
+  const { event, groups, failed, onSave, onCancelDate, onRestoreDate, onSetReminder, onCancelForGood, onClose } = props;
   const { t } = useLanguage(); // I18N
 
   // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
@@ -55,6 +57,7 @@ export default function EventEditor(props: Props) {
 
         {event && (
           <>
+            <EventReminders event={event} onSet={onSetReminder} />
             <EventDates event={event} onCancelDate={onCancelDate} onRestoreDate={onRestoreDate} />
             {/* No "are you sure?" (decided: fewer taps), and no undo: members are told, the event stays on
                 their schedule struck through for a week, then it is gone. The row is kept in the database. */}
