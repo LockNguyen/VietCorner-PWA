@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
+import { isoDate, toInstant } from "../churchTime";
 import { formatLongDate } from "../formatting";
-import { isoDate } from "../occurrences";
 import { STRINGS } from "../strings";
 import type { Occurrence, SerializedOccurrence } from "../types";
 import EventDetails from "./EventDetails";
@@ -63,5 +63,5 @@ function dayLabel(day: string, language: Language, t: (text: Text) => string): s
   if (day === isoDate(new Date())) return t(STRINGS.today);
   if (day === isoDate(new Date(Date.now() + 24 * 60 * 60 * 1000))) return t(STRINGS.tomorrow);
 
-  return formatLongDate(new Date(`${day}T12:00:00`), language);
+  return formatLongDate(toInstant(`${day}T12:00`), language);
 }

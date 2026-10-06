@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isoDate, occurrencesOf, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
+import { isoDate, wallTime } from "./churchTime";
+import { occurrencesOf, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
 import type { ChurchEvent } from "./types";
 
 const MONDAY = new Date("2026-10-05T18:00:00Z");
@@ -54,6 +55,29 @@ describe("a weekly event", () => {
     expect(dates[1].startsAt.toISOString()).toBe("2026-10-12T18:00:00.000Z");
     expect(dates.at(-1)?.startsAt.getTime()).toBeLessThanOrEqual(horizon.getTime());
     expect(dates.at(-1)!.startsAt.getTime() + 7 * 24 * 60 * 60 * 1000).toBeGreaterThan(horizon.getTime());
+  });
+
+  it("keeps its hour on the wall when the clocks go back", () => {
+    // Wednesday 7 PM, church time. The clocks change on 1 November 2026.
+    const event = makeEvent({ starts_at: "2026-10-21T23:00:00Z", repeats_weekly: true });
+
+    const dates = occurrencesOf(event, new Set(), new Date("2026-10-20T00:00:00Z"));
+
+    expect(dates.slice(0, 4).map((date) => wallTime(date.startsAt))).toEqual([
+      "2026-10-21T19:00",
+      "2026-10-28T19:00",
+      "2026-11-04T19:00",
+      "2026-11-11T19:00",
+    ]);
+  });
+
+  it("matches a cancelled week by the church's date, even when UTC is already on the next day", () => {
+    // 7 PM on Wednesday 4 November is midnight UTC on the 5th.
+    const event = makeEvent({ starts_at: "2026-10-28T23:00:00Z", repeats_weekly: true, repeat_until: "2026-11-04" });
+
+    const dates = occurrencesOf(event, new Set(["2026-11-04"]), new Date("2026-10-20T00:00:00Z"));
+
+    expect(dates.map((date) => date.canceled)).toEqual([false, true]);
   });
 
   it("stops at repeat_until", () => {

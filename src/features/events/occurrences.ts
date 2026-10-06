@@ -1,3 +1,4 @@
+import { addWeeks, isoDate } from "./churchTime";
 import type { ChurchEvent, Occurrence } from "./types";
 
 // Turning stored events into the dates a member sees.
@@ -12,18 +13,21 @@ const MILLISECONDS_PER_WEEK = 7 * 24 * 60 * 60 * 1000;
 export const WEEKS_AHEAD = 8;
 
 // The dates `event` happens on between `from` and `from + WEEKS_AHEAD`, oldest first.
-// `canceledDates` holds the ISO dates (YYYY-MM-DD) of single weeks that were called off.
+// `canceledDates` holds the church's calendar dates (YYYY-MM-DD) of single weeks that were called off.
 export function occurrencesOf(event: ChurchEvent, canceledDates: Set<string>, from: Date): Occurrence[] {
   const horizon = new Date(from.getTime() + WEEKS_AHEAD * MILLISECONDS_PER_WEEK);
-  const length = event.ends_at ? new Date(event.ends_at).getTime() - new Date(event.starts_at).getTime() : null;
-  const repeatUntil = event.repeat_until ? new Date(`${event.repeat_until}T23:59:59`) : null;
+  const first = new Date(event.starts_at);
+  const length = event.ends_at ? new Date(event.ends_at).getTime() - first.getTime() : null;
 
   const dates: Date[] = [];
-  for (let startsAt = new Date(event.starts_at); startsAt <= horizon; ) {
-    if (startsAt >= from) dates.push(new Date(startsAt));
+  // Each week is counted from the first date, in church time, so the event keeps its hour on the wall
+  // when the clocks change (churchTime.ts).
+  for (let week = 0; ; week++) {
+    const startsAt = addWeeks(first, week);
+    if (startsAt > horizon) break;
+    if (event.repeat_until && isoDate(startsAt) > event.repeat_until) break;
+    if (startsAt >= from) dates.push(startsAt);
     if (!event.repeats_weekly) break;
-    startsAt = new Date(startsAt.getTime() + MILLISECONDS_PER_WEEK);
-    if (repeatUntil && startsAt > repeatUntil) break;
   }
 
   return dates.map((startsAt) => ({
@@ -44,11 +48,4 @@ export function upcomingOccurrences(
   return events
     .flatMap((event) => occurrencesOf(event, canceledDatesByEvent.get(event.id) ?? new Set(), from))
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
-}
-
-// The local calendar date, which is how a cancellation is recorded and how the list groups days.
-export function isoDate(date: Date): string {
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
 }
