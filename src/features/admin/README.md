@@ -6,20 +6,18 @@ are not re-litigated later, and what is built so far.
 
 **Built:** the admin-only tab and page; the Events section (create, edit, translate, cancel a date
 with undo, cancel for good, each with a push); the Groups section (create, rename, remove).
-**Next:** prayer moderation, then reminders.
+**Next:** reminders. Prayer moderation is on hold (backlog B24).
 
 ## Decided
 | Question | Decision |
 |---|---|
 | Who is an admin | Whoever holds the `admin` role. Roles are bundles of permissions carried in the login token (2026-10-06: option C, token claims; see the `permissions` README). Replaces the earlier `admins(user_id)` table. |
-| What admins can do | Remove any content, create and edit any event, hide any prayer request, configure reminders, create, rename and remove groups. |
-| Anonymous prayer requests | **Admins do not see the author** (2026-10-06). They see what members see, across all groups, and can hide a request without learning who wrote it. Only developers with database access can look it up. |
+| What admins can do | Create, edit and cancel any event, configure reminders, create, rename and remove groups. Not prayer requests (see below). |
+| Prayer requests | **Admins have no access for now** (2026-10-06, replaces the earlier "admins see every group's requests"). Groups are meant to be private; whether anyone outside a group may read or hide its requests waits on the pastor (backlog B24). Only a request's author, or a developer in the database, can remove one. |
 | Where `/admin` lives | A sixth tab, shown only to admins (2026-10-06). Hiding the tab is convenience; the database is what keeps non-admins out. |
 | Deleting content | **Soft delete** (`deleted_at timestamptz`), never a hard delete, so nothing is lost. **No confirmation and no "Removed" list for now** (2026-10-06): a removal is one tap, and undoing it is a developer's job in the database until a restore screen is wanted. |
 | Removing a group | **Soft, never erased** (2026-10-06): `groups.deleted_at`. The group and everything in it disappear for members and stay in the database. No Reactivate button yet; a developer clears the mark. Reminders must skip removed groups when the scheduler is built. |
-| Deleting a prayer request | The **author's** delete is permanent. An **admin's** is soft: set `prayer_requests.deleted_at`, and the `prayer_feed` view hides the row. |
-| Editing a member's prayer | **No.** An admin can hide a request, never rewrite it (2026-10-06). |
-| Telling the author | Removing a request does **not** notify its author (2026-10-06). |
+| Deleting a prayer request | The **author's** delete is permanent. `prayer_requests.deleted_at` exists for a soft removal and the `prayer_feed` view honours it, but no screen sets it (B24). |
 | Audit trail | **None** (2026-10-06). `deleted_at` is enough; no `deleted_by`, no log. |
 | Translations | Admins write event text in both languages on one form, **English and Vietnamese fields side by side**. Stored as one `event_texts` row per language (not `_en` / `_vi` columns: that note was out of date). Fixed UI labels stay in code. |
 | Event cancellation | One date of a weekly event (with Undo), or the whole event for good, which is the app's delete: it leaves the admin list at once, members see it struck through for one more week, and it cannot be brought back from the app (2026-10-06). Everything happens in the "Edit event" panel. Members get a push each time, including for Undo. |
@@ -32,7 +30,7 @@ with undo, cancel for good, each with a push); the Groups section (create, renam
 
 ## Build order (pause for QA after each)
 1. **Foundation and events:** who may do what, the admin-only page, create / edit / translate / cancel events with the cancellation push, create / rename groups.
-2. **Prayer moderation:** every group's requests, hide.
+2. ~~Prayer moderation~~ — on hold, backlog B24.
 3. **Reminders:** editors for event and prayer reminders, then the scheduler that sends them (a database cron job calling a protected route).
 
 ## Still to decide

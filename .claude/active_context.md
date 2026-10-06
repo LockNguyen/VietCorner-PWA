@@ -155,13 +155,16 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       cancelled date, cancel-for-good replaces Remove and lingers a week for members, cancellations outside
       the one-minute pause. **Pending: the small undo SQL block; test:rls expects 39. QA pause before slice 2.**
       Not exercised: the admin screens, any push on a real phone.
-- [ ] admin slice 2: prayer moderation · slice 3: reminders + scheduler.
+- [x] admin slice 1 merged into `main` on the user's go (2026-10-06, 17 commits ahead of GitHub, not pushed).
+- [ ] admin slice 2 (prayer moderation): ON HOLD, backlog B24, waits on the pastor.
+- [ ] admin slice 3: reminders (editors for event and prayer reminders) + the scheduler that sends them.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
 - B18 shared UI kit (do it inside the UI/UX revamp).
 - B19 post-MVP features still open: account settings, UI revamp.
-- B21 church timezone (cancelled weeks, reminder times, server vs phone rendering) · B22 prayer pause is device-only.
+- B21 done for events; prayer reminder times still need church time · B22 prayer pause is device-only.
+- B24 prayer moderation on hold (pastor) · B5 groups are joinable by anyone, so not yet private.
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
 - M9 (LiveKit real-time voice, B11) stays optional.
@@ -169,8 +172,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the undo SQL block, `npm run test:rls` (expect 39), then QA slice 1 on the Admin tab: groups
-   (add, rename, remove) and events (new, edit, cancel a date, undo it, cancel for good), and the pushes on
-   a phone.
-2. On the user's go: merge `admin-foundation` into `main`.
-3. Admin slice 2: prayer moderation (every group's requests, hide; the author stays hidden from admins).
+1. Deploy and test what is built: push `main`, then a phone session with two accounts (chat push after the
+   move, the one-minute pause, "prayed for you", an event cancellation and its undo, the Admin tab).
+2. Admin slice 3: reminders, on branch `admin-reminders`. Open questions first: what a prayer reminder says,
+   who gets an event reminder, and how often the scheduler runs.
+3. User, with the pastor: who (if anyone) outside a group may read or hide its prayer requests (B24), and
+   whether joining a group should need an invitation (B5).
