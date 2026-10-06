@@ -142,8 +142,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Still not exercised: the Prayer screen while signed in.
 - [x] notification pause (branch `push-cooldown`, off `main`): one notification per user per topic per minute,
       `push_cooldowns` + `claim_push_turns`, topic doubles as the tray tag. Dry run 8/8.
-      **Pending: the user runs the SQL block BEFORE this code is deployed (without it no push is sent);
-      then test:rls expects 33. Phone check: two messages in a minute = one buzz; does the tag replace on iOS?**
+      SQL applied, test:rls 33/33. Merged into `main` (2026-10-06, 11 commits ahead of GitHub, not pushed).
+      Open: phone check (two messages in a minute = one buzz; does the tag replace on iOS?).
 - [ ] Next: admin dashboard (decisions and open questions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
@@ -158,9 +158,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the push-cooldown SQL block, `npm run test:rls` (expect 33), then say whether to merge
-   `push-cooldown` into `main` and push.
-2. Phone check with two accounts: chat pause, another group in the same minute, "prayed for you", and
-   whether a newer notification replaces the older one.
-3. Sign in at localhost:3000 in the Browser pane so Claude can exercise the Prayer screen; then the admin
-   dashboard (open questions in `src/features/admin/README.md`).
+1. Settle how roles and permissions are stored and checked (the one open question in
+   `src/features/admin/README.md`); every other admin decision is recorded there.
+2. Build admin slice 1 on `admin-foundation`: permissions, the admin-only tab, event create / edit /
+   translate / cancel with the push, group create / rename. Pause for QA.
+3. Still unverified from earlier: the Prayer screen while signed in, and push on a real phone.

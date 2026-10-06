@@ -143,3 +143,5 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 
 ## B22. The prayer pause is enforced on the device only
 **Why:** decided 2026-10-05: the one-hour pause is stored locally and nothing about who prayed is kept in the database. So clearing storage, using a second device, or calling `pray_for_request` directly adds as many prayers as the caller likes, and "N people prayed for you" can be one person. **What:** if it is ever abused, a `prayer_request_prayers(request_id, user_id, prayed_at)` table with no member grant, written by the function, which refuses a second prayer inside the hour and lets the count mean distinct people. **Trade-offs:** stores who prayed for whom (private data, even if members never see it) and replaces a counter with rows. **Done when:** two calls inside an hour from the same account raise the count once, proven in `tests/rls.test.ts`.
+
+**B21 timezone decided 2026-10-06:** `America/New_York` (Winston-Salem, NC). What remains is the code: format every date with that `timeZone`, and compute cancelled weeks in it.
