@@ -14,6 +14,16 @@ export async function renameGroup(groupId: string, name: string) {
   if (error) throw new Error(error.message);
 }
 
+// PATCH a group as removed. It disappears for everyone, with its chat, events and prayers; nothing is
+// erased, and clearing `deleted_at` in the dashboard brings it all back.
+export async function removeGroup(groupId: string) {
+  const { error } = await createClient()
+    .from("groups")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", groupId);
+  if (error) throw new Error(error.message);
+}
+
 // POST a membership: the signed-in user joins a group. RLS only allows joining as yourself.
 export async function joinGroup(groupId: string) {
   const { error } = await createClient().from("group_members").insert({ group_id: groupId });

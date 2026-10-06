@@ -145,8 +145,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       SQL applied, test:rls 33/33. Merged into `main` (2026-10-06, 11 commits ahead of GitHub, not pushed).
       Open: phone check (two messages in a minute = one buzz; does the tag replace on iOS?).
 - [x] admin slice 1a (branch `admin-foundation`): permissions in the login token (hook + `has_permission`),
-      admin-only tab and page, Groups section (create, rename). Dry run 18/18, build clean.
-      **Pending: the user runs the SQL, switches the hook on, makes themselves admin; test:rls expects 37.**
+      admin-only tab and page, Groups section (create, rename, remove = soft delete that silences the
+      group everywhere). Dry run of the whole setup 15/15, build clean.
+      **Pending: the user runs the SQL, switches the hook on, makes themselves admin; test:rls expects 38.**
 - [ ] admin slice 1b: events section (create, edit, en/vi side by side, cancel a week or the series with the
       push, remove), in church time (`America/New_York`, backlog B21 incl. weekly events across the clock change).
 - [ ] admin slice 2: prayer moderation · slice 3: reminders + scheduler.
@@ -164,6 +165,6 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 
 ## ➡️ Next 3 Micro-Steps
 1. User: paste the permissions block, switch the Custom Access Token hook on, sign in once to prove sign-in
-   works, insert their own `admin` row, sign out and in. `npm run test:rls` (expect 37). Check the Admin tab.
+   works, insert their own `admin` row, sign out and in. `npm run test:rls` (expect 38). Check the Admin tab.
 2. Claude: events admin section on the proven foundation, with dates in church time (B21).
 3. Still unverified from earlier: the Prayer screen while signed in, and push on a real phone.

@@ -175,13 +175,37 @@ describe("permissions", () => {
     expect(renamed?.name).toBe(`${name} renamed`);
   });
 
-  it("stop a member from creating or renaming a group", async () => {
+  it("stop a member from creating, renaming or removing a group", async () => {
     const { error } = await bob.client.from("groups").insert({ name: "bob's group" });
     await bob.client.from("groups").update({ name: "defaced" }).eq("id", groupId);
-    const { data: untouched } = await admin.from("groups").select("name").eq("id", groupId).single();
+    await bob.client.from("groups").update({ deleted_at: new Date().toISOString() }).eq("id", groupId);
+    const { data: untouched } = await admin.from("groups").select("name, deleted_at").eq("id", groupId).single();
 
     expect(error).not.toBeNull();
     expect(untouched?.name).not.toBe("defaced");
+    expect(untouched?.deleted_at).toBeNull();
+  });
+
+  it("a removed group goes quiet for its members, and nothing in it is erased", async () => {
+    // Bob joins the group Alice made and posts; then Alice, who may manage groups, removes it.
+    if (!createdGroupId) throw new Error("the group from the previous test is missing");
+    await bob.client.from("group_members").insert({ group_id: createdGroupId });
+    await bob.client.from("messages").insert({ group_id: createdGroupId, body: "before the group was removed" });
+    const { error: removeError } = await alice.client
+      .from("groups")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", createdGroupId);
+
+    const { data: listed } = await bob.client.from("groups").select("id").eq("id", createdGroupId);
+    const { data: readable } = await bob.client.from("messages").select("id").eq("group_id", createdGroupId);
+    const { error: postError } = await bob.client.from("messages").insert({ group_id: createdGroupId, body: "after" });
+    const { data: kept } = await admin.from("messages").select("body").eq("group_id", createdGroupId);
+
+    expect(removeError).toBeNull();
+    expect(listed).toEqual([]);
+    expect(readable).toEqual([]);
+    expect(postError).not.toBeNull();
+    expect(kept).toEqual([{ body: "before the group was removed" }]);
   });
 });
 

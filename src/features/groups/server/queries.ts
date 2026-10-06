@@ -7,7 +7,8 @@ import type { Group, GroupWithMembership } from "../types";
 // All groups, each marked with whether the signed-in user has joined.
 export async function getGroups(supabase: SupabaseClient): Promise<GroupWithMembership[]> {
   const [groups, memberships] = await Promise.all([
-    supabase.from("groups").select("id, name").order("name"),
+    // Members never receive removed groups (RLS). A manager would, so the filter is spelled out.
+    supabase.from("groups").select("id, name").is("deleted_at", null).order("name"),
     supabase.from("group_members").select("group_id"), // RLS returns only my memberships
   ]);
   if (groups.error) throw new Error(groups.error.message);
@@ -16,8 +17,13 @@ export async function getGroups(supabase: SupabaseClient): Promise<GroupWithMemb
   return groups.data.map((group) => ({ ...group, joined: joinedGroupIds.has(group.id) }));
 }
 
-// One group, or null if it does not exist.
+// One group, or null if it does not exist or was removed.
 export async function getGroup(supabase: SupabaseClient, groupId: string): Promise<Group | null> {
-  const { data } = await supabase.from("groups").select("id, name").eq("id", groupId).maybeSingle();
+  const { data } = await supabase
+    .from("groups")
+    .select("id, name")
+    .eq("id", groupId)
+    .is("deleted_at", null)
+    .maybeSingle();
   return data;
 }

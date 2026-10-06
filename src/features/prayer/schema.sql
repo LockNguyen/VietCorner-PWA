@@ -96,6 +96,7 @@ from public.prayer_requests r
 join public.groups g on g.id = r.group_id
 where r.deleted_at is null
   and r.answered_at is null
+  and g.deleted_at is null -- a removed group's requests leave the feed with it
   and exists (
     select 1 from public.group_members m
     where m.group_id = r.group_id and m.user_id = auth.uid()
@@ -119,7 +120,8 @@ language sql security definer set search_path = '' as $$
       and r.author_id <> auth.uid()
       and exists (
         select 1 from public.group_members m
-        where m.group_id = r.group_id and m.user_id = auth.uid()
+        join public.groups g on g.id = m.group_id
+        where m.group_id = r.group_id and m.user_id = auth.uid() and g.deleted_at is null
       )
     returning 1
   )

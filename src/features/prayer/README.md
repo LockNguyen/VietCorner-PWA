@@ -96,6 +96,7 @@ Verified so far: permissions, by attacking the schema and the migration inside r
 real notification arriving on a phone.**
 
 ## Edge cases
+- When a group is removed, its requests leave the feed and can no longer be prayed for; they stay stored.
 - A second device, or a second browser, has its own pause: the same person can pray from each.
 - If the device's clock is moved back, a pause recorded "in the future" is treated as finished.
 - A prayer that fails to reach the server cancels its pause, so the member can try again.

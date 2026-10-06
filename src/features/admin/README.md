@@ -4,17 +4,18 @@ The admin page has no code of its own in this folder: `src/app/admin/page.tsx` l
 and who may see which section is the `permissions` feature. This file records the decisions made, so they
 are not re-litigated later, and what is built so far.
 
-**Built:** the admin-only tab and page, and the Groups section (create, rename).
+**Built:** the admin-only tab and page, and the Groups section (create, rename, remove).
 **Next:** events (create, edit, translate, cancel with the push), then prayer moderation, then reminders.
 
 ## Decided
 | Question | Decision |
 |---|---|
 | Who is an admin | Whoever holds the `admin` role. Roles are bundles of permissions carried in the login token (2026-10-06: option C, token claims; see the `permissions` README). Replaces the earlier `admins(user_id)` table. |
-| What admins can do | Remove any content, create and edit any event, hide any prayer request, configure reminders, create and rename groups. |
+| What admins can do | Remove any content, create and edit any event, hide any prayer request, configure reminders, create, rename and remove groups. |
 | Anonymous prayer requests | **Admins do not see the author** (2026-10-06). They see what members see, across all groups, and can hide a request without learning who wrote it. Only developers with database access can look it up. |
 | Where `/admin` lives | A sixth tab, shown only to admins (2026-10-06). Hiding the tab is convenience; the database is what keeps non-admins out. |
 | Deleting content | **Soft delete** (`deleted_at timestamptz`), never a hard delete, so nothing is lost. **No confirmation and no "Removed" list for now** (2026-10-06): a removal is one tap, and undoing it is a developer's job in the database until a restore screen is wanted. |
+| Removing a group | **Soft, never erased** (2026-10-06): `groups.deleted_at`. The group and everything in it disappear for members and stay in the database. No Reactivate button yet; a developer clears the mark. Reminders must skip removed groups when the scheduler is built. |
 | Deleting a prayer request | The **author's** delete is permanent. An **admin's** is soft: set `prayer_requests.deleted_at`, and the `prayer_feed` view hides the row. |
 | Editing a member's prayer | **No.** An admin can hide a request, never rewrite it (2026-10-06). |
 | Telling the author | Removing a request does **not** notify its author (2026-10-06). |
