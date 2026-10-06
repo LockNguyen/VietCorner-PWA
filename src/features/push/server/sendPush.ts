@@ -10,20 +10,15 @@ const PAUSE_SECONDS = 60;
 // Sends one notification to every device of the given users. The caller decides WHO (a group's other
 // members, the author of a prayer request); this file only knows HOW.
 //
-// A user who was notified about the same topic less than a minute ago is skipped. Nothing is sent later
+// With a topic, a user who was notified about it less than a minute ago is skipped. Nothing is sent later
 // to make up for it: there is no scheduler, so what arrives during the pause is silent.
+// Without a topic it is an announcement, and everyone gets it.
 // Uses the admin client because RLS (correctly) hides other users' subscriptions.
 export async function sendPush(userIds: string[], notification: PushNotification) {
   if (userIds.length === 0) return;
 
   const admin = createAdminClient();
-  // The database decides and records in one step (schema.sql), so two sends at once cannot both win.
-  const { data: dueUserIds, error } = await admin.rpc("claim_push_turns", {
-    user_ids: userIds,
-    topic: notification.topic,
-    pause_seconds: PAUSE_SECONDS,
-  });
-  if (error) throw new Error(error.message);
+  const dueUserIds = notification.topic ? await whoIsDue(admin, userIds, notification.topic) : userIds;
   if (dueUserIds.length === 0) return;
 
   const { data: subscriptions } = await admin
@@ -55,4 +50,16 @@ export async function sendPush(userIds: string[], notification: PushNotification
       }
     }),
   );
+}
+
+// The users not notified about `topic` within the pause. The database decides and records in one step
+// (schema.sql), so two sends at once cannot both win.
+async function whoIsDue(admin: ReturnType<typeof createAdminClient>, userIds: string[], topic: string): Promise<string[]> {
+  const { data, error } = await admin.rpc("claim_push_turns", {
+    user_ids: userIds,
+    topic,
+    pause_seconds: PAUSE_SECONDS,
+  });
+  if (error) throw new Error(error.message);
+  return data;
 }

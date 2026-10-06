@@ -21,15 +21,17 @@ every case the list has to handle (see **Seed data** below).
 | Pure logic | `formatting.ts` | Dates and times in the reader's language, always in church time |
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
-| Browser API | `api.ts` | `saveEvent`, `removeEvent`, `cancelEvent` (POST `/api/events/cancel`) |
+| Browser API | `api.ts` | `saveEvent`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
 | Server reads | `server/queries.ts` | `getUpcomingSchedule` (members), `getManagedEvents` (admin section) |
-| Server logic | `server/cancelEvent.ts` | Records the cancellation as the **user**, then calls `notifyCancellation` |
-| Server logic | `server/notifyCancellation.ts` | **Admin** client: who could see the event → one push per language (`// PUSH`, `// I18N`) |
-| Routes | `src/app/api/events/cancel/route.ts` | Verify (401) → validate (400) → `cancelEvent` (403 when refused) → 204 |
+| Server logic | `server/changeSchedule.ts` | `cancelDate`, `restoreDate`, `cancelForGood`: each records the change as the **user**, then notifies |
+| Server logic | `server/notifyScheduleChange.ts` | **Admin** client: who could see the event → one push per language (`// PUSH`, `// I18N`) |
+| Routes | `src/app/api/events/cancel/route.ts` | POST cancels, DELETE undoes. Verify (401) → validate (400) → change (403 when refused) → 204 |
 | UI | `components/EventSchedule.tsx`, `EventRow.tsx`, `EventDetails.tsx` | The members' schedule: days, one line per date, the details panel |
-| UI | `components/EventAdmin.tsx` | The admin section: the list, and the form when one is open |
-| UI | `components/EventAdminRow.tsx` | One event: its next dates, Edit, Cancel, Remove |
-| UI | `components/EventForm.tsx` | The form, with English and Vietnamese side by side |
+| UI | `components/EventAdmin.tsx` | The admin section: the list, and which event the editor is open on |
+| UI | `components/EventAdminRow.tsx` | One event in the list, with its "Edit event" button |
+| UI | `components/EventEditor.tsx` | The panel: the form, the next dates, the red button |
+| UI | `components/EventForm.tsx` | The fields, with English and Vietnamese side by side |
+| UI | `components/EventDates.tsx` | The next four dates, each with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `TabBar.tsx` | The Events tab |
 | Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
 
@@ -62,11 +64,18 @@ every case the list has to handle (see **Seed data** below).
   later one fails the event exists with older or missing text; the form stays open and saving again
   finishes it. An event with no text at all is left off the members' schedule.
 - **A language without a title is not stored.** Its readers fall back to the other language.
-- **Cancelling and removing are different.** Cancel tells members by push and leaves the event on the
-  schedule, struck through. Remove (soft delete) takes it away silently. Neither asks for confirmation.
-- **Cancelling goes through a route** because it notifies. The route treats "the update matched no row" as
-  refused: an update RLS forbids is not an error, and without that check anyone could trigger the push.
-- **A cancellation cannot be undone from the app yet**, and nothing is ever erased.
+- **Two kinds of cancelling, with different endings** (decided 2026-10-06):
+  - *One date* of a weekly event. It can be undone: the Cancel button becomes Undo. Members are told both times.
+  - *The whole event, for good.* This is the app's "delete": it leaves the admin list at once and cannot be
+    brought back from the app. Members are told, see it struck through for **one more week**
+    (`DAYS_A_CANCELLED_EVENT_STAYS`), and then it is gone. The row is kept (`canceled_at`).
+  Neither asks for confirmation. There is no separate Remove button; `deleted_at` still exists for hiding
+  an event from everyone at once, by hand in the dashboard.
+- **Every cancellation is its own notification.** They carry no push topic, so the one-minute pause does not
+  apply and one never replaces another: two dates called off in a minute are two notifications.
+- **Cancelling goes through a route** because it notifies. An update or delete that RLS forbids is not an
+  error, it just matches no row, so the server asks for the row back and treats "nothing" as refused.
+  Without that check anyone could make the server notify the whole church.
 
 ## Seed data (what each row proves)
 | Row | Case |
@@ -87,12 +96,17 @@ every case the list has to handle (see **Seed data** below).
 - Tapping a row opens a panel with the full date, end time, location and description; tapping outside closes it.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
 - **Admin tab → Events** (with `events.manage`): every upcoming event in every group, soonest first, each with
-  its next four dates. "New event" opens a form with English and Vietnamese columns; Save is disabled, with
-  the reason shown, until there is a title in one language and a start. A weekly event has "Cancel this
-  date" per date and "Cancel every week"; a one-off has "Cancel event". Remove takes it off every list.
+  an "Edit event" button. It opens a panel: the fields (English and Vietnamese columns; Save is disabled,
+  with the reason shown, until there is a title in one language and a start), then the next four dates, then
+  a red "Cancel this event permanently". On a weekly event each date has Cancel, and a cancelled date has
+  Undo in its place; the panel stays open and shows the change. A one-off event's date has no button.
+  "New event" opens the same panel with the fields only.
+- Cancelled for good: gone from the admin list at once; on members' schedules struck through for a week,
+  then absent (observed 2026-10-06 against the real database: cancelled 2 days ago shows, 8 days ago does not).
 - `POST /api/events/cancel` while signed out → `401 {"error":"Not signed in"}` (observed 2026-10-06).
 - A cancellation sends each member who could see the event one push in their language: the title, then
   "Cancelled: Wednesday 14 October, 7:00 PM", or "Cancelled: until further notice" for a whole weekly event.
+  Undo sends "Back on: Wednesday 14 October, 7:00 PM".
 
 Verified 2026-10-06: the rules in a rolled-back transaction (16 checks) and the time and form logic in unit
 tests. **Not yet exercised: the admin screen itself, and a cancellation push arriving on a phone.**
@@ -104,7 +118,7 @@ Verified against the seeds on 2026-10-05 by running `getUpcomingSchedule` as rea
 - The past event and the soft-deleted one never come back, and `event_reminders` answers "permission denied".
 
 ## Not built yet
-Un-cancelling; restoring a removed event; and `event_reminders` (an editor, and a scheduler to act on them —
+Bringing back an event that was cancelled for good; and `event_reminders` (an editor, and a scheduler to act on them —
 Supabase `pg_cron` calling a route, as decided).
 
 ## Remove

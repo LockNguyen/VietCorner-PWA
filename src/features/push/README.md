@@ -13,7 +13,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | `push_subscriptions` (one row per device, owner-only RLS), `push_cooldowns` + `claim_push_turns` (server-only), the DROP statements |
-| Types | `types.ts` | `PushNotification`: `{ title, body, url, topic }`, the fields `sw.js` reads |
+| Types | `types.ts` | `PushNotification`: `{ title, body, url, topic? }`, the fields `sw.js` reads |
 | Browser API | `api.ts` | `savePushSubscription` (upsert by endpoint: one row per device) |
 | State | `hooks/usePushNotifications.ts` | Status (`unsupported/blocked/off/on/error`), re-saves the subscription on every open, `enable()` |
 | UI | `components/EnableNotificationsButton.tsx` | The toggle, shown on the Groups page |
@@ -30,6 +30,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   `chat:<group id>` or `prayer`. So a busy group buzzes once a minute, a second group still gets through,
   and so does a prayer; several prayers in a minute are one notification. The minute is `PAUSE_SECONDS` in
   `sendPush.ts`, the same for everyone.
+- **A notification without a topic is an announcement:** always delivered, never replaced. Event
+  cancellations use this (decided 2026-10-06), so each one arrives however close together they are.
 - **The pause is decided in the database, in one statement** (`claim_push_turns`): it returns who is due and
   marks them notified together, so two messages sent at the same instant cannot both notify one person.
 - **Nothing is sent when the pause ends.** There is no scheduler, so messages that arrive during the minute

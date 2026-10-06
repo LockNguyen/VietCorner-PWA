@@ -20,8 +20,8 @@ create table public.events (
   ends_at timestamptz,                    -- optional: many events just have a start time
   repeats_weekly boolean not null default false,
   repeat_until date,                      -- optional: null means it keeps repeating until cancelled
-  canceled_at timestamptz,                -- the whole event is off, including future weeks
-  deleted_at timestamptz,                 -- soft delete: admins can undo, members never see it
+  canceled_at timestamptz,                -- the whole event is off for good; members see it one more week
+  deleted_at timestamptz,                 -- hidden from everyone at once; set by hand, the app has no button for it
   -- Null when nobody signed in created it: the seed rows below, and anything the system adds later.
   -- `auth.uid()` is null outside a request (the SQL Editor), so a NOT NULL here makes seeding impossible.
   created_by uuid default auth.uid() references auth.users (id),
@@ -72,7 +72,7 @@ grant insert (group_id, starts_at, ends_at, repeats_weekly, repeat_until) on pub
 grant update (group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, deleted_at)
   on public.events to authenticated;
 grant insert, update, delete on public.event_texts to authenticated;
-grant insert on public.event_cancellations to authenticated;
+grant insert, delete on public.event_cancellations to authenticated; -- delete = undo
 
 -- 3. Row Level Security ---------------------------------------------------
 
@@ -133,8 +133,10 @@ create policy "Event managers write event text" on public.event_texts
   using ((select public.has_permission('events.manage')))
   with check ((select public.has_permission('events.manage')));
 
-create policy "Event managers cancel a single week" on public.event_cancellations
-  for insert to authenticated with check ((select public.has_permission('events.manage')));
+create policy "Event managers cancel a single week, and undo it" on public.event_cancellations
+  for all to authenticated
+  using ((select public.has_permission('events.manage')))
+  with check ((select public.has_permission('events.manage')));
 
 insert into public.role_permissions (role, permission) values ('admin', 'events.manage');
 

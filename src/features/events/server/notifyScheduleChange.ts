@@ -9,16 +9,20 @@ import { toInstant, wallTime } from "../churchTime";
 import { formatLongDate, formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 
-// Tells the members who could see an event that it is off: the group's members for a group event,
-// everyone with notifications on for a church-wide one. Each reads it in their own language.
+// What happened to the schedule: a date (or the whole event) was called off, or a called-off date is on again.
+export type ScheduleChange = "canceled" | "backOn";
+
+// Tells the members who could see an event that its schedule changed: the group's members for a group
+// event, everyone with notifications on for a church-wide one. Each reads it in their own language.
+// `occurrenceDate` (a church date) names the one week concerned; without it, the whole event is meant.
 // Uses the admin client because RLS (correctly) hides other users' memberships and settings.
-export async function notifyCancellation(eventId: string, occurrenceDate?: string) {
+export async function notifyScheduleChange(eventId: string, change: ScheduleChange, occurrenceDate?: string) {
   const admin = createAdminClient();
   const [{ data: event }, { data: texts }] = await Promise.all([
     admin.from("events").select("group_id, starts_at, repeats_weekly").eq("id", eventId).single(),
     admin.from("event_texts").select("language, title").eq("event_id", eventId),
   ]);
-  if (!event || !texts?.length) return; // removed meanwhile, or nothing to call it by
+  if (!event || !texts?.length) return; // nothing to call it by
 
   const userIds = event.group_id
     ? ((await admin.from("group_members").select("user_id").eq("group_id", event.group_id)).data ?? []).map(
@@ -27,7 +31,7 @@ export async function notifyCancellation(eventId: string, occurrenceDate?: strin
     : await getSubscribedUserIds(admin);
   const languageOf = await getLanguagesOf(admin, userIds);
 
-  // The week that is off keeps the event's hour: the cancelled date at the event's wall-clock time.
+  // The week concerned keeps the event's hour: that date at the event's wall-clock time.
   const hour = wallTime(new Date(event.starts_at)).slice(10); // "T19:00"
   const when = occurrenceDate ? toInstant(`${occurrenceDate}${hour}`) : new Date(event.starts_at);
   const wholeSeries = !occurrenceDate && event.repeats_weekly;
@@ -36,18 +40,16 @@ export async function notifyCancellation(eventId: string, occurrenceDate?: strin
   await Promise.all(
     LANGUAGES.map((language: Language) => {
       const title = texts.find((text) => text.language === language)?.title ?? texts[0].title;
-      const whatIsOff = wholeSeries
-        ? translate(STRINGS.canceledUntilFurtherNotice, language)
+      const what = translate(change === "canceled" ? STRINGS.canceled : STRINGS.backOn, language);
+      const which = wholeSeries
+        ? translate(STRINGS.untilFurtherNotice, language)
         : `${formatLongDate(when, language)}, ${formatTime(when, language)}`;
 
+      // No topic on purpose: an announcement is always delivered and never replaces another one. Two dates
+      // called off in the same minute are two notifications (the push README).
       return sendPush(
         userIds.filter((userId) => (languageOf.get(userId) ?? DEFAULT_LANGUAGE) === language),
-        {
-          title,
-          body: `${translate(STRINGS.canceled, language)}: ${whatIsOff}`,
-          url: "/events",
-          topic: `event:${eventId}`, // its own topic: the one-minute pause on chat never swallows a cancellation
-        },
+        { title, body: `${what}: ${which}`, url: "/events" },
       );
     }),
   );

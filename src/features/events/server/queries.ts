@@ -18,6 +18,10 @@ const EVENT_COLUMNS = "id, group_id, starts_at, ends_at, repeats_weekly, repeat_
 // why: enough to cancel next week or the one after without scrolling a long list per event.
 const DATES_SHOWN_TO_MANAGERS = 4;
 
+// why: an event called off for good stays on the schedule, struck through, long enough for someone who
+// missed the notification to see it at their next weekly visit. After that it is clutter.
+const DAYS_A_CANCELLED_EVENT_STAYS = 7;
+
 // Everything the schedule page shows: every date in the next few weeks, oldest first.
 export async function getUpcomingSchedule(
   supabase: SupabaseClient,
@@ -27,12 +31,14 @@ export async function getUpcomingSchedule(
   // A weekly event that started months ago still runs today, so the window reaches back far enough to
   // catch those rows, and the expansion decides which dates actually fall ahead of `now`.
   const horizon = new Date(now.getTime() + WEEKS_AHEAD * 7 * 24 * 60 * 60 * 1000);
+  const cancelledSince = new Date(now.getTime() - DAYS_A_CANCELLED_EVENT_STAYS * 24 * 60 * 60 * 1000);
   const { data: rows, error } = await supabase
     .from("events")
     .select(EVENT_COLUMNS)
     .is("deleted_at", null)
     .lte("starts_at", horizon.toISOString())
-    .or(`repeats_weekly.eq.true,starts_at.gte.${now.toISOString()}`);
+    .or(`repeats_weekly.eq.true,starts_at.gte.${now.toISOString()}`)
+    .or(`canceled_at.is.null,canceled_at.gte.${cancelledSince.toISOString()}`); // the two .or() are ANDed
   if (error || !rows?.length) return [];
 
   const ids = rows.map((row: EventRow) => row.id);
@@ -40,14 +46,15 @@ export async function getUpcomingSchedule(
   return upcomingOccurrences(events, await cancellations(supabase, ids), now);
 }
 
-// Everything the admin section lists: every event that still has a date ahead, soonest first, with its
-// text in every language and its next few dates. Needs the "events.manage" permission to return more than
+// Everything the admin section lists: every event that still has a date ahead and was not called off for
+// good, soonest first, with its text in every language and its next few dates. Needs the "events.manage" permission to return more than
 // a member would see.
 export async function getManagedEvents(supabase: SupabaseClient, now = new Date()): Promise<ManagedEvent[]> {
   const { data: rows, error } = await supabase
     .from("events")
     .select(EVENT_COLUMNS)
     .is("deleted_at", null)
+    .is("canceled_at", null) // called off for good = gone from here; it cannot be brought back from the app
     .or(`repeats_weekly.eq.true,starts_at.gte.${now.toISOString()}`)
     .order("starts_at");
   if (error || !rows?.length) return [];

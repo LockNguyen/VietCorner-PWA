@@ -21,11 +21,11 @@ export const STRINGS = {
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
   untitled: { en: "(no title)", vi: "(chưa có tên)" } satisfies Text,
   churchWide: { en: "Whole church", vi: "Cả hội thánh" } satisfies Text,
-  edit: { en: "Edit", vi: "Sửa" } satisfies Text,
-  cancelThisDate: { en: "Cancel this date", vi: "Hủy buổi này" } satisfies Text,
-  cancelEvent: { en: "Cancel event", vi: "Hủy sự kiện" } satisfies Text,
-  cancelEveryWeek: { en: "Cancel every week", vi: "Hủy mọi tuần" } satisfies Text,
-  remove: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
+  editEvent: { en: "Edit event", vi: "Sửa sự kiện" } satisfies Text,
+  nextDates: { en: "Next dates", vi: "Các buổi sắp tới" } satisfies Text,
+  cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,
+  undoCancel: { en: "Undo", vi: "Hoàn tác" } satisfies Text,
+  cancelForGood: { en: "Cancel this event permanently", vi: "Hủy hẳn sự kiện này" } satisfies Text,
   save: { en: "Save", vi: "Lưu" } satisfies Text,
   couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 
@@ -37,8 +37,9 @@ export const STRINGS = {
   forWhomField: { en: "For", vi: "Dành cho" } satisfies Text,
   repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (không bắt buộc)" } satisfies Text,
 
-  // The notification members get when a whole weekly event is called off (server/notifyCancellation.ts)
-  canceledUntilFurtherNotice: { en: "until further notice", vi: "cho đến khi có thông báo mới" } satisfies Text,
+  // The notification members get (server/notifyScheduleChange.ts): "Cancelled: <when>" or "Back on: <when>"
+  backOn: { en: "Back on", vi: "Diễn ra trở lại" } satisfies Text,
+  untilFurtherNotice: { en: "until further notice", vi: "cho đến khi có thông báo mới" } satisfies Text,
 };
 
 // Why the form cannot be saved yet, keyed by cause (draft.ts decides which applies).

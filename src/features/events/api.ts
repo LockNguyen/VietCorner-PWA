@@ -5,8 +5,8 @@ import type { EventDraft } from "./types";
 
 // Events API: every call the browser makes for this feature. Members only read, and that happens on the
 // server (server/queries.ts), so everything here is an action of someone with the "events.manage" permission.
-// - Saving and removing go straight to Supabase. RLS in schema.sql refuses anyone without the permission.
-// - Cancelling goes through our API route, because it also notifies members (needs secrets).
+// - Saving goes straight to Supabase. RLS in schema.sql refuses anyone without the permission.
+// - Cancelling and undoing go through our API route, because they also notify members (needs secrets).
 
 // POST a new event, or PATCH an existing one when `eventId` is given, with its text in each language.
 //
@@ -35,20 +35,20 @@ export async function saveEvent(draft: EventDraft, eventId?: string): Promise<vo
   }
 }
 
-// PATCH an event as removed. It leaves every list; the row stays in the database (soft delete).
-export async function removeEvent(eventId: string): Promise<void> {
-  const { error } = await createClient()
-    .from("events")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", eventId);
-  if (error) throw new Error(error.message);
+// POST a cancellation: one week when `occurrenceDate` (YYYY-MM-DD, church date) is given, otherwise the
+// whole event, for good. The server records it and tells the members who could see the event.
+export function cancelEvent(eventId: string, occurrenceDate?: string): Promise<void> {
+  return changeSchedule("POST", eventId, occurrenceDate);
 }
 
-// POST a cancellation: one week when `occurrenceDate` (YYYY-MM-DD, church date) is given, otherwise the
-// whole event. The server records it and tells the members who could see the event.
-export async function cancelEvent(eventId: string, occurrenceDate?: string): Promise<void> {
+// DELETE a cancellation: that week is on again, and members are told.
+export function restoreDate(eventId: string, occurrenceDate: string): Promise<void> {
+  return changeSchedule("DELETE", eventId, occurrenceDate);
+}
+
+async function changeSchedule(method: "POST" | "DELETE", eventId: string, occurrenceDate?: string) {
   const response = await fetch("/api/events/cancel", {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ eventId, occurrenceDate }),
   });

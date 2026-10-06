@@ -377,6 +377,17 @@ describe("events", () => {
       .from("event_cancellations")
       .insert({ event_id: created.id, occurrence_date: "2030-01-01" });
     const { data: asMember } = await bob.client.from("event_texts").select("title").eq("event_id", created.id);
+    // Undo: only a manager can take a cancellation back. A member's delete is not an error; it matches no row.
+    const { data: undoneByMember } = await bob.client
+      .from("event_cancellations")
+      .delete()
+      .eq("event_id", created.id)
+      .select("event_id");
+    const { data: undone } = await alice.client
+      .from("event_cancellations")
+      .delete()
+      .eq("event_id", created.id)
+      .select("event_id");
     const { data: removed } = await alice.client
       .from("events")
       .update({ deleted_at: new Date().toISOString() })
@@ -389,6 +400,8 @@ describe("events", () => {
     expect(created.created_by).toBe(alice.id); // from her token; the column cannot be sent
     expect([textError, weekError]).toEqual([null, null]);
     expect(asMember).toEqual([{ title: "Buổi nhóm thử nghiệm" }]); // Vietnamese arrives intact
+    expect(undoneByMember).toEqual([]);
+    expect(undone).toHaveLength(1);
     expect(removed).toHaveLength(1);
     expect(afterRemoval).toEqual([]); // gone for members
     expect(kept).toHaveLength(1); // kept in the database

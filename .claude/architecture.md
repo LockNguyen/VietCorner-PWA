@@ -156,9 +156,10 @@ The church schedule. Four tables so a phone downloads only what it shows: `event
 (one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
-excluded by the policy. Whoever holds `events.manage` creates, edits (English and Vietnamese side by side),
-cancels and removes from the Admin tab; cancelling goes through a route and pushes to the members who could
-see the event, each in their language. Every date and time is church time (`America/New_York`), computed in
+excluded by the policy. Whoever holds `events.manage` creates, edits (English and Vietnamese side by side) and
+cancels from the Admin tab: one date (undoable), or the whole event for good, which members then see struck
+through for a week. Cancelling goes through a route and pushes to the members who could see the event, each
+in their language, outside the one-minute pause. Every date and time is church time (`America/New_York`), computed in
 one file, `churchTime.ts`. Reminders are stored but not sent yet.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
@@ -247,7 +248,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
-| One notification per user, per topic, per minute, decided in the database | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free | Messages inside the minute are silent and nothing follows up (no scheduler) |
+| One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
+| Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
 | Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
 | Netlify over Vercel | Free tier allows commercial use; git push deploys | Next runs through Netlify's adapter, so verify routes after a Next upgrade |
 | Layered feature shape (`api.ts` / `hooks` / `components` / `server`) | Every change has one predictable home | More, smaller files; some queries exist on both sides |
@@ -293,3 +295,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-06: permissions: `role_permissions` + `user_roles`, a token hook that writes `permissions` into the login token, `has_permission`, the admin-only tab and page, and the first section (groups: create, rename). Needs the SQL and the dashboard hook switch.
 - 2026-10-06: groups can be removed by a manager: soft (`deleted_at`), never erased, and silenced everywhere through the membership policy. Prayer's view and function check it themselves.
 - 2026-10-06: events admin section: `events.manage`, create / edit with English and Vietnamese side by side / cancel one week or the whole event with a push per language (`POST /api/events/cancel`) / remove. All event dates and times moved to church time (`churchTime.ts`, closes B21 for events). An admin's own schedule shows every group's events.
+- 2026-10-06: events admin reworked to one "Edit event" panel: fields, next four dates with Cancel / Undo, and "Cancel this event permanently" (replaces Remove; members see it one more week). Cancellation and undo notifications carry no topic, so each arrives outside the one-minute pause.

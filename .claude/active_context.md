@@ -151,7 +151,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] events in church time (`churchTime.ts`): closes B21 for events, incl. weekly events across the clock change.
 - [x] admin slice 1b: events section (create, edit en/vi side by side, cancel a week or the whole event with a
       push per language, remove). 59 unit tests, 16-check dry run of the rules, build clean.
-      **Pending: the user runs the events SQL block; test:rls expects 39. QA pause before slice 2.**
+      Events SQL applied by the user. Reworked after review (2026-10-06): one "Edit event" panel, Undo per
+      cancelled date, cancel-for-good replaces Remove and lingers a week for members, cancellations outside
+      the one-minute pause. **Pending: the small undo SQL block; test:rls expects 39. QA pause before slice 2.**
       Not exercised: the admin screens, any push on a real phone.
 - [ ] admin slice 2: prayer moderation · slice 3: reminders + scheduler.
 
@@ -167,8 +169,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the events SQL block, `npm run test:rls` (expect 39), then QA slice 1 on the Admin tab: groups
-   (add, rename, remove) and events (new, edit, cancel a date, cancel all, remove), and a cancellation push
-   on a phone.
+1. User: run the undo SQL block, `npm run test:rls` (expect 39), then QA slice 1 on the Admin tab: groups
+   (add, rename, remove) and events (new, edit, cancel a date, undo it, cancel for good), and the pushes on
+   a phone.
 2. On the user's go: merge `admin-foundation` into `main`.
 3. Admin slice 2: prayer moderation (every group's requests, hide; the author stays hidden from admins).

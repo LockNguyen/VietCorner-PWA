@@ -4,8 +4,8 @@ The admin page has no code of its own in this folder: `src/app/admin/page.tsx` l
 and who may see which section is the `permissions` feature. This file records the decisions made, so they
 are not re-litigated later, and what is built so far.
 
-**Built:** the admin-only tab and page; the Events section (create, edit, translate, cancel with the push,
-remove); the Groups section (create, rename, remove).
+**Built:** the admin-only tab and page; the Events section (create, edit, translate, cancel a date
+with undo, cancel for good, each with a push); the Groups section (create, rename, remove).
 **Next:** prayer moderation, then reminders.
 
 ## Decided
@@ -22,8 +22,8 @@ remove); the Groups section (create, rename, remove).
 | Telling the author | Removing a request does **not** notify its author (2026-10-06). |
 | Audit trail | **None** (2026-10-06). `deleted_at` is enough; no `deleted_by`, no log. |
 | Translations | Admins write event text in both languages on one form, **English and Vietnamese fields side by side**. Stored as one `event_texts` row per language (not `_en` / `_vi` columns: that note was out of date). Fixed UI labels stay in code. |
-| Event cancellation | One occurrence, or a recurring event permanently. Members get a push. |
-| Who gets event pushes | A group event: that group's members. A church-wide event: everyone with notifications on. Each in their own language. Each event is its own push topic, so the one-minute pause never swallows a cancellation (2026-10-06). |
+| Event cancellation | One date of a weekly event (with Undo), or the whole event for good, which is the app's delete: it leaves the admin list at once, members see it struck through for one more week, and it cannot be brought back from the app (2026-10-06). Everything happens in the "Edit event" panel. Members get a push each time, including for Undo. |
+| Who gets event pushes | A group event: that group's members. A church-wide event: everyone with notifications on. Each in their own language. Every cancellation is its own notification, outside the one-minute pause (2026-10-06). |
 | Prayer reminders | A scheduled push to a group. Set by admins only, several per group (`prayer_reminders(group_id, weekday, send_at)` exists; nothing sends it yet). |
 | Church timezone | **`America/New_York`** (Winston-Salem, NC; 2026-10-06). Reminder times and event dates are in this timezone. Closes the question in backlog B21; the code change is still to do. |
 | Groups | Admins can create and rename groups (2026-10-06). |
