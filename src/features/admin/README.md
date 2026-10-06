@@ -1,11 +1,16 @@
-# admin (not built yet)
+# admin
 
-The admin dashboard is built **last**, after events and prayer requests exist, so it has something to manage.
-This file records the decisions already made, so they are not re-litigated later.
+The admin page has no code of its own in this folder: `src/app/admin/page.tsx` lists one section per feature,
+and who may see which section is the `permissions` feature. This file records the decisions made, so they
+are not re-litigated later, and what is built so far.
+
+**Built:** the admin-only tab and page, and the Groups section (create, rename).
+**Next:** events (create, edit, translate, cancel with the push), then prayer moderation, then reminders.
 
 ## Decided
 | Question | Decision |
 |---|---|
+| Who is an admin | Whoever holds the `admin` role. Roles are bundles of permissions carried in the login token (2026-10-06: option C, token claims; see the `permissions` README). Replaces the earlier `admins(user_id)` table. |
 | What admins can do | Remove any content, create and edit any event, hide any prayer request, configure reminders, create and rename groups. |
 | Anonymous prayer requests | **Admins do not see the author** (2026-10-06). They see what members see, across all groups, and can hide a request without learning who wrote it. Only developers with database access can look it up. |
 | Where `/admin` lives | A sixth tab, shown only to admins (2026-10-06). Hiding the tab is convenience; the database is what keeps non-admins out. |
@@ -28,11 +33,9 @@ This file records the decisions already made, so they are not re-litigated later
 2. **Prayer moderation:** every group's requests, hide.
 3. **Reminders:** editors for event and prayer reminders, then the scheduler that sends them (a database cron job calling a protected route).
 
-## Still to decide before building
-- **How "who may do what" is stored and checked.** The earlier decision was an `admins(user_id)` table. It is
-  reopened (2026-10-06) because group leaders and post writers are wanted later: the design must let a new
-  role arrive without rewriting every policy, and must check a permission once per query, not once per row.
-  Options and a recommendation are under discussion.
+## Still to decide
+- Should an admin's own Events tab show every group's events, or only their own groups'? (Arises with the
+  events section: the policy that lets them manage an event also lets them read it.)
 
 ## When it is built
 Follow `docs/adding-a-feature.md`. Every table another feature adds must already carry `deleted_at` for soft

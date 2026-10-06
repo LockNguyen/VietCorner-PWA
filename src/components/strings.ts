@@ -7,5 +7,6 @@ export const SHELL_STRINGS = {
   prayerTab: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
   assistantTab: { en: "Assistant", vi: "Trợ lý" } satisfies Text,
   settingsTab: { en: "Settings", vi: "Cài đặt" } satisfies Text,
+  adminTab: { en: "Admin", vi: "Quản trị" } satisfies Text,
   signInTitle: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
 };

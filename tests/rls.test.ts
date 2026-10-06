@@ -123,6 +123,68 @@ describe("push_subscriptions", () => {
   });
 });
 
+describe("permissions", () => {
+  // Alice is made an admin for these tests and refreshes her token, which is when the hook writes her
+  // permissions into it. Bob stays a member.
+  let createdGroupId: string | undefined;
+
+  beforeAll(async () => {
+    await admin.from("user_roles").insert({ user_id: alice.id, role: "admin" });
+    await alice.client.auth.refreshSession();
+
+    const { data } = await alice.client.auth.getClaims();
+    if (!Array.isArray(data?.claims.permissions)) {
+      throw new Error(
+        "Alice's token has no `permissions` claim. Switch the hook on: Dashboard → Authentication → Hooks → " +
+          "Custom Access Token → public.custom_access_token_hook",
+      );
+    }
+  }, 60_000);
+
+  afterAll(async () => {
+    if (createdGroupId) await admin.from("groups").delete().eq("id", createdGroupId);
+  });
+
+  it("reach a user through their login token", async () => {
+    const { data: forAdmin } = await alice.client.auth.getClaims();
+    const { data: forMember } = await bob.client.auth.getClaims();
+
+    expect(forAdmin?.claims.permissions).toContain("groups.manage");
+    expect(forMember?.claims.permissions ?? []).toEqual([]);
+  });
+
+  it("cannot be read or granted by a member, who could otherwise make themselves admin", async () => {
+    const { error: readError } = await bob.client.from("user_roles").select("role");
+    const { error: grantError } = await bob.client.from("user_roles").insert({ user_id: bob.id, role: "admin" });
+    const { error: defineError } = await bob.client
+      .from("role_permissions")
+      .insert({ role: "member", permission: "groups.manage" });
+
+    expect([readError, grantError, defineError].every((error) => error !== null)).toBe(true);
+  });
+
+  it("let someone with groups.manage create and rename a group", async () => {
+    const name = `rls test ${Date.now()}`;
+    const { error: createError } = await alice.client.from("groups").insert({ name });
+    const { data: created } = await admin.from("groups").select("id").eq("name", name).single();
+    createdGroupId = created?.id;
+    const { error: renameError } = await alice.client.from("groups").update({ name: `${name} renamed` }).eq("id", createdGroupId);
+    const { data: renamed } = await admin.from("groups").select("name").eq("id", createdGroupId).single();
+
+    expect([createError, renameError]).toEqual([null, null]);
+    expect(renamed?.name).toBe(`${name} renamed`);
+  });
+
+  it("stop a member from creating or renaming a group", async () => {
+    const { error } = await bob.client.from("groups").insert({ name: "bob's group" });
+    await bob.client.from("groups").update({ name: "defaced" }).eq("id", groupId);
+    const { data: untouched } = await admin.from("groups").select("name").eq("id", groupId).single();
+
+    expect(error).not.toBeNull();
+    expect(untouched?.name).not.toBe("defaced");
+  });
+});
+
 describe("push cooldowns (server-only)", () => {
   it("cannot be read or reset by a member, who could otherwise silence or spam someone", async () => {
     const { data, error } = await alice.client.from("push_cooldowns").select("topic");

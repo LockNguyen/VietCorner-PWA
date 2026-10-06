@@ -77,7 +77,19 @@ create view public.<table>_feed with (security_invoker = false) as
                 where m.group_id = t.group_id and m.user_id = auth.uid());
 grant select on public.<table>_feed to authenticated;
 ```
-`features/prayer/schema.sql` is the worked example, including column grants (`grant insert (a, b)`) so a
+**Admin actions** use a fifth shape: the policy asks for a permission, read from the login token.
+```sql
+create policy "Event managers edit events" on public.events
+  for update to authenticated
+  using ((select public.has_permission('events.manage')))
+  with check ((select public.has_permission('events.manage')));
+insert into public.role_permissions (role, permission) values ('admin', 'events.manage');
+```
+Name a permission, never a role, and keep the `(select ...)`: it makes the check run once per query.
+Export the name from the feature's `types.ts`, and give the feature an admin component that
+`src/app/admin/page.tsx` shows when the user has it. `features/groups` is the worked example.
+
+`features/prayer/schema.sql` is the worked example of Pattern D, including column grants (`grant insert (a, b)`) so a
 caller cannot send the columns that must come from the login token.
 
 Rules of thumb:

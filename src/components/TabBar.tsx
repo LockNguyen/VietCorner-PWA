@@ -14,13 +14,18 @@ const TABS = [
   { href: "/settings", label: SHELL_STRINGS.settingsTab, icon: "⚙️" },
 ];
 
-export default function TabBar() {
+// PERMISSIONS: shown only to someone who may manage something. Hiding it is a convenience; the page and
+// the database each check again.
+const ADMIN_TAB = { href: "/admin", label: SHELL_STRINGS.adminTab, icon: "🛠️" };
+
+export default function TabBar({ showAdmin }: { showAdmin: boolean }) {
   const pathname = usePathname();
   const { t } = useLanguage(); // I18N
+  const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 flex border-t bg-gray-50 pb-[env(safe-area-inset-bottom)]">
-      {TABS.map((tab) => {
+      {tabs.map((tab) => {
         const active = pathname.startsWith(tab.href);
         return (
           <Link

@@ -144,7 +144,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       `push_cooldowns` + `claim_push_turns`, topic doubles as the tray tag. Dry run 8/8.
       SQL applied, test:rls 33/33. Merged into `main` (2026-10-06, 11 commits ahead of GitHub, not pushed).
       Open: phone check (two messages in a minute = one buzz; does the tag replace on iOS?).
-- [ ] Next: admin dashboard (decisions and open questions in features/admin/README.md).
+- [x] admin slice 1a (branch `admin-foundation`): permissions in the login token (hook + `has_permission`),
+      admin-only tab and page, Groups section (create, rename). Dry run 18/18, build clean.
+      **Pending: the user runs the SQL, switches the hook on, makes themselves admin; test:rls expects 37.**
+- [ ] admin slice 1b: events section (create, edit, en/vi side by side, cancel a week or the series with the
+      push, remove), in church time (`America/New_York`, backlog B21 incl. weekly events across the clock change).
+- [ ] admin slice 2: prayer moderation · slice 3: reminders + scheduler.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
@@ -158,8 +163,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. Settle how roles and permissions are stored and checked (the one open question in
-   `src/features/admin/README.md`); every other admin decision is recorded there.
-2. Build admin slice 1 on `admin-foundation`: permissions, the admin-only tab, event create / edit /
-   translate / cancel with the push, group create / rename. Pause for QA.
+1. User: paste the permissions block, switch the Custom Access Token hook on, sign in once to prove sign-in
+   works, insert their own `admin` row, sign out and in. `npm run test:rls` (expect 37). Check the Admin tab.
+2. Claude: events admin section on the proven foundation, with dates in church time (B21).
 3. Still unverified from earlier: the Prayer screen while signed in, and push on a real phone.

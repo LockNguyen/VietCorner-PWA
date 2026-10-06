@@ -16,7 +16,8 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
 | Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Members' schedule built; admin editing comes with the admin feature |
 | Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven. The screen and a real notification are not exercised yet |
-| Admin dashboard | `src/features/admin/` | [admin](../src/features/admin/README.md) | Not built; decisions recorded |
+| Roles and permissions | `src/features/permissions/` | [permissions](../src/features/permissions/README.md) | Built; the token hook must be switched on in the dashboard |
+| Admin page | `src/app/admin/` | [admin](../src/features/admin/README.md) | Tab, page and the Groups section built; events, prayer and reminders to come |
 
 Still planned: the admin dashboard, account settings, and a UI/UX revamp. Each follows [docs/adding-a-feature.md](../docs/adding-a-feature.md).
 
@@ -62,9 +63,9 @@ feature README lists its own files.
 The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The rules that keep it honest:
 
 - **Features never import each other's internals.** Composition happens in `src/app/**`.
-- **Three features are foundations, not leaves.** `groups`: chat, events and prayer depend on its two tables
-  in their SQL policies, never in TypeScript. `i18n` and `push` are imported directly, on lines marked
-  `// I18N` and `// PUSH`. A leaf feature never imports another leaf.
+- **Four features are foundations, not leaves.** `groups` and `permissions` are depended on in SQL (a
+  membership check, `has_permission`). `i18n` and `push` are imported directly, on lines marked `// I18N` and
+  `// PUSH`. A leaf feature never imports another leaf.
 - **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`),
   or the steps under **Remove** in its README.
 - **Layers point one way:** page → components → hooks → `api.ts` → Supabase, and page → `server/queries.ts`;
@@ -88,6 +89,9 @@ The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The 
 1. **Exposed schema:** only `public` is served. `auth.users` is unreachable.
 2. **Grants:** what a role may attempt (`anon`, `authenticated`, `service_role`). Set in each `schema.sql`.
 3. **RLS policies:** which rows that role sees. RLS on with no matching policy → nothing.
+
+Supabase grants **everything** on a new table to `anon` and `authenticated` by default. RLS still filters
+rows, but a column list (`grant update (name)`) means nothing until the default is revoked first.
 
 - A "server-only" table has no grants and no policies (`document_chunks`).
 - Secrets never get a `NEXT_PUBLIC_` prefix; that prefix means "shipped to the browser".
@@ -127,6 +131,12 @@ cookies for up to 400 days; `src/proxy.ts` refreshes them and redirects logged-o
 Messages inside a group. Live updates come from Supabase Realtime (WebSocket, RLS-aware); members with the
 app closed are told by push. Sending goes through an API route because it must also notify, which needs the
 service-role key. Table: `messages`.
+
+### 6.9 permissions → [README](../src/features/permissions/README.md) · [admin](../src/features/admin/README.md)
+Roles are bundles of permissions (`role_permissions`), held by users (`user_roles`). At sign-in a hook copies
+the user's permissions into their login token; every admin policy asks `(select has_permission('…'))`, which
+reads the token and no table; `layout.tsx` reads the same list once per page to show the Admin tab. Each
+feature registers its own permission and brings its own section to `src/app/admin/page.tsx`.
 
 ### 6.8 push → [README](../src/features/push/README.md)
 Web Push delivery: the device's subscription, the toggle, the service-worker handlers, and
@@ -173,7 +183,8 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | Table | Owner | Notes |
 |---|---|---|
 | `auth.users` | Supabase | Built in; one row per account, created on first sign-in |
-| `groups` | groups | Readable by any signed-in user; seeded by `schema.sql` |
+| `role_permissions`, `user_roles` | permissions | **Server-only.** Read by Supabase Auth while it builds a token; rows added by hand. |
+| `groups` | groups | Readable by any signed-in user; created and renamed with `groups.manage`; seeded by `schema.sql` |
 | `group_members` | groups | Users see and insert only their own rows |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
@@ -229,6 +240,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
 | Email one-time code, not a magic link | iOS Home Screen apps don't share Safari's cookies | Users type a code |
+| Permissions ride in the login token, and policies name a permission, not a role | A check reads the token: no lookup per query, at any size. New roles are rows, not policy rewrites. | A role change waits for the token to refresh (up to an hour); the hook is switched on in the dashboard, and a broken hook blocks every sign-in |
 | Authorization in RLS, not TypeScript `if`s | Browsers query Supabase directly, so the database is the only check that covers every path | Blocked reads look empty rather than failing; needs the RLS tests |
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
@@ -274,3 +286,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-05: push delivery moved out of chat into `src/features/push/` (`sendPush`, the subscription table, the toggle, the `sw.js` handlers). No database change. Chat's `notifyGroup` now only decides who is told. Not re-tested on a real phone since the move.
 - 2026-10-06: prayer, second pass: authors can edit; answered requests leave the feed (kept in the table); the prayer count left the screen and became a push to the author through `POST /api/prayer/pray`; delete no longer asks; "more…" is measured instead of estimated. Needs the migration block (grant, view, function).
 - 2026-10-06: notification pause: `push_cooldowns` + `claim_push_turns`, `topic` on every notification (also its tray `tag`). One notification per user per topic per minute. Run the SQL before deploying, or no notification is sent.
+- 2026-10-06: permissions: `role_permissions` + `user_roles`, a token hook that writes `permissions` into the login token, `has_permission`, the admin-only tab and page, and the first section (groups: create, rename). Needs the SQL and the dashboard hook switch.

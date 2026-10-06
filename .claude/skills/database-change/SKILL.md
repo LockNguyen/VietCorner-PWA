@@ -18,7 +18,10 @@ Pick the pattern (full SQL in `docs/adding-a-feature.md` §3):
 
 ## 2. Required, every time
 - `alter table ... enable row level security;` — a `public` table without it is world-readable.
-- `grant` only the operations the browser actually performs.
+- `grant` only the operations the browser actually performs. Supabase grants everything by default, so
+  `revoke` first: a column list (`grant update (name)`) means nothing on top of the default.
+- Admin actions: `(select public.has_permission('<feature>.<action>'))` in the policy, and one row in
+  `role_permissions`. Never check a role by name.
 - Identity columns default from the token: `user_id uuid not null default auth.uid()`. Never trust a body field.
   Such a column is null in the SQL Editor, so seed rows cannot use it: seed only tables that do not have one.
 - `with check` on every insert/update policy. Without it a user can write rows they cannot read.
