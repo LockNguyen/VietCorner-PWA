@@ -1,4 +1,5 @@
--- EVENTS feature schema. Run once in Supabase → SQL Editor.
+-- EVENTS feature schema. Run once in Supabase → SQL Editor, after features/permissions/schema.sql and
+-- features/groups/schema.sql.
 --
 -- Four tables instead of one, so a member's phone downloads only what it shows:
 --   events              when it happens (structure only)
@@ -7,7 +8,7 @@
 --   event_reminders     admin configuration; members have no grant on it at all
 --
 -- Visibility: an event with no group is church-wide; an event with a group is for its members only.
--- That policy reads chat's `group_members` table, which is the one place these two features touch.
+-- That policy reads `group_members`, which belongs to the groups feature.
 
 -- 1. Tables ---------------------------------------------------------------
 
@@ -55,13 +56,23 @@ create table public.event_reminders (
 );
 
 -- 2. Grants ---------------------------------------------------------------
--- Members read. Nobody writes from the browser yet: admins get write access in the admin feature.
+-- Members read. Writing is for whoever holds the "events.manage" permission (section 3).
 -- event_reminders has NO grant, so it never reaches a member's device.
 
 grant select on public.events to authenticated;
 grant select on public.event_texts to authenticated;
 grant select on public.event_cancellations to authenticated;
 revoke all on public.event_reminders from anon, authenticated;
+
+-- Supabase grants everything on a new table by default, so take the writes away first; then give back
+-- exactly what the admin page sends. `created_by` is not in the list: it comes from the login token.
+revoke insert, update, delete on public.events, public.event_texts, public.event_cancellations
+  from anon, authenticated;
+grant insert (group_id, starts_at, ends_at, repeats_weekly, repeat_until) on public.events to authenticated;
+grant update (group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, deleted_at)
+  on public.events to authenticated;
+grant insert, update, delete on public.event_texts to authenticated;
+grant insert on public.event_cancellations to authenticated;
 
 -- 3. Row Level Security ---------------------------------------------------
 
@@ -94,6 +105,38 @@ create policy "Members read cancellations of events they can see" on public.even
   for select to authenticated using (
     exists (select 1 from public.events e where e.id = event_cancellations.event_id)
   );
+
+-- Managing events needs the "events.manage" permission, read from the login token (permissions feature).
+--
+-- A manager reads every event, in any group, including ones they removed: Postgres checks the row an
+-- update leaves behind against the select policies, so hiding removed events here would make removing one
+-- impossible. Events of a removed GROUP stay hidden even from managers, like the rest of that group.
+create policy "Event managers read every event" on public.events
+  for select to authenticated using (
+    (select public.has_permission('events.manage'))
+    and (
+      group_id is null
+      or exists (select 1 from public.groups g where g.id = events.group_id and g.deleted_at is null)
+    )
+  );
+
+create policy "Event managers create events" on public.events
+  for insert to authenticated with check ((select public.has_permission('events.manage')));
+
+create policy "Event managers edit, cancel and remove events" on public.events
+  for update to authenticated
+  using ((select public.has_permission('events.manage')))
+  with check ((select public.has_permission('events.manage')));
+
+create policy "Event managers write event text" on public.event_texts
+  for all to authenticated
+  using ((select public.has_permission('events.manage')))
+  with check ((select public.has_permission('events.manage')));
+
+create policy "Event managers cancel a single week" on public.event_cancellations
+  for insert to authenticated with check ((select public.has_permission('events.manage')));
+
+insert into public.role_permissions (role, permission) values ('admin', 'events.manage');
 
 -- event_reminders gets RLS with no policies at all: admin code will reach it with the service role.
 

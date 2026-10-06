@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
 import { SHELL_STRINGS } from "@/components/strings";
+import EventAdmin from "@/features/events/components/EventAdmin";
+import { getManagedEvents } from "@/features/events/server/queries";
+import { MANAGE_EVENTS } from "@/features/events/types";
 import GroupAdmin from "@/features/groups/components/GroupAdmin";
 import { getGroups } from "@/features/groups/server/queries";
 import { MANAGE_GROUPS } from "@/features/groups/types";
@@ -17,10 +20,16 @@ export default async function AdminPage() {
   // render, and every save would still be refused by the database.
   if (permissions.length === 0) notFound();
 
+  // Groups are read once: the Groups section edits them, and the event form offers them as "For".
+  const groups = await getGroups(supabase);
+
   return (
     <>
       <PageHeader title={SHELL_STRINGS.adminTab} />
-      {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={await getGroups(supabase)} />}
+      {permissions.includes(MANAGE_EVENTS) && (
+        <EventAdmin events={await getManagedEvents(supabase)} groups={groups.map(({ id, name }) => ({ id, name }))} />
+      )}
+      {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={groups} />}
     </>
   );
 }

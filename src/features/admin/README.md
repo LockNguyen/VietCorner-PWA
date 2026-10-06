@@ -4,8 +4,9 @@ The admin page has no code of its own in this folder: `src/app/admin/page.tsx` l
 and who may see which section is the `permissions` feature. This file records the decisions made, so they
 are not re-litigated later, and what is built so far.
 
-**Built:** the admin-only tab and page, and the Groups section (create, rename, remove).
-**Next:** events (create, edit, translate, cancel with the push), then prayer moderation, then reminders.
+**Built:** the admin-only tab and page; the Events section (create, edit, translate, cancel with the push,
+remove); the Groups section (create, rename, remove).
+**Next:** prayer moderation, then reminders.
 
 ## Decided
 | Question | Decision |
@@ -35,8 +36,7 @@ are not re-litigated later, and what is built so far.
 3. **Reminders:** editors for event and prayer reminders, then the scheduler that sends them (a database cron job calling a protected route).
 
 ## Still to decide
-- Should an admin's own Events tab show every group's events, or only their own groups'? (Arises with the
-  events section: the policy that lets them manage an event also lets them read it.)
+Nothing open. (An admin's own Events tab shows every group's events: decided 2026-10-06.)
 
 ## When it is built
 Follow `docs/adding-a-feature.md`. Every table another feature adds must already carry `deleted_at` for soft

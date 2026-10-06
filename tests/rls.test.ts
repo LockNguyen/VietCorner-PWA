@@ -336,18 +336,62 @@ describe("events", () => {
     expect(forOutsider).toEqual([]);
   });
 
-  it("a soft-deleted event is invisible, even queried directly", async () => {
-    const { data } = await alice.client.from("events").select("id").eq("id", deletedId);
+  it("a soft-deleted event is invisible to a member, even queried directly", async () => {
+    const { data } = await bob.client.from("events").select("id").eq("id", deletedId);
 
     expect(data).toEqual([]);
   });
 
-  it("members cannot write events", async () => {
-    const { error } = await alice.client
+  it("members cannot create, cancel or remove events", async () => {
+    const { error: createError } = await bob.client.from("events").insert({ starts_at: new Date().toISOString() });
+    const { error: weekError } = await bob.client
+      .from("event_cancellations")
+      .insert({ event_id: churchWideId, occurrence_date: "2030-01-01" });
+    // An update a member may not make is not an error: it matches no row. The cancel route relies on that.
+    const { data: canceled } = await bob.client
       .from("events")
-      .insert({ starts_at: new Date().toISOString() });
+      .update({ canceled_at: new Date().toISOString() })
+      .eq("id", churchWideId)
+      .select("id");
+    await bob.client.from("events").update({ deleted_at: new Date().toISOString() }).eq("id", churchWideId);
+    const { data: untouched } = await admin.from("events").select("canceled_at, deleted_at").eq("id", churchWideId).single();
 
-    expect(error).not.toBeNull(); // no insert grant until the admin feature exists
+    expect([createError, weekError].every((error) => error !== null)).toBe(true);
+    expect(canceled).toEqual([]);
+    expect(untouched).toEqual({ canceled_at: null, deleted_at: null });
+  });
+
+  it("someone with events.manage runs an event from creation to removal", async () => {
+    // Alice was made an admin in the permissions tests above; her token carries events.manage.
+    const { data: created, error: createError } = await alice.client
+      .from("events")
+      .insert({ starts_at: new Date(Date.now() + 86_400_000).toISOString(), repeats_weekly: true })
+      .select("id, created_by")
+      .single();
+    if (createError || !created) throw createError ?? new Error("the manager could not create an event");
+
+    const { error: textError } = await alice.client
+      .from("event_texts")
+      .upsert({ event_id: created.id, language: "vi", title: "Buổi nhóm thử nghiệm" });
+    const { error: weekError } = await alice.client
+      .from("event_cancellations")
+      .insert({ event_id: created.id, occurrence_date: "2030-01-01" });
+    const { data: asMember } = await bob.client.from("event_texts").select("title").eq("event_id", created.id);
+    const { data: removed } = await alice.client
+      .from("events")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", created.id)
+      .select("id");
+    const { data: afterRemoval } = await bob.client.from("events").select("id").eq("id", created.id);
+    const { data: kept } = await admin.from("events").select("id").eq("id", created.id);
+    await admin.from("events").delete().eq("id", created.id);
+
+    expect(created.created_by).toBe(alice.id); // from her token; the column cannot be sent
+    expect([textError, weekError]).toEqual([null, null]);
+    expect(asMember).toEqual([{ title: "Buổi nhóm thử nghiệm" }]); // Vietnamese arrives intact
+    expect(removed).toHaveLength(1);
+    expect(afterRemoval).toEqual([]); // gone for members
+    expect(kept).toHaveLength(1); // kept in the database
   });
 
   it("reminders never reach a member's device", async () => {

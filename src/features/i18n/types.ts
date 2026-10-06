@@ -1,6 +1,9 @@
 // The two languages the app ships.
 export type Language = "en" | "vi";
 
+// The same two, as a list, for code that does something once per language (a form column, a push per language).
+export const LANGUAGES: Language[] = ["en", "vi"];
+
 // One piece of user-facing text in both languages. Every feature's `strings.ts` is a map of these.
 //
 // Fixed UI labels live in code because they only change when a developer changes a screen. Text that an

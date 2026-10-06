@@ -19,11 +19,11 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | `user_settings(user_id, language)`, owner-only RLS |
-| Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `DEFAULT_LANGUAGE`, `LOCALES` (date formats), `isLanguage` |
+| Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `LANGUAGES`, `DEFAULT_LANGUAGE`, `LOCALES` (date formats), `isLanguage` |
 | Pure logic | `translate.ts` | `translate(text, language)`; falls back to the other language rather than showing nothing |
 | Text | `strings.ts` | This feature's own labels |
 | Browser API | `api.ts` | `saveLanguage` (upsert, RLS allows only your own row) |
-| Server reads | `server/queries.ts` | `getLanguage(supabase)` → the user's language or `null` |
+| Server reads | `server/queries.ts` | `getLanguage(supabase)` → the user's language or `null`; `getLanguagesOf(admin, userIds)` for text the server writes to others |
 | State | `components/LanguageProvider.tsx` | Holds the language for the whole app; writes the device copy and the database |
 | State | `hooks/useLanguage.ts` | `{ language, setLanguage, t }` for client components |
 | UI | `components/LanguageToggle.tsx` | Two big buttons, each written in its own language |

@@ -147,9 +147,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] admin slice 1a (branch `admin-foundation`): permissions in the login token (hook + `has_permission`),
       admin-only tab and page, Groups section (create, rename, remove = soft delete that silences the
       group everywhere). Dry run of the whole setup 15/15, build clean.
-      **Pending: the user runs the SQL, switches the hook on, makes themselves admin; test:rls expects 38.**
-- [ ] admin slice 1b: events section (create, edit, en/vi side by side, cancel a week or the series with the
-      push, remove), in church time (`America/New_York`, backlog B21 incl. weekly events across the clock change).
+      Setup applied and the hook switched on by the user; test:rls 38/38 (2026-10-06).
+- [x] events in church time (`churchTime.ts`): closes B21 for events, incl. weekly events across the clock change.
+- [x] admin slice 1b: events section (create, edit en/vi side by side, cancel a week or the whole event with a
+      push per language, remove). 59 unit tests, 16-check dry run of the rules, build clean.
+      **Pending: the user runs the events SQL block; test:rls expects 39. QA pause before slice 2.**
+      Not exercised: the admin screens, any push on a real phone.
 - [ ] admin slice 2: prayer moderation · slice 3: reminders + scheduler.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
@@ -164,7 +167,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: paste the permissions block, switch the Custom Access Token hook on, sign in once to prove sign-in
-   works, insert their own `admin` row, sign out and in. `npm run test:rls` (expect 38). Check the Admin tab.
-2. Claude: events admin section on the proven foundation, with dates in church time (B21).
-3. Still unverified from earlier: the Prayer screen while signed in, and push on a real phone.
+1. User: run the events SQL block, `npm run test:rls` (expect 39), then QA slice 1 on the Admin tab: groups
+   (add, rename, remove) and events (new, edit, cancel a date, cancel all, remove), and a cancellation push
+   on a phone.
+2. On the user's go: merge `admin-foundation` into `main`.
+3. Admin slice 2: prayer moderation (every group's requests, hide; the author stays hidden from admins).

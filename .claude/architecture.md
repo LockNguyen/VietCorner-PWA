@@ -14,10 +14,10 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Push delivery | `src/features/push/` | [push](../src/features/push/README.md) | Done (moved out of chat 2026-10-05; not re-tested on a phone since the move) |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
-| Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Members' schedule built; admin editing comes with the admin feature |
+| Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Schedule and admin section built (create, edit, translate, cancel with a push, remove); the admin screen is not exercised yet |
 | Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven. The screen and a real notification are not exercised yet |
 | Roles and permissions | `src/features/permissions/` | [permissions](../src/features/permissions/README.md) | Built; the token hook must be switched on in the dashboard |
-| Admin page | `src/app/admin/` | [admin](../src/features/admin/README.md) | Tab, page and the Groups section built; events, prayer and reminders to come |
+| Admin page | `src/app/admin/` | [admin](../src/features/admin/README.md) | Tab, page, and the Events and Groups sections built; prayer moderation and reminders to come |
 
 Still planned: the admin dashboard, account settings, and a UI/UX revamp. Each follows [docs/adding-a-feature.md](../docs/adding-a-feature.md).
 
@@ -156,8 +156,10 @@ The church schedule. Four tables so a phone downloads only what it shows: `event
 (one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
-excluded by the policy. Admin editing, the cancellation push and acting on reminders arrive with the admin
-feature. Its policy reads `group_members` from the `groups` feature.
+excluded by the policy. Whoever holds `events.manage` creates, edits (English and Vietnamese side by side),
+cancels and removes from the Admin tab; cancelling goes through a route and pushes to the members who could
+see the event, each in their language. Every date and time is church time (`America/New_York`), computed in
+one file, `churchTime.ts`. Reminders are stored but not sent yet.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
 The church's groups and who joined which: `groups` and `group_members`, the list page and the Join button.
@@ -191,7 +193,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
-| `events` | events | When an event happens. Church-wide when `group_id` is null. Soft-deleted rows hidden by the policy. |
+| `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `event_reminders` | events | Admin configuration. **No grant to `authenticated`:** it never reaches a member's device. |
@@ -257,6 +259,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Chat providers are config, asked in order of preference | Free tiers cap tokens per minute; the fastest answers until it throttles | Fallback quotas idle while the primary is healthy |
 | Follow-up questions are rewritten server-side before retrieval | A search index has no memory; one worked example in the prompt made a small model resolve "nhóm khác" | One extra LLM call per turn; it can narrow a question that already stood alone |
 | The assistant's conversation lives in localStorage, keyed by user id | Nothing server-side to leak, survives closing the app, keeps shared phones separate | Stays on the device after sign-out until "New chat"; no sync between devices |
+| Every event date and time is church time, computed in one file with `Intl` and no date library | The server runs on UTC and phones run anywhere; one wall clock makes them agree, keeps a weekly event at its hour across the clock change, and matches a cancelled week to the right day | Someone abroad sees the church's hour, not their own; `churchTime.ts` has to be right, so it is the most tested file in the feature |
 | A weekly event is stored once and expanded in code, not copied per week | One row stays the truth; cancelling one week is a row in `event_cancellations`, and an endless weekly event never fills the table | The schedule only reaches 8 weeks ahead, and "what happens on 3 March" needs the expansion to run |
 | Prayer requests are read through a view, never the table | RLS hides rows, not columns: a policy alone would let any member select the author of an "anonymous" request | A fourth pattern to know; the view runs with its owner's rights, so its `where` clause is the security and needs its own tests |
 | Prayers are a counter raised by a function; the pause between them is local | Who prayed is never stored, and nobody can write the number directly | "N people" can be one person several times; the pause does not stop a direct caller (B22) |
@@ -289,3 +292,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-06: notification pause: `push_cooldowns` + `claim_push_turns`, `topic` on every notification (also its tray `tag`). One notification per user per topic per minute. Run the SQL before deploying, or no notification is sent.
 - 2026-10-06: permissions: `role_permissions` + `user_roles`, a token hook that writes `permissions` into the login token, `has_permission`, the admin-only tab and page, and the first section (groups: create, rename). Needs the SQL and the dashboard hook switch.
 - 2026-10-06: groups can be removed by a manager: soft (`deleted_at`), never erased, and silenced everywhere through the membership policy. Prayer's view and function check it themselves.
+- 2026-10-06: events admin section: `events.manage`, create / edit with English and Vietnamese side by side / cancel one week or the whole event with a push per language (`POST /api/events/cancel`) / remove. All event dates and times moved to church time (`churchTime.ts`, closes B21 for events). An admin's own schedule shows every group's events.

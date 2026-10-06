@@ -19,6 +19,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | UI | `components/EnableNotificationsButton.tsx` | The toggle, shown on the Groups page |
 | Text | `strings.ts` | The toggle's labels |
 | Server logic | `server/sendPush.ts` | `sendPush(userIds, notification)`: **admin** client → who is due (the pause) → their devices → `web-push`. Deletes rows on 404/410. |
+| Server reads | `server/queries.ts` | `getSubscribedUserIds(admin)`: everyone with notifications on, for a church-wide announcement |
 | Shell | `public/sw.js` (`PUSH` lines) | `push` → show the notification; `notificationclick` → open its `url` |
 | Shell | `src/app/groups/page.tsx` (`// PUSH` lines) | Where the toggle is shown |
 
