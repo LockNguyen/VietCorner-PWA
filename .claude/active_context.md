@@ -138,8 +138,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] prayer, second pass (2026-10-06): Edit is back; answered requests leave the feed but stay in the table;
       the count left the screen and became a push to the author (`/api/prayer/pray`); delete asks nothing;
       "more…" is measured. Migration dry-run: 18/18 checks.
-      **Pending: the user runs the migration block (then test:rls expects 31; 4 fail until then), and signs
-      in at localhost:3000 in the Browser pane so Claude can exercise the screen. Then merge on the user's go.**
+      Migration applied, test:rls 31/31. Merged into `main` with events on the user's go (2026-10-06, not pushed).
+      Still not exercised: the Prayer screen while signed in.
+- [x] notification pause (branch `push-cooldown`, off `main`): one notification per user per topic per minute,
+      `push_cooldowns` + `claim_push_turns`, topic doubles as the tray tag. Dry run 8/8.
+      **Pending: the user runs the SQL block BEFORE this code is deployed (without it no push is sent);
+      then test:rls expects 33. Phone check: two messages in a minute = one buzz; does the tag replace on iOS?**
 - [ ] Next: admin dashboard (decisions and open questions in features/admin/README.md).
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
@@ -154,9 +158,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the prayer migration block in Supabase, then `npm run test:rls` (expect 31). Sign in at
-   localhost:3000 in the Browser pane.
-2. Claude: exercise the Prayer tab (post, anonymous, edit, answered, delete, pray + pause across a reload,
-   "more…", scroll past 20) and the Groups/Events tabs after the two extractions; record what was seen.
-3. On the user's go: merge `feature-events` and `feature-prayer` into `main`. Then a phone check of push
-   (chat message + "prayed for you"), then the admin dashboard.
+1. User: run the push-cooldown SQL block, `npm run test:rls` (expect 33), then say whether to merge
+   `push-cooldown` into `main` and push.
+2. Phone check with two accounts: chat pause, another group in the same minute, "prayed for you", and
+   whether a newer notification replaces the older one.
+3. Sign in at localhost:3000 in the Browser pane so Claude can exercise the Prayer screen; then the admin
+   dashboard (open questions in `src/features/admin/README.md`).

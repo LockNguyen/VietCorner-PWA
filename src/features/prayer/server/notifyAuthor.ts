@@ -23,5 +23,6 @@ export async function notifyAuthor(requestId: string) {
     title: translate(STRINGS.notificationTitle, language),
     body: translate(prayedForYou(request.prayer_count), language),
     url: "/prayer",
+    topic: "prayer", // all of an author's requests share one pause: several prayers in a minute, one notification
   });
 }

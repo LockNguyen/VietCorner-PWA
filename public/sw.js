@@ -12,6 +12,10 @@ self.addEventListener("push", (event) => {
     self.registration.showNotification(data.title || "VietCorner", {
       body: data.body,
       icon: "/icons/icon-192.png",
+      // Same topic = same tag: the new notification replaces the old one in the tray instead of stacking.
+      // `renotify` keeps the sound, which a replacement would otherwise lose (it needs a tag to be legal).
+      tag: data.topic,
+      renotify: Boolean(data.topic),
       data: { url: data.url || "/" },
     }),
   );

@@ -58,7 +58,7 @@ And a small group can guess from timing or wording — no software fixes that.
   set it to a million. `pray_for_request` adds exactly one, for a request the caller can see and did not
   write, and answers whether it counted.
 - **Praying goes through a route** because it notifies the author, which needs the service-role and VAPID
-  keys. The author gets a push, "N people prayed for you", on every counted prayer. Nothing about it is
+  keys. The author gets a push, "N people prayed for you", at most once a minute. Nothing about it is
   shown on screen, and nobody can read the count — not even the author.
 - **The count is a number of prayers, not a list of people.** Who prayed is never stored. The same person
   praying again after an hour counts again; the notification still says "people" (decided, for simplicity).
@@ -101,7 +101,8 @@ real notification arriving on a phone.**
 - A prayer that fails to reach the server cancels its pause, so the member can try again.
 - A prayer that does not count (own request, answered meanwhile) still pauses the button and notifies nobody.
 - An author with notifications off, or who never turned them on, is not told at all.
-- A popular request sends one notification per prayer; there is no batching or mute yet (backlog B4).
+- An author gets at most one "prayed for you" notification a minute, across all their requests (the `push`
+  README). The next one carries the running total, so no prayer goes uncounted, only unannounced.
 - "more…" is measured when the card appears and when its text changes, not when the phone is rotated.
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 

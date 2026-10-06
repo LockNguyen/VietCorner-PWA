@@ -123,6 +123,39 @@ describe("push_subscriptions", () => {
   });
 });
 
+describe("push cooldowns (server-only)", () => {
+  it("cannot be read or reset by a member, who could otherwise silence or spam someone", async () => {
+    const { data, error } = await alice.client.from("push_cooldowns").select("topic");
+    const { error: claimError } = await alice.client.rpc("claim_push_turns", {
+      user_ids: [bob.id],
+      topic: "prayer",
+      pause_seconds: 0,
+    });
+
+    expect(error).not.toBeNull();
+    expect(data).toBeNull();
+    expect(claimError).not.toBeNull();
+  });
+
+  it("give each user one turn per topic per pause", async () => {
+    const claim = async (topic: string, pauseSeconds = 60) => {
+      const { data, error } = await admin.rpc("claim_push_turns", {
+        user_ids: [alice.id, bob.id],
+        topic,
+        pause_seconds: pauseSeconds,
+      });
+      if (error) throw error;
+      return (data as string[]).sort();
+    };
+    const both = [alice.id, bob.id].sort();
+
+    expect(await claim("test:one")).toEqual(both); // first notification goes out
+    expect(await claim("test:one")).toEqual([]); // a second inside the minute does not
+    expect(await claim("test:two")).toEqual(both); // another topic is not affected
+    expect(await claim("test:one", 0)).toEqual(both); // and once the pause is over, it goes out again
+  });
+});
+
 describe("document_chunks (server-only table)", () => {
   it("is unreachable with the anon key, even for a signed-in user", async () => {
     const { data, error } = await alice.client.from("document_chunks").select("id").limit(1);

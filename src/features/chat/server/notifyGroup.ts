@@ -20,6 +20,7 @@ export async function notifyGroup(message: Message) {
       title: group?.name ?? "New message",
       body: `${message.sender_email}: ${message.body}`,
       url: `/groups/${message.group_id}`,
+      topic: `chat:${message.group_id}`, // per group: a quiet minute here does not silence another group
     },
   );
 }

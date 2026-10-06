@@ -131,7 +131,8 @@ service-role key. Table: `messages`.
 ### 6.8 push → [README](../src/features/push/README.md)
 Web Push delivery: the device's subscription, the toggle, the service-worker handlers, and
 `sendPush(userIds, notification)`. Chat and prayer decide who is told and what it says; this feature only
-delivers. Table: `push_subscriptions`.
+delivers, at most one notification per user per topic (`chat:<group>`, `prayer`) per minute. Tables:
+`push_subscriptions`, `push_cooldowns` (server-only).
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -176,6 +177,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `group_members` | groups | Users see and insert only their own rows |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
+| `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Soft-deleted rows hidden by the policy. |
@@ -231,6 +233,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
+| One notification per user, per topic, per minute, decided in the database | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
 | Netlify over Vercel | Free tier allows commercial use; git push deploys | Next runs through Netlify's adapter, so verify routes after a Next upgrade |
 | Layered feature shape (`api.ts` / `hooks` / `components` / `server`) | Every change has one predictable home | More, smaller files; some queries exist on both sides |
@@ -245,7 +248,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A weekly event is stored once and expanded in code, not copied per week | One row stays the truth; cancelling one week is a row in `event_cancellations`, and an endless weekly event never fills the table | The schedule only reaches 8 weeks ahead, and "what happens on 3 March" needs the expansion to run |
 | Prayer requests are read through a view, never the table | RLS hides rows, not columns: a policy alone would let any member select the author of an "anonymous" request | A fourth pattern to know; the view runs with its owner's rights, so its `where` clause is the security and needs its own tests |
 | Prayers are a counter raised by a function; the pause between them is local | Who prayed is never stored, and nobody can write the number directly | "N people" can be one person several times; the pause does not stop a direct caller (B22) |
-| The author learns of a prayer by push only; the count is on no screen | A notification reaches someone who is not looking at the app, and a number on a card invites comparing requests | One push per prayer (no batching); an author without notifications is never told |
+| The author learns of a prayer by push only; the count is on no screen | A notification reaches someone who is not looking at the app, and a number on a card invites comparing requests | At most one a minute; an author without notifications is never told |
 | Answered requests leave the feed but are never deleted | The list stays about what still needs prayer; the history feeds an end-of-year look back | Marking as answered cannot be undone from the app |
 | A cooldown is a stored timestamp, not a running timer | Correct after the app was closed for hours; nothing to resume or leak | The button returns up to 30 s late (one shared clock tick) |
 | `groups` is its own feature, and others depend on it only in SQL | Chat, events and prayer all share by group; one owner for membership means one truth and chat stays removable | `groups` cannot be removed while any of the three exists |
@@ -270,3 +273,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-05: prayer requests: `prayer_requests` + `prayer_feed` view (anonymity by column, not by UI), `pray_for_request`, `prayer_reminders`, the Prayer tab with paging on scroll and a local one-hour pause. `LOCALES` moved into i18n so events and prayer format dates the same way. Permissions proven by a 27-check dry run; the schema is not applied and the screen not exercised yet.
 - 2026-10-05: push delivery moved out of chat into `src/features/push/` (`sendPush`, the subscription table, the toggle, the `sw.js` handlers). No database change. Chat's `notifyGroup` now only decides who is told. Not re-tested on a real phone since the move.
 - 2026-10-06: prayer, second pass: authors can edit; answered requests leave the feed (kept in the table); the prayer count left the screen and became a push to the author through `POST /api/prayer/pray`; delete no longer asks; "more…" is measured instead of estimated. Needs the migration block (grant, view, function).
+- 2026-10-06: notification pause: `push_cooldowns` + `claim_push_turns`, `topic` on every notification (also its tray `tag`). One notification per user per topic per minute. Run the SQL before deploying, or no notification is sent.

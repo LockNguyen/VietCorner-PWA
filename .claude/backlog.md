@@ -40,7 +40,7 @@ Each item: **Why** → **What** → **Trade-offs** → **Done when**. Highest va
 ## B3. Rate limit sending messages
 **Why:** a signed-in user can spam a group and trigger unlimited pushes. **What:** per-user limit in `POST /api/chat/messages` (e.g. 20/min, counted in Postgres). **Done when:** the 21st message in a minute returns 429.
 
-## B4. Notification control (mute + grouping; prayer now sends one push per prayer too)
+## B4. Notification control (mute + grouping; a fixed one-minute pause per topic exists since 2026-10-06)
 **Why:** every message pushes every member, and elderly users may disable notifications entirely. **What:** a per-group mute flag. `sw.js` uses `tag: groupId` so repeated pushes replace each other. **Done when:** a muted member gets no push, and 5 messages show as 1 notification.
 
 ## B5. Private groups / invite-only joining

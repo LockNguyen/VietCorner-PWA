@@ -3,17 +3,33 @@ import webpush from "web-push";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { PushNotification } from "../types";
 
+// why: a lively group sends many messages a minute, and a phone that buzzes for each one gets its
+// notifications switched off. The first message says "this group is talking"; the rest are found on opening it.
+const PAUSE_SECONDS = 60;
+
 // Sends one notification to every device of the given users. The caller decides WHO (a group's other
 // members, the author of a prayer request); this file only knows HOW.
+//
+// A user who was notified about the same topic less than a minute ago is skipped. Nothing is sent later
+// to make up for it: there is no scheduler, so what arrives during the pause is silent.
 // Uses the admin client because RLS (correctly) hides other users' subscriptions.
 export async function sendPush(userIds: string[], notification: PushNotification) {
   if (userIds.length === 0) return;
 
   const admin = createAdminClient();
+  // The database decides and records in one step (schema.sql), so two sends at once cannot both win.
+  const { data: dueUserIds, error } = await admin.rpc("claim_push_turns", {
+    user_ids: userIds,
+    topic: notification.topic,
+    pause_seconds: PAUSE_SECONDS,
+  });
+  if (error) throw new Error(error.message);
+  if (dueUserIds.length === 0) return;
+
   const { data: subscriptions } = await admin
     .from("push_subscriptions")
     .select("endpoint, subscription")
-    .in("user_id", userIds);
+    .in("user_id", dueUserIds);
 
   // Set here, not at import time, so a missing env var can't break the build.
   webpush.setVapidDetails(

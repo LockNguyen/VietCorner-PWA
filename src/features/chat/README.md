@@ -57,7 +57,8 @@ There is no WebRTC: that is for peer-to-peer media, and chat is client ↔ serve
 - Everything about delivery (iOS, closed apps, shared devices) is in the `push` README.
 - An unknown group id shows Next's 404 page with HTTP 200, because `loading.tsx` starts streaming first.
 - Only the newest 50 messages load; there is no "load older" yet (backlog B6).
-- **Known gaps:** no rate limiting on sending (B3), and every message notifies every member (B4).
+- A member is notified about a group at most once a minute (the `push` README); nobody can mute a group yet (B4).
+- **Known gap:** no rate limiting on sending (B3).
 
 ## Limits (free tiers)
 | Limit | Where | Our usage |
