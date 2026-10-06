@@ -16,7 +16,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | `role_permissions`, `user_roles` (both server-only), the token hook, `has_permission`, the DROPs |
-| Server reads | `server/queries.ts` | `getMyPermissions(supabase)` → the list from the login token |
+| Server reads | `server/queries.ts` | `getMyPermissions(supabase)` → the list from the login token; `getUserIdsWithPermission(admin, name)` → who to notify |
 | Shell | `src/app/layout.tsx` (`// PERMISSIONS`) | Reads the list once per page load; shows the Admin tab when it is not empty |
 | Shell | `src/app/admin/page.tsx` | One section per feature, each shown only with that feature's permission |
 

@@ -157,6 +157,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Not exercised: the admin screens, any push on a real phone.
 - [x] admin slice 1 merged into `main` on the user's go (2026-10-06, 17 commits ahead of GitHub, not pushed).
 - [ ] admin slice 2 (prayer moderation): ON HOLD, backlog B24, waits on the pastor.
+- [x] join approval (branch `join-approval`): ask → pending → a manager approves or declines; three pushes.
+      Dry run 17/17, build clean. **Pending: the join SQL block; test:rls expects 40.** Not exercised on screen.
 - [ ] admin slice 3: reminders (editors for event and prayer reminders) + the scheduler that sends them.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
@@ -164,7 +166,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - B18 shared UI kit (do it inside the UI/UX revamp).
 - B19 post-MVP features still open: account settings, UI revamp.
 - B21 done for events; prayer reminder times still need church time · B22 prayer pause is device-only.
-- B24 prayer moderation on hold (pastor) · B5 groups are joinable by anyone, so not yet private.
+- B24 prayer moderation on hold (pastor).
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
 - M9 (LiveKit real-time voice, B11) stays optional.

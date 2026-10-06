@@ -46,6 +46,13 @@ async function createTestUser(name: string): Promise<TestUser> {
   return { id: created.user.id, email, client };
 }
 
+// Makes `user` a member of a group the way an approval does: with the service role. Members cannot add
+// themselves any more; the "joining a group" tests below cover the request and the approval.
+async function makeMember(user: TestUser, memberOfGroupId: string) {
+  const { error } = await admin.from("group_members").insert({ group_id: memberOfGroupId, user_id: user.id });
+  if (error) throw error;
+}
+
 let alice: TestUser;
 let bob: TestUser;
 let groupId: string;
@@ -58,7 +65,7 @@ beforeAll(async () => {
   groupId = group.id;
 
   // Alice joins the group and posts; Bob stays outside it.
-  await alice.client.from("group_members").insert({ group_id: groupId });
+  await makeMember(alice, groupId);
   await alice.client.from("messages").insert({ group_id: groupId, body: "alice's private message" });
   await alice.client
     .from("push_subscriptions")
@@ -102,10 +109,11 @@ describe("messages", () => {
 });
 
 describe("group_members", () => {
-  it("cannot be created on behalf of another user", async () => {
-    const { error } = await bob.client.from("group_members").insert({ group_id: groupId, user_id: alice.id });
+  it("cannot be created by a member, for themselves or anyone else: the way in is an approval", async () => {
+    const { error: forSelf } = await bob.client.from("group_members").insert({ group_id: groupId });
+    const { error: forOther } = await bob.client.from("group_members").insert({ group_id: groupId, user_id: alice.id });
 
-    expect(error?.message).toMatch(/row-level security/i);
+    expect([forSelf, forOther].every((error) => error !== null)).toBe(true);
   });
 });
 
@@ -175,6 +183,30 @@ describe("permissions", () => {
     expect(renamed?.name).toBe(`${name} renamed`);
   });
 
+  it("joining a group: a member asks, only a manager lets them in", async () => {
+    // Bob asks to join the group Alice (a manager by now) created in the test above.
+    if (!createdGroupId) throw new Error("the group from the previous test is missing");
+    const { error: askError } = await bob.client.from("group_join_requests").insert({ group_id: createdGroupId });
+    const { data: ownRequest } = await bob.client.from("group_join_requests").select("user_email");
+    const { data: selfApproved } = await bob.client.rpc("approve_join_request", { group_id: createdGroupId, user_id: bob.id });
+    const { data: beforeApproval } = await bob.client.from("group_members").select("group_id").eq("group_id", createdGroupId);
+
+    const { data: seenByManager } = await alice.client.from("group_join_requests").select("user_id").eq("group_id", createdGroupId);
+    const { data: approved } = await alice.client.rpc("approve_join_request", { group_id: createdGroupId, user_id: bob.id });
+    const { data: afterApproval } = await bob.client.from("group_members").select("group_id").eq("group_id", createdGroupId);
+    const { data: leftOver } = await admin.from("group_join_requests").select("user_id").eq("group_id", createdGroupId);
+    await admin.from("group_members").delete().eq("group_id", createdGroupId).eq("user_id", bob.id); // the next test adds him itself
+
+    expect(askError).toBeNull();
+    expect(ownRequest).toEqual([{ user_email: bob.email }]);
+    expect(selfApproved).toBe(false); // asking is not getting
+    expect(beforeApproval).toEqual([]);
+    expect(seenByManager).toEqual([{ user_id: bob.id }]);
+    expect(approved).toBe(true);
+    expect(afterApproval).toHaveLength(1);
+    expect(leftOver).toEqual([]); // the request became the membership
+  });
+
   it("stop a member from creating, renaming or removing a group", async () => {
     const { error } = await bob.client.from("groups").insert({ name: "bob's group" });
     await bob.client.from("groups").update({ name: "defaced" }).eq("id", groupId);
@@ -189,7 +221,7 @@ describe("permissions", () => {
   it("a removed group goes quiet for its members, and nothing in it is erased", async () => {
     // Bob joins the group Alice made and posts; then Alice, who may manage groups, removes it.
     if (!createdGroupId) throw new Error("the group from the previous test is missing");
-    await bob.client.from("group_members").insert({ group_id: createdGroupId });
+    await makeMember(bob, createdGroupId);
     await bob.client.from("messages").insert({ group_id: createdGroupId, body: "before the group was removed" });
     const { error: removeError } = await alice.client
       .from("groups")
@@ -438,8 +470,8 @@ describe("prayer requests", () => {
     const { data: other } = await admin.from("groups").select("id").neq("id", groupId).limit(1).single();
     if (!other) throw new Error("needs two groups: run features/groups/schema.sql first");
     sharedGroupId = other.id;
-    await alice.client.from("group_members").insert({ group_id: sharedGroupId });
-    await bob.client.from("group_members").insert({ group_id: sharedGroupId });
+    await makeMember(alice, sharedGroupId);
+    await makeMember(bob, sharedGroupId);
 
     // Posted through the same door the app uses, so the grants and defaults are part of what is tested.
     const posted = await Promise.all([

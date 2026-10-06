@@ -13,3 +13,15 @@ export async function getMyPermissions(supabase: SupabaseClient): Promise<string
   const permissions: unknown = data?.claims.permissions;
   return Array.isArray(permissions) ? permissions.filter((name) => typeof name === "string") : [];
 }
+
+// Everyone who holds `permission`, for telling them something (a push). This one reads the tables, because
+// other people's tokens are not ours to read. `admin` must be the service-role client: the tables are
+// closed to members.
+export async function getUserIdsWithPermission(admin: SupabaseClient, permission: string): Promise<string[]> {
+  const { data: roles } = await admin.from("role_permissions").select("role").eq("permission", permission);
+  const { data: holders } = await admin
+    .from("user_roles")
+    .select("user_id")
+    .in("role", (roles ?? []).map((row) => row.role));
+  return [...new Set((holders ?? []).map((row) => row.user_id as string))];
+}

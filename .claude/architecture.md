@@ -188,7 +188,8 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `auth.users` | Supabase | Built in; one row per account, created on first sign-in |
 | `role_permissions`, `user_roles` | permissions | **Server-only.** Read by Supabase Auth while it builds a token; rows added by hand. |
 | `groups` | groups | Active groups readable by any signed-in user; created, renamed and removed (`deleted_at`, never erased) with `groups.manage` |
-| `group_members` | groups | Users see and insert only their own rows, and only in active groups: this is what silences a removed group everywhere |
+| `group_members` | groups | Users see only their own rows, and only in active groups: this is what silences a removed group everywhere. No member can insert; the way in is `approve_join_request`. |
+| `group_join_requests` | groups | Someone asked to join. Users insert and see their own; `groups.manage` sees all, declines (delete) and approves (function). |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
@@ -268,6 +269,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | The author learns of a prayer by push only; the count is on no screen | A notification reaches someone who is not looking at the app, and a number on a card invites comparing requests | At most one a minute; an author without notifications is never told |
 | Answered requests leave the feed but are never deleted | The list stays about what still needs prayer; the history feeds an end-of-year look back | Marking as answered cannot be undone from the app |
 | A cooldown is a stored timestamp, not a running timer | Correct after the app was closed for hours; nothing to resume or leak | The button returns up to 30 s late (one shared clock tick) |
+| A request to join is its own table, and approval is the only way into `group_members` | A group's chat, events and prayers are private only if joining is; a separate table keeps "is a member" meaning one thing, so no other feature changed | Every join waits on a person; managers are told by push so requests do not sit unseen |
 | A removed group is silenced by hiding its memberships, not by editing every feature | Chat, events and prayer already ask "is the caller a member?"; one policy answers no for a removed group | Code that skips row rules (prayer's view and function, anything using the service role) must check `groups.deleted_at` itself |
 | `groups` is its own feature, and others depend on it only in SQL | Chat, events and prayer all share by group; one owner for membership means one truth and chat stays removable | `groups` cannot be removed while any of the three exists |
 | **Fixed UI labels are translated in code; admin-written content is translated in the database** | Labels change only when a developer changes a screen, so a table would add caching, fallbacks and a deploy-free path nobody needs. Event titles are data an admin writes, so they get `_en`/`_vi` columns. | Two mechanisms to understand. A label fix needs a deploy. |
@@ -297,3 +299,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-06: events admin section: `events.manage`, create / edit with English and Vietnamese side by side / cancel one week or the whole event with a push per language (`POST /api/events/cancel`) / remove. All event dates and times moved to church time (`churchTime.ts`, closes B21 for events). An admin's own schedule shows every group's events.
 - 2026-10-06: events admin reworked to one "Edit event" panel: fields, next four dates with Cancel / Undo, and "Cancel this event permanently" (replaces Remove; members see it one more week). Cancellation and undo notifications carry no topic, so each arrives outside the one-minute pause.
 - 2026-10-06: prayer moderation put on hold (backlog B24): groups are meant to be private, so admins get no access to prayer requests until the pastor decides. No code changed.
+- 2026-10-06: joining a group needs approval (B5): `group_join_requests`, `approve_join_request`, members lose insert on `group_members`, "Waiting to join" in the Groups admin section, pushes to managers (on a request) and to the person (on approval).

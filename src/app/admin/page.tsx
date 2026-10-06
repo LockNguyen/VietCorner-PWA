@@ -5,7 +5,7 @@ import EventAdmin from "@/features/events/components/EventAdmin";
 import { getManagedEvents } from "@/features/events/server/queries";
 import { MANAGE_EVENTS } from "@/features/events/types";
 import GroupAdmin from "@/features/groups/components/GroupAdmin";
-import { getGroups } from "@/features/groups/server/queries";
+import { getGroups, getJoinRequests } from "@/features/groups/server/queries";
 import { MANAGE_GROUPS } from "@/features/groups/types";
 import { getMyPermissions } from "@/features/permissions/server/queries";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +29,7 @@ export default async function AdminPage() {
       {permissions.includes(MANAGE_EVENTS) && (
         <EventAdmin events={await getManagedEvents(supabase)} groups={groups.map(({ id, name }) => ({ id, name }))} />
       )}
-      {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={groups} />}
+      {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={groups} requests={await getJoinRequests(supabase)} />}
     </>
   );
 }

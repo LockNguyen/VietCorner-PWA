@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { joinGroup } from "../api";
+import { requestToJoin } from "../api";
 import { STRINGS } from "../strings";
 
 export default function JoinButton({ groupId }: { groupId: string }) {
@@ -11,8 +11,8 @@ export default function JoinButton({ groupId }: { groupId: string }) {
 
   async function handleClick() {
     try {
-      await joinGroup(groupId);
-      router.refresh(); // reload the page's server data so the group turns into a link
+      await requestToJoin(groupId);
+      router.refresh(); // reload the page's server data so the button turns into "Waiting for approval"
     } catch (error) {
       alert((error as Error).message);
     }

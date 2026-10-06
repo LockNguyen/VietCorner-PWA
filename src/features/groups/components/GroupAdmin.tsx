@@ -5,12 +5,13 @@ import { useState, type FormEvent } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { createGroup } from "../api";
 import { STRINGS } from "../strings";
-import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
+import { MAX_GROUP_NAME_LENGTH, type Group, type JoinRequest } from "../types";
 import GroupNameEditor from "./GroupNameEditor";
+import JoinRequests from "./JoinRequests";
 
-// The admin page's section for groups: rename the ones that exist, add a new one.
+// The admin page's section for groups: answer who is waiting to join, rename or remove a group, add one.
 // Shown only to someone with the "groups.manage" permission; the database refuses everyone else anyway.
-export default function GroupAdmin({ groups }: { groups: Group[] }) {
+export default function GroupAdmin({ groups, requests }: { groups: Group[]; requests: JoinRequest[] }) {
   const router = useRouter();
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
@@ -31,6 +32,8 @@ export default function GroupAdmin({ groups }: { groups: Group[] }) {
   return (
     <section className="p-4">
       <h2 className="mb-2 border-b pb-1 text-lg font-semibold">{t(STRINGS.adminHeading)}</h2>
+
+      <JoinRequests requests={requests} groups={groups} />
 
       <ul className="space-y-2">
         {groups.map((group) => (
