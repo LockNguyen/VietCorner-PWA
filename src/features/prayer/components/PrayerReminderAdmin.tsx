@@ -22,6 +22,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
   const [weekday, setWeekday] = useState(0);
   const [sendAt, setSendAt] = useState("19:00");
   const [failed, setFailed] = useState(false);
+  const [saving, setSaving] = useState(false); // one change at a time: a second tap waits for the first
 
   // 1 January 2023 was a Sunday, so day 1 + n of that month is weekday n. Read in UTC so no timezone moves it.
   const weekdayName = (day: number) =>
@@ -29,12 +30,14 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
 
   async function save(change: () => Promise<void>) {
     setFailed(false);
+    setSaving(true);
     try {
       await change();
       router.refresh(); // reload the page's server data: the list is what the database says
     } catch {
-      setFailed(true); // most often: that group already has this exact reminder
+      setFailed(true);
     }
+    setSaving(false);
   }
 
   function handleSubmit(event: FormEvent) {
@@ -55,7 +58,11 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
               {groups.find((group) => group.id === reminder.group_id)?.name} · {weekdayName(reminder.weekday)} ·{" "}
               {reminder.send_at.slice(0, 5)}
             </span>
-            <button onClick={() => save(() => removeReminder(reminder.id))} className="rounded border px-3 py-1 text-red-600">
+            <button
+              onClick={() => save(() => removeReminder(reminder.id))}
+              disabled={saving}
+              className="rounded border px-3 py-1 text-red-600 disabled:opacity-50"
+            >
               {t(STRINGS.removeReminder)}
             </button>
           </li>
@@ -78,7 +85,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
           ))}
         </select>
         <input type="time" value={sendAt} onChange={(event) => setSendAt(event.target.value)} className={input} />
-        <button disabled={!groupId || !sendAt} className="w-full rounded bg-blue-500 p-3 text-lg text-white disabled:opacity-50">
+        <button disabled={saving || !groupId || !sendAt} className="w-full rounded bg-blue-500 p-3 text-lg text-white disabled:opacity-50">
           {t(STRINGS.addReminder)}
         </button>
       </form>

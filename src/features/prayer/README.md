@@ -97,7 +97,9 @@ And a small group can guess from timing or wording — no software fixes that.
 - Your own request has no Pray button and an X, which opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
-  with Remove, and a row to add one. Adding the same reminder twice shows the error line.
+  with Remove, and a row to add one. A group can have several reminders on one day at different times, but
+  not the same day and time twice; adding one that already exists changes nothing and is not an error.
+  The buttons are disabled while a change is being saved.
   **Not yet exercised on screen; no reminder has been seen arriving.**
 - Twenty requests load first; reaching the bottom loads twenty more until none are left.
 - `POST /api/prayer/pray` while signed out → `401 {"error":"Not signed in"}` (observed 2026-10-06).
