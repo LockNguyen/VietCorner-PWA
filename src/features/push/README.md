@@ -62,7 +62,10 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - The Groups page shows the toggle; after a tap and the permission prompt it reads "Notifications are on".
 - A device that unsubscribed returns 404/410 on the next send, and its row is removed.
 - `POST /api/reminders/send` without the secret, or with a wrong one → `401 {"error":"Not allowed"}`
-  (observed 2026-10-06). **Not yet observed: the cron job calling it, or a reminder arriving.**
+  (observed 2026-10-06, and on the live site 2026-10-07).
+- The cron job `send-reminders` runs every 15 minutes; its first run on 2026-10-07 got
+  `200 {"sent":{"events":0,"prayer":0}}` from the live site, so the secret matches on both sides.
+  **Not yet observed: a reminder arriving on a phone.**
 - Two messages in one group within a minute: one notification. A message in another group, or a prayer, in
   that same minute: its own notification. **Proven in the database (8-check dry run, 2026-10-06); not yet
   observed on a phone**, including whether the tag replaces the older notification on iOS.

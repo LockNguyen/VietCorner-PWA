@@ -161,8 +161,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Dry run 17/17, build clean. **Pending: the join SQL block; test:rls expects 40.** Not exercised on screen.
 - [x] admin slice 3: reminders (branch `join-approval`): event reminders (3 choices), weekly prayer reminders per
       group, `/api/reminders/send` behind `CRON_SECRET`, send-once ledger. 69 unit tests, 15-check dry run.
-      **Pending: the reminders SQL block (test:rls expects 41 with the join block too); then, to actually send:
-      deploy, set `CRON_SECRET` on Netlify, run the cron SQL by hand.** No reminder has been seen arriving.
+      SQL applied (test:rls 41/41). Merged and **pushed to GitHub 2026-10-07** (`7aec5b8`); Netlify deployed it.
+      `CRON_SECRET` set and the cron job running: first run answered 200 with nothing due.
+      No reminder has been seen arriving on a phone yet.
 
 ## ⏭️ Known, deferred, not forgotten (see `.claude/backlog.md`)
 - B17 strings migration for chat + assistant (do it inside the i18n step).
@@ -177,9 +178,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the join block and the reminders block; `npm run test:rls` (expect 41). Sign out and in (new
-   permission `prayer.reminders`).
-2. On the user's go: merge `join-approval`, push `main`, set `CRON_SECRET` on Netlify, run the cron SQL
-   (push/schema.sql section 5). Then the phone session: chat push, the pause, "prayed for you", a
-   cancellation and undo, a join request and approval, one event reminder, one prayer reminder.
+1. Phone session on the live site with two accounts: chat push, the one-minute pause, "prayed for you", an
+   event cancellation and undo, a join request and approval, one event reminder ("30 minutes before" on an
+   event ~40 minutes away), one prayer reminder.
+2. Fix whatever that session finds; record what was seen in each feature README.
 3. User, with the pastor: who (if anyone) outside a group may read or hide its prayer requests (B24).
