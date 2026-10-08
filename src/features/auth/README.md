@@ -45,7 +45,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 ## Expected behavior
 - Logged out, every page redirects to `/login`; `sw.js`, the manifest and icons still load, so the app can be
   installed before signing in.
-- Logged in, `/login` redirects to `/groups`.
+- Logged in, `/login` redirects to Home (`/`).
 - One exception to the redirect: `/ui`, the component showcase, opens without signing in when the app runs
   in development (`// UI SHOWCASE` in `refreshSession.ts`). In production it is redirected like any page.
 - New and returning users both receive exactly one email containing a code. There is no sign-up page.

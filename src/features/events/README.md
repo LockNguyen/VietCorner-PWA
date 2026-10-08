@@ -35,7 +35,7 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventForm.tsx` | The fields, with English and Vietnamese side by side |
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three ticks: 1 day, 2 hours, 30 minutes before; one tick |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
-| Shell | `src/app/events/page.tsx`, `TabBar.tsx` | The Events tab |
+| Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
 | Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
 
 ## Four tables, on purpose
@@ -132,5 +132,5 @@ Verified against the seeds on 2026-10-05 by running `getUpcomingSchedule` as rea
 Bringing back an event that was cancelled for good.
 
 ## Remove
-Delete this folder, `src/app/events/`, the Events tab in `TabBar.tsx` and `eventsTab` in
+Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `eventsTab` in
 `src/components/strings.ts`, then run the DROP statements at the bottom of `schema.sql`.

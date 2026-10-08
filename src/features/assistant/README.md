@@ -67,5 +67,5 @@ No `server/queries.ts`: the page loads only who is signed in, because the assist
 
 ## Remove
 Delete this folder and `src/app/api/assistant/`, reset `src/app/assistant/page.tsx` to a placeholder, drop the
-Assistant tab in `src/components/TabBar.tsx`, remove `AI_SERVICE_URL`/`AI_SERVICE_TOKEN`, and delete
+Assistant tab in `src/components/AppTabs.tsx`, remove `AI_SERVICE_URL`/`AI_SERVICE_TOKEN`, and delete
 `services/ai` plus the `document_chunks` table.

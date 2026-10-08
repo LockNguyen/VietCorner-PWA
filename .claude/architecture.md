@@ -45,7 +45,7 @@ Phone ──► Netlify ──────────────────�
 ```
 src/
   app/          Routes. Thin: a page loads data and composes feature components.
-  components/   App shell shared by every page (TabBar, PageHeader, ServiceWorkerRegister) and ui/ActionButton.
+  components/   The app shell (PageHeader, AppTabs, HomeTiles, ServiceWorkerRegister) and ui/, the component library.
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
@@ -108,16 +108,18 @@ The empty installable app every feature plugs into.
 
 | File | Job |
 |---|---|
-| `src/app/layout.tsx` | Root HTML, `TabBar`, `ServiceWorkerRegister`, iOS metadata |
-| `src/app/manifest.ts` | `/manifest.webmanifest`: name, icons, `display: standalone`, `start_url: /groups` |
-| `src/app/page.tsx` | `/` redirects to `/groups` |
+| `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata |
+| `src/app/manifest.ts` | `/manifest.webmanifest`: "Góc Việt" under the icon, icons, `display: standalone`, `start_url: /` |
+| `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`) |
 | `src/app/loading.tsx` | Instant "Loading…" while a dynamic page renders, so a tap gives feedback |
-| `src/components/TabBar.tsx` | Bottom navigation. `TABS` is the only list of tabs. |
-| `src/components/PageHeader.tsx` | Sticky title bar |
+| `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
+| `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
 | `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. |
 
-**Expected behavior:** `/` opens `/groups` (or `/login`); tabs switch without a reload; `sw.js`, the manifest
+**Expected behavior:** `/` is Home (or redirects to `/login`); signing in lands on Home; the tab bar is
+absent until signed in; the assistant and Settings open from the top-right icons and have a back arrow to
+Home; tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
 
 **Shared UI:** `src/components/ui/` is the component library of the UI revamp, built slice by slice from
@@ -336,3 +338,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: design decisions closed. `docs/design-system.md` holds the tokens (one accent `#1976D2`, system font, 17 base), the frame, the component list and the cross-component rules; `docs/design-questions.md` keeps the reasons. Still nothing implemented.
 - 2026-10-08: UI revamp, slice 0: design tokens in `globals.css` (colours, text sizes on a scalable root, px spacing, radii), `Text`, `Button` (with the pending state), `Spinner`, the `/ui` showcase and the component README. No existing screen restyled; `ActionButton` stays until its screens move.
 - 2026-10-08: `Spinner` aligns to the middle of the text beside it (it sat 1.5 to 3 px high), in a busy button's label and inline.
+- 2026-10-08: UI revamp, slice 1, the frame: blue `TopBar` with the assistant and Settings icons and a back arrow on sub-screens; `TabBar` with drawn icons (Home, Events, Prayer, Groups, Admin); a Home screen with three tiles, where the app now opens; no tab bar before sign-in; the app is named "Góc Việt" with a placeholder icon. Adds `lucide-react`. Screens inside the frame are still the old look.

@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const LOGIN_PATH = "/login";
-const HOME_PATH = "/groups";
+const HOME_PATH = "/";
 
 // Called by src/proxy.ts before every request.
 // 1) Refreshes the login cookie so users stay signed in.

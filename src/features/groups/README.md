@@ -23,7 +23,7 @@ events or prayer: their tables point at `groups`.
 | UI | `components/JoinRequests.tsx`, `JoinRequestRow.tsx` | The admin section's list of who is waiting; one person, with Approve and Decline |
 | UI | `components/GroupAdmin.tsx`, `GroupNameEditor.tsx` | The admin page's section: rename a group, remove one, add one |
 | Text | `strings.ts` | The Join button. Group names are data. |
-| Shell | `src/app/groups/page.tsx`, the Groups tab in `TabBar.tsx` | The list page |
+| Shell | `src/app/groups/page.tsx`, the Groups tab in `AppTabs.tsx` | The list page |
 
 ## Decisions worth knowing
 - **Other features depend on this one in SQL only.** Their policies read `group_members`; none of them
@@ -72,5 +72,5 @@ events or prayer: their tables point at `groups`.
 
 ## Remove
 This is a foundation, not a leaf: chat, events (group events) and prayer stop working without it. Remove those
-first, then delete this folder, `src/app/groups/`, the Groups tab in `TabBar.tsx`, and run the DROP statement
+first, then delete this folder, `src/app/groups/`, the Groups tab in `AppTabs.tsx`, and run the DROP statement
 at the bottom of `schema.sql`.

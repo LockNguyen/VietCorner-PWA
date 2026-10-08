@@ -83,14 +83,13 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 
 | Group | Component | Job | Variants |
 |---|---|---|---|
-| Frame | `TopBar` | Title, optional back, right-hand icons | |
+| Frame | `TopBar` | Title, optional back, right-hand icons. (The centred column is two classes on `layout.tsx`, not a component.) | |
 | | `TabBar` | The tabs | |
-| | `Screen` | The centred column and its paddings | |
 | Text | `Text` | Every piece of text outside a control | `tile`, `body`, `small`; tone `ink`, `subtle`, `danger` |
 | List | `ListRow` | Thumbnail, title, subtitle, trailing chevron or control | link, static |
 | | `Thumbnail` | A picture, or a tinted tile with an icon or letter | |
 | | `Avatar` | A person's picture, or the default one | `small` (chat), `regular` |
-| | `PhotoTile` | Home's large tile: picture, dark overlay, title | |
+| | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
 | Controls | `Button` | Any button; shows the turning circle while pending (absorbs `ActionButton`) | `primary`, `quiet`, `danger`, `text` |
 | | `IconButton` | An icon alone, with a screen-reader name | on `action`, on `surface` |

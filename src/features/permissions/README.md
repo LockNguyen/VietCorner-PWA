@@ -63,4 +63,4 @@ about church-wide permissions.
 ## Remove
 Switch the hook off in the dashboard **first**. Then run the DROP statements in `schema.sql` (they also drop
 every policy that uses `has_permission`), delete this folder and `src/app/admin/`, and remove the
-`// PERMISSIONS` lines in `layout.tsx` and `TabBar.tsx`.
+`// PERMISSIONS` lines in `layout.tsx` and `AppTabs.tsx`.

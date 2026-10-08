@@ -36,7 +36,7 @@ to run twice (plain `create`).
 | UI | `components/RequestEditor.tsx` | The dialog's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
 | UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: each group's weekly reminders and the row to add one; one reminder, with Remove |
-| Shell | `src/app/prayer/page.tsx`, `TabBar.tsx`, `src/components/strings.ts` | The Prayer tab |
+| Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |
 
 ## How anonymity is guaranteed
 RLS hides **rows**, not columns. If members could read `prayer_requests`, any of them could open the browser
@@ -125,6 +125,6 @@ real notification arriving on a phone.**
 - **The end-of-year look back** at answered requests (backlog B19). The data is already being kept.
 
 ## Remove
-Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, the Prayer tab in `TabBar.tsx`, `prayerTab`
+Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
 in `src/components/strings.ts`, and the "prayer requests" block in `tests/rls.test.ts`. Run the DROP
 statements at the bottom of `schema.sql`.

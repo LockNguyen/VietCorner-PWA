@@ -40,7 +40,7 @@ export default function LoginForm() {
       setError("");
       try {
         await verifyLoginCode(email, code);
-        router.replace("/groups");
+        router.replace("/");
         router.refresh(); // re-run the proxy so it sees the new login cookie
       } catch (error) {
         setError((error as Error).message);

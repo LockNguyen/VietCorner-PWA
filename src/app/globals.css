@@ -35,6 +35,14 @@
   --radius-bubble: 18px;
 }
 
+/* Room for the phone's own furniture: the status bar and notch above, the home indicator below. */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */
 html {
   font-size: calc(106.25% * var(--text-scale, 1));

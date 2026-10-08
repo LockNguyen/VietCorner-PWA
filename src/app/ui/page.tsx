@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
+import { Bot, CalendarDays, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
 import Button from "@/components/ui/Button";
+import IconLink from "@/components/ui/IconLink";
+import PhotoTile from "@/components/ui/PhotoTile";
 import Spinner from "@/components/ui/Spinner";
+import TabBar from "@/components/ui/TabBar";
 import Text from "@/components/ui/Text";
+import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,6 +39,53 @@ export default async function ShowcasePage() {
             <Button variant={variant} pending pendingLabel="Đang lưu…">{variant}</Button>
           </div>
         ))}
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">TopBar: a tab's screen, a sub-screen with a long title</Text>
+        <TopBar
+          title="Sự kiện"
+          right={
+            <>
+              <IconLink href="/ui" label="Assistant"><Bot /></IconLink>
+              <IconLink href="/ui" label="Settings"><Settings /></IconLink>
+            </>
+          }
+        />
+        <TopBar
+          title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư"
+          left={<IconLink href="/ui" label="Back"><ChevronLeft /></IconLink>}
+          right={
+            <>
+              <IconLink href="/ui" label="Assistant"><Bot /></IconLink>
+              <IconLink href="/ui" label="Settings"><Settings /></IconLink>
+            </>
+          }
+        />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">IconLink: on the bar, on white</Text>
+        <div className="flex gap-2">
+          <IconLink href="/ui" label="Home" tone="ink"><House /></IconLink>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-6">
+        <Text as="h2" variant="small" tone="subtle">PhotoTile</Text>
+        <PhotoTile href="/ui" title="Cầu nguyện"><HandHeart className="size-8" /></PhotoTile>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">TabBar: fixed to the bottom of this page, second tab active</Text>
+        <TabBar
+          tabs={[
+            { href: "/ui#home", label: "Trang chủ", icon: <House />, active: false },
+            { href: "/ui#events", label: "Sự kiện", icon: <CalendarDays />, active: true },
+            { href: "/ui#prayer", label: "Cầu nguyện", icon: <HandHeart />, active: false },
+            { href: "/ui#groups", label: "Nhóm", icon: <Users />, active: false },
+          ]}
+        />
       </section>
 
       <section className="flex flex-col gap-2">

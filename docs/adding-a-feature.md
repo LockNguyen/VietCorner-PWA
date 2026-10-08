@@ -34,7 +34,7 @@ src/features/<name>/
 Then wire it into the shell, one line each:
 - `src/app/<name>/page.tsx` — load data, render components.
 - `src/app/api/<name>/<action>/route.ts` — only if the feature needs a route.
-- `src/components/TabBar.tsx` — add to `TABS` if it needs a tab.
+- `src/components/AppTabs.tsx` — add to `TABS` if it needs a tab.
 - `.claude/architecture.md` §6 — one paragraph and a link to the feature README.
 
 Not every file is required. An assistant with no tables has no `schema.sql`; a feature whose page needs no

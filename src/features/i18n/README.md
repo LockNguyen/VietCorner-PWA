@@ -52,5 +52,5 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 
 ## Remove
 Delete this folder and `src/components/strings.ts`, remove the `// I18N` lines in `src/app/layout.tsx`,
-`src/components/TabBar.tsx` and the pages, convert each feature's `strings.ts` values back to plain strings,
+`src/components/AppTabs.tsx` and the pages, convert each feature's `strings.ts` values back to plain strings,
 and run `drop table public.user_settings;`.

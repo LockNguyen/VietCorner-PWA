@@ -14,7 +14,7 @@ export default async function GroupPage({ params }: { params: Promise<{ groupId:
 
   return (
     <>
-      <PageHeader title={group.name} />
+      <PageHeader title={group.name} backHref="/groups" />
       <ChatRoom groupId={groupId} myUserId={room.userId} initialMessages={room.messages} />
     </>
   );

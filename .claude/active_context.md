@@ -181,7 +181,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] `double-tap` merged into `main` (confirmed by the user 2026-10-08). `main` is 7 commits ahead of GitHub; nothing is pushed, by instruction.
 - [ ] **UI/UX revamp** (design: `docs/design-system.md`; rules: the `frontend` skill; a review pause after each slice)
   - [x] 0 Foundations (branch `ui-0-foundations`): tokens, `Text`, `Button`, `Spinner`, `/ui`. Seen at phone width.
-  - [ ] 1 Frame: top bar, tab bar, Home with three tiles, assistant + Settings at the top right, placeholder logo and icon
+  - [x] 1 Frame (branch `ui-1-frame`): `TopBar`, `TabBar`, `IconLink`, `PhotoTile`; Home with three tiles; the
+        assistant and Settings at the top right; opens on Home; "Góc Việt" and a placeholder icon. Seen in
+        `/ui` and on the sign-in screen at phone width. NOT seen: any signed-in screen, an installed iPhone app.
   - [ ] 2 Lists: row, thumbnail, avatar, skeleton, empty state → Groups, Events, Settings
   - [ ] 3 Banners → replace every inline error
   - [ ] 4 Forms and the sheet → sign-in, admin sections, the event editor as a full screen
@@ -190,7 +192,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: look at `/ui` (run the app locally; it needs no sign-in there) and say go, or what to change.
-2. Claude: slice 1, the frame. Installs `lucide-react`. Changes where the app opens (Home) and moves the
-   assistant and Settings out of the tab bar.
-3. Slice 2, lists.
+1. User: run the app, sign in, and look at the frame: Home's tiles, the four tabs (five as admin), the
+   top-right icons, the back arrow from the assistant, Settings and a group's chat. On an iPhone: does the
+   blue bar run up behind the status bar? Say go, or what to change.
+2. Claude: slice 2, lists: `ListRow`, `Thumbnail`, `Avatar`, `SkeletonRow`, `EmptyState` → Groups, Events, Settings.
+3. Slice 3, banners.

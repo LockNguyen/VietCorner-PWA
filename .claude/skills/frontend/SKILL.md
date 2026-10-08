@@ -56,7 +56,7 @@ export default function Button({ variant = "primary", size = "regular", ...butto
 5. Classes use design tokens only (`bg-action`, `text-ink`, `rounded-control`), never a palette colour
    (`bg-blue-500`), a hex value or an arbitrary value (`p-[13px]`).
 6. Text arrives as `children` or a prop. No `useLanguage`, no strings of its own.
-7. No `useState`, `useEffect`, `fetch`, router or Supabase. Behaviour a component needs (close on Escape)
+7. No `useState`, `useEffect`, `fetch`, router hooks or Supabase (`Link` is fine: it is an element). Behaviour a component needs (close on Escape)
    is a hook beside it in `src/components/ui/hooks/`.
 8. Spacing between components belongs to the parent (`gap`), never to the component (`margin`).
 

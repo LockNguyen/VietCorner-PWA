@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import TabBar from "@/components/TabBar";
+import AppTabs from "@/components/AppTabs";
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
 import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I18N
 import { getLanguage } from "@/features/i18n/server/queries"; // I18N
@@ -10,14 +10,15 @@ import { createClient } from "@/lib/supabase/server";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "VietCorner",
+  title: "Góc Việt",
   // iOS reads these instead of manifest.ts when the app is added to the Home Screen.
-  appleWebApp: { capable: true, title: "VietCorner", statusBarStyle: "default" },
+  // "black-translucent" lets the blue top bar run up behind the status bar, with white clock and battery.
+  appleWebApp: { capable: true, title: "Góc Việt", statusBarStyle: "black-translucent" },
   icons: { apple: "/icons/icon-192.png" },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2196f3",
+  themeColor: "#1976d2", // the `action` token: the top bar's blue
   viewportFit: "cover", // lets content use the full screen on notched phones
 };
 
@@ -31,10 +32,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang={storedLanguage ?? DEFAULT_LANGUAGE}>
-      <body className="bg-white text-gray-900">
+      <body className="bg-surface text-ink">
         <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
-          <main className="pb-20">{children}</main>
-          <TabBar showAdmin={permissions.length > 0} />
+          <main className="mx-auto max-w-column pb-24">{children}</main>
+          {user && <AppTabs showAdmin={permissions.length > 0} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
         </LanguageProvider>
         <ServiceWorkerRegister />

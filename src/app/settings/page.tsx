@@ -10,7 +10,7 @@ export default async function SettingsPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.settingsTab} />
+      <PageHeader title={SHELL_STRINGS.settingsTab} backHref="/" />
       <AccountSection email={user?.email ?? ""} /> {/* AUTH */}
       <LanguageToggle /> {/* I18N */}
     </>

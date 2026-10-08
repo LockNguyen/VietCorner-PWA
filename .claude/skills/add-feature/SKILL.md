@@ -21,7 +21,7 @@ If the user has already decided something, do not re-open it.
 1. `schema.sql` + RLS policies → use the **database-change** skill.
 2. `types.ts` → `server/queries.ts` and `server/<action>.ts` → `api.ts` → `hooks/` → `components/` → `strings.ts`.
    Components follow the **frontend** skill.
-3. `src/app/<name>/page.tsx`, any `src/app/api/<name>/<action>/route.ts`, the `TABS` line in `TabBar.tsx`.
+3. `src/app/<name>/page.tsx`, any `src/app/api/<name>/<action>/route.ts`, the `TABS` line in `AppTabs.tsx`.
 4. `README.md` from the template of an existing feature (Purpose · Setup · Files · Decisions · Expected behavior · Edge cases · Remove).
 5. Tests: Vitest for pure logic, a case in `tests/rls.test.ts` for every new table.
 6. Finish with the **verify-and-finish** skill.

@@ -10,7 +10,17 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 |---|---|---|---|
 | `Text` | Any text outside a control | `variant`: `tile`, `body`, `small` · `tone`: `ink`, `subtle`, `danger` | `as`: `p`, `span`, `h1`, `h2`, `h3` |
 | `Button` | Any button | `primary`, `quiet`, `danger`, `text` | `pending`, `pendingLabel` |
+| `TopBar` | The bar at the top: centred title, a slot for icons at each end | | `title`, `left`, `right` |
+| `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
+| `IconLink` | A link shown as an icon alone | `tone`: `onAction`, `ink` | `label` (read by screen readers) |
+| `PhotoTile` | A large tile that opens an area; grey stands in for its photo (B32) | | `title`; children are the artwork |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
+
+## Conventions the list relies on
+- A component may render `next/link`'s `Link`, the app's anchor element. It never uses the router's hooks.
+- Icons come from `lucide-react` and are passed in as children by the screen; a component does not pick one.
+- The app's own fillings of the frame are in `src/components/`: `PageHeader` (the top bar's contents) and
+  `AppTabs` (which tabs exist). They translate and know the addresses; the components here do neither.
 
 ## Being replaced
 `ActionButton` is the busy button from before the design system. Screens move to `Button` as each is

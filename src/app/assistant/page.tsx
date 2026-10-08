@@ -13,7 +13,7 @@ export default async function AssistantPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.assistantTab} />
+      <PageHeader title={SHELL_STRINGS.assistantTab} backHref="/" />
       <AssistantChat userId={user.id} />
     </>
   );
