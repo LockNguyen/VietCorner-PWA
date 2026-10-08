@@ -33,7 +33,7 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words, the group, "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
 | UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
-| UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip beside it; my own has the pencil that opens its options |
+| UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip beside it; my own has a small grey pencil that opens its options |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel, two by two |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -102,7 +102,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
-- Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has a pencil button in the same place, which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
+- Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has a small round grey pencil button in the same place (32 across, two thirds of the Pray chip), which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but

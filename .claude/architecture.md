@@ -382,3 +382,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: prayer screen, on the user's direction: Pray is a round purple chip overlapping the bubble's right edge and becomes a green tick once given (tokens `pray`, `pray-soft`, `success-soft`); a new request is written in a sheet opened by a round plus at the top right, so the list starts at the top of the screen.
 - 2026-10-08: prayer list: my own named requests come first in every week; the Pray chip sits 8 to the right of its bubble, level with its middle, instead of overlapping it.
 - 2026-10-08: prayer list: my own request has a pencil button beside it (the bubble itself is no longer a button); its options sheet is a two-by-two grid.
+- 2026-10-08: prayer list: the pencil beside my own request is a small round grey chip (32 across), not a rectangular button.

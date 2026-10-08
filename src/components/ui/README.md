@@ -33,7 +33,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `TimeLine` | A small centred label between messages: a time, or a week | | |
 | `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. Leaves room for its own row under the messages; a screen that adds children above the field adds room for those. | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
 | `IconButton` | A button shown as an icon alone | `tone`: `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
-| `Chip` | A round reaction beside a bubble: a button to give it, a tick once given | `tone`: `pray`, `done` | `label` (read by screen readers) |
+| `Chip` | A round button beside a bubble: Pray, the tick once given, the author's small grey pencil | `tone`: `pray`, `done`, `quiet` · `size`: `regular`, `small` (32, below `touch`: asked for) | `label` (read by screen readers) |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 

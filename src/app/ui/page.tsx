@@ -182,7 +182,7 @@ export default async function ShowcasePage() {
         <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>
           <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
-            <Button variant="quiet" aria-label="Options"><Pencil aria-hidden /></Button>
+            <Chip tone="quiet" size="small" label="Options"><Pencil aria-hidden className="size-4" /></Chip>
           </div>
         </BubbleRun>
         <ComposerDemo />

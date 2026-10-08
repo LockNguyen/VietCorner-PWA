@@ -107,7 +107,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Overlay | `Sheet` | A short choice, or a few details, rising from the bottom | |
 | Conversation | `Bubble` | One message | `mine`, `theirs`, `failed` (an answer that did not come) |
 | | `BubbleRun` | One speaker's consecutive messages: name above, avatar beside the last | |
-| | `Chip` | A round reaction beside a bubble (Pray) | `pray`, `done` |
+| | `Chip` | A round button beside a bubble (Pray, its tick, the author's pencil) | `pray`, `done`, `quiet`; `regular`, `small` |
 | | `TimeLine` | A small centred time or week label | |
 | | `Composer` | The pill field and send button, held at the bottom above the tab bar | |
 | Placeholder | `LogoMark` | The stand-in logo until the church has one | |
@@ -129,7 +129,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person,
   as runs like chat's. Nothing sits between two requests: Pray is a round `Chip` on the bubble's
-  own line, 8 to its right and level with its middle (purple; a green tick once given), my own request has a pencil button in the same place, which opens its options, and the list
+  own line, 8 to its right and level with its middle (purple; a green tick once given), my own request has a small round grey pencil in the same place, which opens its options, and the list
   shows no date or group. A request is written in a sheet, opened by the round plus at the top right.
   A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
