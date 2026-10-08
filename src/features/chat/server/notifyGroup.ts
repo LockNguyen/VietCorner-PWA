@@ -16,11 +16,13 @@ export async function notifyGroup(message: Message) {
     getNames(admin, [message.sender_id]), // PROFILES
   ]);
 
+  const sender = names[message.sender_id];
+
   await sendPush(
     (members ?? []).map((member) => member.user_id),
     {
       title: group?.name ?? "New message",
-      body: `${names[message.sender_id]}: ${message.body}`,
+      body: sender ? `${sender}: ${message.body}` : message.body,
       url: `/groups/${message.group_id}`,
       topic: `chat:${message.group_id}`, // per group: a quiet minute here does not silence another group
     },

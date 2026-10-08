@@ -20,5 +20,6 @@ export type GroupWithMembership = Group & { joined: boolean; pending: boolean };
 export type JoinRequest = {
   group_id: string;
   user_id: string;
+  user_email: string; // the address the account signed in with: a name is whatever its owner typed
   requested_at: string;
 };

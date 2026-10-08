@@ -8,9 +8,9 @@ import { approveJoinRequest, declineJoinRequest } from "../api";
 import { STRINGS } from "../strings";
 import type { JoinRequest } from "../types";
 
-type Props = { request: JoinRequest; name: string; groupName: string | undefined };
+type Props = { request: JoinRequest; name: string | undefined; groupName: string | undefined };
 
-// One person waiting to join one group, with the two answers a manager can give.
+// One person waiting to join one group, by name and email, with the two answers a manager can give.
 // A row of its own, so answering one request never blocks the requests around it.
 export default function JoinRequestRow({ request, name, groupName }: Props) {
   const { t } = useLanguage(); // I18N
@@ -20,7 +20,7 @@ export default function JoinRequestRow({ request, name, groupName }: Props) {
 
   return (
     <ListRow
-      title={name}
+      title={name ? `${name} (${request.user_email})` : request.user_email}
       subtitle={groupName}
       trailing={
         <>

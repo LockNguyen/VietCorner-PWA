@@ -1,9 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
+import { useGoTo } from "@/lib/useGoTo";
 import { useRefresh } from "@/lib/useRefresh";
 import { cancelEvent, restoreDate, saveEvent, setReminder } from "../api";
 import { STRINGS } from "../strings";
@@ -12,7 +12,7 @@ import type { EventDraft } from "../types";
 // Every change the editor can make to one event (`eventId` undefined = a new one).
 // Each resolves when the change is on screen, and says how it went in a banner.
 export function useEventChanges(eventId: string | undefined, listHref: string) {
-  const router = useRouter();
+  const goTo = useGoTo();
   const refresh = useRefresh();
   const showBanner = useBanner();
   const { t } = useLanguage(); // I18N
@@ -23,9 +23,10 @@ export function useEventChanges(eventId: string | undefined, listHref: string) {
   async function change(action: () => Promise<void>, done: Text, leave = false) {
     try {
       await action();
-      if (leave) router.push(listHref);
-      else await refresh();
+      if (!leave) await refresh();
       showBanner({ kind: "success", message: t(done) });
+      // Awaited last: the button stays busy until the list is drawn, so a second tap cannot save twice.
+      if (leave) await goTo(listHref);
     } catch {
       showBanner({ kind: "error", message: t(STRINGS.couldNotSave) });
     }
