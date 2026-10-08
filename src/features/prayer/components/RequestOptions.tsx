@@ -18,7 +18,7 @@ type Props = {
 };
 
 // What an author can do with their own request: mark it answered, edit it, delete it, or change their mind.
-// One tap each, with no "are you sure?": the sheet itself is the second step after the X.
+// One tap each, with no "are you sure?": the sheet itself is the second step after the pencil.
 export default function RequestOptions({ request, onAnswered, onEdit, onDelete, onClose }: Props) {
   const { t } = useLanguage(); // I18N
   const [editing, setEditing] = useState(false);
@@ -42,7 +42,8 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
           onCancel={onClose}
         />
       ) : (
-        <>
+        // Two by two: the two that keep the request above the two that end it or back out.
+        <div className="grid grid-cols-2 gap-3">
           <Button pending={pending === "answered"} disabled={pending !== null} onClick={() => finish("answered", onAnswered)}>
             {t(STRINGS.markAnswered)}
           </Button>
@@ -52,10 +53,10 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
           <Button variant="danger" pending={pending === "delete"} disabled={pending !== null} onClick={() => finish("delete", onDelete)}>
             {t(STRINGS.deleteRequest)}
           </Button>
-          <Button variant="text" onClick={onClose}>
+          <Button variant="quiet" onClick={onClose}>
             {t(STRINGS.cancel)}
           </Button>
-        </>
+        </div>
       )}
     </Sheet>
   );

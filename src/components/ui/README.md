@@ -28,7 +28,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
-| `Bubble` | One message, at most 70% wide. With `onClick` it is a button. | `tone`: `mine`, `theirs`, `failed` | `onClick` |
+| `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
 | `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |
 | `TimeLine` | A small centred label between messages: a time, or a week | | |
 | `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. Leaves room for its own row under the messages; a screen that adds children above the field adds room for those. | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Settings, Square, Users } from "lucide-react";
+import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Pencil, Settings, Square, Users } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
 import Bubble from "@/components/ui/Bubble";
@@ -153,7 +153,7 @@ export default async function ShowcasePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the round Pray chip on the edge (to give, given), my own; Composer is held above the tabs</Text>
+        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the round Pray chip on the edge (to give, given), my own with the pencil; Composer is held above the tabs</Text>
         <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
           <Bubble tone="theirs">Chào cả nhà</Bubble>
@@ -180,7 +180,10 @@ export default async function ShowcasePage() {
           </div>
         </BubbleRun>
         <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>
-          <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
+          <div className="flex w-full items-center gap-2">
+            <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
+            <Button variant="quiet" aria-label="Options"><Pencil aria-hidden /></Button>
+          </div>
         </BubbleRun>
         <ComposerDemo />
       </section>

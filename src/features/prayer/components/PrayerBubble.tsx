@@ -1,7 +1,8 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import Bubble from "@/components/ui/Bubble";
+import Button from "@/components/ui/Button";
 import Chip from "@/components/ui/Chip";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
@@ -9,16 +10,19 @@ import type { PrayerRequest } from "../types";
 
 type Props = { request: PrayerRequest; canPray: boolean; onPray: () => void; onManage: () => void };
 
-// One request. Someone else's has the round Pray button beside it, level with its middle, which turns
-// into a green tick once prayed; my own opens its options when tapped.
+// One request with its one button beside it, level with its middle. Someone else's: the round Pray button,
+// a green tick once prayed. My own: the pencil, which opens its options.
 export default function PrayerBubble({ request, canPray, onPray, onManage }: Props) {
   const { t } = useLanguage(); // I18N
 
   if (request.is_mine) {
     return (
-      <Bubble tone="theirs" onClick={onManage}>
-        {request.body}
-      </Bubble>
+      <div className="flex w-full items-center gap-2">
+        <Bubble tone="theirs">{request.body}</Bubble>
+        <Button variant="quiet" aria-label={t(STRINGS.manage)} onClick={onManage}>
+          <Pencil aria-hidden />
+        </Button>
+      </div>
     );
   }
 
