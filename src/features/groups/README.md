@@ -20,7 +20,7 @@ events or prayer: their tables point at `groups`.
 | Server logic | `server/notifyJoin.ts` | **Admin** client: tells managers someone is waiting; tells a person they are in (`// PUSH`, `// I18N`, `// PERMISSIONS`) |
 | Routes | `src/app/api/groups/join/route.ts`, `approve/route.ts` | Verify (401) → validate (400) → the step (403 when refused) → 204 |
 | UI | `components/GroupList.tsx`, `JoinButton.tsx` | The list of groups; asking to join one; "Waiting for approval" |
-| UI | `components/JoinRequests.tsx` | The admin section's list of who is waiting, with Approve and Decline |
+| UI | `components/JoinRequests.tsx`, `JoinRequestRow.tsx` | The admin section's list of who is waiting; one person, with Approve and Decline |
 | UI | `components/GroupAdmin.tsx`, `GroupNameEditor.tsx` | The admin page's section: rename a group, remove one, add one |
 | Text | `strings.ts` | The Join button. Group names are data. |
 | Shell | `src/app/groups/page.tsx`, the Groups tab in `TabBar.tsx` | The list page |

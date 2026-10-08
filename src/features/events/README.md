@@ -33,8 +33,8 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventAdminRow.tsx` | One event in the list, with its "Edit event" button |
 | UI | `components/EventEditor.tsx` | The panel: the form, the next dates, the red button |
 | UI | `components/EventForm.tsx` | The fields, with English and Vietnamese side by side |
-| UI | `components/EventReminders.tsx` | Three ticks: 1 day, 2 hours, 30 minutes before |
-| UI | `components/EventDates.tsx` | The next four dates, each with Cancel or Undo |
+| UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three ticks: 1 day, 2 hours, 30 minutes before; one tick |
+| UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `TabBar.tsx` | The Events tab |
 | Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
 

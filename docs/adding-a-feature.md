@@ -123,6 +123,23 @@ Decide, per call, what the user sees when it fails. The assistant's `errors.ts` 
 feature has more than one failure mode: a table of cause → message + whether a retry could help. Key it by
 **cause**, not HTTP status — "the phone is offline" and "the request timed out" have no status.
 
+### A button that starts a request
+Never a plain `<button>`: a request takes a moment, and a button that looks the same during it gets tapped
+again. Use the shared pair, the same way everywhere:
+
+```tsx
+const { pending, run } = usePending<"save" | "remove">();   // @/lib/usePending
+
+<ActionButton pending={pending === "save"} pendingLabel={t(STRINGS.saving)}   // @/components/ui/ActionButton
+              disabled={pending !== null || nothingToSave}>Save</ActionButton>
+<ActionButton pending={pending === "remove"} disabled={pending !== null}
+              onClick={() => run("remove", remove)}>Remove</ActionButton>
+```
+
+`pending === "<this action>"` shows the circle on the tapped button; `pending !== null` disables its
+siblings. Leave `pendingLabel` out for the circle alone. In a list, make each row its own component so it
+has its own `usePending` and its own error line. Buttons that only open or close something stay plain.
+
 ## 6. Put user-facing text in `strings.ts`
 
 ```ts

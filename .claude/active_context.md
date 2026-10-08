@@ -178,9 +178,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the one-line cron timeout change; approve (or change) the double-tap plan (backlog B25, now the
-   whole app, not just admin forms). On the go: merge `scheduler-reliability`, push.
-2. Claude: build the approved double-tap fix as its own commit. Then read `net._http_response` after a few
-   runs to confirm `tookMs` and no more timeouts.
-3. User: phone session (chat push, "prayed for you", cancellation and undo, join request and approval, an
-   event reminder). Then choose the next larger piece (launch readiness, UI revamp, account settings).
+1. User: run the one-line cron timeout change if not done; try the busy buttons (login, an admin list).
+   Say when to merge `double-tap` and push `main` (one Netlify build for everything since 7aec5b8).
+2. After the deploy: read `net._http_response` for `tookMs` and no more timeouts; phone session (chat push,
+   "prayed for you", cancellation and undo, join request and approval, an event reminder).
+3. Choose the next larger piece: launch readiness (B9), UI/UX revamp (B18), or account settings (B19).

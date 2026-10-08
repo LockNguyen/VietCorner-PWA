@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { removeGroup, renameGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
@@ -16,20 +18,23 @@ export default function GroupNameEditor({ group }: { group: Group }) {
   const [name, setName] = useState(group.name);
   const [failed, setFailed] = useState(false);
   const unchanged = name.trim() === group.name;
+  const { pending, run } = usePending<"rename" | "remove">();
 
-  async function save(change: () => Promise<void>) {
-    setFailed(false);
-    try {
-      await change();
-      router.refresh(); // reload the page's server data: the saved name, or the list without this group
-    } catch {
-      setFailed(true);
-    }
+  function save(action: "rename" | "remove", change: () => Promise<void>) {
+    return run(action, async () => {
+      setFailed(false);
+      try {
+        await change();
+        router.refresh(); // reload the page's server data: the saved name, or the list without this group
+      } catch {
+        setFailed(true);
+      }
+    });
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save(() => renameGroup(group.id, name.trim()));
+    save("rename", () => renameGroup(group.id, name.trim()));
   }
 
   return (
@@ -41,16 +46,23 @@ export default function GroupNameEditor({ group }: { group: Group }) {
           maxLength={MAX_GROUP_NAME_LENGTH}
           className="min-w-0 flex-1 rounded border p-2 text-lg"
         />
-        <button disabled={unchanged || name.trim() === ""} className="rounded border px-4 text-lg disabled:opacity-50">
+        <ActionButton
+          pending={pending === "rename"}
+          pendingLabel={t(STRINGS.saving)}
+          disabled={pending !== null || unchanged || name.trim() === ""}
+          className="rounded border px-4 text-lg"
+        >
           {t(STRINGS.saveName)}
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
-          onClick={() => save(() => removeGroup(group.id))}
+          pending={pending === "remove"}
+          disabled={pending !== null}
+          onClick={() => save("remove", () => removeGroup(group.id))}
           className="rounded border border-red-600 px-4 text-lg text-red-600"
         >
           {t(STRINGS.removeGroup)}
-        </button>
+        </ActionButton>
       </form>
       {failed && <p className="mt-1 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </li>

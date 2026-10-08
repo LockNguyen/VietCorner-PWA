@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { createGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group, type JoinRequest } from "../types";
@@ -16,17 +18,20 @@ export default function GroupAdmin({ groups, requests }: { groups: Group[]; requ
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
   const [failed, setFailed] = useState(false);
+  const { pending, run } = usePending<"add">(); // a second tap used to create a second group of the same name
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setFailed(false);
-    try {
-      await createGroup(name.trim());
-      setName("");
-      router.refresh(); // reload the page's server data so the new group joins the list
-    } catch {
-      setFailed(true);
-    }
+    run("add", async () => {
+      setFailed(false);
+      try {
+        await createGroup(name.trim());
+        setName("");
+        router.refresh(); // reload the page's server data so the new group joins the list
+      } catch {
+        setFailed(true);
+      }
+    });
   }
 
   return (
@@ -49,9 +54,13 @@ export default function GroupAdmin({ groups, requests }: { groups: Group[]; requ
           maxLength={MAX_GROUP_NAME_LENGTH}
           className="min-w-0 flex-1 rounded border p-2 text-lg"
         />
-        <button disabled={name.trim() === ""} className="rounded bg-blue-500 px-4 text-lg text-white disabled:opacity-50">
+        <ActionButton
+          pending={pending === "add"}
+          disabled={name.trim() === ""}
+          className="rounded bg-blue-500 px-4 text-lg text-white"
+        >
           {t(STRINGS.addGroup)}
-        </button>
+        </ActionButton>
       </form>
       {failed && <p className="mt-2 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </section>

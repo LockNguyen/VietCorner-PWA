@@ -5,7 +5,9 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   emailLabel: { en: "Email", vi: "Email" } satisfies Text,
   sendCodeButton: { en: "Send me a code", vi: "Gửi mã cho tôi" } satisfies Text,
+  sendingCode: { en: "Sending…", vi: "Đang gửi…" } satisfies Text,
   signInButton: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
+  signingIn: { en: "Signing in…", vi: "Đang đăng nhập…" } satisfies Text,
   useAnotherEmail: { en: "Use a different email", vi: "Dùng email khác" } satisfies Text,
   signedInAs: { en: "Signed in as", vi: "Đã đăng nhập" } satisfies Text,
   signOutButton: { en: "Sign out", vi: "Đăng xuất" } satisfies Text,

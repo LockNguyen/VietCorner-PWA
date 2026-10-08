@@ -1,6 +1,8 @@
 "use client";
 
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { STRINGS } from "../strings";
 
@@ -9,6 +11,7 @@ import { STRINGS } from "../strings";
 export default function EnableNotificationsButton() {
   const { status, enable } = usePushNotifications();
   const { t } = useLanguage(); // I18N
+  const { pending, run } = usePending<"enable">();
 
   const box = "m-4 rounded border p-3";
   if (status === "loading") return null;
@@ -19,9 +22,13 @@ export default function EnableNotificationsButton() {
 
   return (
     <div className={box}>
-      <button onClick={enable} className="w-full rounded bg-blue-500 p-3 text-lg text-white">
+      <ActionButton
+        pending={pending === "enable"}
+        onClick={() => run("enable", enable)}
+        className="w-full rounded bg-blue-500 p-3 text-lg text-white"
+      >
         {t(STRINGS.turnOnNotifications)}
-      </button>
+      </ActionButton>
       {status === "error" && <p className="mt-2 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </div>
   );

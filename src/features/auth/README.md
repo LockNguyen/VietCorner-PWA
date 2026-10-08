@@ -47,6 +47,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   installed before signing in.
 - Logged in, `/login` redirects to `/groups`.
 - New and returning users both receive exactly one email containing a code. There is no sign-up page.
+- "Send me a code" turns into a turning circle and "Sending…" and takes no more taps until the request
+  ends (observed 2026-10-07: three quick taps made one request; after a failure the button came back with
+  the error under it). Before this, a second tap emailed a second, different code.
 - Reloading or closing the app keeps you signed in.
 - Settings shows "Signed in as <email>"; signing out returns to `/login`.
 - The tab bar also shows on `/login`; tapping a tab just redirects back. Left as is so the shell needs no

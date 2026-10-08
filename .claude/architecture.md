@@ -45,10 +45,11 @@ Phone ──► Netlify ──────────────────�
 ```
 src/
   app/          Routes. Thin: a page loads data and composes feature components.
-  components/   App shell shared by every page (TabBar, PageHeader, ServiceWorkerRegister).
+  components/   App shell shared by every page (TabBar, PageHeader, ServiceWorkerRegister) and ui/ActionButton.
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
+  lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
   proxy.ts      Runs before each request. Belongs to auth.
 public/         sw.js (push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
@@ -118,8 +119,20 @@ The empty installable app every feature plugs into.
 **Expected behavior:** `/` opens `/groups` (or `/login`); tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
 
-**Shared UI:** there is none yet on purpose. When a second feature needs the same control, it moves to
-`src/components/ui/` — not before. The UI/UX revamp is when that set gets designed properly (backlog B18).
+**Shared UI:** one control so far, `src/components/ui/ActionButton.tsx`, because every feature needed the same
+answer to the same problem. Anything else moves to `src/components/ui/` only when a second feature needs it;
+the UI/UX revamp is when that set gets designed properly (backlog B18).
+
+**Every button that starts a request** is an `ActionButton` driven by `usePending` (`src/lib/usePending.ts`):
+- The first tap runs the action; taps while it is running are ignored. (A second tap used to send a second
+  login code, create a second identical event, or show "could not save" for something that had saved.)
+- The tapped button turns into a turning circle, with words where they help ("Saving…"); the other buttons
+  of the same row are disabled until it finishes.
+- A list gives each row its own component, so its own `usePending` and its own error line: a busy row never
+  blocks the rows around it.
+- Left as plain buttons on purpose: ones that only open or close something, and four that already cannot
+  repeat (chat Send empties its box at once, the assistant's Send is disabled while answering, Pray starts
+  its hour on the first tap, the language toggle is instant and repeating it changes nothing).
 
 ## 6. Features
 Each feature's README holds its files, flows, expected behavior, edge cases and removal steps.
@@ -255,6 +268,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
+| One shared busy button (`ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
 | Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
 | Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
@@ -309,3 +323,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-06: reminders: event reminders (three choices, in the Edit panel) and weekly prayer reminders per group (Admin tab, `prayer.reminders`); `POST /api/reminders/send` behind `CRON_SECRET`, called every 15 minutes by a Supabase cron job; `push_sent_once` + `sendPushOnce`. `churchTime.ts` moved to `src/lib` (prayer uses it too).
 - 2026-10-07: prayer reminders: adding one that already exists now says so ("That group already has a reminder at that day and time") instead of a generic failure, and the section's buttons are disabled while saving, so a second tap can no longer send the same reminder twice. The same gap in other admin forms is backlog B25.
 - 2026-10-07: scheduler reliability: the cron call waits 25 s instead of 5 (the site takes seconds to wake), due reminders are sent side by side, and `/api/reminders/send` answers with `tookMs` or the error. The prayer reminder form starts on today's weekday.
+- 2026-10-07: double taps: `ActionButton` + `usePending` on every button that starts a request (login, sign out, join, notifications, prayer, and the events, groups and reminders admin sections). Lists got a component per row. Closes backlog B25.

@@ -35,7 +35,7 @@ to run twice (plain `create`).
 | UI | `components/RequestOptions.tsx` | The author's dialog: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The dialog's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
-| UI | `components/PrayerReminderAdmin.tsx` | The admin section: each group's weekly reminders, add and remove |
+| UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: each group's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `TabBar.tsx`, `src/components/strings.ts` | The Prayer tab |
 
 ## How anonymity is guaranteed

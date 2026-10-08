@@ -30,6 +30,7 @@ export const STRINGS = {
   markAnswered: { en: "Answered", vi: "Đã được nhậm lời" } satisfies Text,
   editRequest: { en: "Edit", vi: "Sửa" } satisfies Text,
   saveEdit: { en: "Save", vi: "Lưu" } satisfies Text,
+  saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 

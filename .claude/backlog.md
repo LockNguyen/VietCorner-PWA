@@ -122,7 +122,7 @@ without hurting Vietnamese ones.
 ## B17. Finish the `strings.ts` migration (chat + assistant) — DONE 2026-09-29 (i18n)
 **Why:** i18n should swap one file per feature, not edit every component. `auth` is migrated as the worked example; `chat` (~29 strings) and `assistant` (~43) still have text inline. **What:** move their user-facing text into `features/<name>/strings.ts`, unchanged. **Trade-offs:** a large, mechanical diff; best done *as part of* the i18n step so the strings are touched once. **Done when:** no user-facing literal is left in a `components/` file of either feature.
 
-## B18. Shared UI kit (with the UI/UX revamp)
+## B18. Shared UI kit (with the UI/UX revamp; `ActionButton` already lives in `src/components/ui/`)
 **Why:** prayer requests, events and account settings will each need buttons, cards, fields and empty states. Inventing them per feature gives four different looks; building them now guesses at a design that hasn't been made. **What:** during the revamp, lift the repeated controls into `src/components/ui/`, keep them presentational, and let features import them. **Trade-offs:** shared UI is the one exception to feature isolation, so it must stay logic-free. **Done when:** every feature uses the same button, field and card, and none defines its own.
 
 ## B19. Post-MVP features (planned, not scheduled; events and prayer requests are built)
@@ -151,5 +151,5 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 
 **Related, and worth raising in the same conversation (B5):** groups are not private today. Any signed-in user can see every group and join any of them, and joining is what opens its chat, events and prayer requests. Privacy inside a group is only as strong as who may join it.
 
-## B25. Other admin forms still accept a second tap while the first is saving
+## B25. Other admin forms still accept a second tap while the first is saving — DONE 2026-10-07 (whole app: `ActionButton` + `usePending`)
 **Why:** found 2026-10-07 on prayer reminders (fixed there): a second identical submit was refused as a duplicate and shown as a failure although the first had saved. The same gap exists where nothing refuses the duplicate, which is worse: a double tap on Save in the event form creates two events, and on "Add group" two groups with the same name. **What:** one shared `useSave` hook (the five admin components already repeat the same try / refresh / failed lines) that ignores a second call while one is in flight and exposes `saving` for disabling buttons. **Trade-offs:** touches five working components for a bug nobody has hit yet outside reminders. **Done when:** no admin button can send the same change twice, shown by tapping twice quickly on each.

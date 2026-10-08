@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
 import type { PrayerRequest } from "../types";
 import RequestEditor from "./RequestEditor";
@@ -29,10 +31,14 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const { pending, run } = usePending<"answered" | "edit" | "delete">();
+
   // The dialog closes either way: on failure the board shows the error, behind where this was.
-  async function run(action: () => Promise<boolean>) {
-    await action();
-    onClose();
+  function finish(action: "answered" | "edit" | "delete", change: () => Promise<boolean>) {
+    return run(action, async () => {
+      await change();
+      onClose();
+    });
   }
 
   return (
@@ -46,19 +52,38 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
         onClick={(click) => click.stopPropagation()}
       >
         {editing ? (
-          <RequestEditor body={request.body} onSave={(body) => run(() => onEdit(body))} onCancel={onClose} />
+          <RequestEditor
+            body={request.body}
+            saving={pending === "edit"}
+            onSave={(body) => finish("edit", () => onEdit(body))}
+            onCancel={onClose}
+          />
         ) : (
           <>
             <p className="line-clamp-2 text-gray-500">{request.body}</p>
-            <button onClick={() => run(onAnswered)} className="w-full rounded bg-green-600 p-3 text-lg text-white">
+            <ActionButton
+              pending={pending === "answered"}
+              disabled={pending !== null}
+              onClick={() => finish("answered", onAnswered)}
+              className="w-full rounded bg-green-600 p-3 text-lg text-white"
+            >
               ✓ {t(STRINGS.markAnswered)}
-            </button>
-            <button onClick={() => setEditing(true)} className="w-full rounded bg-blue-500 p-3 text-lg text-white">
+            </ActionButton>
+            <button
+              onClick={() => setEditing(true)}
+              disabled={pending !== null}
+              className="w-full rounded bg-blue-500 p-3 text-lg text-white disabled:opacity-50"
+            >
               {t(STRINGS.editRequest)}
             </button>
-            <button onClick={() => run(onDelete)} className="w-full rounded bg-red-600 p-3 text-lg text-white">
+            <ActionButton
+              pending={pending === "delete"}
+              disabled={pending !== null}
+              onClick={() => finish("delete", onDelete)}
+              className="w-full rounded bg-red-600 p-3 text-lg text-white"
+            >
               {t(STRINGS.deleteRequest)}
-            </button>
+            </ActionButton>
             <button onClick={onClose} className="w-full rounded border p-3 text-lg">
               {t(STRINGS.cancel)}
             </button>

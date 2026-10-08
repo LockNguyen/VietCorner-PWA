@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
 import { MAX_BODY_LENGTH, type NewPrayerRequest, type PostableGroup } from "../types";
 
@@ -16,18 +18,18 @@ export default function PrayerComposer({ groups, onPost }: Props) {
   const [body, setBody] = useState("");
   const [groupId, setGroupId] = useState(groups[0].id);
   const [isAnonymous, setIsAnonymous] = useState(false);
-  const [posting, setPosting] = useState(false);
+  const { pending, run } = usePending<"post">();
 
-  async function handleSubmit(event: FormEvent) {
+  function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setPosting(true);
-    const posted = await onPost({ groupId, body: body.trim(), isAnonymous });
-    setPosting(false);
-    // Only a request that was saved clears the form: after a failure the words are still there to resend.
-    if (posted) {
-      setBody("");
-      setIsAnonymous(false);
-    }
+    run("post", async () => {
+      const posted = await onPost({ groupId, body: body.trim(), isAnonymous });
+      // Only a request that was saved clears the form: after a failure the words are still there to resend.
+      if (posted) {
+        setBody("");
+        setIsAnonymous(false);
+      }
+    });
   }
 
   return (
@@ -71,12 +73,13 @@ export default function PrayerComposer({ groups, onPost }: Props) {
         {t(STRINGS.postAnonymously)}
       </label>
 
-      <button
-        disabled={posting || body.trim() === ""}
-        className="mt-3 w-full rounded bg-blue-500 p-3 text-lg text-white disabled:opacity-50"
+      <ActionButton
+        pending={pending === "post"}
+        disabled={body.trim() === ""}
+        className="mt-3 w-full rounded bg-blue-500 p-3 text-lg text-white"
       >
         {t(STRINGS.postButton)}
-      </button>
+      </ActionButton>
     </form>
   );
 }

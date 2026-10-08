@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
+import { usePending } from "@/lib/usePending";
 import { problemWith } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
 import type { EventDraft, EventGroup } from "../types";
@@ -10,7 +12,7 @@ import type { EventDraft, EventGroup } from "../types";
 type Props = {
   initial: EventDraft;
   groups: EventGroup[];
-  onSave: (draft: EventDraft) => void;
+  onSave: (draft: EventDraft) => Promise<boolean>; // answers whether it was saved
   onCancel: () => void;
 };
 
@@ -29,9 +31,12 @@ export default function EventForm({ initial, groups, onSave, onCancel }: Props) 
     setDraft({ ...draft, texts: { ...draft.texts, [language]: { ...draft.texts[language], [field]: value } } });
   }
 
+  const [failed, setFailed] = useState(false);
+  const { pending, run } = usePending<"save">(); // a second tap on Save used to create a second, identical event
+
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!problem) onSave(draft);
+    if (!problem) run("save", async () => setFailed(!(await onSave(draft))));
   }
 
   const input = "w-full rounded border p-2 text-lg";
@@ -122,9 +127,19 @@ export default function EventForm({ initial, groups, onSave, onCancel }: Props) 
       )}
 
       {problem && <p className="text-gray-500">{t(PROBLEMS[problem])}</p>}
-      <button disabled={Boolean(problem)} className="w-full rounded bg-blue-500 p-3 text-lg text-white disabled:opacity-50">
+      {failed && (
+        <p role="alert" className="text-red-600">
+          {t(STRINGS.couldNotSave)}
+        </p>
+      )}
+      <ActionButton
+        pending={pending === "save"}
+        pendingLabel={t(STRINGS.saving)}
+        disabled={Boolean(problem)}
+        className="w-full rounded bg-blue-500 p-3 text-lg text-white"
+      >
         {t(STRINGS.save)}
-      </button>
+      </ActionButton>
       <button type="button" onClick={onCancel} className="w-full rounded border p-3 text-lg">
         {t(STRINGS.close)}
       </button>

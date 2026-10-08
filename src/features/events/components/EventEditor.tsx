@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
 import { draftOf, emptyDraft } from "../draft";
 import { STRINGS } from "../strings";
 import type { EventDraft, EventGroup, ManagedEvent } from "../types";
@@ -9,15 +11,15 @@ import EventDates from "./EventDates";
 import EventForm from "./EventForm";
 import EventReminders from "./EventReminders";
 
+// Each handler answers whether the change happened, so the part that asked can say "could not save".
 type Props = {
   event: ManagedEvent | undefined; // undefined = a new event
   groups: EventGroup[];
-  failed: boolean;
-  onSave: (draft: EventDraft) => void;
-  onCancelDate: (churchDate: string) => void;
-  onRestoreDate: (churchDate: string) => void;
-  onSetReminder: (minutesBefore: number, on: boolean) => void;
-  onCancelForGood: () => void;
+  onSave: (draft: EventDraft) => Promise<boolean>;
+  onCancelDate: (churchDate: string) => Promise<boolean>;
+  onRestoreDate: (churchDate: string) => Promise<boolean>;
+  onSetReminder: (minutesBefore: number, on: boolean) => Promise<boolean>;
+  onCancelForGood: () => Promise<boolean>;
   onClose: () => void;
 };
 
@@ -25,8 +27,10 @@ type Props = {
 // exists) its reminders, its next dates with Cancel or Undo on each, and last the red button that calls
 // the whole event off for good. A new event has only the fields: save it first, then open it again.
 export default function EventEditor(props: Props) {
-  const { event, groups, failed, onSave, onCancelDate, onRestoreDate, onSetReminder, onCancelForGood, onClose } = props;
+  const { event, groups, onSave, onCancelDate, onRestoreDate, onSetReminder, onCancelForGood, onClose } = props;
   const { t } = useLanguage(); // I18N
+  const [failed, setFailed] = useState(false); // the red button's own "could not save"
+  const { pending, run } = usePending<"cancelForGood">();
 
   // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
   useEffect(() => {
@@ -47,12 +51,6 @@ export default function EventEditor(props: Props) {
         className="max-h-[90vh] w-full space-y-4 overflow-y-auto rounded-t-lg bg-white p-4"
         onClick={(click) => click.stopPropagation()}
       >
-        {failed && (
-          <p role="alert" className="text-red-600">
-            {t(STRINGS.couldNotSave)}
-          </p>
-        )}
-
         <EventForm initial={event ? draftOf(event) : emptyDraft()} groups={groups} onSave={onSave} onCancel={onClose} />
 
         {event && (
@@ -61,9 +59,18 @@ export default function EventEditor(props: Props) {
             <EventDates event={event} onCancelDate={onCancelDate} onRestoreDate={onRestoreDate} />
             {/* No "are you sure?" (decided: fewer taps), and no undo: members are told, the event stays on
                 their schedule struck through for a week, then it is gone. The row is kept in the database. */}
-            <button onClick={onCancelForGood} className="w-full rounded bg-red-600 p-3 text-lg text-white">
+            <ActionButton
+              pending={pending === "cancelForGood"}
+              onClick={() => run("cancelForGood", async () => setFailed(!(await onCancelForGood())))}
+              className="w-full rounded bg-red-600 p-3 text-lg text-white"
+            >
               {t(STRINGS.cancelForGood)}
-            </button>
+            </ActionButton>
+            {failed && (
+              <p role="alert" className="text-red-600">
+                {t(STRINGS.couldNotSave)}
+              </p>
+            )}
           </>
         )}
       </div>

@@ -10,6 +10,7 @@ export const STRINGS = {
   newGroupPlaceholder: { en: "Name of the new group", vi: "Tên nhóm mới" } satisfies Text,
   addGroup: { en: "Add group", vi: "Thêm nhóm" } satisfies Text,
   saveName: { en: "Save", vi: "Lưu" } satisfies Text,
+  saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
   removeGroup: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
   couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
   requestsHeading: { en: "Waiting to join", vi: "Đang chờ tham gia" } satisfies Text,
