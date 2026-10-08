@@ -8,7 +8,8 @@ import GroupAdmin from "@/features/groups/components/GroupAdmin";
 import { getGroups, getJoinRequests } from "@/features/groups/server/queries";
 import { MANAGE_GROUPS } from "@/features/groups/types";
 import { getMyPermissions } from "@/features/permissions/server/queries";
-import { getNames } from "@/features/profiles/server/queries"; // PROFILES
+import NameRequestAdmin from "@/features/profiles/components/NameRequestAdmin"; // PROFILES
+import { getNameRequests, getNames } from "@/features/profiles/server/queries"; // PROFILES
 import PrayerReminderAdmin from "@/features/prayer/components/PrayerReminderAdmin";
 import { getPrayerReminders } from "@/features/prayer/server/queries";
 import { MANAGE_PRAYER_REMINDERS } from "@/features/prayer/types";
@@ -26,9 +27,12 @@ export default async function AdminPage() {
   // Groups are read once: the Groups section edits them, and the other sections offer them as a choice.
   const groups = await getGroups(supabase);
   const groupChoices = groups.map(({ id, name }) => ({ id, name }));
-  // Who is waiting to join, and what they are called. PROFILES
-  const requests = permissions.includes(MANAGE_GROUPS) ? await getJoinRequests(supabase) : [];
-  const names = await getNames(supabase, requests.map((request) => request.user_id));
+  // Who is waiting to join or to be renamed, and what they are called now. PROFILES
+  const managesGroups = permissions.includes(MANAGE_GROUPS);
+  const [requests, nameRequests] = managesGroups
+    ? await Promise.all([getJoinRequests(supabase), getNameRequests(supabase)])
+    : [[], []];
+  const names = await getNames(supabase, [...requests, ...nameRequests].map((request) => request.user_id));
 
   return (
     <>
@@ -39,7 +43,8 @@ export default async function AdminPage() {
       {permissions.includes(MANAGE_PRAYER_REMINDERS) && (
         <PrayerReminderAdmin reminders={await getPrayerReminders(supabase)} groups={groupChoices} />
       )}
-      {permissions.includes(MANAGE_GROUPS) && <GroupAdmin groups={groups} requests={requests} names={names} />}
+      {managesGroups && <NameRequestAdmin requests={nameRequests} names={names} />} {/* PROFILES */}
+      {managesGroups && <GroupAdmin groups={groups} requests={requests} names={names} />}
     </>
   );
 }

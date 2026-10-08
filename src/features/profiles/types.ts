@@ -8,5 +8,16 @@ export type Profile = {
 // a member only reads the names of people they share a group with, and of nobody who has left.
 export type Names = Partial<Record<string, string>>;
 
+// What setting a name did: saved at once, or kept for a group manager to approve (schema.sql, section 5).
+export type NameOutcome = "saved" | "requested";
+
+// A name someone asked for, as a manager sees it (a row of `name_requests`).
+export type NameRequest = {
+  user_id: string;
+  user_email: string; // the address the account signed in with: a name is whatever its owner typed
+  name: string;
+  requested_at: string;
+};
+
 // why: the database rejects anything longer (schema.sql); the field stops the typing at the same number.
 export const MAX_NAME_LENGTH = 60;

@@ -2,7 +2,8 @@
 -- Copy this file from the editor, not from terminal output (PowerShell garbles non-ASCII text).
 --
 -- Security in one sentence: a name is read by its owner, by people who share a group with them and by
--- group managers; a user changes only their own; nobody but the database creates or deletes a row.
+-- group managers; it is changed only through `set_my_name`, which a group manager must approve once the
+-- person is in a group; nobody but the database creates or deletes a row.
 
 -- 1. Table ----------------------------------------------------------------
 
@@ -46,7 +47,7 @@ on conflict (user_id) do nothing;
 
 revoke all on public.profiles from anon, authenticated;
 grant select on public.profiles to authenticated;
-grant update (name, named_at) on public.profiles to authenticated;
+-- No update grant: a name is changed through the functions in section 5, which hold the rule.
 
 -- 4. Row Level Security ---------------------------------------------------
 -- This section can be run again by itself: it is how the policies are changed.
@@ -84,16 +85,99 @@ create policy "Names are read within a group, and by group managers" on public.p
     or public.shares_a_group_with(user_id)
   );
 
--- `with check` as well as `using`: without it a user could move their row onto someone else's id.
-drop policy if exists "Users change their own name" on public.profiles;
-create policy "Users change their own name" on public.profiles
-  for update to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
+-- 5. Changing a name ------------------------------------------------------
+-- This section can be run again by itself.
+--
+-- The rule (decided 2026-10-08): admins gate members against impersonation. Whoever lets a person into a
+-- group sees their name and email at that moment, so from then on the name must not change unseen.
+-- A person in no group sets their name freely: nobody else can read it yet.
 
--- 5. Undo (removing the foundation) ---------------------------------------
+-- A name someone asked for, waiting for a group manager. One per person: asking again replaces it.
+create table if not exists public.name_requests (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  user_email text not null, -- what the manager sees beside the name: it cannot be typed, only signed in with
+  name text not null check (char_length(btrim(name)) between 1 and 60),
+  requested_at timestamptz not null default now()
+);
+
+-- Written only by the two functions below. A manager declines by deleting.
+revoke all on public.name_requests from anon, authenticated;
+grant select, delete on public.name_requests to authenticated;
+
+alter table public.name_requests enable row level security;
+
+drop policy if exists "People see their own name request, managers see all" on public.name_requests;
+create policy "People see their own name request, managers see all" on public.name_requests
+  for select to authenticated
+  using (user_id = (select auth.uid()) or (select public.has_permission('groups.manage')));
+
+drop policy if exists "Group managers decline name requests" on public.name_requests;
+create policy "Group managers decline name requests" on public.name_requests
+  for delete to authenticated
+  using ((select public.has_permission('groups.manage')));
+
+-- The direct way to change a name is closed: with it, the rule above could be skipped from any browser.
+drop policy if exists "Users change their own name" on public.profiles;
+revoke update on public.profiles from authenticated;
+
+-- Sets the caller's name, and answers what happened: 'saved', or 'requested' when a manager must approve.
+-- "In a group" includes having asked to join one: a manager is looking at that name right now.
+create or replace function public.set_my_name(new_name text) returns text
+language plpgsql security definer set search_path = '' as $$
+declare
+  me uuid := auth.uid();
+begin
+  if me is null then
+    raise exception 'Not signed in';
+  end if;
+
+  if not exists (select 1 from public.group_members m where m.user_id = me)
+     and not exists (select 1 from public.group_join_requests r where r.user_id = me) then
+    update public.profiles set name = btrim(new_name), named_at = now() where user_id = me;
+    delete from public.name_requests where user_id = me;
+    return 'saved';
+  end if;
+
+  insert into public.name_requests (user_id, user_email, name)
+  values (me, auth.jwt() ->> 'email', btrim(new_name))
+  on conflict (user_id) do update set name = excluded.name, requested_at = now();
+
+  -- The question has been answered, so the app stops asking it while the request waits.
+  update public.profiles set named_at = coalesce(named_at, now()) where user_id = me;
+  return 'requested';
+end;
+$$;
+
+revoke execute on function public.set_my_name (text) from public, anon;
+grant execute on function public.set_my_name (text) to authenticated;
+
+-- Approving is the only way a requested name becomes a name: the request turns into the name in one step.
+-- It answers whether there was a request to approve, so the server tells the person only when one was.
+create or replace function public.approve_name_request(user_id uuid) returns boolean
+language sql security definer set search_path = '' as $$
+  with approved as (
+    delete from public.name_requests r
+    where r.user_id = approve_name_request.user_id
+      and (select public.has_permission('groups.manage'))
+    returning r.user_id, r.name
+  ), renamed as (
+    update public.profiles p
+    set name = approved.name, named_at = now()
+    from approved
+    where p.user_id = approved.user_id
+  )
+  select exists (select 1 from approved);
+$$;
+
+revoke execute on function public.approve_name_request (uuid) from public, anon;
+grant execute on function public.approve_name_request (uuid) to authenticated;
+
+-- 6. Undo (removing the foundation) ---------------------------------------
 -- The prayer feed reads names: recreate `prayer_feed` without them first (features/prayer/schema.sql).
 -- drop trigger if exists create_profile_for_new_user on auth.users;
 -- drop function if exists public.create_profile ();
+-- drop function if exists public.approve_name_request (uuid);
+-- drop function if exists public.set_my_name (text);
+-- drop table if exists public.name_requests;
 -- drop table if exists public.profiles;
 -- drop function if exists public.shares_a_group_with (uuid);

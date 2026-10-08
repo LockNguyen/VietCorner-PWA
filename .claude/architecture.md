@@ -182,9 +182,11 @@ minutes by a Supabase cron job, and `sendPushOnce` makes each reminder go out on
 What a person is called. `profiles` holds one row per account, made by a database trigger and named after
 the email until the person answers "What is your name?", which `layout.tsx` shows in place of every screen
 after the first sign-in. A name is read by its owner, by people in a group with them and by group managers;
-each person changes only their own (Settings → Name).
+a person in no group sets their own; once in a group a new name is a request (`name_requests`) that someone
+with `groups.manage` approves in the Admin tab, so nobody can take another's name unseen.
+Routes: `POST /api/names/request`, `POST /api/names/approve` (each notifies).
 Names are looked up by user id, never copied onto a message: pages call `getNames`, chat keeps up with new
-senders through `useNames`, and the prayer feed joins them in its view. Table: `profiles`.
+senders through `useNames`, and the prayer feed joins them in its view. Tables: `profiles`, `name_requests`.
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -237,7 +239,8 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
-| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; the owner updates `name`; nobody inserts or deletes. |
+| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; no direct write: `set_my_name` and `approve_name_request` change it; nobody inserts or deletes. |
+| `name_requests` | profiles | A name someone in a group asked for. The owner reads their own; `groups.manage` reads all, declines (delete) and approves (function). Written only by `set_my_name`. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
@@ -297,6 +300,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
 | Names are readable within a shared group and by group managers, not by every signed-in user | Sign-up is open: "signed in" is anyone with an email | A former member's old messages lose their name; one function call per row read |
+| Once in a group, a name changes only with a group manager's approval | The manager saw name and email when letting the person in; a later change unseen would undo that check | A wait for an honest correction; one more thing for managers to answer |
 | A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
 | Words every feature says alike (Save, Saved, Could not save) live once, in `i18n/common.ts` | "Saved" cannot be worded five ways | Removing a feature no longer removes all of its words |
 | Names are looked up from one `profiles` table, not copied onto each message as emails were | A corrected name is corrected everywhere, old messages included; one place to protect | One more read per screen that shows people; chat fetches the name of a sender it has not met |
@@ -383,3 +387,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: prayer list: my own named requests come first in every week; the Pray chip sits 8 to the right of its bubble, level with its middle, instead of overlapping it.
 - 2026-10-08: prayer list: my own request has a pencil button beside it (the bubble itself is no longer a button); its options sheet is a two-by-two grid.
 - 2026-10-08: prayer list: the pencil beside my own request is a small round grey chip (32 across), not a rectangular button.
+- 2026-10-08: admins approve names: `name_requests`, `set_my_name`, `approve_name_request` (no direct write on `profiles` any more); `POST /api/names/request` and `/approve` with a push to managers and to the approved person; Settings shows the waiting name; Admin tab → "Names waiting for approval". Settings no longer shows "Name" twice. Needs section 5 of `features/profiles/schema.sql`.

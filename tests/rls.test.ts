@@ -380,28 +380,106 @@ describe("profiles", () => {
     expect(data).toBe(false); // it only ever answers about the caller, who shares none with her
   });
 
-  it("are changed by their owner, and by nobody else", async () => {
+  it("cannot be changed directly, by their owner or anyone: the way is set_my_name", async () => {
     const { error: own } = await bob.client.from("profiles").update({ name: "Bob" }).eq("user_id", bob.id);
-    await bob.client.from("profiles").update({ name: "Hacked" }).eq("user_id", alice.id); // RLS: matches no row
-    const { data } = await admin.from("profiles").select("user_id, name").in("user_id", [alice.id, bob.id]);
+    const { error: other } = await bob.client.from("profiles").update({ name: "Hacked" }).eq("user_id", alice.id);
+    const { error: moved } = await bob.client.from("profiles").update({ user_id: alice.id }).eq("user_id", bob.id);
 
-    expect(own).toBeNull();
-    expect(data?.find((row) => row.user_id === bob.id)?.name).toBe("Bob");
-    expect(data?.find((row) => row.user_id === alice.id)?.name).toBe(standIn(alice));
+    expect([own, other, moved].every((error) => error !== null)).toBe(true);
   });
 
-  it("cannot be moved onto another account, created or deleted by a user", async () => {
-    const { error: moved } = await bob.client.from("profiles").update({ user_id: alice.id }).eq("user_id", bob.id);
+  it("cannot be created or deleted by a user", async () => {
     const { error: created } = await bob.client.from("profiles").insert({ user_id: bob.id, name: "Second" });
     const { error: deleted } = await bob.client.from("profiles").delete().eq("user_id", bob.id);
 
-    expect([moved, created, deleted].every((error) => error !== null)).toBe(true);
+    expect([created, deleted].every((error) => error !== null)).toBe(true);
+  });
+});
+
+describe("changing a name", () => {
+  const nameOf = async (user: TestUser) =>
+    (await admin.from("profiles").select("name").eq("user_id", user.id).single()).data?.name;
+  const requestOf = async (user: TestUser) =>
+    (await admin.from("name_requests").select("name, user_email").eq("user_id", user.id).maybeSingle()).data;
+
+  it("is immediate for someone in no group: nobody else reads the name yet", async () => {
+    const { data: outcome } = await bob.client.rpc("set_my_name", { new_name: "  Bob  " });
+
+    expect(outcome).toBe("saved");
+    expect(await nameOf(bob)).toBe("Bob");
+    expect(await requestOf(bob)).toBeNull();
   });
 
-  it("refuse an empty name", async () => {
-    const { error } = await bob.client.from("profiles").update({ name: "   " }).eq("user_id", bob.id);
+  it("refuses an empty name", async () => {
+    const { error } = await bob.client.rpc("set_my_name", { new_name: "   " });
 
     expect(error).not.toBeNull();
+    expect(await nameOf(bob)).toBe("Bob");
+  });
+
+  describe("for someone in a group", () => {
+    beforeAll(async () => {
+      await makeMember(bob, groupId);
+    });
+
+    afterAll(async () => {
+      await admin.from("group_members").delete().eq("group_id", groupId).eq("user_id", bob.id); // as he was
+      await admin.from("name_requests").delete().eq("user_id", bob.id);
+    });
+
+    it("becomes a request, with the account's email, and the name stays as it was", async () => {
+      const { data: outcome } = await bob.client.rpc("set_my_name", { new_name: "Pastor John" });
+
+      expect(outcome).toBe("requested");
+      expect(await nameOf(bob)).toBe("Bob");
+      expect(await requestOf(bob)).toEqual({ name: "Pastor John", user_email: bob.email });
+    });
+
+    it("is replaced by asking again: one request per person", async () => {
+      await bob.client.rpc("set_my_name", { new_name: "Robert" });
+      const { data } = await admin.from("name_requests").select("name").eq("user_id", bob.id);
+
+      expect(data).toEqual([{ name: "Robert" }]);
+    });
+
+    it("cannot be approved, forged or removed by the person themselves", async () => {
+      const { data: approved } = await bob.client.rpc("approve_name_request", { user_id: bob.id });
+      const { error: forged } = await bob.client.from("name_requests").insert({ user_id: bob.id, user_email: "x@y.z", name: "Forged" });
+      const { error: edited } = await bob.client.from("name_requests").update({ name: "Edited" }).eq("user_id", bob.id);
+      await bob.client.from("name_requests").delete().eq("user_id", bob.id); // RLS: matches no row
+
+      expect(approved).toBe(false);
+      expect([forged, edited].every((error) => error !== null)).toBe(true);
+      expect(await nameOf(bob)).toBe("Bob");
+      expect((await requestOf(bob))?.name).toBe("Robert");
+    });
+
+    it("is seen by its owner and by a group manager", async () => {
+      const { data: own } = await bob.client.from("name_requests").select("name");
+      const { data: asManager } = await alice.client.from("name_requests").select("name").eq("user_id", bob.id);
+
+      expect(own).toEqual([{ name: "Robert" }]);
+      expect(asManager).toEqual([{ name: "Robert" }]);
+    });
+
+    it("becomes the name when a group manager approves it, once", async () => {
+      const { data: approved } = await alice.client.rpc("approve_name_request", { user_id: bob.id });
+      const { data: again } = await alice.client.rpc("approve_name_request", { user_id: bob.id });
+
+      expect(approved).toBe(true);
+      expect(again).toBe(false);
+      expect(await nameOf(bob)).toBe("Robert");
+      expect(await requestOf(bob)).toBeNull();
+    });
+
+    it("can be declined by a group manager, which leaves the name alone", async () => {
+      await bob.client.rpc("set_my_name", { new_name: "Declined" });
+      const { error } = await alice.client.from("name_requests").delete().eq("user_id", bob.id);
+
+      expect(error).toBeNull();
+      expect(await requestOf(bob)).toBeNull();
+      expect(await nameOf(bob)).toBe("Robert");
+    });
   });
 });
 

@@ -221,11 +221,13 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         sheets), Groups, a chat, Settings, the assistant's empty state; /admin answers 404 to a member.
         NOT seen: anything as a picture; the admin screens; the name question; a real save.
         Found: Settings shows "Name" twice (heading and field label).
-  - [ ] **Admins approve names** (asked for 2026-10-08): a name change becomes a request an admin answers,
-        like a join request. Needs a plan and the user's answers first; nothing built.
+  - [x] **Admins approve names** (branch `names-approval`, on top of `ui-6-conversations`): in no group a name
+        saves at once; in a group (or with a join request waiting) it becomes a request that `groups.manage`
+        approves or declines. Database functions hold the rule; two routes notify. 8 new security cases.
+        **WAITS ON THE USER: section 5 of `features/profiles/schema.sql`.** Until then saving a name fails
+        and `npm run test:rls` (expects 58) fails. NOT seen on any screen.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: answer the questions on admin-approved names; bring the Chrome tab to the front (or sign in as an
-   admin there) if screenshots and the admin screens are wanted.
-2. Claude: plan, then build, admin-approved names (a database change; the user runs the SQL).
-3. User decides: the merge of `ui-0` … `ui-6` into `main`.
+1. User: run section 5 of `src/features/profiles/schema.sql` (copied from the editor).
+2. Claude: `npm run test:rls` (58). User: change a name as a member, approve it as an admin.
+3. User decides: the merge of `ui-0` … `ui-6` and `names-approval` into `main`.
