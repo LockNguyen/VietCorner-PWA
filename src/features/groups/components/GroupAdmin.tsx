@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
+import { useRefresh } from "@/lib/useRefresh";
 import { createGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group, type JoinRequest } from "../types";
@@ -14,7 +14,7 @@ import JoinRequests from "./JoinRequests";
 // The admin page's section for groups: answer who is waiting to join, rename or remove a group, add one.
 // Shown only to someone with the "groups.manage" permission; the database refuses everyone else anyway.
 export default function GroupAdmin({ groups, requests }: { groups: Group[]; requests: JoinRequest[] }) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
   const [failed, setFailed] = useState(false);
@@ -27,7 +27,7 @@ export default function GroupAdmin({ groups, requests }: { groups: Group[]; requ
       try {
         await createGroup(name.trim());
         setName("");
-        router.refresh(); // reload the page's server data so the new group joins the list
+        await refresh(); // the new group is in the list before the button stops looking busy
       } catch {
         setFailed(true);
       }

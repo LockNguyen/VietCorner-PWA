@@ -50,6 +50,7 @@ src/
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
+  lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
   proxy.ts      Runs before each request. Belongs to auth.
 public/         sw.js (push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
@@ -130,6 +131,9 @@ the UI/UX revamp is when that set gets designed properly (backlog B18).
   of the same row are disabled until it finishes.
 - A list gives each row its own component, so its own `usePending` and its own error line: a busy row never
   blocks the rows around it.
+- After the change, the page's data is reloaded with `await refresh()` (`src/lib/useRefresh.ts`), which
+  resolves when the new data is drawn. The button therefore stays busy until what it shows has changed;
+  with a bare `router.refresh()` it flashed its old label first ("Cancel", then "Undo").
 - Left as plain buttons on purpose: ones that only open or close something, and four that already cannot
   repeat (chat Send empties its box at once, the assistant's Send is disabled while answering, Pray starts
   its hour on the first tap, the language toggle is instant and repeating it changes nothing).
@@ -324,3 +328,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-07: prayer reminders: adding one that already exists now says so ("That group already has a reminder at that day and time") instead of a generic failure, and the section's buttons are disabled while saving, so a second tap can no longer send the same reminder twice. The same gap in other admin forms is backlog B25.
 - 2026-10-07: scheduler reliability: the cron call waits 25 s instead of 5 (the site takes seconds to wake), due reminders are sent side by side, and `/api/reminders/send` answers with `tookMs` or the error. The prayer reminder form starts on today's weekday.
 - 2026-10-07: double taps: `ActionButton` + `usePending` on every button that starts a request (login, sign out, join, notifications, prayer, and the events, groups and reminders admin sections). Lists got a component per row. Closes backlog B25.
+- 2026-10-07: busy buttons stay busy until the reloaded data is drawn (`useRefresh`), so a button no longer flashes its old label between saving and the list updating.

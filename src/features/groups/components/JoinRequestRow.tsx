@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
+import { useRefresh } from "@/lib/useRefresh";
 import { approveJoinRequest, declineJoinRequest } from "../api";
 import { STRINGS } from "../strings";
 import type { JoinRequest } from "../types";
@@ -14,7 +14,7 @@ type Props = { request: JoinRequest; groupName: string | undefined };
 // One person waiting to join one group, with the two answers a manager can give.
 // A row of its own, so answering one request never blocks the requests around it.
 export default function JoinRequestRow({ request, groupName }: Props) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [failed, setFailed] = useState(false);
   const { pending, run } = usePending<"approve" | "decline">();
@@ -24,7 +24,7 @@ export default function JoinRequestRow({ request, groupName }: Props) {
       setFailed(false);
       try {
         await decide(request.group_id, request.user_id);
-        router.refresh(); // reload the page's server data: the answered request leaves the list
+        await refresh(); // the answered request has left the list before its buttons stop looking busy
       } catch {
         setFailed(true);
       }

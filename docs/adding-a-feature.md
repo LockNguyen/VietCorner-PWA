@@ -140,6 +140,10 @@ const { pending, run } = usePending<"save" | "remove">();   // @/lib/usePending
 siblings. Leave `pendingLabel` out for the circle alone. In a list, make each row its own component so it
 has its own `usePending` and its own error line. Buttons that only open or close something stay plain.
 
+When the change must show up in data the page loaded on the server, end the work with
+`await refresh()` from `useRefresh` (`@/lib/useRefresh`), not `router.refresh()`: it resolves when the new
+data is drawn, so the button stays busy until what it shows has changed.
+
 ## 6. Put user-facing text in `strings.ts`
 
 ```ts

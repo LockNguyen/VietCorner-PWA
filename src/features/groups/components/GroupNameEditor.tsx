@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
+import { useRefresh } from "@/lib/useRefresh";
 import { removeGroup, renameGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
@@ -13,7 +13,7 @@ import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
 // Save is enabled only when the name actually changed. Remove asks nothing (decided: fewer taps); the
 // group is kept in the database, so a mistaken tap is undone there.
 export default function GroupNameEditor({ group }: { group: Group }) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState(group.name);
   const [failed, setFailed] = useState(false);
@@ -25,7 +25,7 @@ export default function GroupNameEditor({ group }: { group: Group }) {
       setFailed(false);
       try {
         await change();
-        router.refresh(); // reload the page's server data: the saved name, or the list without this group
+        await refresh(); // the saved name, or the list without this group, is drawn before the button stops looking busy
       } catch {
         setFailed(true);
       }

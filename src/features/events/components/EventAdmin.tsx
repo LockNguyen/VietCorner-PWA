@@ -1,8 +1,8 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { useRefresh } from "@/lib/useRefresh";
 import { cancelEvent, restoreDate, saveEvent, setReminder } from "../api";
 import { STRINGS } from "../strings";
 import type { EventGroup, ManagedEvent } from "../types";
@@ -15,7 +15,7 @@ type Props = { events: ManagedEvent[]; groups: EventGroup[] };
 // changes and cancels. Shown only to someone with the "events.manage" permission; the database refuses
 // everyone else anyway.
 export default function EventAdmin({ events, groups }: Props) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   // Which event the editor is open on, by id rather than by value: after a date is cancelled the list is
   // reloaded, and the open editor must show the reloaded event, not the copy it was opened with.
@@ -23,14 +23,15 @@ export default function EventAdmin({ events, groups }: Props) {
   const openEvent = events.find((event) => event.id === openOn);
   const eventId = openEvent?.id ?? ""; // the handlers that use it are only reachable with an event open
 
-  // Every change ends the same way: reload the page's server data, so the screen is what the database says.
+  // Every change ends the same way: reload the page's server data and wait for it, so the screen is what
+  // the database says by the time the button that was tapped stops looking busy.
   // It answers whether the change happened; the part of the editor that asked shows its own "could not
   // save" next to the button that was tapped, and keeps the editor open with what was typed.
   async function change(action: () => Promise<void>, { thenClose }: { thenClose: boolean }): Promise<boolean> {
     try {
       await action();
       if (thenClose) setOpenOn(null);
-      router.refresh();
+      await refresh(); // until the new list is drawn, so the tapped button stays busy until it has changed
       return true;
     } catch {
       return false;

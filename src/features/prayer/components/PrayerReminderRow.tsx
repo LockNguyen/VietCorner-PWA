@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
+import { useRefresh } from "@/lib/useRefresh";
 import { removeReminder } from "../api";
 import { STRINGS } from "../strings";
 import type { PrayerReminder } from "../types";
@@ -14,7 +14,7 @@ type Props = { reminder: PrayerReminder; label: string }; // label: "Bible Study
 // One reminder, with the button that removes it.
 // A row of its own, so removing one never blocks the reminders around it.
 export default function PrayerReminderRow({ reminder, label }: Props) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [failed, setFailed] = useState(false);
   const { pending, run } = usePending<"remove">();
@@ -24,7 +24,7 @@ export default function PrayerReminderRow({ reminder, label }: Props) {
       setFailed(false);
       try {
         await removeReminder(reminder.id);
-        router.refresh(); // reload the page's server data: the list is what the database says
+        await refresh(); // the reminder has left the list before its button stops looking busy
       } catch {
         setFailed(true);
       }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES, type Text } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
+import { useRefresh } from "@/lib/useRefresh";
 import { addReminder } from "../api";
 import { churchWeekday } from "../reminders";
 import { STRINGS } from "../strings";
@@ -20,7 +20,7 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 // Times are church time. Shown only to someone with the "prayer.reminders" permission; the database
 // refuses everyone else anyway.
 export default function PrayerReminderAdmin({ reminders, groups }: Props) {
-  const router = useRouter();
+  const refresh = useRefresh();
   const { t, language } = useLanguage(); // I18N
   const [groupId, setGroupId] = useState(groups[0]?.id ?? "");
   // Starts on today (at church): a reminder is most often set for the day it is thought of, and a list
@@ -41,7 +41,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
       try {
         const outcome = await addReminder(groupId, weekday, sendAt);
         if (outcome === "exists") setProblem(STRINGS.reminderExists);
-        router.refresh(); // reload the page's server data: the list is what the database says
+        await refresh(); // the list is what the database says before the button stops looking busy
       } catch {
         setProblem(STRINGS.failed);
       }
