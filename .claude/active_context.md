@@ -224,10 +224,13 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] **Admins approve names** (branch `names-approval`, on top of `ui-6-conversations`): in no group a name
         saves at once; in a group (or with a join request waiting) it becomes a request that `groups.manage`
         approves or declines. Database functions hold the rule; two routes notify. 8 new security cases.
-        **WAITS ON THE USER: section 5 of `features/profiles/schema.sql`.** Until then saving a name fails
-        and `npm run test:rls` (expects 56) fails. NOT seen on any screen.
+        Section 5 of the schema is run; `npm run test:rls` 56/56. NOT seen on any screen.
+  - [x] **Merged and pushed (2026-10-08, on the user's word):** `main` fast-forwarded to `17e82b5` (the whole UI
+        revamp, the review fixes, admin-approved names) and pushed to GitHub; Netlify builds from it.
+        NOT checked: that the Netlify build passed, or anything on the live site.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run section 5 of `src/features/profiles/schema.sql` (copied from the editor).
-2. Claude: `npm run test:rls` (56). User: change a name as a member, approve it as an admin.
-3. User decides: the merge of `ui-0` … `ui-6` and `names-approval` into `main`.
+1. User: check the Netlify deploy finished, then on a phone: sign in, the Prayer tab, a chat, Settings → Name,
+   and as an admin the Admin tab (a join request, a name request, an event).
+2. Still unseen by anyone as a picture: the admin screens, the name question, the composer over a phone keyboard.
+3. Open: backlog B24 (prayer moderation, on hold), B34 (email copies), the Vietnamese text review (the user's).
