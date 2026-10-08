@@ -205,12 +205,15 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         NOT run: `npm run test:rls` (needs that SQL). NOT seen: any of it on screen. `Avatar` has no screen
         yet (slice 6). Debt: backlog B34 (email copies still stored).
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
-  - [ ] 6 Conversations: bubbles → chat, prayer (by week, then person), assistant
+  - [x] 6 Conversations (branch `ui-6-conversations`): `Bubble`, `BubbleRun`, `TimeLine`, `Composer`, `IconButton`,
+        `useScrollToEnd`; chat as runs (`chat/runs.ts`), prayer by week then person (`prayer/grouping.ts`), the
+        assistant on the same bubbles. 15 new unit tests (85). Seen: the components and compositions in `/ui`.
+        NOT seen: the three screens themselves; the fixed composer over a phone keyboard; the assistant's
+        bottom area (`pb-48` is a measured guess at its height).
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run `src/features/profiles/schema.sql` (whole file), then section 4 of
-   `src/features/prayer/schema.sql`, both copied from the editor. Then `npm run test:rls` (expect 46).
-2. User: open the app (the name question appears once), answer it, check Settings → Name, a chat, the
-   prayer list. Say go, or what to change.
-3. Claude: slice 6, conversations: `Bubble`, `BubbleRun`, `TimeLine`, `Composer` → chat, prayer, the assistant.
+1. User: open a group chat (send, receive, scroll), the Prayer tab (weeks, people, Pray, the X, "more…") and
+   the assistant (type, speak, a failure). Say go, or what to change.
+2. Claude: cleanup: the Vietnamese text list for the native-speaker review; check nothing off-token is left.
+3. User decides: merge `ui-0` … `ui-6` into `main`, and when to push (one Netlify build for all of it).

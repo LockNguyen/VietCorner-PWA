@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import Composer from "@/components/ui/Composer";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 
@@ -9,17 +10,17 @@ import { STRINGS } from "../strings";
 const MAX_QUESTION_CHARS = 500;
 
 type Props = {
-  disabled: boolean;
+  disabled: boolean; // an answer is on its way
   onSend: (question: string) => void;
+  children: ReactNode; // what sits above the field: the microphone
 };
 
 // Type a question and send it. Clears itself; the conversation lives in the hook, not here.
-export default function Composer({ disabled, onSend }: Props) {
+export default function QuestionForm({ disabled, onSend, children }: Props) {
   const [draft, setDraft] = useState("");
   const { t } = useLanguage(); // I18N
 
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
+  function send() {
     const question = draft.trim();
     if (!question) return;
     setDraft("");
@@ -27,17 +28,16 @@ export default function Composer({ disabled, onSend }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        maxLength={MAX_QUESTION_CHARS}
-        placeholder={t(STRINGS.questionPlaceholder)}
-        className="flex-1 rounded border p-3 text-lg"
-      />
-      <button disabled={disabled} className="rounded bg-blue-500 px-4 text-lg text-white disabled:opacity-50">
-        {t(STRINGS.sendButton)}
-      </button>
-    </form>
+    <Composer
+      value={draft}
+      onChange={setDraft}
+      onSend={send}
+      placeholder={t(STRINGS.questionPlaceholder)}
+      sendLabel={t(STRINGS.sendButton)}
+      disabled={disabled || draft.trim() === ""}
+      maxLength={MAX_QUESTION_CHARS}
+    >
+      {children}
+    </Composer>
   );
 }

@@ -92,7 +92,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
 | Controls | `Button` | Any button; shows the turning circle while pending | `primary`, `quiet`, `danger`, `text` |
-| | `IconButton` | An icon alone, with a screen-reader name | on `action`, on `surface` |
+| | `IconButton` | An icon alone, with a screen-reader name | `quiet`, `action`, `filled`, `danger`; `regular`, `large` (the assistant's microphone) |
 | | `Field` | A label above a control and, once the form has been tried, what is wrong with it | |
 | | `TextInput`, `TextArea`, `Select` | `fill` background, no border, `radius-control`. A date or a time is a `TextInput` with that `type`: the phone's own picker, so no separate component. | |
 | | `Switch` | On / off, with its label on the same line | |
@@ -102,10 +102,10 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | | `SkeletonRow` | A grey placeholder in the shape of a `ListRow` | |
 | | `EmptyState` | One sentence and, where there is one, the next step | |
 | Overlay | `Sheet` | A short choice, or a few details, rising from the bottom | |
-| Conversation | `Bubble` | One message | `mine`, `theirs` |
+| Conversation | `Bubble` | One message | `mine`, `theirs`, `failed` (an answer that did not come) |
 | | `BubbleRun` | One speaker's consecutive messages: name above, avatar beside the last | |
 | | `TimeLine` | A small centred time or week label | |
-| | `Composer` | The pill field and send button at the bottom | |
+| | `Composer` | The pill field and send button, held at the bottom above the tab bar | |
 | Placeholder | `LogoMark` | The stand-in logo until the church has one | |
 
 ### Rules that span components
@@ -124,6 +124,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   `ink` text; mine at the right on `action` with `on-action` text. Bubbles at most 70% wide. 4 between
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person.
+  A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
   before the @. A row that already carries two buttons (a join request) shows the name without the avatar. Nobody is greeted and no form of address is used.
 - **Pictures** are placeholders drawn in code until photos are planned (backlog B32).

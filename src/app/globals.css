@@ -51,6 +51,11 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Where the composer sits: on top of the tab bar. */
+@utility bottom-tabs {
+  bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom));
+}
+
 /* Where banners sit: just clear of the tab bar and the phone's home indicator. */
 @utility bottom-above-tabs {
   bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom) + 8px);

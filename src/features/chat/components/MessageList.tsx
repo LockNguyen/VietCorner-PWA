@@ -1,35 +1,57 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import Avatar from "@/components/ui/Avatar";
+import Bubble from "@/components/ui/Bubble";
+import BubbleRun from "@/components/ui/BubbleRun";
+import TimeLine from "@/components/ui/TimeLine";
+import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { LOCALES } from "@/features/i18n/types"; // I18N
 import type { Names } from "@/features/profiles/types"; // PROFILES
+import { CHURCH_TIME_ZONE } from "@/lib/churchTime";
+import { useScrollToEnd } from "@/lib/useScrollToEnd";
+import { intoRuns } from "../runs";
 import type { Message } from "../types";
 
 type Props = { messages: Message[]; names: Names; myUserId: string };
 
-// Chat bubbles: mine on the right in blue, others on the left in gray. Scrolls to the newest message.
+// The conversation: mine at the right, others at the left under their name. Stays scrolled to the newest.
 export default function MessageList({ messages, names, myUserId }: Props) {
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const { language } = useLanguage(); // I18N
+  const end = useScrollToEnd(messages);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView();
-  }, [messages]);
+  // Church time, like every date in the app: the server and the phone then print the same words.
+  const when = (at: string) =>
+    new Date(at).toLocaleString(LOCALES[language], {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: CHURCH_TIME_ZONE,
+    });
 
   return (
-    <>
-      <ul className="space-y-3">
-        {messages.map((message) => {
-          const mine = message.sender_id === myUserId;
-          return (
-            <li key={message.id} className={mine ? "text-right" : ""}>
-              <div className="text-xs text-gray-500">{names[message.sender_id]}</div>
-              <div className={`inline-block rounded-lg px-3 py-2 text-lg ${mine ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
+    <div role="log" className="flex flex-col gap-4 px-3 pt-2 pb-16">
+      {intoRuns(messages).map((item) => {
+        if (item.kind === "time") return <TimeLine key={`time-${item.at}`}>{when(item.at)}</TimeLine>;
+
+        const mine = item.senderId === myUserId;
+        return (
+          <BubbleRun
+            key={item.messages[0].id}
+            side={mine ? "mine" : "theirs"}
+            name={mine ? undefined : names[item.senderId]}
+            avatar={mine ? undefined : <Avatar size="small" />}
+          >
+            {item.messages.map((message) => (
+              <Bubble key={message.id} tone={mine ? "mine" : "theirs"}>
                 {message.body}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      <div ref={bottomRef} />
-    </>
+              </Bubble>
+            ))}
+          </BubbleRun>
+        );
+      })}
+      <div ref={end} />
+    </div>
   );
 }

@@ -1,10 +1,13 @@
 import { notFound } from "next/navigation";
-import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
+import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Settings, Square, Users, X } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
+import Bubble from "@/components/ui/Bubble";
+import BubbleRun from "@/components/ui/BubbleRun";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import Field from "@/components/ui/Field";
+import IconButton from "@/components/ui/IconButton";
 import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
 import LogoMark from "@/components/ui/LogoMark";
@@ -20,10 +23,12 @@ import Text from "@/components/ui/Text";
 import TextArea from "@/components/ui/TextArea";
 import TextInput from "@/components/ui/TextInput";
 import Thumbnail from "@/components/ui/Thumbnail";
+import TimeLine from "@/components/ui/TimeLine";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
+import ComposerDemo from "./ComposerDemo";
 import SheetDemo from "./SheetDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
@@ -144,6 +149,47 @@ export default async function ShowcasePage() {
         <SheetDemo />
         <LogoMark />
         <div className="flex items-center gap-2"><Avatar /><Avatar size="small" /></div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then a prayer request as it is composed; Composer is held above the tabs</Text>
+        <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
+        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar size="small" />}>
+          <Bubble tone="theirs">Chào cả nhà</Bubble>
+          <Bubble tone="theirs">Tối nay học Kinh Thánh lúc 7 giờ tại hội trường chính, xin mọi người nhớ mang theo sách và đến sớm mười phút.</Bubble>
+        </BubbleRun>
+        <BubbleRun side="mine">
+          <Bubble tone="mine">Cảm ơn anh</Bubble>
+          <Bubble tone="mine">Tôi sẽ đến, và sẽ đưa thêm hai người bạn mới cùng tham dự buổi học tối nay.</Bubble>
+        </BubbleRun>
+        <BubbleRun side="theirs">
+          <Bubble tone="failed">Không kết nối được. Xin thử lại.</Bubble>
+          <Button variant="text">Thử lại</Button>
+          <Bubble tone="theirs"><Spinner /></Bubble>
+        </BubbleRun>
+        <TimeLine>Tuần này</TimeLine>
+        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar size="small" />}>
+          <div className="flex w-full items-start">
+            <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện.</Bubble>
+            <IconButton label="Options"><X /></IconButton>
+          </div>
+          <div className="flex items-center gap-2 ps-4">
+            <Button variant="quiet">🙏 Cầu nguyện</Button>
+            <Text as="span" variant="small" tone="subtle">Nhóm Thanh Niên · 14 thg 10</Text>
+          </div>
+        </BubbleRun>
+        <ComposerDemo />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">IconButton: quiet, action, filled and danger at the large size, disabled</Text>
+        <div className="flex items-center gap-2">
+          <IconButton label="Close"><X /></IconButton>
+          <IconButton label="Send" tone="action"><Check /></IconButton>
+          <IconButton label="Speak" tone="filled" size="large"><Mic className="size-8" /></IconButton>
+          <IconButton label="Stop" tone="danger" size="large"><Square className="size-8" /></IconButton>
+          <IconButton label="Busy" tone="filled" size="large" disabled><Spinner /></IconButton>
+        </div>
       </section>
 
       <section className="flex flex-col gap-2">

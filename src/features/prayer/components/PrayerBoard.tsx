@@ -1,21 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
+import { byWeekThenPerson } from "../grouping";
 import { usePrayerCooldown } from "../hooks/usePrayerCooldown";
 import { usePrayerFeed } from "../hooks/usePrayerFeed";
 import { STRINGS } from "../strings";
 import type { PostableGroup, PrayerRequest } from "../types";
 import OlderRequestsMarker from "./OlderRequestsMarker";
-import PrayerCard from "./PrayerCard";
 import PrayerComposer from "./PrayerComposer";
+import PrayerWeek from "./PrayerWeek";
 import RequestOptions from "./RequestOptions";
 
 type Props = { initialRequests: PrayerRequest[]; groups: PostableGroup[]; userId: string };
 
-// The Prayer tab: the composer, then every request from my groups, newest first.
+// The Prayer tab: the composer, then every request from my groups, by week and then by person.
 // It connects the two hooks to the components below it; each of those only renders.
 export default function PrayerBoard({ initialRequests, groups, userId }: Props) {
   const { t } = useLanguage(); // I18N
@@ -38,26 +40,18 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
-  if (groups.length === 0) return <p className="p-4 text-center text-lg text-gray-500">{t(STRINGS.noGroups)}</p>;
+  if (groups.length === 0) return <EmptyState message={t(STRINGS.noGroups)} />;
 
   return (
-    <div className="p-4">
+    <div className="flex flex-col gap-4">
       <PrayerComposer groups={groups} onPost={(request) => report(feed.post(request), STRINGS.shared)} />
 
       {feed.requests.length === 0 ? (
-        <p className="mt-6 text-center text-gray-500">{t(STRINGS.emptyState)}</p>
+        <EmptyState message={t(STRINGS.emptyState)} />
       ) : (
-        <ul className="mt-4 space-y-3">
-          {feed.requests.map((request) => (
-            <PrayerCard
-              key={request.id}
-              request={request}
-              canPray={cooldown.canPrayFor(request.id)}
-              onPray={() => pray(request.id)}
-              onManage={() => setManaging(request)}
-            />
-          ))}
-        </ul>
+        byWeekThenPerson(feed.requests).map((week) => (
+          <PrayerWeek key={week.start} week={week} canPrayFor={cooldown.canPrayFor} onPray={pray} onManage={setManaging} />
+        ))
       )}
 
       {feed.hasMore && <OlderRequestsMarker onReached={() => report(feed.loadOlder())} loadedSoFar={feed.requests.length} />}

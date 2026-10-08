@@ -32,7 +32,7 @@ tap 🎙️ ─► useVoiceQuestion ─► api.transcribeRecording ─► /api/a
 | State | `hooks/useConversation.ts` | The conversation: send, retry with a growing wait, new chat, persistence |
 | State | `hooks/useVoiceQuestion.ts` | Record → transcribe → hand over the text (`onQuestion`) |
 | State | `hooks/useVoiceRecorder.ts` | The microphone only: formats, permission, stopping the tracks |
-| UI | `components/` | `AssistantChat` (wires the hooks), `MessageList`, `MessageBubble`, `Composer`, `VoiceButton` |
+| UI | `components/` | `AssistantChat` (wires the hooks), `MessageList`, `MessageBubble`, `QuestionForm`, `VoiceButton` |
 | Server logic | `server/aiService.ts` | The only holder of the service URL + token: timeout, 503 → `AiServiceUnavailable` |
 | Server logic | `server/askQuestion.ts`, `server/transcribeAudio.ts` | One call each; no Next.js imports |
 | Routes | `src/app/api/assistant/{ask,transcribe}/route.ts` | Verify the user, validate input, map errors |
@@ -56,11 +56,12 @@ No `server/queries.ts`: the page loads only who is signed in, because the assist
 
 ## Expected behavior
 - Logged out: `/assistant` redirects to `/login`; both routes answer `401 {"error":"Not signed in"}`.
-- A typed question shows the user's bubble plus a "…" answer bubble, then the answer with its sources.
+- A typed question shows the user's bubble plus an answer bubble holding a turning circle, then the answer
+  with its sources.
 - A spoken question does the same and reads the answer aloud, without the `[1]` citations.
 - Any answer can be replayed with 🔊.
 - Nothing understood → "Tôi chưa nghe rõ…" under the microphone; no bubble is added.
-- A failed answer becomes a red bubble with "Try again"; tapping it counts down, then asks again.
+- A failed answer becomes a bubble in red words with "Try again" under it; tapping it counts down, then asks again.
 - 401 and 400-type failures show the reason with **no** retry link, because retrying cannot help.
 - "New chat" empties the screen and the device, cancels a pending retry, and stops any speech.
 - The conversation is still there after closing and reopening the app.

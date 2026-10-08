@@ -1,12 +1,14 @@
 "use client";
 
+import Button from "@/components/ui/Button";
+import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useConversation } from "../hooks/useConversation";
 import { STRINGS } from "../strings";
 import { useVoiceQuestion } from "../hooks/useVoiceQuestion";
 import * as speech from "../speech";
-import Composer from "./Composer";
 import MessageList from "./MessageList";
+import QuestionForm from "./QuestionForm";
 import VoiceButton from "./VoiceButton";
 
 type Props = { userId: string };
@@ -19,29 +21,22 @@ export default function AssistantChat({ userId }: Props) {
   const voice = useVoiceQuestion((question) => chat.send(question, { byVoice: true }));
 
   return (
-    <div className="flex h-[calc(100dvh-8rem)] flex-col">
-      <div className="flex justify-end p-2">
-        <button onClick={chat.newChat} className="rounded border px-3 py-1 text-sm">
+    // The bottom padding is the room the microphone and the field take, so the last answer is not under them.
+    <div className="flex flex-col pb-48">
+      <div className="flex justify-end px-3">
+        <Button variant="text" onClick={chat.newChat}>
           {t(STRINGS.newChat)}
-        </button>
+        </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4">
-        <MessageList
-          messages={chat.messages}
-          countdown={chat.countdown}
-          onRetry={chat.retry}
-          onSpeak={speech.speak}
-        />
-      </div>
+      <MessageList messages={chat.messages} countdown={chat.countdown} onRetry={chat.retry} onSpeak={speech.speak} />
 
-      <div className="space-y-3 border-t p-4">
-        {voice.notice && <p className="text-center text-gray-500">{t(voice.notice)}</p>}
-        <div className="flex justify-center">
+      <QuestionForm disabled={chat.sending} onSend={(question) => chat.send(question)}>
+        <div className="flex flex-col items-center gap-2 pt-1 text-center">
+          {voice.notice && <Text tone="subtle">{t(voice.notice)}</Text>}
           <VoiceButton status={voice.status} recorderStatus={voice.recorderStatus} onToggle={voice.toggle} />
         </div>
-        <Composer disabled={chat.sending} onSend={(question) => chat.send(question)} />
-      </div>
+      </QuestionForm>
     </div>
   );
 }

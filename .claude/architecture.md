@@ -51,6 +51,7 @@ src/
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
+  lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
   lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
   proxy.ts      Runs before each request. Belongs to auth.
@@ -128,7 +129,7 @@ and icons return 200 even when logged out; iOS installs via Share → Add to Hom
 `docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
 component in every state (admins in production; anyone on a developer's machine, where it needs no
 sign-in so the library can be looked at without an account). The design tokens live in
-`src/app/globals.css`. Still on the old look until slice 6: chat, the prayer list and composer, the assistant.
+`src/app/globals.css`. Every screen is built from it; no component carries a colour or a size of its own.
 
 **Every button that starts a request** is a `Button` driven by `usePending` (`src/lib/usePending.ts`):
 - The first tap runs the action; taps while it is running are ignored. (A second tap used to send a second
@@ -294,6 +295,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Names are looked up from one `profiles` table, not copied onto each message as emails were | A corrected name is corrected everywhere, old messages included; one place to protect | One more read per screen that shows people; chat fetches the name of a sender it has not met |
 | A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
 | The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
+| The prayer list groups people by name, because its view carries no author id | The id is what would unmask an anonymous request, so it stays out of the feed altogether | Two members with one name share a group in a week (they look the same on screen anyway) |
 | The event editor is a route (`/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
 | One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
@@ -363,3 +365,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: UI revamp, slice 3, banners: `Banner`, `useBanner` (+ `BannerProvider`, `BannerHost`), `useSave`. Every result of a tap is now a banner: sign-in errors, chat send failures, the notification toggle, groups and join requests, prayer (share, edit, answered, delete, reminders), events (save, cancel, undo, reminders). Inline error lines and their `failed` states are gone. Closes backlog B30.
 - 2026-10-08: UI revamp, slice 4, forms and the sheet: `Field`, `TextInput`, `TextArea`, `Select`, `Switch`, `Sheet` (adds `@radix-ui/react-dialog`), `LogoMark`. Sign-in in its new layout with its own error wording; the three admin sections as rows and labelled fields; the event editor moved from an overlay to its own screen (`/admin/events/[eventId]`, `hooks/useEventChanges.ts`); a form says what is wrong beside the field once Save was tried; event details and the prayer options are sheets. `ActionButton` deleted.
 - 2026-10-08: UI revamp, slice 5, names: new foundation `profiles` (table, trigger, RLS; `getNames`, `useNames`, `NameStep`, `NameSection`) and `ui/Avatar`. The layout asks "What is your name?" once after sign-in. Chat, the chat notification, prayer requests (`prayer_feed.author_name`) and join requests show names instead of emails. Needs `features/profiles/schema.sql` and section 4 of `features/prayer/schema.sql` to be run.
+- 2026-10-08: UI revamp, slice 6, conversations: `Bubble`, `BubbleRun`, `TimeLine`, `Composer`, `IconButton`, `useScrollToEnd`. Chat is runs of bubbles with names, avatars and a time after an hour of silence (`chat/runs.ts`); the prayer list is grouped by church week and then by person (`prayer/grouping.ts`), every request at the left; the assistant uses the same bubbles, with icons in place of emoji on the microphone. No old styling is left in any component.

@@ -20,6 +20,11 @@ export const STRINGS = {
   postAnonymously: { en: "Hide my name", vi: "Ẩn tên tôi" } satisfies Text,
   postButton: { en: "Share", vi: "Chia sẻ" } satisfies Text,
 
+  // The weeks the list is divided into
+  thisWeek: { en: "This week", vi: "Tuần này" } satisfies Text,
+  lastWeek: { en: "Last week", vi: "Tuần trước" } satisfies Text,
+  weekOf: { en: "Week of", vi: "Tuần bắt đầu ngày" } satisfies Text,
+
   // One request
   anonymous: { en: "Anonymous", vi: "Ẩn danh" } satisfies Text,
   you: { en: "you", vi: "bạn" } satisfies Text,
@@ -56,6 +61,11 @@ export const STRINGS = {
   // The notification an author gets (server/notifyAuthor.ts)
   notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };
+
+// The label of a week two or three back. A sentence with a number in it, so it is a function.
+export function weeksAgo(count: number): Text {
+  return { en: `${count} weeks ago`, vi: `${count} tuần trước` };
+}
 
 // The body of that notification. A sentence with a number in it, so it is a function. English has a
 // singular; Vietnamese does not. The number counts prayers: one person praying twice is "2 people".

@@ -17,9 +17,9 @@ export default function ChatRoom({ groupId, myUserId, initialMessages, initialNa
   const names = useNames(messages.map((message) => message.sender_id), initialNames);
 
   return (
-    <div className="p-4">
+    <>
       <MessageList messages={messages} names={names} myUserId={myUserId} />
       <MessageForm onSend={send} />
-    </div>
+    </>
   );
 }

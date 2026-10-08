@@ -2,6 +2,10 @@
 
 import { useState, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
+import Field from "@/components/ui/Field";
+import Select from "@/components/ui/Select";
+import Switch from "@/components/ui/Switch";
+import TextArea from "@/components/ui/TextArea";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
@@ -33,51 +37,29 @@ export default function PrayerComposer({ groups, onPost }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded border p-3">
-      <textarea
-        value={body}
-        onChange={(event) => setBody(event.target.value)}
-        placeholder={t(STRINGS.bodyPlaceholder)}
-        maxLength={MAX_BODY_LENGTH}
-        rows={3}
-        className="w-full rounded border p-2 text-lg"
-      />
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-3 pt-4">
+      <Field label={t(STRINGS.bodyPlaceholder)}>
+        <TextArea value={body} onChange={(event) => setBody(event.target.value)} maxLength={MAX_BODY_LENGTH} rows={3} />
+      </Field>
 
-      <label className="mt-2 flex items-center gap-2 text-lg">
-        {t(STRINGS.shareWith)}
-        {/* With one group there is nothing to choose, so the choice is shown rather than asked. */}
-        {groups.length === 1 ? (
-          <strong>{groups[0].name}</strong>
-        ) : (
-          <select
-            value={groupId}
-            onChange={(event) => setGroupId(event.target.value)}
-            className="flex-1 rounded border p-2"
-          >
+      {/* With one group there is nothing to choose, so the question is not asked. */}
+      {groups.length > 1 && (
+        <Field label={t(STRINGS.shareWith)}>
+          <Select value={groupId} onChange={(event) => setGroupId(event.target.value)}>
             {groups.map((group) => (
               <option key={group.id} value={group.id}>
                 {group.name}
               </option>
             ))}
-          </select>
-        )}
-      </label>
+          </Select>
+        </Field>
+      )}
 
-      <label className="mt-2 flex items-center gap-2 text-lg">
-        <input
-          type="checkbox"
-          checked={isAnonymous}
-          onChange={(event) => setIsAnonymous(event.target.checked)}
-          className="h-5 w-5"
-        />
-        {t(STRINGS.postAnonymously)}
-      </label>
+      <Switch label={t(STRINGS.postAnonymously)} checked={isAnonymous} onChange={(event) => setIsAnonymous(event.target.checked)} />
 
-      <div className="mt-3 flex flex-col">
-        <Button pending={pending === "post"} disabled={body.trim() === ""}>
-          {t(STRINGS.postButton)}
-        </Button>
-      </div>
+      <Button pending={pending === "post"} disabled={body.trim() === ""}>
+        {groups.length > 1 ? t(STRINGS.postButton) : `${t(STRINGS.shareWith)} ${groups[0].name}`}
+      </Button>
     </form>
   );
 }

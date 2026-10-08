@@ -28,14 +28,19 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | `size`: `regular`, `small` | |
+| `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
+| `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |
+| `TimeLine` | A small centred label between messages: a time, or a week | | |
+| `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. The screen leaves room under its messages (`pb-16`). | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
+| `IconButton` | A button shown as an icon alone | `tone`: `quiet`, `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
 ## Conventions the list relies on
 - A component may render `next/link`'s `Link`, the app's anchor element. It never uses the router's hooks.
 - Icons come from `lucide-react` and are passed in as children by the screen; a component does not pick one.
-  The two exceptions: the chevron `ListRow` draws itself (it is part of what a row that opens something
-  looks like) and the figure inside `Avatar` (it is the default picture).
+  The exceptions, each part of what the component is: the chevron of a `ListRow` that opens something, the
+  figure inside `Avatar`, and the arrow on `Composer`'s send button.
 - `ListRow` does not extend a native element's props, because it is one of three elements (link, button,
   plain) depending on what it does. Its props are the short list in the table.
 - `TextInput`, `TextArea` and `Select` share one look, the constant in `controlLook.ts`. It is the only file
@@ -53,4 +58,5 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `useSave` | The usual change from tap to result: `usePending`, then the change, `useRefresh`, and a banner saying how it went. Start here. |
 | `usePending` | Which action of a component is on its way; ignores a second tap. Feeds `Button`'s `pending`. |
 | `useRefresh` | Reloads the page's data and resolves when it is on screen, so a button stays busy until then. |
+| `useScrollToEnd` | Keeps the newest message of a conversation in view. |
 | `useBanner` | `showBanner({ kind, message, seconds? })` from anywhere. Success stays 2 s, an error 8 s. `BannerProvider` wraps the app once; `src/components/BannerHost.tsx` draws them and handles the stack. |

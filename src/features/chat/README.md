@@ -18,8 +18,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Browser API | `api.ts` | `getLatestMessages`, `sendMessage` (POST `/api/chat/messages`), `subscribeToNewMessages` |
 | State | `hooks/useChatMessages.ts` | The whole sync strategy: first load, Realtime inserts, refetch on (re)connect and on visible, own message merged, dedupe by id |
 | UI | `components/ChatRoom.tsx` | `useChatMessages` → `MessageList` + `MessageForm` |
-| UI | `components/MessageList.tsx` | Bubbles (mine blue right, others gray left) + auto-scroll |
-| UI | `components/MessageForm.tsx` | Draft + error; restores the text when sending fails |
+| Pure logic | `runs.ts` | `intoRuns`: messages → runs of one sender, with a time wherever an hour passed in silence |
+| UI | `components/MessageList.tsx` | The runs as bubbles: mine at the right, others at the left under their name and beside an avatar; stays scrolled to the newest |
+| UI | `components/MessageForm.tsx` | The draft in the composer at the bottom; a failed send raises a banner and puts the words back |
 | Server reads | `server/queries.ts` | `getChatRoom` → `{ messages, userId }` |
 | Server logic | `server/sendMessage.ts` | Inserts as the **user** (RLS checks membership), then calls `notifyGroup` |
 | Server logic | `server/notifyGroup.ts` | **Admin** client: the group's other members and its name → `sendPush` (`// PUSH`) |

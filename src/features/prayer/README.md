@@ -32,7 +32,9 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | State | `hooks/useWhenVisible.ts` | "Call this when the element scrolls into view" |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
 | UI | `components/PrayerComposer.tsx` | The words, the group, "Hide my name" |
-| UI | `components/PrayerCard.tsx` | One request: three lines and "more…", then Pray, or the author's X |
+| Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
+| UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests under their name |
+| UI | `components/PrayerBubble.tsx` | One request: three lines and "more…", its group and day, then Pray, or the author's X |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -91,6 +93,10 @@ And a small group can guess from timing or wording — no software fixes that.
 - With no group joined: "Join a group first…" and no composer.
 - Posting puts the request at the top, under the author's name. With "Hide my name", others see
   "Anonymous"; the author sees "Anonymous (you)".
+- The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
+  <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
+  their name, people in the order of their newest request; anonymous requests share one group. Every
+  request is at the left, mine included; my own named group says "(you)".
 - A request longer than three lines on this screen shows "more…"; a shorter one shows no link.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
@@ -119,7 +125,8 @@ real notification arriving on a phone.**
 - An author with notifications off, or who never turned them on, is not told at all.
 - An author gets at most one "prayed for you" notification a minute, across all their requests (the `push`
   README). The next one carries the running total, so no prayer goes uncounted, only unannounced.
-- "more…" is measured when the card appears and when its text changes, not when the phone is rotated.
+- Two members with the same name share a group within a week: the feed carries no author id to tell them apart.
+- "more…" is measured when the request appears and when its text changes, not when the phone is rotated.
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
 ## Not built yet
