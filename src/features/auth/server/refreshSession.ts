@@ -33,8 +33,10 @@ export async function refreshSession(request: NextRequest) {
   const isOnLoginPage = request.nextUrl.pathname.startsWith(LOGIN_PATH);
   // API routes answer 401 themselves. A redirect would hand fetch() an HTML page instead of JSON.
   const isApi = request.nextUrl.pathname.startsWith("/api/");
+  // UI SHOWCASE: on a developer's machine the component showcase opens without signing in. It shows no data.
+  const isOpenShowcase = process.env.NODE_ENV !== "production" && request.nextUrl.pathname === "/ui";
 
-  if (!isLoggedIn && !isOnLoginPage && !isApi) return redirectTo(request, LOGIN_PATH);
+  if (!isLoggedIn && !isOnLoginPage && !isApi && !isOpenShowcase) return redirectTo(request, LOGIN_PATH);
   if (isLoggedIn && isOnLoginPage) return redirectTo(request, HOME_PATH);
   return response;
 }

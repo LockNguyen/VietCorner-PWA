@@ -120,9 +120,11 @@ The empty installable app every feature plugs into.
 **Expected behavior:** `/` opens `/groups` (or `/login`); tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
 
-**Shared UI:** one control so far, `src/components/ui/ActionButton.tsx`, because every feature needed the same
-answer to the same problem. Anything else moves to `src/components/ui/` only when a second feature needs it;
-the UI/UX revamp is when that set gets designed properly (backlog B18).
+**Shared UI:** `src/components/ui/` is the component library of the UI revamp, built slice by slice from
+`docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
+component in every state (admins in production; anyone on a developer's machine, where it needs no
+sign-in so the library can be looked at without an account). The design tokens live in
+`src/app/globals.css`. Screens still on the old look keep using `ActionButton` until their slice.
 
 **Every button that starts a request** is an `ActionButton` driven by `usePending` (`src/lib/usePending.ts`):
 - The first tap runs the action; taps while it is running are ignored. (A second tap used to send a second
@@ -332,3 +334,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: added the `frontend` skill ahead of the UI/UX revamp: the one shape of a shared UI component, what a feature component may and may not do, and the comment rule. It points at `docs/design-system.md` and `src/components/ui/README.md`, which are written once the design decisions are made.
 - 2026-10-08: `docs/design-questions.md`: every design decision for the UI revamp, with the reference app's patterns written down and the questions it answers filled in. Nothing is implemented from it yet.
 - 2026-10-08: design decisions closed. `docs/design-system.md` holds the tokens (one accent `#1976D2`, system font, 17 base), the frame, the component list and the cross-component rules; `docs/design-questions.md` keeps the reasons. Still nothing implemented.
+- 2026-10-08: UI revamp, slice 0: design tokens in `globals.css` (colours, text sizes on a scalable root, px spacing, radii), `Text`, `Button` (with the pending state), `Spinner`, the `/ui` showcase and the component README. No existing screen restyled; `ActionButton` stays until its screens move.

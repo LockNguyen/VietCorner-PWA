@@ -23,7 +23,7 @@ Defined once in `src/app/globals.css` (`@theme`). Components use the token name,
 | Token | Value | Used for | Contrast |
 |---|---|---|---|
 | `action` | `#1976D2` | Top bar, primary button, my chat bubble, active tab, text buttons | 4.6 with white |
-| `on-action` | `#FFFFFF` | Text and icons on `action` | 4.6 |
+| `on-action` | `#FFFFFF` | Text and icons on any filled colour: `action`, `danger`, `success` | 4.6 or better |
 | `surface` | `#FFFFFF` | Every background, including the tab bar | |
 | `fill` | `#F0F0F0` | Fields, others' chat bubbles, quiet tiles, loading placeholders | |
 | `ink` | `#1A1A1A` | Titles and body text | 17.4 on white, 15.3 on `fill` |
@@ -53,7 +53,7 @@ setting changes one number and the phone's own text-size setting is still respec
 ### Space, size and shape
 | Token | Value | Used for |
 |---|---|---|
-| Spacing steps | 4, 8, 12, 16, 20, 24 | The only gaps and paddings. 12 = side padding of a row. 20 = screen margin around tiles. |
+| Spacing steps | 4, 8, 12, 16, 20, 24 | The only gaps and paddings (`gap-1` … `gap-6`). 12 = side padding of a row. 20 = screen margin around tiles. Space is in px, so larger text does not push the layout apart. |
 | `touch` | 48 | Smallest tappable height and width |
 | `row` | 72 | Minimum height of a list row |
 | `bar` | 48 | Top bar height (reference: 44; raised so its icons meet `touch`) |
@@ -78,7 +78,8 @@ phone asks for reduced motion.
 - **No menu.**
 
 ## 4. Components (`src/components/ui/`)
-Each follows the one file shape in the `frontend` skill. Built in the order of the build plan.
+Each follows the one file shape in the `frontend` skill. Built in the order of the build plan; what exists
+today is listed in `src/components/ui/README.md` and shown in every state at `/ui`.
 
 | Group | Component | Job | Variants |
 |---|---|---|---|
@@ -128,6 +129,8 @@ Each follows the one file shape in the `frontend` skill. Built in the order of t
 - **Icons:** `lucide-react`, outline. Always with a label in the tab bar; alone in the top bar.
 
 ## 5. Dependencies this adds
+Each is installed in the slice that first uses it, not before.
+
 | Package | Why | Used by |
 |---|---|---|
 | `lucide-react` | Outline icons, one import per icon, so only those used are shipped | `TabBar`, `TopBar`, `IconButton`, `Thumbnail` |

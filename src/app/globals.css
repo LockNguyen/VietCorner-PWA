@@ -1,1 +1,41 @@
 @import "tailwindcss";
+
+/* The design tokens (docs/design-system.md). Components use these names, never the values. */
+@theme {
+  --color-action: #1976d2;
+  --color-on-action: #ffffff;
+  --color-surface: #ffffff;
+  --color-fill: #f0f0f0;
+  --color-ink: #1a1a1a;
+  --color-subtle: #5f5f5f;
+  --color-line: #e0e0e0;
+  --color-danger: #c62828;
+  --color-success: #2e7d32;
+
+  /* Sizes in rem follow the root size below, so one setting scales all text. 1rem = 17px by default. */
+  --text-tile: 1.1765rem;
+  --text-tile--line-height: 1.25;
+  --text-body: 1rem;
+  --text-body--line-height: 1.4;
+  --text-small: 0.8235rem;
+  --text-small--line-height: 1.4;
+  --text-tab: 0.7647rem;
+  --text-tab--line-height: 1.2;
+
+  /* Space is in px on purpose: larger text must not push the layout's paddings apart. */
+  --spacing: 4px;
+  --spacing-touch: 48px;
+  --spacing-row: 72px;
+  --spacing-bar: 48px;
+  --spacing-tabs: 56px;
+  --spacing-column: 480px;
+
+  --radius-thumb: 4px;
+  --radius-control: 12px;
+  --radius-bubble: 18px;
+}
+
+/* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */
+html {
+  font-size: calc(106.25% * var(--text-scale, 1));
+}

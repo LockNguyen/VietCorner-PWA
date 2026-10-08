@@ -125,7 +125,8 @@ feature has more than one failure mode: a table of cause → message + whether a
 
 ### A button that starts a request
 Never a plain `<button>`: a request takes a moment, and a button that looks the same during it gets tapped
-again. Use the shared pair, the same way everywhere:
+again. Use the shared pair, the same way everywhere. New code uses `Button` (`@/components/ui/Button`, with
+`variant` for its look); `ActionButton` below is the same idea on screens not yet restyled.
 
 ```tsx
 const { pending, run } = usePending<"save" | "remove">();   // @/lib/usePending
