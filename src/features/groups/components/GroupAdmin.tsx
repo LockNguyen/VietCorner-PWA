@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import Field from "@/components/ui/Field";
+import SectionHeading from "@/components/ui/SectionHeading";
+import TextInput from "@/components/ui/TextInput";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { createGroup } from "../api";
@@ -24,32 +27,23 @@ export default function GroupAdmin({ groups, requests }: { groups: Group[]; requ
   }
 
   return (
-    <section className="p-4">
-      <h2 className="mb-2 border-b pb-1 text-lg font-semibold">{t(STRINGS.adminHeading)}</h2>
-
+    <section>
       <JoinRequests requests={requests} groups={groups} />
 
-      <ul className="space-y-2">
+      <SectionHeading>{t(STRINGS.adminHeading)}</SectionHeading>
+      <ul className="flex flex-col gap-3 px-3">
         {groups.map((group) => (
           <GroupNameEditor key={group.id} group={group} />
         ))}
       </ul>
 
-      <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          placeholder={t(STRINGS.newGroupPlaceholder)}
-          maxLength={MAX_GROUP_NAME_LENGTH}
-          className="min-w-0 flex-1 rounded border p-2 text-lg"
-        />
-        <ActionButton
-          pending={pending === "add"}
-          disabled={name.trim() === ""}
-          className="rounded bg-blue-500 px-4 text-lg text-white"
-        >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-3 pt-6">
+        <Field label={t(STRINGS.newGroupField)}>
+          <TextInput value={name} onChange={(event) => setName(event.target.value)} maxLength={MAX_GROUP_NAME_LENGTH} />
+        </Field>
+        <Button variant="quiet" pending={pending === "add"} disabled={name.trim() === ""}>
           {t(STRINGS.addGroup)}
-        </ActionButton>
+        </Button>
       </form>
     </section>
   );

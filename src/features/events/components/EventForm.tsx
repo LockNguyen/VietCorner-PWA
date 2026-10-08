@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import Button from "@/components/ui/Button";
+import Field from "@/components/ui/Field";
+import Select from "@/components/ui/Select";
+import Switch from "@/components/ui/Switch";
+import TextArea from "@/components/ui/TextArea";
+import TextInput from "@/components/ui/TextInput";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
+import { LANGUAGE_NAMES, LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
-import { problemWith } from "../draft";
+import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
 import type { EventDraft, EventGroup } from "../types";
 
@@ -13,130 +18,101 @@ type Props = {
   initial: EventDraft;
   groups: EventGroup[];
   onSave: (draft: EventDraft) => Promise<void>;
-  onCancel: () => void;
 };
 
-// Each language's own name, written in that language: the column headings of the text fields.
-const LANGUAGE_NAMES: Record<Language, string> = { en: "English", vi: "Tiếng Việt" };
+type TextField = "title" | "location" | "description";
+const TEXT_FIELDS = [
+  { field: "title", label: STRINGS.titleField },
+  { field: "location", label: STRINGS.location },
+  { field: "description", label: STRINGS.descriptionField },
+] as const;
 
-// Adding or changing an event. The words are entered in both languages side by side, so a translation is
-// written while the original is in view; a language left without a title is simply not stored.
+// Adding or changing an event. Each piece of text is asked in one language and then the other, so a
+// translation is written with the original just above it; a language left without a title is not stored.
 // Times are church time whatever device the admin holds (draft.ts converts).
-export default function EventForm({ initial, groups, onSave, onCancel }: Props) {
+export default function EventForm({ initial, groups, onSave }: Props) {
   const { t } = useLanguage(); // I18N
   const [draft, setDraft] = useState(initial);
+  // What is wrong is said once Save has been tried, and from then on as the fields change.
+  const [tried, setTried] = useState(false);
   const problem = problemWith(draft);
+  const said = (cause: DraftProblem) => (tried && problem === cause ? t(PROBLEMS[cause]) : undefined);
+  const { pending, run } = usePending<"save">();
 
-  function setText(language: Language, field: "title" | "description" | "location", value: string) {
+  function setText(language: Language, field: TextField, value: string) {
     setDraft({ ...draft, texts: { ...draft.texts, [language]: { ...draft.texts[language], [field]: value } } });
   }
 
-  const { pending, run } = usePending<"save">();
-
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setTried(true);
     if (!problem) run("save", () => onSave(draft));
   }
 
-  const input = "w-full rounded border p-2 text-lg";
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded border p-3">
-      <div className="grid grid-cols-2 gap-2">
-        {LANGUAGES.map((language) => (
-          <div key={language} className="space-y-2">
-            <p className="font-semibold">{LANGUAGE_NAMES[language]}</p>
-            <input
-              value={draft.texts[language].title}
-              onChange={(event) => setText(language, "title", event.target.value)}
-              placeholder={t(STRINGS.titleField)}
-              className={input}
-            />
-            <input
-              value={draft.texts[language].location}
-              onChange={(event) => setText(language, "location", event.target.value)}
-              placeholder={t(STRINGS.location)}
-              className={input}
-            />
-            <textarea
-              value={draft.texts[language].description}
-              onChange={(event) => setText(language, "description", event.target.value)}
-              placeholder={t(STRINGS.descriptionField)}
-              rows={3}
-              className={input}
-            />
-          </div>
-        ))}
-      </div>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-3 pt-4">
+      {TEXT_FIELDS.map(({ field, label }) =>
+        LANGUAGES.map((language) => {
+          const control = {
+            value: draft.texts[language][field],
+            onChange: (change: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setText(language, field, change.target.value),
+          };
+          return (
+            <Field
+              key={`${field}-${language}`}
+              label={`${t(label)} · ${LANGUAGE_NAMES[language]}`}
+              problem={field === "title" && language === LANGUAGES[0] ? said("noTitle") : undefined}
+            >
+              {field === "description" ? <TextArea rows={3} {...control} /> : <TextInput {...control} />}
+            </Field>
+          );
+        }),
+      )}
 
-      <label className="block">
-        {t(STRINGS.startsField)}
-        <input
+      <Field label={t(STRINGS.startsField)} problem={said("noStart")}>
+        <TextInput
           type="datetime-local"
           value={draft.startsAt}
           onChange={(event) => setDraft({ ...draft, startsAt: event.target.value })}
-          className={input}
         />
-      </label>
-      <label className="block">
-        {t(STRINGS.endsField)}
-        <input
+      </Field>
+      <Field label={t(STRINGS.endsField)} problem={said("endsBeforeItStarts")}>
+        <TextInput
           type="datetime-local"
           value={draft.endsAt}
           onChange={(event) => setDraft({ ...draft, endsAt: event.target.value })}
-          className={input}
         />
-      </label>
+      </Field>
 
-      <label className="block">
-        {t(STRINGS.forWhomField)}
-        <select
-          value={draft.groupId ?? ""}
-          onChange={(event) => setDraft({ ...draft, groupId: event.target.value || null })}
-          className={input}
-        >
+      <Field label={t(STRINGS.forWhomField)}>
+        <Select value={draft.groupId ?? ""} onChange={(event) => setDraft({ ...draft, groupId: event.target.value || null })}>
           <option value="">{t(STRINGS.churchWide)}</option>
           {groups.map((group) => (
             <option key={group.id} value={group.id}>
               {group.name}
             </option>
           ))}
-        </select>
-      </label>
+        </Select>
+      </Field>
 
-      <label className="flex items-center gap-2 text-lg">
-        <input
-          type="checkbox"
-          checked={draft.repeatsWeekly}
-          onChange={(event) => setDraft({ ...draft, repeatsWeekly: event.target.checked })}
-          className="h-5 w-5"
-        />
-        {t(STRINGS.everyWeek)}
-      </label>
+      <Switch
+        label={t(STRINGS.everyWeek)}
+        checked={draft.repeatsWeekly}
+        onChange={(event) => setDraft({ ...draft, repeatsWeekly: event.target.checked })}
+      />
       {draft.repeatsWeekly && (
-        <label className="block">
-          {t(STRINGS.repeatUntilField)}
-          <input
+        <Field label={t(STRINGS.repeatUntilField)}>
+          <TextInput
             type="date"
             value={draft.repeatUntil}
             onChange={(event) => setDraft({ ...draft, repeatUntil: event.target.value })}
-            className={input}
           />
-        </label>
+        </Field>
       )}
 
-      {problem && <p className="text-gray-500">{t(PROBLEMS[problem])}</p>}
-      <ActionButton
-        pending={pending === "save"}
-        pendingLabel={t(STRINGS.saving)}
-        disabled={Boolean(problem)}
-        className="w-full rounded bg-blue-500 p-3 text-lg text-white"
-      >
+      <Button pending={pending === "save"} pendingLabel={t(STRINGS.saving)}>
         {t(STRINGS.save)}
-      </ActionButton>
-      <button type="button" onClick={onCancel} className="w-full rounded border p-3 text-lg">
-        {t(STRINGS.close)}
-      </button>
+      </Button>
     </form>
   );
 }

@@ -20,6 +20,13 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `SectionHeading` | The small grey heading above a group of rows | | |
 | `EmptyState` | What a screen shows with nothing to list | | `message`; children are the next step |
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
+| `Field` | A label above one control; under it, what is wrong, once the form has been tried | | `label`, `problem` |
+| `TextInput` | One line of typed input. Also a date, a time, or both: set `type` | | |
+| `TextArea` | Several lines of typed input | | |
+| `Select` | One choice from a list, in the phone's own picker; children are `<option>`s | | |
+| `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
+| `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
+| `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
@@ -29,12 +36,14 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
   The one exception is the chevron `ListRow` draws itself: it is part of what a row that opens something looks like.
 - `ListRow` does not extend a native element's props, because it is one of three elements (link, button,
   plain) depending on what it does. Its props are the short list in the table.
+- `TextInput`, `TextArea` and `Select` share one look, the constant in `controlLook.ts`. It is the only file
+  here that is not a component.
+- `Sheet` is the only component built on a library (`@radix-ui/react-dialog`): keeping focus inside an
+  overlay and telling a screen reader about it is easy to get subtly wrong by hand.
+- Which button: `primary` for the one main action of a screen or sheet, `danger` for what cannot be undone
+  from the app, `quiet` for everything else, `text` for backing out.
 - The app's own fillings of the frame are in `src/components/`: `PageHeader` (the top bar's contents) and
   `AppTabs` (which tabs exist). They translate and know the addresses; the components here do neither.
-
-## Being replaced
-`ActionButton` is the busy button from before the design system. Screens move to `Button` as each is
-restyled; it is deleted when the last one has moved. Do not use it in new code.
 
 ## Hooks they rely on (`src/lib/`)
 | Hook | Job |

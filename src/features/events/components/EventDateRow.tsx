@@ -1,6 +1,7 @@
 "use client";
 
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import ListRow from "@/components/ui/ListRow";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { formatLongDate, formatTime } from "../formatting";
@@ -18,32 +19,20 @@ type Props = {
 // A row of its own, so calling one date off never blocks the dates around it.
 export default function EventDateRow({ date, canChange, onCancel, onRestore }: Props) {
   const { t, language } = useLanguage(); // I18N
-  const { pending, run } = usePending<"cancel" | "restore">();
+  const { pending, run } = usePending<"change">();
   const startsAt = new Date(date.startsAt);
 
   return (
-    <li className="flex items-center justify-between gap-2">
-      <span className={`text-lg ${date.canceled ? "text-gray-400 line-through" : ""}`}>
-        {formatLongDate(startsAt, language)}, {formatTime(startsAt, language)}
-      </span>
-      {canChange &&
-        (date.canceled ? (
-          <ActionButton
-            pending={pending === "restore"}
-            onClick={() => run("restore", onRestore)}
-            className="rounded border px-4 py-2 text-lg"
-          >
-            {t(STRINGS.undoCancel)}
-          </ActionButton>
-        ) : (
-          <ActionButton
-            pending={pending === "cancel"}
-            onClick={() => run("cancel", onCancel)}
-            className="rounded border border-red-600 px-4 py-2 text-lg text-red-600"
-          >
-            {t(STRINGS.cancelThisDate)}
-          </ActionButton>
-        ))}
-    </li>
+    <ListRow
+      title={`${formatLongDate(startsAt, language)}, ${formatTime(startsAt, language)}`}
+      tone={date.canceled ? "off" : "normal"}
+      trailing={
+        canChange && (
+          <Button variant="quiet" pending={pending === "change"} onClick={() => run("change", date.canceled ? onRestore : onCancel)}>
+            {t(date.canceled ? STRINGS.undoCancel : STRINGS.cancelThisDate)}
+          </Button>
+        )
+      }
+    />
   );
 }

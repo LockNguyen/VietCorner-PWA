@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import Field from "@/components/ui/Field";
+import SectionHeading from "@/components/ui/SectionHeading";
+import Select from "@/components/ui/Select";
+import TextInput from "@/components/ui/TextInput";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
@@ -51,45 +55,45 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
     });
   }
 
-  const input = "rounded border p-2 text-lg";
-
   return (
-    <section className="p-4">
-      <h2 className="mb-2 border-b pb-1 text-lg font-semibold">{t(STRINGS.remindersHeading)}</h2>
-
-      <ul className="space-y-2">
+    <section>
+      <SectionHeading>{t(STRINGS.remindersHeading)}</SectionHeading>
+      <ul>
         {reminders.map((reminder) => (
           <PrayerReminderRow
             key={reminder.id}
             reminder={reminder}
-            label={`${groups.find((group) => group.id === reminder.group_id)?.name} · ${weekdayName(reminder.weekday)} · ${reminder.send_at.slice(0, 5)}`}
+            groupName={groups.find((group) => group.id === reminder.group_id)?.name}
+            when={`${weekdayName(reminder.weekday)} · ${reminder.send_at.slice(0, 5)}`}
           />
         ))}
       </ul>
 
-      <form onSubmit={handleSubmit} className="mt-4 flex flex-wrap gap-2">
-        <select value={groupId} onChange={(event) => setGroupId(event.target.value)} className={`${input} min-w-0 flex-1`}>
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name}
-            </option>
-          ))}
-        </select>
-        <select value={weekday} onChange={(event) => setWeekday(Number(event.target.value))} className={input}>
-          {WEEKDAYS.map((day) => (
-            <option key={day} value={day}>
-              {weekdayName(day)}
-            </option>
-          ))}
-        </select>
-        <input type="time" value={sendAt} onChange={(event) => setSendAt(event.target.value)} className={input} />
-        <ActionButton
-          pending={pending === "add"}
-          disabled={!groupId || !sendAt}
-          className="w-full rounded bg-blue-500 p-3 text-lg text-white"
-        >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3 px-3 pt-6">
+        <Field label={t(STRINGS.groupField)}>
+          <Select value={groupId} onChange={(event) => setGroupId(event.target.value)}>
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t(STRINGS.dayField)}>
+          <Select value={weekday} onChange={(event) => setWeekday(Number(event.target.value))}>
+            {WEEKDAYS.map((day) => (
+              <option key={day} value={day}>
+                {weekdayName(day)}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        <Field label={t(STRINGS.timeField)}>
+          <TextInput type="time" value={sendAt} onChange={(event) => setSendAt(event.target.value)} />
+        </Field>
+        <Button variant="quiet" pending={pending === "add"} disabled={!groupId || !sendAt}>
           {t(STRINGS.addReminder)}
-        </ActionButton>
+        </Button>
       </form>
     </section>
   );

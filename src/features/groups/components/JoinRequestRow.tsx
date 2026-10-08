@@ -1,6 +1,7 @@
 "use client";
 
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import ListRow from "@/components/ui/ListRow";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { approveJoinRequest, declineJoinRequest } from "../api";
@@ -18,27 +19,28 @@ export default function JoinRequestRow({ request, groupName }: Props) {
   const { group_id: groupId, user_id: userId } = request;
 
   return (
-    <li className="rounded border p-3">
-      <p className="text-lg break-words">{request.user_email}</p>
-      <p className="text-sm text-gray-500">{groupName}</p>
-      <div className="mt-2 flex gap-2">
-        <ActionButton
-          pending={pending === "approve"}
-          disabled={pending !== null}
-          onClick={() => save("approve", () => approveJoinRequest(groupId, userId), { done: t(STRINGS.approved), failed })}
-          className="flex-1 rounded bg-blue-500 p-2 text-lg text-white"
-        >
-          {t(STRINGS.approve)}
-        </ActionButton>
-        <ActionButton
-          pending={pending === "decline"}
-          disabled={pending !== null}
-          onClick={() => save("decline", () => declineJoinRequest(groupId, userId), { done: t(STRINGS.declined), failed })}
-          className="flex-1 rounded border p-2 text-lg"
-        >
-          {t(STRINGS.decline)}
-        </ActionButton>
-      </div>
-    </li>
+    <ListRow
+      title={request.user_email}
+      subtitle={groupName}
+      trailing={
+        <>
+          <Button
+            pending={pending === "approve"}
+            disabled={pending !== null}
+            onClick={() => save("approve", () => approveJoinRequest(groupId, userId), { done: t(STRINGS.approved), failed })}
+          >
+            {t(STRINGS.approve)}
+          </Button>
+          <Button
+            variant="quiet"
+            pending={pending === "decline"}
+            disabled={pending !== null}
+            onClick={() => save("decline", () => declineJoinRequest(groupId, userId), { done: t(STRINGS.declined), failed })}
+          >
+            {t(STRINGS.decline)}
+          </Button>
+        </>
+      }
+    />
   );
 }

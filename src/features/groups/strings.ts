@@ -9,7 +9,8 @@ export const STRINGS = {
 
   // Admin section
   adminHeading: { en: "Groups", vi: "Nhóm" } satisfies Text,
-  newGroupPlaceholder: { en: "Name of the new group", vi: "Tên nhóm mới" } satisfies Text,
+  newGroupField: { en: "Name of the new group", vi: "Tên nhóm mới" } satisfies Text,
+  groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
   addGroup: { en: "Add group", vi: "Thêm nhóm" } satisfies Text,
   saveName: { en: "Save", vi: "Lưu" } satisfies Text,
   saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,

@@ -191,15 +191,21 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] 3 Banners (branch `ui-3-banners`): `Banner`, `useBanner`, `BannerHost`, `useSave`; every inline error line
         and `failed` state replaced; successes announced. Timing, tap-away and the stack tried in `/ui`.
         NOT seen: a real save or failure on a signed-in screen.
-  - [ ] 4 Forms and the sheet → sign-in, admin sections, the event editor as a full screen
+  - [x] 4 Forms and the sheet (branch `ui-4-forms`): `Field`, `TextInput`, `TextArea`, `Select`, `Switch`, `Sheet`,
+        `LogoMark`; sign-in; the three admin sections; the event editor as its own screen
+        (`/admin/events/[eventId]`); event details and prayer options as sheets; `ActionButton` deleted.
+        Seen: sign-in, and every component and admin row in `/ui`. NOT seen: any signed-in screen, so the
+        admin page, the editor's screen (save, back to the list, cancel for good) and both sheets in place.
+        Debt: a join request shows the full email beside two buttons and wraps to three lines (names in
+        slice 5 shorten it); date and time fields not seen on an iPhone.
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
   - [ ] 6 Conversations: bubbles → chat, prayer (by week, then person), assistant
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: sign in and cause a success and a failure (rename a group; turn the network off and save). Say go,
-   or what to change.
-2. Claude: slice 4, forms and the sheet: `Field`, inputs, `Switch`, `Sheet` (adds `@radix-ui/react-dialog`) →
-   sign-in in the Messenger layout, the admin sections, the event editor as a full screen. Deletes
-   `ActionButton` if nothing uses it afterwards.
-3. Slice 5, names.
+1. User: sign in as an admin and walk the Admin tab: open an event, save with the title emptied (the red
+   line), save properly (back to the list), cancel and undo a date, add and remove a reminder and a group.
+   Then tap an event on the schedule and the X on a prayer request (the two sheets). Say go, or what to change.
+2. Claude: slice 5, names: the name-only step after the first sign-in, `Avatar`, names in place of emails.
+   The only slice with a database change (the user runs the SQL).
+3. Slice 6, conversations: chat, prayer, the assistant.

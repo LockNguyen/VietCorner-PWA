@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
@@ -73,13 +73,11 @@ export default function PrayerComposer({ groups, onPost }: Props) {
         {t(STRINGS.postAnonymously)}
       </label>
 
-      <ActionButton
-        pending={pending === "post"}
-        disabled={body.trim() === ""}
-        className="mt-3 w-full rounded bg-blue-500 p-3 text-lg text-white"
-      >
-        {t(STRINGS.postButton)}
-      </ActionButton>
+      <div className="mt-3 flex flex-col">
+        <Button pending={pending === "post"} disabled={body.trim() === ""}>
+          {t(STRINGS.postButton)}
+        </Button>
+      </div>
     </form>
   );
 }

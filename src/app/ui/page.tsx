@@ -3,20 +3,27 @@ import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Settings, User
 import Banner from "@/components/ui/Banner";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
+import Field from "@/components/ui/Field";
 import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
+import LogoMark from "@/components/ui/LogoMark";
 import RowLabel from "@/components/ui/RowLabel";
 import PhotoTile from "@/components/ui/PhotoTile";
 import SectionHeading from "@/components/ui/SectionHeading";
+import Select from "@/components/ui/Select";
 import SkeletonRow from "@/components/ui/SkeletonRow";
 import Spinner from "@/components/ui/Spinner";
+import Switch from "@/components/ui/Switch";
 import TabBar from "@/components/ui/TabBar";
 import Text from "@/components/ui/Text";
+import TextArea from "@/components/ui/TextArea";
+import TextInput from "@/components/ui/TextInput";
 import Thumbnail from "@/components/ui/Thumbnail";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
+import SheetDemo from "./SheetDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
 
@@ -93,6 +100,48 @@ export default async function ShowcasePage() {
         <Banner kind="error" message="Không lưu được. Xin thử lại." />
         <Banner kind="error" message="Nhóm này đã có lời nhắc vào ngày và giờ đó." more={2} />
         <BannerDemo />
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <Text as="h2" variant="small" tone="subtle">Field with each control: text, with a problem, several lines, a choice, a date and time, a time; then Switch</Text>
+        <Field label="Tên sự kiện · Tiếng Việt"><TextInput defaultValue="Học Kinh Thánh" /></Field>
+        <Field label="Tên sự kiện · English" problem="Xin nhập tên sự kiện bằng ít nhất một ngôn ngữ."><TextInput /></Field>
+        <Field label="Mô tả"><TextArea rows={3} defaultValue="Mỗi tối thứ Tư lúc 7 giờ tại hội trường chính." /></Field>
+        <Field label="Dành cho">
+          <Select defaultValue="b">
+            <option value="a">Cả hội thánh</option>
+            <option value="b">Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư</option>
+          </Select>
+        </Field>
+        <Field label="Bắt đầu (giờ hội thánh)"><TextInput type="datetime-local" defaultValue="2026-10-14T19:00" /></Field>
+        <Field label="Giờ (giờ hội thánh)"><TextInput type="time" defaultValue="19:00" /></Field>
+        <TextInput placeholder="Email" aria-label="Email" />
+        <div className="flex flex-col">
+          <Switch label="Hằng tuần" defaultChecked />
+          <Switch label="Trước 30 phút" />
+          <Switch label="Trước 1 ngày" defaultChecked disabled />
+        </div>
+      </section>
+
+      <section>
+        <Text as="h2" variant="small" tone="subtle">Rows as the admin screens compose them: a request, a reminder, a date on and off; then a group's name</Text>
+        <ul>
+          <ListRow title="theauthenticmember@gmail.com" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
+          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Gỡ bỏ</Button>} />
+          <ListRow title="Thứ Tư, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
+          <ListRow title="Thứ Tư, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
+        </ul>
+        <div className="flex gap-2 px-3 pt-3">
+          <TextInput defaultValue="Nhóm Học Kinh Thánh" aria-label="Tên nhóm" />
+          <Button variant="quiet">Lưu</Button>
+          <Button variant="danger">Gỡ bỏ</Button>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">Sheet, LogoMark</Text>
+        <SheetDemo />
+        <LogoMark />
       </section>
 
       <section className="flex flex-col gap-2">

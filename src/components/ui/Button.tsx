@@ -8,7 +8,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BASE =
-  "relative inline-flex min-h-touch items-center justify-center rounded-control px-4 text-body font-medium " +
+  "relative inline-flex min-h-touch shrink-0 items-center justify-center rounded-control px-4 text-body font-medium " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action disabled:opacity-50";
 const VARIANTS = {
   primary: "bg-action text-on-action",

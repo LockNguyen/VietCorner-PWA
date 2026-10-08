@@ -18,7 +18,7 @@ export default function BannerHost() {
   const isStack = banners.length > 1 && !opened;
 
   return (
-    <div role="status" className="fixed inset-x-0 bottom-above-tabs z-20 mx-auto flex max-w-column flex-col gap-2 px-3">
+    <div role="status" className="fixed inset-x-0 bottom-above-tabs z-30 mx-auto flex max-w-column flex-col gap-2 px-3">
       {isStack ? (
         <Banner kind={newest.kind} message={newest.message} more={banners.length - 1} onClick={() => setOpened(true)} />
       ) : (

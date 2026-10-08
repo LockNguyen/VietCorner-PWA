@@ -32,8 +32,8 @@ to run twice (plain `create`).
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
 | UI | `components/PrayerComposer.tsx` | The words, the group, "Hide my name" |
 | UI | `components/PrayerCard.tsx` | One request: three lines and "more…", then Pray, or the author's X |
-| UI | `components/RequestOptions.tsx` | The author's dialog: Answered, Edit, Delete, Cancel |
-| UI | `components/RequestEditor.tsx` | The dialog's edit form |
+| UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
+| UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
 | UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: each group's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |

@@ -31,7 +31,7 @@ export default async function AdminPage() {
     <>
       <PageHeader title={SHELL_STRINGS.adminTab} />
       {permissions.includes(MANAGE_EVENTS) && (
-        <EventAdmin events={await getManagedEvents(supabase)} groups={groupChoices} />
+        <EventAdmin events={await getManagedEvents(supabase)} groups={groupChoices} editorPath="/admin/events" />
       )}
       {permissions.includes(MANAGE_PRAYER_REMINDERS) && (
         <PrayerReminderAdmin reminders={await getPrayerReminders(supabase)} groups={groupChoices} />

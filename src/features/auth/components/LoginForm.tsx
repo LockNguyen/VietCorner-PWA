@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import LogoMark from "@/components/ui/LogoMark";
+import Text from "@/components/ui/Text";
+import TextInput from "@/components/ui/TextInput";
 import { sendLoginCode, verifyLoginCode } from "../api";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useBanner } from "@/lib/useBanner";
@@ -28,8 +31,8 @@ export default function LoginForm() {
       try {
         await sendLoginCode(email);
         setCodeSent(true);
-      } catch (error) {
-        showBanner({ kind: "error", message: (error as Error).message });
+      } catch {
+        showBanner({ kind: "error", message: t(STRINGS.couldNotSendCode) });
       }
     });
   }
@@ -41,42 +44,54 @@ export default function LoginForm() {
         await verifyLoginCode(email, code);
         router.replace("/");
         router.refresh(); // re-run the proxy so it sees the new login cookie
-      } catch (error) {
-        showBanner({ kind: "error", message: (error as Error).message });
+      } catch {
+        showBanner({ kind: "error", message: t(STRINGS.wrongCode) });
       }
     });
   }
 
-  const inputClass = "w-full rounded border p-3 text-lg";
-  const buttonClass = "w-full rounded bg-blue-500 p-3 text-lg text-white";
-
+  // The one screen whose fields carry their hint inside: the sentence above each says what to enter.
   return (
-    <div className="space-y-4 p-4">
+    <div className="flex flex-col items-center gap-6 px-5 pt-12">
+      <LogoMark />
       {!codeSent ? (
-        <form onSubmit={handleSendCode} className="space-y-4">
-          <label className="block text-lg">{t(STRINGS.emailLabel)}</label>
-          <input type="email" required autoComplete="email" value={email}
-            onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-          <ActionButton pending={pending === "send"} pendingLabel={t(STRINGS.sendingCode)} className={buttonClass}>
+        <form onSubmit={handleSendCode} className="flex w-full flex-col gap-3">
+          <div className="pb-3 text-center">
+            <Text as="h2" variant="tile">{t(STRINGS.emailPrompt)}</Text>
+          </div>
+          <TextInput
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            placeholder={t(STRINGS.emailLabel)}
+            aria-label={t(STRINGS.emailLabel)}
+          />
+          <Button pending={pending === "send"} pendingLabel={t(STRINGS.sendingCode)}>
             {t(STRINGS.sendCodeButton)}
-          </ActionButton>
+          </Button>
         </form>
       ) : (
-        <form onSubmit={handleVerifyCode} className="space-y-4">
-          <label className="block text-lg">{t(STRINGS.codeSentTo)} {email}</label>
-          <input inputMode="numeric" required autoComplete="one-time-code" value={code}
-            onChange={(e) => setCode(e.target.value.trim())} className={inputClass} />
-          <ActionButton pending={pending === "verify"} pendingLabel={t(STRINGS.signingIn)} className={buttonClass}>
+        <form onSubmit={handleVerifyCode} className="flex w-full flex-col gap-3">
+          <div className="pb-3 text-center wrap-anywhere">
+            <Text as="h2" variant="tile">{t(STRINGS.codeSentTo)} {email}</Text>
+          </div>
+          <TextInput
+            inputMode="numeric"
+            required
+            autoComplete="one-time-code"
+            value={code}
+            onChange={(event) => setCode(event.target.value.trim())}
+            placeholder={t(STRINGS.codeLabel)}
+            aria-label={t(STRINGS.codeLabel)}
+          />
+          <Button pending={pending === "verify"} pendingLabel={t(STRINGS.signingIn)}>
             {t(STRINGS.signInButton)}
-          </ActionButton>
-          <button
-            type="button"
-            onClick={() => setCodeSent(false)}
-            disabled={pending !== null}
-            className="w-full p-2 text-blue-500 disabled:opacity-50"
-          >
+          </Button>
+          <Button type="button" variant="text" onClick={() => setCodeSent(false)} disabled={pending !== null}>
             {t(STRINGS.useAnotherEmail)}
-          </button>
+          </Button>
         </form>
       )}
     </div>

@@ -91,17 +91,17 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | | `Avatar` | A person's picture, or the default one (built with names, slice 5) | `small` (chat), `regular` |
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
-| Controls | `Button` | Any button; shows the turning circle while pending (absorbs `ActionButton`) | `primary`, `quiet`, `danger`, `text` |
+| Controls | `Button` | Any button; shows the turning circle while pending | `primary`, `quiet`, `danger`, `text` |
 | | `IconButton` | An icon alone, with a screen-reader name | on `action`, on `surface` |
-| | `Field` | A label above a control, and its hint | |
-| | `TextInput`, `TextArea`, `Select`, `DateTimeInput` | `fill` background, no border, `radius-control` | |
-| | `Switch` | On / off | |
+| | `Field` | A label above a control and, once the form has been tried, what is wrong with it | |
+| | `TextInput`, `TextArea`, `Select` | `fill` background, no border, `radius-control`. A date or a time is a `TextInput` with that `type`: the phone's own picker, so no separate component. | |
+| | `Switch` | On / off, with its label on the same line | |
 | | `ChoiceList` | Up to five options as rows with a tick. Today this is `ListRow` with a tick as `trailing` (the language choice); it becomes its own component when a second chooser needs it. | |
 | Feedback | `Banner` + `useBanner` | Success and error messages at the bottom | `success`, `error` |
 | | `Spinner` | The turning circle | |
 | | `SkeletonRow` | A grey placeholder in the shape of a `ListRow` | |
 | | `EmptyState` | One sentence and, where there is one, the next step | |
-| Overlay | `Sheet` | A short choice rising from the bottom | |
+| Overlay | `Sheet` | A short choice, or a few details, rising from the bottom | |
 | Conversation | `Bubble` | One message | `mine`, `theirs` |
 | | `BubbleRun` | One speaker's consecutive messages: name above, avatar beside the last | |
 | | `TimeLine` | A small centred time or week label | |
@@ -109,7 +109,9 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Placeholder | `LogoMark` | The stand-in logo until the church has one | |
 
 ### Rules that span components
-- **Buttons:** `touch` tall, `radius-control`, flat. One `primary` per screen at most.
+- **Buttons:** `touch` tall, `radius-control`, flat. One `primary` per screen or sheet at most. `danger` is
+  for what cannot be undone from the app (remove a group, cancel an event for good, delete a request);
+  everything else that changes something is `quiet`; `text` backs out.
 - **Fields:** a label above in `text-small` `subtle`. Sign-in is the one exception: its single field has
   the hint inside, under a sentence that says what to enter.
 - **Forms** say what is wrong on submit, then live while the field is being fixed. Hints sit beside the

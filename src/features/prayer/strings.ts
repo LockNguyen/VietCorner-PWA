@@ -28,6 +28,7 @@ export const STRINGS = {
   prayButton: { en: "🙏 Pray", vi: "🙏 Cầu nguyện" } satisfies Text,
   prayed: { en: "🙏 Prayed", vi: "🙏 Đã cầu nguyện" } satisfies Text,
   manage: { en: "Options for this request", vi: "Tùy chọn cho lời xin này" } satisfies Text,
+  yourWords: { en: "Your request", vi: "Lời xin của bạn" } satisfies Text,
   loadingOlder: { en: "Loading…", vi: "Đang tải…" } satisfies Text,
 
   // The author's options
@@ -40,6 +41,9 @@ export const STRINGS = {
 
   // Admin section: when each group is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
+  groupField: { en: "Group", vi: "Nhóm" } satisfies Text,
+  dayField: { en: "Day", vi: "Ngày" } satisfies Text,
+  timeField: { en: "Time (church time)", vi: "Giờ (giờ hội thánh)" } satisfies Text,
   addReminder: { en: "Add reminder", vi: "Thêm lời nhắc" } satisfies Text,
   removeReminder: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
   reminderExists: {

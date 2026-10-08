@@ -1,5 +1,6 @@
 "use client";
 
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 import type { ManagedEvent } from "../types";
@@ -19,8 +20,8 @@ export default function EventDates({ event, onCancelDate, onRestoreDate }: Props
 
   return (
     <section>
-      <h3 className="mb-1 font-semibold">{t(STRINGS.nextDates)}</h3>
-      <ul className="space-y-2">
+      <SectionHeading>{t(STRINGS.nextDates)}</SectionHeading>
+      <ul>
         {event.upcoming.map((date) => (
           <EventDateRow
             key={date.churchDate}

@@ -125,16 +125,15 @@ feature has more than one failure mode: a table of cause → message + whether a
 
 ### A button that starts a request
 Never a plain `<button>`: a request takes a moment, and a button that looks the same during it gets tapped
-again. Use the shared pair, the same way everywhere. New code uses `Button` (`@/components/ui/Button`, with
-`variant` for its look); `ActionButton` below is the same idea on screens not yet restyled.
+again. Use the shared pair, the same way everywhere. `Button` (`@/components/ui/Button`) shows the busy state; `variant` picks its look.
 
 ```tsx
 const { pending, run } = usePending<"save" | "remove">();   // @/lib/usePending
 
-<ActionButton pending={pending === "save"} pendingLabel={t(STRINGS.saving)}   // @/components/ui/ActionButton
-              disabled={pending !== null || nothingToSave}>Save</ActionButton>
-<ActionButton pending={pending === "remove"} disabled={pending !== null}
-              onClick={() => run("remove", remove)}>Remove</ActionButton>
+<Button pending={pending === "save"} pendingLabel={t(STRINGS.saving)}
+        disabled={pending !== null || nothingToSave}>Save</Button>
+<Button variant="danger" pending={pending === "remove"} disabled={pending !== null}
+        onClick={() => run("remove", remove)}>Remove</Button>
 ```
 
 `pending === "<this action>"` shows the circle on the tapped button; `pending !== null` disables its

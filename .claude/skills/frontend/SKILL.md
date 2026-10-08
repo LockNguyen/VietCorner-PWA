@@ -58,7 +58,8 @@ export default function Button({ variant = "primary", size = "regular", ...butto
 6. Text arrives as `children` or a prop. No `useLanguage`, no strings of its own.
 7. No `useState`, `useEffect`, `fetch`, router hooks or Supabase (`Link` is fine: it is an element). Behaviour a component needs (close on Escape)
    is a hook beside it in `src/components/ui/hooks/`.
-8. Spacing between components belongs to the parent (`gap`), never to the component (`margin`).
+8. A look shared by several components is one exported constant beside them (`controlLook.ts`), not a copy in each.
+9. Spacing between components belongs to the parent (`gap`), never to the component (`margin`).
 
 ## 3. Feature components
 - Compose UI components and lay them out. Tailwind here is **layout only**: flex, grid, gap, padding, width.

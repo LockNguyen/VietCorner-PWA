@@ -1,73 +1,46 @@
 "use client";
 
-import { useEffect } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { draftOf, emptyDraft } from "../draft";
+import { useEventChanges } from "../hooks/useEventChanges";
 import { STRINGS } from "../strings";
-import type { EventDraft, EventGroup, ManagedEvent } from "../types";
+import type { EventGroup, ManagedEvent } from "../types";
 import EventDates from "./EventDates";
 import EventForm from "./EventForm";
 import EventReminders from "./EventReminders";
 
-// Each handler resolves when its change is done and on screen; how it went is said in a banner.
 type Props = {
   event: ManagedEvent | undefined; // undefined = a new event
   groups: EventGroup[];
-  onSave: (draft: EventDraft) => Promise<void>;
-  onCancelDate: (churchDate: string) => Promise<void>;
-  onRestoreDate: (churchDate: string) => Promise<void>;
-  onSetReminder: (minutesBefore: number, on: boolean) => Promise<void>;
-  onCancelForGood: () => Promise<void>;
-  onClose: () => void;
+  listHref: string; // where saving, or calling the event off for good, leads back to
 };
 
-// The editor for one event, in a panel over the admin page: its fields, then (for an event that already
-// exists) its reminders, its next dates with Cancel or Undo on each, and last the red button that calls
-// the whole event off for good. A new event has only the fields: save it first, then open it again.
-export default function EventEditor(props: Props) {
-  const { event, groups, onSave, onCancelDate, onRestoreDate, onSetReminder, onCancelForGood, onClose } = props;
+// The editor for one event, a screen of its own: its fields, then (for an event that already exists) its
+// reminders, its next dates, and last the red button that calls the whole event off for good.
+export default function EventEditor({ event, groups, listHref }: Props) {
   const { t } = useLanguage(); // I18N
+  const changes = useEventChanges(event?.id, listHref);
   const { pending, run } = usePending<"cancelForGood">();
 
-  // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
-  useEffect(() => {
-    function onKey(keyboard: KeyboardEvent) {
-      if (keyboard.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
   return (
-    <div className="fixed inset-0 z-10 flex items-end bg-black/40" onClick={onClose}>
-      {/* Stops a tap inside the panel from closing it. Scrolls, because the form is taller than a phone. */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={t(event ? STRINGS.editEvent : STRINGS.newEvent)}
-        className="max-h-[90vh] w-full space-y-4 overflow-y-auto rounded-t-lg bg-white p-4"
-        onClick={(click) => click.stopPropagation()}
-      >
-        <EventForm initial={event ? draftOf(event) : emptyDraft()} groups={groups} onSave={onSave} onCancel={onClose} />
+    <div className="flex flex-col gap-6">
+      <EventForm initial={event ? draftOf(event) : emptyDraft()} groups={groups} onSave={changes.save} />
 
-        {event && (
-          <>
-            <EventReminders event={event} onSet={onSetReminder} />
-            <EventDates event={event} onCancelDate={onCancelDate} onRestoreDate={onRestoreDate} />
-            {/* No "are you sure?" (decided: fewer taps), and no undo: members are told, the event stays on
-                their schedule struck through for a week, then it is gone. The row is kept in the database. */}
-            <ActionButton
-              pending={pending === "cancelForGood"}
-              onClick={() => run("cancelForGood", onCancelForGood)}
-              className="w-full rounded bg-red-600 p-3 text-lg text-white"
-            >
+      {event && (
+        <>
+          <EventReminders event={event} onSet={changes.setReminder} />
+          <EventDates event={event} onCancelDate={changes.cancelDate} onRestoreDate={changes.restoreDate} />
+          {/* No "are you sure?" (decided: fewer taps), and no undo: members are told, the event stays on
+              their schedule struck through for a week, then it is gone. The row is kept in the database. */}
+          <div className="flex flex-col px-3">
+            <Button variant="danger" pending={pending === "cancelForGood"} onClick={() => run("cancelForGood", changes.cancelForGood)}>
               {t(STRINGS.cancelForGood)}
-            </ActionButton>
-          </>
-        )}
-      </div>
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

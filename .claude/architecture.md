@@ -128,9 +128,9 @@ and icons return 200 even when logged out; iOS installs via Share → Add to Hom
 `docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
 component in every state (admins in production; anyone on a developer's machine, where it needs no
 sign-in so the library can be looked at without an account). The design tokens live in
-`src/app/globals.css`. Screens still on the old look keep using `ActionButton` until their slice.
+`src/app/globals.css`. Still on the old look until slice 6: chat, the prayer list and composer, the assistant.
 
-**Every button that starts a request** is an `ActionButton` driven by `usePending` (`src/lib/usePending.ts`):
+**Every button that starts a request** is a `Button` driven by `usePending` (`src/lib/usePending.ts`):
 - The first tap runs the action; taps while it is running are ignored. (A second tap used to send a second
   login code, create a second identical event, or show "could not save" for something that had saved.)
 - The tapped button turns into a turning circle, with words where they help ("Saving…"); the other buttons
@@ -186,8 +186,8 @@ The church schedule. Four tables so a phone downloads only what it shows: `event
 (one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
-excluded by the policy. Whoever holds `events.manage` creates, edits (English and Vietnamese side by side) and
-cancels from the Admin tab: one date (undoable), or the whole event for good, which members then see struck
+excluded by the policy. Whoever holds `events.manage` creates, edits (each text in English, then Vietnamese) and
+cancels from the Admin tab, where each event opens its own screen (`/admin/events/<id>`, or `/new`): one date (undoable), or the whole event for good, which members then see struck
 through for a week. Cancelling goes through a route and pushes to the members who could see the event, each
 in their language, outside the one-minute pause. Every date and time is church time (`America/New_York`), computed in
 one file, `churchTime.ts`. Reminders are stored but not sent yet.
@@ -283,7 +283,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
-| One shared busy button (`ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
+| The event editor is a route (`/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
+| One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
 | Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
 | Push delivery is its own feature, imported by its senders | Chat and prayer both notify; one place knows VAPID and cleans up dead subscriptions | A second foundation that leaf features import (`// PUSH`) |
@@ -349,3 +350,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: UI revamp, slice 2, lists: `ListRow`, `Thumbnail`, `SectionHeading`, `EmptyState`, `SkeletonRow`. Groups, the event schedule, Settings (account, language) and the notification toggle use them; loading shows placeholder rows. The event details panel and every form keep the old look until slice 4.
 - 2026-10-08: event rows: the time moved out of the picture into `RowLabel`, a bold fixed-width box before it; the picture is a plain grey tile. The join button reads "Join" / "Tham gia".
 - 2026-10-08: UI revamp, slice 3, banners: `Banner`, `useBanner` (+ `BannerProvider`, `BannerHost`), `useSave`. Every result of a tap is now a banner: sign-in errors, chat send failures, the notification toggle, groups and join requests, prayer (share, edit, answered, delete, reminders), events (save, cancel, undo, reminders). Inline error lines and their `failed` states are gone. Closes backlog B30.
+- 2026-10-09: UI revamp, slice 4, forms and the sheet: `Field`, `TextInput`, `TextArea`, `Select`, `Switch`, `Sheet` (adds `@radix-ui/react-dialog`), `LogoMark`. Sign-in in its new layout with its own error wording; the three admin sections as rows and labelled fields; the event editor moved from an overlay to its own screen (`/admin/events/[eventId]`, `hooks/useEventChanges.ts`); a form says what is wrong beside the field once Save was tried; event details and the prayer options are sheets. `ActionButton` deleted.

@@ -17,6 +17,9 @@ export const DEFAULT_LANGUAGE: Language = "vi";
 // it, and two features must not disagree about how Vietnamese dates look.
 export const LOCALES: Record<Language, string> = { en: "en-US", vi: "vi-VN" };
 
+// Each language's own name, written in that language, so it is readable to the person who needs it.
+export const LANGUAGE_NAMES: Record<Language, string> = { en: "English", vi: "Tiếng Việt" };
+
 export function isLanguage(value: unknown): value is Language {
   return value === "en" || value === "vi";
 }

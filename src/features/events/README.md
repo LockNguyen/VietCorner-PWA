@@ -28,15 +28,17 @@ every case the list has to handle (see **Seed data** below).
 | Server logic | `server/audience.ts` | Who is told about an event: the group, or everyone with notifications on |
 | Server logic | `server/notifyScheduleChange.ts` | **Admin** client: who could see the event → one push per language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/events/cancel/route.ts` | POST cancels, DELETE undoes. Verify (401) → validate (400) → change (403 when refused) → 204 |
-| UI | `components/EventSchedule.tsx`, `EventRow.tsx`, `EventDetails.tsx` | The members' schedule: days, one line per date, the details panel |
-| UI | `components/EventAdmin.tsx` | The admin section: the list, and which event the editor is open on |
-| UI | `components/EventAdminRow.tsx` | One event in the list, with its "Edit event" button |
-| UI | `components/EventEditor.tsx` | The panel: the form, the next dates, the red button |
-| UI | `components/EventForm.tsx` | The fields, with English and Vietnamese side by side |
-| UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three ticks: 1 day, 2 hours, 30 minutes before; one tick |
+| UI | `components/EventSchedule.tsx`, `EventRow.tsx`, `EventDetails.tsx` | The members' schedule: days, one line per date, the details sheet |
+| State | `hooks/useEventChanges.ts` | Every change the editor makes: the call, then reload or go back to the list, then a banner |
+| UI | `components/EventAdmin.tsx` | The admin section: "New event", then the list; each row opens the editor's screen |
+| UI | `components/EventAdminRow.tsx` | One event in the list: a row that opens its editor |
+| UI | `components/EventEditor.tsx` | The editor's screen: the form, the reminders, the next dates, the red button |
+| UI | `components/EventForm.tsx` | The fields; each text in English and then Vietnamese |
+| UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
 | Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
+| Shell | `src/app/admin/events/[eventId]/page.tsx` | The editor's screen for one event, or for `new`; 404 without `events.manage` |
 
 ## Four tables, on purpose
 | Table | Why separate |
@@ -74,7 +76,7 @@ every case the list has to handle (see **Seed data** below).
     (`DAYS_A_CANCELLED_EVENT_STAYS`), and then it is gone. The row is kept (`canceled_at`).
   Neither asks for confirmation. There is no separate Remove button; `deleted_at` still exists for hiding
   an event from everyone at once, by hand in the dashboard.
-- **Reminders are three fixed choices** (1 day, 2 hours, 30 minutes before), ticked in the Edit panel and
+- **Reminders are three fixed choices** (1 day, 2 hours, 30 minutes before), switched on in the editor and
   applied to every date of the event. A reminder is due from its moment for one hour and never after the
   date has started; cancelled dates, cancelled events and removed groups get none. It reaches the same
   people a cancellation would, in their language, once (the push README explains the clock and "once").
@@ -103,19 +105,23 @@ every case the list has to handle (see **Seed data** below).
   the list.
 - A cancelled date is grey, struck through and says "Cancelled" beneath, not hidden.
 - Group events show a small "Group event" badge and only appear for members of that group.
-- Tapping a row opens a panel with the full date, end time, location and description; tapping outside closes it.
+- Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
+  outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
-- **Admin tab → Events** (with `events.manage`): every upcoming event in every group, soonest first, each with
-  an "Edit event" button. It opens a panel: the fields (English and Vietnamese columns; Save is disabled,
-  with the reason shown, until there is a title in one language and a start), then the next four dates, then
-  a red "Cancel this event permanently". On a weekly event each date has Cancel, and a cancelled date has
-  Undo in its place; the panel stays open and shows the change. A one-off event's date has no button.
-  "New event" opens the same panel with the fields only.
+- **Admin tab → Events** (with `events.manage`): a "New event" row, then every upcoming event in every group,
+  soonest first. A row opens that event's own screen (`/admin/events/<id>`) with a back arrow: the fields
+  (title, location and description, each in English and then Vietnamese), then "Remind members", the next
+  four dates, and a red "Cancel this event permanently". Save with something missing says what, in red under
+  the field concerned, and from then on as the fields change. Save goes back to the Admin tab. On a weekly
+  event each date has Cancel, and a cancelled date has Undo in its place; the screen stays and shows the
+  change. A one-off event's date has no button. "New event" opens the same screen with the fields only.
+  Back with unsaved changes loses them without asking.
+  **The new screen has not been seen signed in (2026-10-09); its parts were checked in `/ui`.**
 - Cancelled for good: gone from the admin list at once; on members' schedules struck through for a week,
   then absent (observed 2026-10-06 against the real database: cancelled 2 days ago shows, 8 days ago does not).
-- In the Edit panel, "Remind members" has three ticks; a tick saves at once and the panel stays open.
+- In the editor, "Remind members" has three switches; a switch saves at once and the screen stays.
   A new event has none until it is saved and opened again.
-- A ticked reminder arrives as the event's title and "Wednesday 14 October, 7:00 PM", up to 15 minutes
+- A switched-on reminder arrives as the event's title and "Wednesday 14 October, 7:00 PM", up to 15 minutes
   after its moment. **Not yet observed: needs the deployed site and the cron job.**
 - `POST /api/events/cancel` while signed out → `401 {"error":"Not signed in"}` (observed 2026-10-06).
 - A cancellation sends each member who could see the event one push in their language: the title, then

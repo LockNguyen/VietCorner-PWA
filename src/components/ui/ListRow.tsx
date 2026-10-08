@@ -24,7 +24,7 @@ export default function ListRow({ title, subtitle, leading, trailing, tone = "no
   const content = (
     <>
       {leading}
-      <span className="flex min-w-0 flex-1 flex-col">
+      <span className="flex min-w-0 flex-1 flex-col wrap-anywhere">
         <span className={`text-body ${TONES[tone]}`}>{title}</span>
         {subtitle && <span className="text-small text-subtle">{subtitle}</span>}
       </span>

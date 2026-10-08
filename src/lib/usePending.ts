@@ -9,7 +9,7 @@ import { useRef, useState } from "react";
 // save" for something that did save. Every button that starts a request goes through here.
 //
 //   const { pending, run } = usePending<"save" | "remove">();
-//   <ActionButton pending={pending === "save"} disabled={pending !== null} onClick={() => run("save", save)}>
+//   <Button pending={pending === "save"} disabled={pending !== null} onClick={() => run("save", save)}>
 //
 // - `run(action, work)` does the work unless something is already running, in which case the tap is ignored.
 // - `pending` is the name of the running action, or null. The tapped button shows it is busy

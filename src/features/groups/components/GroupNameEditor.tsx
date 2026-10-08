@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
+import TextInput from "@/components/ui/TextInput";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { removeGroup, renameGroup } from "../api";
@@ -26,29 +27,28 @@ export default function GroupNameEditor({ group }: { group: Group }) {
   return (
     <li>
       <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
+        <TextInput
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={MAX_GROUP_NAME_LENGTH}
-          className="min-w-0 flex-1 rounded border p-2 text-lg"
+          aria-label={t(STRINGS.groupName)}
         />
-        <ActionButton
+        <Button
+          variant="quiet"
           pending={pending === "rename"}
-          pendingLabel={t(STRINGS.saving)}
           disabled={pending !== null || unchanged || name.trim() === ""}
-          className="rounded border px-4 text-lg"
         >
           {t(STRINGS.saveName)}
-        </ActionButton>
-        <ActionButton
+        </Button>
+        <Button
           type="button"
+          variant="danger"
           pending={pending === "remove"}
           disabled={pending !== null}
           onClick={() => save("remove", () => removeGroup(group.id), { done: t(STRINGS.removed), failed })}
-          className="rounded border border-red-600 px-4 text-lg text-red-600"
         >
           {t(STRINGS.removeGroup)}
-        </ActionButton>
+        </Button>
       </form>
     </li>
   );

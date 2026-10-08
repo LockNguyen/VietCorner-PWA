@@ -33,6 +33,14 @@
   --radius-thumb: 4px;
   --radius-control: 12px;
   --radius-bubble: 18px;
+
+  /* A sheet coming up from the bottom edge. */
+  --animate-rise: rise 200ms ease-out;
+  @keyframes rise {
+    from {
+      transform: translateY(100%);
+    }
+  }
 }
 
 /* Room for the phone's own furniture: the status bar and notch above, the home indicator below. */
