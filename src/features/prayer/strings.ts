@@ -37,6 +37,10 @@ export const STRINGS = {
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
   addReminder: { en: "Add reminder", vi: "Thêm lời nhắc" } satisfies Text,
   removeReminder: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
+  reminderExists: {
+    en: "That group already has a reminder at that day and time.",
+    vi: "Nhóm này đã có lời nhắc vào ngày và giờ đó.",
+  } satisfies Text,
   // The notification a group gets at that time (server/sendDueReminders.ts). The group's name is the title.
   timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
 

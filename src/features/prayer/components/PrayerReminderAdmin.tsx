@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { LOCALES } from "@/features/i18n/types"; // I18N
+import { LOCALES, type Text } from "@/features/i18n/types"; // I18N
 import { addReminder, removeReminder } from "../api";
 import { STRINGS } from "../strings";
 import type { PostableGroup, PrayerReminder } from "../types";
@@ -21,28 +21,29 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
   const [groupId, setGroupId] = useState(groups[0]?.id ?? "");
   const [weekday, setWeekday] = useState(0);
   const [sendAt, setSendAt] = useState("19:00");
-  const [failed, setFailed] = useState(false);
+  const [problem, setProblem] = useState<Text | null>(null); // what to tell the admin, when a change did not happen
   const [saving, setSaving] = useState(false); // one change at a time: a second tap waits for the first
 
   // 1 January 2023 was a Sunday, so day 1 + n of that month is weekday n. Read in UTC so no timezone moves it.
   const weekdayName = (day: number) =>
     new Date(Date.UTC(2023, 0, 1 + day)).toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: "UTC" });
 
-  async function save(change: () => Promise<void>) {
-    setFailed(false);
+  // `change` answers with a reason when it did nothing for a reason worth naming; anything unexpected throws.
+  async function save(change: () => Promise<Text | null>) {
+    setProblem(null);
     setSaving(true);
     try {
-      await change();
+      setProblem(await change());
       router.refresh(); // reload the page's server data: the list is what the database says
     } catch {
-      setFailed(true);
+      setProblem(STRINGS.failed);
     }
     setSaving(false);
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save(() => addReminder(groupId, weekday, sendAt));
+    save(async () => ((await addReminder(groupId, weekday, sendAt)) === "exists" ? STRINGS.reminderExists : null));
   }
 
   const input = "rounded border p-2 text-lg";
@@ -59,7 +60,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
               {reminder.send_at.slice(0, 5)}
             </span>
             <button
-              onClick={() => save(() => removeReminder(reminder.id))}
+              onClick={() => save(async () => (await removeReminder(reminder.id), null))}
               disabled={saving}
               className="rounded border px-3 py-1 text-red-600 disabled:opacity-50"
             >
@@ -89,7 +90,11 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
           {t(STRINGS.addReminder)}
         </button>
       </form>
-      {failed && <p className="mt-2 text-red-600">{t(STRINGS.failed)}</p>}
+      {problem && (
+        <p role="alert" className="mt-2 text-red-600">
+          {t(problem)}
+        </p>
+      )}
     </section>
   );
 }

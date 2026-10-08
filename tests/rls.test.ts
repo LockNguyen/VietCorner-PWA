@@ -622,10 +622,10 @@ describe("prayer requests", () => {
     const { error: managerAdds } = await alice.client
       .from("prayer_reminders")
       .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
-    // The app adds with "ignore if it is already there", so a second tap is not a failure.
+    // The same group, day and time again is refused with the code the app turns into "already has a reminder".
     const { error: addedAgain } = await alice.client
       .from("prayer_reminders")
-      .upsert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" }, { onConflict: "group_id,weekday,send_at", ignoreDuplicates: true });
+      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
     const { data: stored } = await admin.from("prayer_reminders").select("id").eq("group_id", sharedGroupId).eq("weekday", 6);
     const { data: removed } = await alice.client
       .from("prayer_reminders")
@@ -638,7 +638,7 @@ describe("prayer requests", () => {
     expect(asMember).toEqual([]);
     expect(memberAdds).not.toBeNull();
     expect(managerAdds).toBeNull();
-    expect(addedAgain).toBeNull();
+    expect(addedAgain?.code).toBe("23505");
     expect(stored).toHaveLength(1); // still one reminder, not two
     expect(removed).toHaveLength(1);
   });

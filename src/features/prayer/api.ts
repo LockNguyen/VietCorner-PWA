@@ -50,15 +50,19 @@ export async function deleteRequest(requestId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-// PUT a weekly reminder for a group ("Wednesdays at 19:00", church time). Needs "prayer.reminders".
-// A group cannot have the same day and time twice (schema.sql), so adding one that is already there is
-// not an error: it is there, which is what was asked for. Without that, a second tap would report a failure
-// for a reminder that was in fact saved.
-export async function addReminder(groupId: string, weekday: number, sendAt: string): Promise<void> {
+// Postgres's code for "this would break a unique rule": here, the same group, day and time twice (schema.sql).
+const ALREADY_EXISTS = "23505";
+
+// POST a weekly reminder for a group ("Wednesdays at 19:00", church time). Needs "prayer.reminders".
+// Answers "exists" when that group already has a reminder at that day and time: nothing was added, and the
+// screen can say exactly that instead of "something went wrong". Any other refusal throws.
+export async function addReminder(groupId: string, weekday: number, sendAt: string): Promise<"added" | "exists"> {
   const { error } = await createClient()
     .from("prayer_reminders")
-    .upsert({ group_id: groupId, weekday, send_at: sendAt }, { onConflict: "group_id,weekday,send_at", ignoreDuplicates: true });
+    .insert({ group_id: groupId, weekday, send_at: sendAt });
+  if (error?.code === ALREADY_EXISTS) return "exists";
   if (error) throw new Error(error.message);
+  return "added";
 }
 
 // DELETE a reminder. Needs "prayer.reminders".
