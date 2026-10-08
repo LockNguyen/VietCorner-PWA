@@ -8,6 +8,7 @@ question here has an answer. When all are answered, the decided values move into
 - **REF** — taken from the reference app. Decided unless you object.
 - **PROPOSED** — the reference does not show it; my proposal, consistent with what it does show. Needs your yes.
 - **YOU** — only you can answer.
+- **DECIDED** — answered by you (2026-10-08).
 
 ---
 
@@ -72,7 +73,7 @@ rules (flat, one accent, system font, the same paddings).
 | 1 | Three words a member should use for it | Clean, clear, calm. (Your words: "pleasing on the eyes", "clear and easy", "clean and consistent".) | REF |
 | 2 | A church's app, or a neutral community app | A church's app: the reference leads with the church's name and imagery. | REF |
 | 3 | An app to be close to | First Baptist Church Kannapolis, as above. | REF |
-| 4 | Does our church have a logo, colours or printed materials to match? | | YOU |
+| 4 | Does our church have a logo, colours or printed materials to match? | No logo yet. A generic placeholder mark is used; the real logo is chosen once the app's look is settled. | DECIDED |
 | 5 | Is the elderly member on a phone the main user, every tie decided for them? | Yes. | REF |
 
 ## B. Colour
@@ -93,7 +94,7 @@ rules (flat, one accent, system font, the same paddings).
 |---|---|---|---|
 | 13 | Typeface | The phone's system font. It renders Vietnamese diacritics correctly and costs no download. | REF |
 | 14 | Base text size | 17 (row titles in the reference). Subtitles 14, top-bar title 17 semibold, tile titles 20 bold. | REF |
-| 15 | Can a member choose larger text in Settings? | | YOU |
+| 15 | Can a member choose larger text in Settings? | Yes, but the Settings control is not built now. Every size is defined relative to one root value, so the setting is one number later. | DECIDED |
 | 16 | Headings | Restrained: semibold at the same size as content, not large display type. | REF |
 | 17 | Capitals-only text | Never. | REF |
 
@@ -114,19 +115,19 @@ rules (flat, one accent, system font, the same paddings).
 | 23 | Replace the emoji tab icons with a drawn set | Yes. One small icon dependency; which set is Q-L65. | REF |
 | 24 | Outline or filled | Outline. The active tab changes colour, not shape. | REF |
 | 25 | Does every icon carry a label | In the tab bar, always. Top-bar icons stand alone in the reference; ours get an accessible name. | REF |
-| 26 | Photos or illustrations | The reference leans on photos: every row has a thumbnail and the home screen is photo tiles. We have none. See N2. | YOU |
-| 27 | How a person is shown (email today) | | YOU |
+| 26 | Photos or illustrations | Yes, many photos: they help elderly members and look good. Placeholders for now. Uploading, storing and caching them is planned separately (backlog B32). | DECIDED |
+| 27 | How a person is shown (email today) | By name with an avatar. A default generic avatar until the person sets one. Setting a name or avatar is not built now; the screens are built to show them. Where the name comes from is F1. | DECIDED |
 
 ## F. Navigation and layout
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 28 | Six tabs for an admin | Five at most. What does not fit goes behind the top bar's menu. Which five is Q29. | REF |
-| 29 | Which five tabs, in what order, and which opens first | | YOU |
-| 30 | Top bar | Blue, centred white title, a menu icon at the left, at most two icons at the right. On a sub-screen the left icon is a back arrow. | REF |
+| 28 | Six tabs for an admin | Members have four tabs, admins five (Q29). There is no menu (N3). | DECIDED |
+| 29 | Which five tabs, in what order, and which opens first | Home, Events, Prayer, Groups, in that order; admins also get Admin. The app opens on **Events**. The assistant and Settings are two icons at the top right of the top bar. | DECIDED |
+| 30 | Top bar | Blue, centred white title. Left: nothing, or a back arrow on a sub-screen. Right: the assistant and Settings icons. | DECIDED |
 | 31 | Sub-screens | Full screen with a back arrow: every row's chevron implies "go in". Sheets only for a short choice (the prayer options). | REF |
 | 32 | Tablet and computer | A centred column at phone width. | PROPOSED |
-| 33 | Where the language toggle lives | In the menu and on the login screen. | PROPOSED |
+| 33 | Where the language toggle lives | On the login screen and in Settings (reached from the top-right icon). | PROPOSED |
 
 ## G. Controls and forms (not shown in the reference)
 
@@ -143,10 +144,10 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 40 | Error banner (backlog B30): top or bottom, timed or tapped away | | YOU |
-| 41 | Announce success ("Saved")? | | YOU |
+| 40 | Error banner (backlog B30): top or bottom, timed or tapped away | At the bottom, above the tab bar. It goes away by itself after a time and can be tapped away sooner. Several stack; tapping the stack shows all of them; tapping one removes it. One reusable piece any feature can raise (backlog B30 moves into the revamp). How long it stays is F5. | DECIDED |
+| 41 | Announce success ("Saved")? | Yes. Success uses the same banner as errors, in a different colour. | DECIDED |
 | 42 | Loading | Grey placeholder rows in the shape of the list being loaded, so the frame never jumps. | PROPOSED |
-| 43 | Tap feedback (backlog B31): vibration, sound, both, visual only | iPhones do not let a web app vibrate. | YOU |
+| 43 | Tap feedback (backlog B31): vibration, sound, both, visual only | Not now. Stays in the backlog (B31). | DECIDED |
 | 44 | Animation | Subtle: screens slide, sheets rise, nothing bounces. The phone's "reduce motion" setting is honoured. | PROPOSED |
 | 45 | Empty screens | One plain sentence and, where there is one, the next step as a button. | PROPOSED |
 
@@ -154,27 +155,27 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 46 | Login | The church's name or logo above the form, on white. Depends on Q4. | YOU |
+| 46 | Login | Like Facebook Messenger's sign-in for ease of use, in the reference app's look. **Waiting on the Messenger screenshots** (F0). | YOU |
 | 47 | Groups | The reference row: a tile at the left, the group's name, a subtitle, a chevron. What the subtitle says (members, last message) is yours; the tile is N2. | REF |
-| 48 | Chat: bubbles, times, names | Not shown. | YOU |
+| 48 | Chat: bubbles, times, names | Like Messenger for ease of use, in the reference's look. Other people's messages at the left in grey with their name and avatar; mine at the right in the accent blue. **Details wait on the Messenger screenshots** (F0). | DECIDED |
 | 49 | Events | A list in the reference row, grouped by day. No month calendar. | REF |
-| 50 | Prayer requests: how they differ from chat | Not shown. | YOU |
-| 51 | Assistant: its own identity? | Not shown. | YOU |
+| 50 | Prayer requests: how they differ from chat | Bubbles like chat, but all at the left, mine included. Grouped by week ("This week", "Last week", "2 weeks ago", …), then by person within a week, anonymous requests together; newest first. Twenty at a time, with "Load more" and a turning circle at the bottom. Open points: F2, F3. | DECIDED |
+| 51 | Assistant: its own identity? | Exactly like a group chat for now, with two speakers: the member and the assistant. It will get its own look later. | DECIDED |
 | 52 | Settings | Reference rows with chevrons, in short groups. | REF |
-| 53 | Admin | The same look as the rest; it lives behind the menu, not in the tab bar. | REF |
+| 53 | Admin | The same look as the rest. A fifth tab that only admins see. | DECIDED |
 
 ## J. Words
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 54 | How the app addresses people in Vietnamese | | YOU |
-| 55 | A native speaker reviews all Vietnamese text? | | YOU |
+| 54 | How the app addresses people in Vietnamese | Each person chooses at sign-up how they are addressed: a kinship term ("cô", "chú") or their name. Open points: F1. | DECIDED |
+| 55 | A native speaker reviews all Vietnamese text? | Yes. All Vietnamese text is reviewed by a native speaker. | DECIDED |
 
 ## K. Brand and install
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 56 | Home Screen name and icon | | YOU |
+| 56 | Home Screen name and icon of the installed app (today "VietCorner"). Your answer "Home, with a house icon" reads as the Home **tab**, which is recorded under N1; this one is still open (F4). |  | YOU |
 | 57 | Status bar and splash colour | The accent blue, so the top bar runs to the top of the phone. | REF |
 
 ## L. How we build it
@@ -194,10 +195,27 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| N1 | **A home screen.** The reference opens on "This week": a banner and big tiles into each area. We open straight on Groups. Do we add a home tab like it, and what are its tiles? | | YOU |
+| N1 | **A home screen.** The reference opens on "This week": a banner and big tiles into each area. We open straight on Groups. Do we add a home tab like it, and what are its tiles? | Yes. A Home tab with a house icon, whose tiles lead to the other areas. Which areas exactly is F6. | DECIDED |
 | N2 | **Thumbnails.** Every reference row has a picture; we have none. Options: (a) admins upload a picture per group and event, which is a new feature (storage, an upload control, moderation); (b) a coloured tile with an icon or the first letter, no upload; (c) no tile at all, text-only rows. | (b) to start: it keeps the row's shape and the left alignment without a new feature. | PROPOSED |
-| N3 | **The menu.** What sits behind the top-left menu: Settings, Admin, language, sign out? | | YOU |
+| N3 | **The menu.** What sits behind the top-left menu? | No menu for now. | DECIDED |
 | N4 | **Tab label size.** Follow the reference's small labels (about 10 pt) exactly, or enlarge them to about 12–13 pt for older eyes? Larger labels with five tabs means short words, especially in Vietnamese. | Enlarge. | PROPOSED |
 | N5 | **Subtitle grey.** Match the reference's light grey exactly, or darken it until it passes the standard contrast level? | Darken. It keeps the two-level look and stays readable. | PROPOSED |
 | N6 | **Text over photos.** Only if we use photo tiles (N1): always under a dark overlay strong enough for any photo? | Yes. | PROPOSED |
-| N7 | **Top-bar actions.** The reference has two icons at the right. Do we want any (add, search), or keep the right side empty until a screen needs one? | Empty until needed. | PROPOSED |
+| N7 | **Top-bar actions.** The reference has two icons at the right. Do we want any (add, search), or keep the right side empty until a screen needs one? | Two: the assistant and Settings (Q29). | DECIDED |
+
+## F. Follow-ups from your answers (2026-10-08)
+
+| # | Question | Answer | Status |
+|---|---|---|---|
+| F0 | **The Messenger screenshots did not arrive.** Q46, Q48, Q50 and Q51 say to mimic them. Please attach them again: the sign-in screen, a group chat, and anything else you want followed. | | YOU |
+| F1 | **Names, avatars and form of address need a place to live and a moment to be asked.** Today an account is only an email. (a) Is a "What is your name, and how should we address you?" step right after the first sign-in part of this revamp? (b) Which forms of address are offered: cô, chú, bác, anh, chị, ông, bà, em, "by my name"? (c) Where does the app use it: a greeting on Home, notifications? (d) Until someone has answered, they are shown as the part of their email before the @. | (a) yes, since nothing can show a name without it; (d) yes. | PROPOSED |
+| F2 | **Prayer grouping.** (a) Week labels: your list has "last month" between "3 weeks ago" and "Week of 10/2/2025", which overlaps both. Proposed rule: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>". (b) A week starts on Sunday, church time. (c) Inside a week, people are ordered by their newest request. (d) With twenty loaded at a time, a later page can add to a person's group already on screen. | As proposed. | PROPOSED |
+| F3 | **Prayer bubbles.** Where do Pray and the author's X go? Proposed: Pray as a small button under the bubble; the author's options by pressing the X at the bubble's corner, as now. | As proposed. | PROPOSED |
+| F4 | Home Screen name and icon of the installed app (Q56). | | YOU |
+| F5 | **How long a banner stays.** Proposed: success 4 seconds, errors 8 seconds, because an error an elderly member did not finish reading is worse than one that lingers. | As proposed. | PROPOSED |
+| F6 | **Home tiles.** "The other four pages": Events, Prayer, Groups, and which fourth — the assistant? | | YOU |
+| F7 | **Opening on Events while there is a Home tab.** The Home tab is first in the bar but the app opens on the second. Intended? The alternative is that Home opens first and shows this week's events on it. | | YOU |
+| F8 | **Banners and forms.** Banners are for what happened after a tap (saved, failed). A form's own hints ("Add a title in at least one language") stay beside the field, where the eye already is. | As proposed. | PROPOSED |
+| F9 | **Top-right icons have no labels** in the reference. It is the one place it breaks "every icon has a word". Keep them bare, or add a small word under each? | Bare, with accessible names; they are secondary. | PROPOSED |
+| F10 | **Placeholder images.** I draw them in code: a neutral mark for the logo, a plain avatar, soft tinted tiles for photos. No downloads needed, and nothing with unclear rights ends up in the app. Real photos from the web need a licence that allows use. | As proposed. | PROPOSED |
+
