@@ -14,7 +14,7 @@ The change must be surgical: it touches the one file that owns the behavior, and
 | What a page reads on the server | `server/queries.ts` |
 | A write with side effects or secrets | `server/<action>.ts` + its route |
 | State, sync, retries, permissions flow | `hooks/*` |
-| Markup, layout, wording | `components/*`, text in `strings.ts` |
+| Markup, layout, wording | `components/*`, text in `strings.ts` (use the **frontend** skill) |
 | Who is allowed | `schema.sql` (use the **database-change** skill) |
 
 If the change needs edits in three or more layers, stop and say so before writing code: either the request

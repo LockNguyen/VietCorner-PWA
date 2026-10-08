@@ -48,7 +48,7 @@ features/<name>/
 - Secrets (AI keys, VAPID private key, service role key) go only in env vars without `NEXT_PUBLIC_`, and are read only in files that start with `import "server-only"`.
 
 ## Skills and Hooks
-- `.claude/skills/` holds the working protocols: `add-feature`, `change-feature`, `database-change`,
+- `.claude/skills/` holds the working protocols: `add-feature`, `change-feature`, `database-change`, `frontend`,
   `code-review`, `ai-service`, `verify-and-finish`, `debug`. Use the one that matches the task; the user can
   also invoke it as `/<name>`.
 - `.claude/hooks/` is enforcement, not advice: a commit is blocked when the build or tests fail, and a turn is

@@ -23,6 +23,7 @@ misses duplicated behavior and dead code left behind.
    non-obvious.
 5. **Well-defined** — one job per file, one home per change, no second code path doing the same thing.
    Layer rules from `docs/adding-a-feature.md` are not style: a violation is a finding.
+   For any `.tsx`: the **frontend** skill's shape and comment rules are part of this bar, not style.
 6. **Textbook** — could this file be printed as an example? If not, say exactly what would embarrass it.
 7. **Failure** — every call that can fail has a decided outcome the user can see and recover from.
 8. **Security** — RLS for new tables, secrets server-side only, no trust in the browser, no user text in logs.
