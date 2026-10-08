@@ -171,6 +171,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - B19 post-MVP features still open: account settings, UI revamp.
 - B22 prayer pause is device-only.
 - B24 prayer moderation on hold (pastor).
+- Noted by the user 2026-10-07: B26 tracked migrations · B27 too many network calls · B28 slow cold start on iPhone ·
+  B29 page caching (needs an approved plan) · B30 error banner (after the revamp) · B31 tap feedback (revamp).
 - B1 API-only data access · B3 rate limiting · B4 notification control · B6 load older messages · B9 launch readiness.
 - B13 answer-quality eval · B14 retrieval experiments (Vietnamese PDFs first) · B16 multi-hop retrieval.
 - M9 (LiveKit real-time voice, B11) stays optional.
