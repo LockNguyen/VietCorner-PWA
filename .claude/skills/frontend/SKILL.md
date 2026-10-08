@@ -18,8 +18,9 @@ when two features need it). A component keeps at most trivial view state: a draf
 ## 1. Before writing
 - Read `src/components/ui/README.md`. If a component does the job, use it. If one nearly does, add a
   **variant** to it. A second component for the same job is a defect.
-- Read `docs/design-system.md` for the decided tokens. If the decision you need is not there, **ask**;
-  do not invent a colour, size, radius or spacing.
+- Read `docs/design-system.md` for the decided tokens (until it exists, the answered rows of
+  `docs/design-questions.md`). If the decision you need is not there, **ask**; do not invent a colour,
+  size, radius or spacing.
 
 ## 2. The one shape of a UI component
 Every file in `src/components/ui/` has these parts, in this order, and nothing else:
