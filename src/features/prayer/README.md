@@ -33,8 +33,8 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
 | UI | `components/PrayerComposer.tsx` | The words, the group, "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
-| UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests under their name |
-| UI | `components/PrayerBubble.tsx` | One request: three lines and "more…", its group and day, then Pray, or the author's X |
+| UI | `components/PrayerWeek.tsx` | One week: its label, then each person (avatar and name) with their requests beneath |
+| UI | `components/PrayerBubble.tsx` | One request, top to bottom: three lines and "more…", its day (and group), then Pray; the author gets the X beside the words |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -96,7 +96,9 @@ And a small group can guess from timing or wording — no software fixes that.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
   their name, people in the order of their newest request; anonymous requests share one group. Every
-  request is at the left, mine included; my own named group says "(you)".
+  request is at the left, mine included; my own named group says "(you)". The group's name is shown under a
+  request only to a member of more than one group.
+  (Layout looked at on made-up requests at phone width, 2026-10-08; not yet on the signed-in screen.)
 - A request longer than three lines on this screen shows "more…"; a shorter one shows no link.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author

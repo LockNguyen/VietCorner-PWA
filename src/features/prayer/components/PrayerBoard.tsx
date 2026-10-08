@@ -50,7 +50,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
         <EmptyState message={t(STRINGS.emptyState)} />
       ) : (
         byWeekThenPerson(feed.requests).map((week) => (
-          <PrayerWeek key={week.start} week={week} canPrayFor={cooldown.canPrayFor} onPray={pray} onManage={setManaging} />
+          <PrayerWeek key={week.start} week={week} showGroup={groups.length > 1} canPrayFor={cooldown.canPrayFor} onPray={pray} onManage={setManaging} />
         ))
       )}
 

@@ -168,16 +168,17 @@ export default async function ShowcasePage() {
           <Bubble tone="theirs"><Spinner /></Bubble>
         </BubbleRun>
         <TimeLine>Tuần này</TimeLine>
-        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar size="small" />}>
-          <div className="flex w-full items-start">
-            <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện.</Bubble>
-            <IconButton label="Options"><X /></IconButton>
-          </div>
-          <div className="flex items-center gap-2 ps-4">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2"><Avatar size="small" /><Text>Trần Thị Bình (bạn)</Text></div>
+          <div className="flex flex-col items-start gap-1">
+            <div className="flex w-full items-start">
+              <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện.</Bubble>
+              <IconButton label="Options"><X /></IconButton>
+            </div>
+            <div className="ps-4"><Text variant="small" tone="subtle">Nhóm Thanh Niên · 14 thg 10</Text></div>
             <Button variant="quiet">🙏 Cầu nguyện</Button>
-            <Text as="span" variant="small" tone="subtle">Nhóm Thanh Niên · 14 thg 10</Text>
           </div>
-        </BubbleRun>
+        </div>
         <ComposerDemo />
       </section>
 

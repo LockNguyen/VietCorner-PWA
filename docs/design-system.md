@@ -123,7 +123,9 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 - **Chat, prayer and the assistant** share the conversation components. Others at the left on `fill` with
   `ink` text; mine at the right on `action` with `on-action` text. Bubbles at most 70% wide. 4 between
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
-  an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person.
+  an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person:
+  the person's avatar and name head their requests; under each bubble come its day (and its group, for a
+  member of several) and then Pray on a line of its own. Requests are 12 apart, people 24.
   A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
   before the @. A row that already carries two buttons (a join request) shows the name without the avatar. Nobody is greeted and no form of address is used.

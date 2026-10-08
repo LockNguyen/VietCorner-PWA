@@ -210,6 +210,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         assistant on the same bubbles. 15 new unit tests (85). Seen: the components and compositions in `/ui`.
         NOT seen: the three screens themselves; the fixed composer over a phone keyboard; the assistant's
         bottom area (`pb-48` is a measured guess at its height).
+        Prayer list layout redone after the user's review (it was cramped and confusing): see the prayer README.
+  - [ ] **UI-wide review before the merge** (plan given to the user 2026-10-08; runs on their go).
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
