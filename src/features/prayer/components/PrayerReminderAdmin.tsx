@@ -3,7 +3,8 @@
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { LOCALES, type Text } from "@/features/i18n/types"; // I18N
+import { LOCALES } from "@/features/i18n/types"; // I18N
+import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
 import { useRefresh } from "@/lib/useRefresh";
 import { addReminder } from "../api";
@@ -27,7 +28,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
   // that starts on Sunday made "add one for tonight" land four days away.
   const [weekday, setWeekday] = useState(() => churchWeekday(new Date()));
   const [sendAt, setSendAt] = useState("19:00");
-  const [problem, setProblem] = useState<Text | null>(null); // what to tell the admin, when nothing was added
+  const showBanner = useBanner();
   const { pending, run } = usePending<"add">();
 
   // 1 January 2023 was a Sunday, so day 1 + n of that month is weekday n. Read in UTC so no timezone moves it.
@@ -36,14 +37,16 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    // Spelled out rather than `useSave`: "already exists" is a third outcome, neither saved nor failed.
     run("add", async () => {
-      setProblem(null);
       try {
-        const outcome = await addReminder(groupId, weekday, sendAt);
-        if (outcome === "exists") setProblem(STRINGS.reminderExists);
-        await refresh(); // the list is what the database says before the button stops looking busy
+        if ((await addReminder(groupId, weekday, sendAt)) === "exists") {
+          return showBanner({ kind: "error", message: t(STRINGS.reminderExists) });
+        }
+        await refresh();
+        showBanner({ kind: "success", message: t(STRINGS.saved) });
       } catch {
-        setProblem(STRINGS.failed);
+        showBanner({ kind: "error", message: t(STRINGS.failed) });
       }
     });
   }
@@ -88,11 +91,6 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
           {t(STRINGS.addReminder)}
         </ActionButton>
       </form>
-      {problem && (
-        <p role="alert" className="mt-2 text-red-600">
-          {t(problem)}
-        </p>
-      )}
     </section>
   );
 }

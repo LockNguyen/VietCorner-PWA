@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ActionButton from "@/components/ui/ActionButton";
 import { sendLoginCode, verifyLoginCode } from "../api";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
 
@@ -17,19 +18,18 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
-  const [error, setError] = useState("");
+  const showBanner = useBanner();
   // One request at a time: a second tap on "Send me a code" used to email a second, different code.
   const { pending, run } = usePending<"send" | "verify">();
 
   function handleSendCode(event: React.FormEvent) {
     event.preventDefault();
     run("send", async () => {
-      setError("");
       try {
         await sendLoginCode(email);
         setCodeSent(true);
       } catch (error) {
-        setError((error as Error).message);
+        showBanner({ kind: "error", message: (error as Error).message });
       }
     });
   }
@@ -37,13 +37,12 @@ export default function LoginForm() {
   function handleVerifyCode(event: React.FormEvent) {
     event.preventDefault();
     run("verify", async () => {
-      setError("");
       try {
         await verifyLoginCode(email, code);
         router.replace("/");
         router.refresh(); // re-run the proxy so it sees the new login cookie
       } catch (error) {
-        setError((error as Error).message);
+        showBanner({ kind: "error", message: (error as Error).message });
       }
     });
   }
@@ -80,7 +79,6 @@ export default function LoginForm() {
           </button>
         </form>
       )}
-      {error && <p className="text-red-600">{error}</p>}
     </div>
   );
 }

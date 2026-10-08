@@ -141,9 +141,17 @@ const { pending, run } = usePending<"save" | "remove">();   // @/lib/usePending
 siblings. Leave `pendingLabel` out for the circle alone. In a list, make each row its own component so it
 has its own `usePending` and its own error line. Buttons that only open or close something stay plain.
 
-When the change must show up in data the page loaded on the server, end the work with
-`await refresh()` from `useRefresh` (`@/lib/useRefresh`), not `router.refresh()`: it resolves when the new
-data is drawn, so the button stays busy until what it shows has changed.
+**The usual case is one call.** `useSave` (`@/lib/useSave`) ignores a second tap, makes the change, reloads
+the page's data, and says how it went in a banner:
+
+```tsx
+const { pending, save } = useSave<"rename" | "remove">();
+save("rename", () => renameGroup(id, name), { done: t(STRINGS.saved), failed: t(STRINGS.couldNotSave) });
+```
+
+It resolves to whether the change happened. Reach for its parts (`usePending`, `useRefresh`, `useBanner`)
+only when there is a third outcome or the change is made by a parent. Never show a result as text beside
+the button; a form's hints about what is missing stay beside the field.
 
 ## 6. Put user-facing text in `strings.ts`
 

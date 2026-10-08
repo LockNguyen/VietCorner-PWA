@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
+import Banner from "@/components/ui/Banner";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import IconLink from "@/components/ui/IconLink";
@@ -15,6 +16,7 @@ import Thumbnail from "@/components/ui/Thumbnail";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
+import BannerDemo from "./BannerDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
 
@@ -53,18 +55,18 @@ export default async function ShowcasePage() {
           title="Sự kiện"
           right={
             <>
-              <IconLink href="/ui" label="Assistant"><Bot /></IconLink>
-              <IconLink href="/ui" label="Settings"><Settings /></IconLink>
+              <IconLink href="/ui#1" label="Assistant"><Bot /></IconLink>
+              <IconLink href="/ui#2" label="Settings"><Settings /></IconLink>
             </>
           }
         />
         <TopBar
           title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư"
-          left={<IconLink href="/ui" label="Back"><ChevronLeft /></IconLink>}
+          left={<IconLink href="/ui#3" label="Back"><ChevronLeft /></IconLink>}
           right={
             <>
-              <IconLink href="/ui" label="Assistant"><Bot /></IconLink>
-              <IconLink href="/ui" label="Settings"><Settings /></IconLink>
+              <IconLink href="/ui#4" label="Assistant"><Bot /></IconLink>
+              <IconLink href="/ui#5" label="Settings"><Settings /></IconLink>
             </>
           }
         />
@@ -74,15 +76,23 @@ export default async function ShowcasePage() {
         <Text as="h2" variant="small" tone="subtle">ListRow: link, with a button, with a RowLabel (called off, two-word time, long title), a choice; then SkeletonRow</Text>
         <SectionHeading>Hôm nay</SectionHeading>
         <ul>
-          <ListRow href="/ui" leading={<Thumbnail><Users /></Thumbnail>} title="Học Kinh Thánh" subtitle="Đã tham gia" />
+          <ListRow href="/ui#6" leading={<Thumbnail><Users /></Thumbnail>} title="Học Kinh Thánh" subtitle="Đã tham gia" />
           <ListRow leading={<Thumbnail><Users /></Thumbnail>} title="Nhóm Thanh Niên" trailing={<Button variant="quiet">Tham gia</Button>} />
-          <ListRow href="/ui" leading={<><RowLabel>7:00 PM</RowLabel><Thumbnail /></>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
-          <ListRow href="/ui" leading={<><RowLabel>10:30 AM</RowLabel><Thumbnail /></>} title="Sunday service" subtitle="Main hall" />
-          <ListRow href="/ui" leading={<><RowLabel>19:00</RowLabel><Thumbnail /></>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
-          <ListRow href="/ui" title="Tiếng Việt" current trailing={<Check aria-hidden className="shrink-0 text-action" />} />
-          <ListRow href="/ui" title="English" trailing={null} />
+          <ListRow href="/ui#7" leading={<><RowLabel>7:00 PM</RowLabel><Thumbnail /></>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
+          <ListRow href="/ui#8" leading={<><RowLabel>10:30 AM</RowLabel><Thumbnail /></>} title="Sunday service" subtitle="Main hall" />
+          <ListRow href="/ui#9" leading={<><RowLabel>19:00</RowLabel><Thumbnail /></>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
+          <ListRow href="/ui#10" title="Tiếng Việt" current trailing={<Check aria-hidden className="shrink-0 text-action" />} />
+          <ListRow href="/ui#11" title="English" trailing={null} />
           <SkeletonRow />
         </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">Banner: success, error, the top of a stack; then the real thing</Text>
+        <Banner kind="success" message="Đã lưu" />
+        <Banner kind="error" message="Không lưu được. Xin thử lại." />
+        <Banner kind="error" message="Nhóm này đã có lời nhắc vào ngày và giờ đó." more={2} />
+        <BannerDemo />
       </section>
 
       <section className="flex flex-col gap-2">
@@ -94,13 +104,13 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-2">
         <Text as="h2" variant="small" tone="subtle">IconLink: on the bar, on white</Text>
         <div className="flex gap-2">
-          <IconLink href="/ui" label="Home" tone="ink"><House /></IconLink>
+          <IconLink href="/ui#12" label="Home" tone="ink"><House /></IconLink>
         </div>
       </section>
 
       <section className="flex flex-col gap-6">
         <Text as="h2" variant="small" tone="subtle">PhotoTile</Text>
-        <PhotoTile href="/ui" title="Cầu nguyện"><HandHeart className="size-8" /></PhotoTile>
+        <PhotoTile href="/ui#13" title="Cầu nguyện"><HandHeart className="size-8" /></PhotoTile>
       </section>
 
       <section className="flex flex-col gap-2">

@@ -51,6 +51,8 @@ src/
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
+  lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
+  lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
   proxy.ts      Runs before each request. Belongs to auth.
 public/         sw.js (push handlers), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
@@ -138,6 +140,10 @@ sign-in so the library can be looked at without an account). The design tokens l
 - After the change, the page's data is reloaded with `await refresh()` (`src/lib/useRefresh.ts`), which
   resolves when the new data is drawn. The button therefore stays busy until what it shows has changed;
   with a bare `router.refresh()` it flashed its old label first ("Cancel", then "Undo").
+- **How it went is said in a banner** (`useBanner`): green for success (2 s), red for an error (8 s), at the
+  bottom above the tabs; a tap puts one away; several show as a stack that a tap opens. No red text under a
+  button. `useSave` (`src/lib/useSave.ts`) is the whole sequence in one call: ignore a second tap, make the
+  change, reload, raise the banner. A form's own hints ("add a title") stay beside the field.
 - Left as plain buttons on purpose: ones that only open or close something, and four that already cannot
   repeat (chat Send empties its box at once, the assistant's Send is disabled while answering, Pray starts
   its hour on the first tap, the language toggle is instant and repeating it changes nothing).
@@ -276,6 +282,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
+| Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
 | One shared busy button (`ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
 | Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
@@ -341,3 +348,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: UI revamp, slice 1, the frame: blue `TopBar` with the assistant and Settings icons and a back arrow on sub-screens; `TabBar` with drawn icons (Home, Events, Prayer, Groups, Admin); a Home screen with three tiles, where the app now opens; no tab bar before sign-in; the app is named "Góc Việt" with a placeholder icon. Adds `lucide-react`. Screens inside the frame are still the old look.
 - 2026-10-08: UI revamp, slice 2, lists: `ListRow`, `Thumbnail`, `SectionHeading`, `EmptyState`, `SkeletonRow`. Groups, the event schedule, Settings (account, language) and the notification toggle use them; loading shows placeholder rows. The event details panel and every form keep the old look until slice 4.
 - 2026-10-08: event rows: the time moved out of the picture into `RowLabel`, a bold fixed-width box before it; the picture is a plain grey tile. The join button reads "Join" / "Tham gia".
+- 2026-10-08: UI revamp, slice 3, banners: `Banner`, `useBanner` (+ `BannerProvider`, `BannerHost`), `useSave`. Every result of a tap is now a banner: sign-in errors, chat send failures, the notification toggle, groups and join requests, prayer (share, edit, answered, delete, reminders), events (save, cancel, undo, reminders). Inline error lines and their `failed` states are gone. Closes backlog B30.

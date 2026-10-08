@@ -5,7 +5,7 @@ import { STRINGS } from "../strings";
 import { REMINDER_CHOICES, type ManagedEvent } from "../types";
 import EventReminderChoice from "./EventReminderChoice";
 
-type Props = { event: ManagedEvent; onSet: (minutesBefore: number, on: boolean) => Promise<boolean> };
+type Props = { event: ManagedEvent; onSet: (minutesBefore: number, on: boolean) => Promise<void> };
 
 // Which reminders members get before each date of this event. A tick saves at once; the scheduler does the
 // sending (the push README), to the same people a cancellation would reach.

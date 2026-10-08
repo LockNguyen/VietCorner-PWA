@@ -7,8 +7,8 @@ import EventDateRow from "./EventDateRow";
 
 type Props = {
   event: ManagedEvent;
-  onCancelDate: (churchDate: string) => Promise<boolean>;
-  onRestoreDate: (churchDate: string) => Promise<boolean>;
+  onCancelDate: (churchDate: string) => Promise<void>;
+  onRestoreDate: (churchDate: string) => Promise<void>;
 };
 
 // An event's next dates. On a weekly event each date can be called off by itself, and a date that was

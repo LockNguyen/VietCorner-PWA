@@ -188,14 +188,18 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         Groups, the event schedule, Settings, the notification toggle, loading. Seen in `/ui` and on the sign-in
         screen. NOT seen: the three signed-in screens themselves. `Avatar` moves to slice 5 (first used there).
         After review: the join button reads "Join"; event times sit in a bold fixed-width box before a plain picture (`RowLabel`).
-  - [ ] 3 Banners → replace every inline error
+  - [x] 3 Banners (branch `ui-3-banners`): `Banner`, `useBanner`, `BannerHost`, `useSave`; every inline error line
+        and `failed` state replaced; successes announced. Timing, tap-away and the stack tried in `/ui`.
+        NOT seen: a real save or failure on a signed-in screen.
   - [ ] 4 Forms and the sheet → sign-in, admin sections, the event editor as a full screen
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
   - [ ] 6 Conversations: bubbles → chat, prayer (by week, then person), assistant
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: sign in and look at Groups, Events and Settings; decide the tight not-joined group row (shorter
-   button words, or no picture on those rows). Say go, or what to change.
-2. Claude: slice 3, banners: `Banner` + `useBanner`, replacing every inline error and adding "Saved".
-3. Slice 4, forms and the sheet.
+1. User: sign in and cause a success and a failure (rename a group; turn the network off and save). Say go,
+   or what to change.
+2. Claude: slice 4, forms and the sheet: `Field`, inputs, `Switch`, `Sheet` (adds `@radix-ui/react-dialog`) →
+   sign-in in the Messenger layout, the admin sections, the event editor as a full screen. Deletes
+   `ActionButton` if nothing uses it afterwards.
+3. Slice 5, names.

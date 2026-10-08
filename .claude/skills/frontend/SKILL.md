@@ -63,8 +63,8 @@ export default function Button({ variant = "primary", size = "regular", ...butto
 ## 3. Feature components
 - Compose UI components and lay them out. Tailwind here is **layout only**: flex, grid, gap, padding, width.
 - Read text through `t(STRINGS.x)` and pass it down. Call hooks and `api.ts` from event handlers.
-- A button that starts a request is driven by `usePending`, and reloads with `await refresh()`
-  (`docs/adding-a-feature.md`). One row of a list is its own component.
+- A button that starts a request goes through `useSave` (busy state, reload, a banner saying how it went;
+  `docs/adding-a-feature.md`). No result is shown as text beside a button. One row of a list is its own component.
 - `@/lib/supabase/*` is never imported here.
 
 ## 4. SOLID, as it applies to a component

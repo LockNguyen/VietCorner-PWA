@@ -12,7 +12,7 @@ import type { EventDraft, EventGroup } from "../types";
 type Props = {
   initial: EventDraft;
   groups: EventGroup[];
-  onSave: (draft: EventDraft) => Promise<boolean>; // answers whether it was saved
+  onSave: (draft: EventDraft) => Promise<void>;
   onCancel: () => void;
 };
 
@@ -31,12 +31,11 @@ export default function EventForm({ initial, groups, onSave, onCancel }: Props) 
     setDraft({ ...draft, texts: { ...draft.texts, [language]: { ...draft.texts[language], [field]: value } } });
   }
 
-  const [failed, setFailed] = useState(false);
-  const { pending, run } = usePending<"save">(); // a second tap on Save used to create a second, identical event
+  const { pending, run } = usePending<"save">();
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!problem) run("save", async () => setFailed(!(await onSave(draft))));
+    if (!problem) run("save", () => onSave(draft));
   }
 
   const input = "w-full rounded border p-2 text-lg";
@@ -127,11 +126,6 @@ export default function EventForm({ initial, groups, onSave, onCancel }: Props) 
       )}
 
       {problem && <p className="text-gray-500">{t(PROBLEMS[problem])}</p>}
-      {failed && (
-        <p role="alert" className="text-red-600">
-          {t(STRINGS.couldNotSave)}
-        </p>
-      )}
       <ActionButton
         pending={pending === "save"}
         pendingLabel={t(STRINGS.saving)}

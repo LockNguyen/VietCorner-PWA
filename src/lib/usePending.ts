@@ -16,20 +16,21 @@ import { useRef, useState } from "react";
 //   (`pending === "save"`); its siblings are disabled meanwhile (`pending !== null`).
 //
 // One instance per row of a list, so a busy row never blocks the rows around it.
-// It only tracks; what happens when the work fails stays with the caller's own try / catch.
+// It only tracks. `useSave` builds on it for the usual case: change, reload, say how it went.
 export function usePending<Action extends string>() {
   const [pending, setPending] = useState<Action | null>(null);
   // A ref as well as state: state only changes on the next render, and a second tap can land before that.
   // The ref is read and written in the same instant, so the second tap always sees the first.
   const inFlight = useRef(false);
 
-  async function run(action: Action, work: () => Promise<unknown>): Promise<void> {
-    if (inFlight.current) return;
+  // Resolves to what the work resolved to, or to undefined for a tap that was ignored.
+  async function run<Result>(action: Action, work: () => Promise<Result>): Promise<Result | undefined> {
+    if (inFlight.current) return undefined;
 
     inFlight.current = true;
     setPending(action);
     try {
-      await work();
+      return await work();
     } finally {
       inFlight.current = false;
       setPending(null);

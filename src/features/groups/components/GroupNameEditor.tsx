@@ -3,8 +3,7 @@
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { usePending } from "@/lib/usePending";
-import { useRefresh } from "@/lib/useRefresh";
+import { useSave } from "@/lib/useSave";
 import { removeGroup, renameGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
@@ -13,28 +12,15 @@ import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
 // Save is enabled only when the name actually changed. Remove asks nothing (decided: fewer taps); the
 // group is kept in the database, so a mistaken tap is undone there.
 export default function GroupNameEditor({ group }: { group: Group }) {
-  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState(group.name);
-  const [failed, setFailed] = useState(false);
   const unchanged = name.trim() === group.name;
-  const { pending, run } = usePending<"rename" | "remove">();
-
-  function save(action: "rename" | "remove", change: () => Promise<void>) {
-    return run(action, async () => {
-      setFailed(false);
-      try {
-        await change();
-        await refresh(); // the saved name, or the list without this group, is drawn before the button stops looking busy
-      } catch {
-        setFailed(true);
-      }
-    });
-  }
+  const { pending, save } = useSave<"rename" | "remove">();
+  const failed = t(STRINGS.couldNotSave);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save("rename", () => renameGroup(group.id, name.trim()));
+    save("rename", () => renameGroup(group.id, name.trim()), { done: t(STRINGS.saved), failed });
   }
 
   return (
@@ -58,13 +44,12 @@ export default function GroupNameEditor({ group }: { group: Group }) {
           type="button"
           pending={pending === "remove"}
           disabled={pending !== null}
-          onClick={() => save("remove", () => removeGroup(group.id))}
+          onClick={() => save("remove", () => removeGroup(group.id), { done: t(STRINGS.removed), failed })}
           className="rounded border border-red-600 px-4 text-lg text-red-600"
         >
           {t(STRINGS.removeGroup)}
         </ActionButton>
       </form>
-      {failed && <p className="mt-1 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </li>
   );
 }

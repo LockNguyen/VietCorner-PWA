@@ -33,7 +33,7 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
 
   const { pending, run } = usePending<"answered" | "edit" | "delete">();
 
-  // The dialog closes either way: on failure the board shows the error, behind where this was.
+  // The dialog closes either way: the board says how it went in a banner.
   function finish(action: "answered" | "edit" | "delete", change: () => Promise<boolean>) {
     return run(action, async () => {
       await change();

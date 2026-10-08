@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
@@ -11,15 +11,15 @@ import EventDates from "./EventDates";
 import EventForm from "./EventForm";
 import EventReminders from "./EventReminders";
 
-// Each handler answers whether the change happened, so the part that asked can say "could not save".
+// Each handler resolves when its change is done and on screen; how it went is said in a banner.
 type Props = {
   event: ManagedEvent | undefined; // undefined = a new event
   groups: EventGroup[];
-  onSave: (draft: EventDraft) => Promise<boolean>;
-  onCancelDate: (churchDate: string) => Promise<boolean>;
-  onRestoreDate: (churchDate: string) => Promise<boolean>;
-  onSetReminder: (minutesBefore: number, on: boolean) => Promise<boolean>;
-  onCancelForGood: () => Promise<boolean>;
+  onSave: (draft: EventDraft) => Promise<void>;
+  onCancelDate: (churchDate: string) => Promise<void>;
+  onRestoreDate: (churchDate: string) => Promise<void>;
+  onSetReminder: (minutesBefore: number, on: boolean) => Promise<void>;
+  onCancelForGood: () => Promise<void>;
   onClose: () => void;
 };
 
@@ -29,7 +29,6 @@ type Props = {
 export default function EventEditor(props: Props) {
   const { event, groups, onSave, onCancelDate, onRestoreDate, onSetReminder, onCancelForGood, onClose } = props;
   const { t } = useLanguage(); // I18N
-  const [failed, setFailed] = useState(false); // the red button's own "could not save"
   const { pending, run } = usePending<"cancelForGood">();
 
   // Escape closes it: a phone user taps outside, a desktop user reaches for the key.
@@ -61,16 +60,11 @@ export default function EventEditor(props: Props) {
                 their schedule struck through for a week, then it is gone. The row is kept in the database. */}
             <ActionButton
               pending={pending === "cancelForGood"}
-              onClick={() => run("cancelForGood", async () => setFailed(!(await onCancelForGood())))}
+              onClick={() => run("cancelForGood", onCancelForGood)}
               className="w-full rounded bg-red-600 p-3 text-lg text-white"
             >
               {t(STRINGS.cancelForGood)}
             </ActionButton>
-            {failed && (
-              <p role="alert" className="text-red-600">
-                {t(STRINGS.couldNotSave)}
-              </p>
-            )}
           </>
         )}
       </div>

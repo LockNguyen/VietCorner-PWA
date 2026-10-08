@@ -98,7 +98,8 @@ And a small group can guess from timing or wording — no software fixes that.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but
-  not the same day and time twice; trying to shows "That group already has a reminder at that day and time."
+  not the same day and time twice; trying to raises the banner "That group already has a reminder at that
+  day and time."
   The buttons are disabled while a change is being saved.
   **Not yet exercised on screen; no reminder has been seen arriving.**
 - Twenty requests load first; reaching the bottom loads twenty more until none are left.

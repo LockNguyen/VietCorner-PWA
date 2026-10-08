@@ -43,6 +43,11 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Where banners sit: just clear of the tab bar and the phone's home indicator. */
+@utility bottom-above-tabs {
+  bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom) + 8px);
+}
+
 /* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */
 html {
   font-size: calc(106.25% * var(--text-scale, 1));

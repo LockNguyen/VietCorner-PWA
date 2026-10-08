@@ -3,6 +3,7 @@
 import Button from "@/components/ui/Button";
 import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
 import { usePushNotifications } from "../hooks/usePushNotifications";
 import { STRINGS } from "../strings";
@@ -12,6 +13,11 @@ export default function EnableNotificationsButton() {
   const { status, enable } = usePushNotifications();
   const { t } = useLanguage(); // I18N
   const { pending, run } = usePending<"enable">();
+  const showBanner = useBanner();
+
+  async function turnOn() {
+    if (!(await enable())) showBanner({ kind: "error", message: t(STRINGS.couldNotSave) });
+  }
 
   if (status === "loading") return null;
 
@@ -20,12 +26,11 @@ export default function EnableNotificationsButton() {
       {status === "on" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsOn)}</Text>}
       {status === "blocked" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsBlocked)}</Text>}
       {status === "unsupported" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsUnsupported)}</Text>}
-      {(status === "off" || status === "error") && (
-        <Button pending={pending === "enable"} onClick={() => run("enable", enable)}>
+      {status === "off" && (
+        <Button pending={pending === "enable"} onClick={() => run("enable", turnOn)}>
           {t(STRINGS.turnOnNotifications)}
         </Button>
       )}
-      {status === "error" && <Text variant="small" tone="danger">{t(STRINGS.couldNotSave)}</Text>}
     </div>
   );
 }

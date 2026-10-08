@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { usePending } from "@/lib/usePending";
-import { useRefresh } from "@/lib/useRefresh";
+import { useSave } from "@/lib/useSave";
 import { approveJoinRequest, declineJoinRequest } from "../api";
 import { STRINGS } from "../strings";
 import type { JoinRequest } from "../types";
@@ -14,22 +12,10 @@ type Props = { request: JoinRequest; groupName: string | undefined };
 // One person waiting to join one group, with the two answers a manager can give.
 // A row of its own, so answering one request never blocks the requests around it.
 export default function JoinRequestRow({ request, groupName }: Props) {
-  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
-  const [failed, setFailed] = useState(false);
-  const { pending, run } = usePending<"approve" | "decline">();
-
-  function answer(action: "approve" | "decline", decide: (groupId: string, userId: string) => Promise<void>) {
-    return run(action, async () => {
-      setFailed(false);
-      try {
-        await decide(request.group_id, request.user_id);
-        await refresh(); // the answered request has left the list before its buttons stop looking busy
-      } catch {
-        setFailed(true);
-      }
-    });
-  }
+  const { pending, save } = useSave<"approve" | "decline">();
+  const failed = t(STRINGS.couldNotSave);
+  const { group_id: groupId, user_id: userId } = request;
 
   return (
     <li className="rounded border p-3">
@@ -39,7 +25,7 @@ export default function JoinRequestRow({ request, groupName }: Props) {
         <ActionButton
           pending={pending === "approve"}
           disabled={pending !== null}
-          onClick={() => answer("approve", approveJoinRequest)}
+          onClick={() => save("approve", () => approveJoinRequest(groupId, userId), { done: t(STRINGS.approved), failed })}
           className="flex-1 rounded bg-blue-500 p-2 text-lg text-white"
         >
           {t(STRINGS.approve)}
@@ -47,13 +33,12 @@ export default function JoinRequestRow({ request, groupName }: Props) {
         <ActionButton
           pending={pending === "decline"}
           disabled={pending !== null}
-          onClick={() => answer("decline", declineJoinRequest)}
+          onClick={() => save("decline", () => declineJoinRequest(groupId, userId), { done: t(STRINGS.declined), failed })}
           className="flex-1 rounded border p-2 text-lg"
         >
           {t(STRINGS.decline)}
         </ActionButton>
       </div>
-      {failed && <p className="mt-2 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </li>
   );
 }

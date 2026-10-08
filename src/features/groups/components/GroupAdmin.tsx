@@ -3,8 +3,7 @@
 import { useState, type FormEvent } from "react";
 import ActionButton from "@/components/ui/ActionButton";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { usePending } from "@/lib/usePending";
-import { useRefresh } from "@/lib/useRefresh";
+import { useSave } from "@/lib/useSave";
 import { createGroup } from "../api";
 import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group, type JoinRequest } from "../types";
@@ -14,24 +13,14 @@ import JoinRequests from "./JoinRequests";
 // The admin page's section for groups: answer who is waiting to join, rename or remove a group, add one.
 // Shown only to someone with the "groups.manage" permission; the database refuses everyone else anyway.
 export default function GroupAdmin({ groups, requests }: { groups: Group[]; requests: JoinRequest[] }) {
-  const refresh = useRefresh();
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
-  const [failed, setFailed] = useState(false);
-  const { pending, run } = usePending<"add">(); // a second tap used to create a second group of the same name
+  const { pending, save } = useSave<"add">();
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    run("add", async () => {
-      setFailed(false);
-      try {
-        await createGroup(name.trim());
-        setName("");
-        await refresh(); // the new group is in the list before the button stops looking busy
-      } catch {
-        setFailed(true);
-      }
-    });
+    const says = { done: t(STRINGS.saved), failed: t(STRINGS.couldNotSave) };
+    if (await save("add", () => createGroup(name.trim()), says)) setName("");
   }
 
   return (
@@ -62,7 +51,6 @@ export default function GroupAdmin({ groups, requests }: { groups: Group[]; requ
           {t(STRINGS.addGroup)}
         </ActionButton>
       </form>
-      {failed && <p className="mt-2 text-red-600">{t(STRINGS.couldNotSave)}</p>}
     </section>
   );
 }

@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AppTabs from "@/components/AppTabs";
+import BannerHost from "@/components/BannerHost";
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
 import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I18N
 import { getLanguage } from "@/features/i18n/server/queries"; // I18N
 import { DEFAULT_LANGUAGE } from "@/features/i18n/types"; // I18N
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
+import { BannerProvider } from "@/lib/useBanner";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
@@ -34,7 +36,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={storedLanguage ?? DEFAULT_LANGUAGE}>
       <body className="bg-surface text-ink">
         <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
-          <main className="mx-auto max-w-column pb-24">{children}</main>
+          <BannerProvider>
+            <main className="mx-auto max-w-column pb-24">{children}</main>
+            <BannerHost />
+          </BannerProvider>
           {user && <AppTabs showAdmin={permissions.length > 0} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
         </LanguageProvider>

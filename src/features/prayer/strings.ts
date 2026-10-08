@@ -9,6 +9,10 @@ export const STRINGS = {
   } satisfies Text,
   emptyState: { en: "No prayer requests yet.", vi: "Chưa có lời xin cầu nguyện nào." } satisfies Text,
   failed: { en: "Something went wrong. Please try again.", vi: "Có lỗi xảy ra. Xin thử lại." } satisfies Text,
+  shared: { en: "Shared", vi: "Đã chia sẻ" } satisfies Text,
+  saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
+  deleted: { en: "Deleted", vi: "Đã xóa" } satisfies Text,
+  removed: { en: "Removed", vi: "Đã gỡ bỏ" } satisfies Text,
 
   // Composer
   bodyPlaceholder: { en: "What can we pray for?", vi: "Bạn cần cầu nguyện cho điều gì?" } satisfies Text,

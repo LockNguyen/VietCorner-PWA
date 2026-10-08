@@ -28,6 +28,7 @@ export const STRINGS = {
   cancelForGood: { en: "Cancel this event permanently", vi: "Hủy hẳn sự kiện này" } satisfies Text,
   save: { en: "Save", vi: "Lưu" } satisfies Text,
   saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
+  saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
   couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 
   // The form

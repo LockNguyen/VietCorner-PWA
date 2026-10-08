@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import type { Text } from "@/features/i18n/types"; // I18N
+import { useBanner } from "@/lib/useBanner";
 import { usePrayerCooldown } from "../hooks/usePrayerCooldown";
 import { usePrayerFeed } from "../hooks/usePrayerFeed";
 import { STRINGS } from "../strings";
@@ -19,25 +21,28 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
   const { t } = useLanguage(); // I18N
   const feed = usePrayerFeed(initialRequests);
   const cooldown = usePrayerCooldown(userId);
+  const showBanner = useBanner();
   const [managing, setManaging] = useState<PrayerRequest | null>(null); // whose options are open
+
+  // Says how an action went, then passes its answer on. `done` is left out where the screen already shows it.
+  async function report(action: Promise<boolean>, done?: Text): Promise<boolean> {
+    const worked = await action;
+    if (!worked) showBanner({ kind: "error", message: t(STRINGS.failed) });
+    else if (done) showBanner({ kind: "success", message: t(done) });
+    return worked;
+  }
 
   // The pause starts before the server answers, so a second tap cannot slip in while the first travels.
   async function pray(requestId: string) {
     cooldown.startPause(requestId);
-    if (!(await feed.pray(requestId))) cooldown.cancelPause(requestId);
+    if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
   if (groups.length === 0) return <p className="p-4 text-center text-lg text-gray-500">{t(STRINGS.noGroups)}</p>;
 
   return (
     <div className="p-4">
-      <PrayerComposer groups={groups} onPost={feed.post} />
-
-      {feed.failed && (
-        <p role="alert" className="mt-3 text-red-600">
-          {t(STRINGS.failed)}
-        </p>
-      )}
+      <PrayerComposer groups={groups} onPost={(request) => report(feed.post(request), STRINGS.shared)} />
 
       {feed.requests.length === 0 ? (
         <p className="mt-6 text-center text-gray-500">{t(STRINGS.emptyState)}</p>
@@ -55,14 +60,14 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
         </ul>
       )}
 
-      {feed.hasMore && <OlderRequestsMarker onReached={feed.loadOlder} loadedSoFar={feed.requests.length} />}
+      {feed.hasMore && <OlderRequestsMarker onReached={() => report(feed.loadOlder())} loadedSoFar={feed.requests.length} />}
 
       {managing && (
         <RequestOptions
           request={managing}
-          onAnswered={() => feed.answer(managing.id)}
-          onEdit={(body) => feed.edit(managing.id, body)}
-          onDelete={() => feed.remove(managing.id)}
+          onAnswered={() => report(feed.answer(managing.id), STRINGS.markAnswered)}
+          onEdit={(body) => report(feed.edit(managing.id, body), STRINGS.saved)}
+          onDelete={() => report(feed.remove(managing.id), STRINGS.deleted)}
           onClose={() => setManaging(null)}
         />
       )}

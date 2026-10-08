@@ -20,6 +20,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `SectionHeading` | The small grey heading above a group of rows | | |
 | `EmptyState` | What a screen shows with nothing to list | | `message`; children are the next step |
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
+| `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
 ## Conventions the list relies on
@@ -38,5 +39,7 @@ restyled; it is deleted when the last one has moved. Do not use it in new code.
 ## Hooks they rely on (`src/lib/`)
 | Hook | Job |
 |---|---|
+| `useSave` | The usual change from tap to result: `usePending`, then the change, `useRefresh`, and a banner saying how it went. Start here. |
 | `usePending` | Which action of a component is on its way; ignores a second tap. Feeds `Button`'s `pending`. |
 | `useRefresh` | Reloads the page's data and resolves when it is on screen, so a button stays busy until then. |
+| `useBanner` | `showBanner({ kind, message, seconds? })` from anywhere. Success stays 2 s, an error 8 s. `BannerProvider` wraps the app once; `src/components/BannerHost.tsx` draws them and handles the stack. |
