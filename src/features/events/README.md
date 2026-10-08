@@ -116,7 +116,7 @@ every case the list has to handle (see **Seed data** below).
   event each date has Cancel, and a cancelled date has Undo in its place; the screen stays and shows the
   change. A one-off event's date has no button. "New event" opens the same screen with the fields only.
   Back with unsaved changes loses them without asking.
-  **The new screen has not been seen signed in (2026-10-09); its parts were checked in `/ui`.**
+  **The new screen has not been seen signed in (2026-10-08); its parts were checked in `/ui`.**
 - Cancelled for good: gone from the admin list at once; on members' schedules struck through for a week,
   then absent (observed 2026-10-06 against the real database: cancelled 2 days ago shows, 8 days ago does not).
 - In the editor, "Remind members" has three switches; a switch saves at once and the screen stays.

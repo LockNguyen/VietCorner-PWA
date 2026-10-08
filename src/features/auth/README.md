@@ -53,7 +53,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   ends (observed 2026-10-07: three quick taps made one request; after a failure the button came back with
   the error). Before this, a second tap emailed a second, different code.
 - The screen is the logo, one bold sentence, one field and one button, with the other language as a link
-  underneath (observed in the preview at phone width, 2026-10-09). A failure raises a banner in the app's
+  underneath (observed in the preview at phone width, 2026-10-08). A failure raises a banner in the app's
   own words: "Could not send the code…" or "That code did not work…", whatever the server said.
 - Reloading or closing the app keeps you signed in.
 - Settings shows "Signed in as <email>"; signing out returns to `/login`.
