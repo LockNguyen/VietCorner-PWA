@@ -111,7 +111,7 @@ The empty installable app every feature plugs into.
 | `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata |
 | `src/app/manifest.ts` | `/manifest.webmanifest`: "Góc Việt" under the icon, icons, `display: standalone`, `start_url: /` |
 | `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`) |
-| `src/app/loading.tsx` | Instant "Loading…" while a dynamic page renders, so a tap gives feedback |
+| `src/app/loading.tsx` | Grey placeholder rows at once while a dynamic page renders, so a tap gives feedback and the screen does not jump |
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
 | `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
@@ -339,3 +339,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: UI revamp, slice 0: design tokens in `globals.css` (colours, text sizes on a scalable root, px spacing, radii), `Text`, `Button` (with the pending state), `Spinner`, the `/ui` showcase and the component README. No existing screen restyled; `ActionButton` stays until its screens move.
 - 2026-10-08: `Spinner` aligns to the middle of the text beside it (it sat 1.5 to 3 px high), in a busy button's label and inline.
 - 2026-10-08: UI revamp, slice 1, the frame: blue `TopBar` with the assistant and Settings icons and a back arrow on sub-screens; `TabBar` with drawn icons (Home, Events, Prayer, Groups, Admin); a Home screen with three tiles, where the app now opens; no tab bar before sign-in; the app is named "Góc Việt" with a placeholder icon. Adds `lucide-react`. Screens inside the frame are still the old look.
+- 2026-10-08: UI revamp, slice 2, lists: `ListRow`, `Thumbnail`, `SectionHeading`, `EmptyState`, `SkeletonRow`. Groups, the event schedule, Settings (account, language) and the notification toggle use them; loading shows placeholder rows. The event details panel and every form keep the old look until slice 4.

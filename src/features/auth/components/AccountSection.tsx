@@ -1,18 +1,24 @@
 "use client";
 
+import ListRow from "@/components/ui/ListRow";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 import SignOutButton from "./SignOutButton";
 
-// Settings block: who is signed in, and a way out. A Client Component so it can read the language;
-// it has a client child anyway.
+// Settings block: who is signed in, and a way out.
 export default function AccountSection({ email }: { email: string }) {
   const { t } = useLanguage(); // I18N
 
   return (
-    <section className="space-y-3 border-b p-4">
-      <p>{t(STRINGS.signedInAs)} <b>{email}</b></p>
-      <SignOutButton />
+    <section>
+      <SectionHeading>{t(STRINGS.accountHeading)}</SectionHeading>
+      <ul>
+        <ListRow title={email} subtitle={t(STRINGS.signedInAs)} />
+      </ul>
+      <div className="flex flex-col p-3">
+        <SignOutButton />
+      </div>
     </section>
   );
 }

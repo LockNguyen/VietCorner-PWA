@@ -56,7 +56,8 @@ events or prayer: their tables point at `groups`.
 - **A joined group links to `/groups/<id>`, which is chat's screen.** Without chat that link has no page.
 
 ## Expected behavior
-- `/groups` lists the groups. "Ask to join" turns into "Waiting for approval"; after a manager approves,
+- `/groups` lists the groups as rows: a joined group says "Joined" and opens with a chevron; the others carry
+  the button or the waiting note. "Ask to join" turns into "Waiting for approval"; after a manager approves,
   the row becomes a link the next time the page loads.
 - Admin tab → Groups shows "Waiting to join" above the group names when anyone is waiting: their email, the
   group, Approve and Decline. Either answer takes the row off the list.

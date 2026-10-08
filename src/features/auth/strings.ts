@@ -9,7 +9,8 @@ export const STRINGS = {
   signInButton: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
   signingIn: { en: "Signing in…", vi: "Đang đăng nhập…" } satisfies Text,
   useAnotherEmail: { en: "Use a different email", vi: "Dùng email khác" } satisfies Text,
-  signedInAs: { en: "Signed in as", vi: "Đã đăng nhập" } satisfies Text,
+  accountHeading: { en: "Account", vi: "Tài khoản" } satisfies Text,
+  signedInAs: { en: "Signed in", vi: "Đã đăng nhập" } satisfies Text,
   signOutButton: { en: "Sign out", vi: "Đăng xuất" } satisfies Text,
   codeSentTo: {
     en: "Enter the code sent to",

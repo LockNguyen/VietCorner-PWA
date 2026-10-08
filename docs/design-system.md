@@ -88,7 +88,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Text | `Text` | Every piece of text outside a control | `tile`, `body`, `small`; tone `ink`, `subtle`, `danger` |
 | List | `ListRow` | Thumbnail, title, subtitle, trailing chevron or control | link, static |
 | | `Thumbnail` | A picture, or a tinted tile with an icon or letter | |
-| | `Avatar` | A person's picture, or the default one | `small` (chat), `regular` |
+| | `Avatar` | A person's picture, or the default one (built with names, slice 5) | `small` (chat), `regular` |
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
 | Controls | `Button` | Any button; shows the turning circle while pending (absorbs `ActionButton`) | `primary`, `quiet`, `danger`, `text` |
@@ -96,7 +96,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | | `Field` | A label above a control, and its hint | |
 | | `TextInput`, `TextArea`, `Select`, `DateTimeInput` | `fill` background, no border, `radius-control` | |
 | | `Switch` | On / off | |
-| | `ChoiceList` | Up to five options as rows with a tick | |
+| | `ChoiceList` | Up to five options as rows with a tick. Today this is `ListRow` with a tick as `trailing` (the language choice); it becomes its own component when a second chooser needs it. | |
 | Feedback | `Banner` + `useBanner` | Success and error messages at the bottom | `success`, `error` |
 | | `Spinner` | The turning circle | |
 | | `SkeletonRow` | A grey placeholder in the shape of a `ListRow` | |

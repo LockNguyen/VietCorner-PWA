@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { signOut } from "../api";
@@ -19,12 +19,8 @@ export default function SignOutButton() {
   }
 
   return (
-    <ActionButton
-      pending={pending === "signOut"}
-      onClick={() => run("signOut", handleClick)}
-      className="rounded border p-3 text-red-600"
-    >
+    <Button variant="quiet" pending={pending === "signOut"} onClick={() => run("signOut", handleClick)}>
       {t(STRINGS.signOutButton)}
-    </ActionButton>
+    </Button>
   );
 }

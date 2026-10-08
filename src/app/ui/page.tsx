@@ -1,11 +1,16 @@
 import { notFound } from "next/navigation";
-import { Bot, CalendarDays, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
+import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
 import Button from "@/components/ui/Button";
+import EmptyState from "@/components/ui/EmptyState";
 import IconLink from "@/components/ui/IconLink";
+import ListRow from "@/components/ui/ListRow";
 import PhotoTile from "@/components/ui/PhotoTile";
+import SectionHeading from "@/components/ui/SectionHeading";
+import SkeletonRow from "@/components/ui/SkeletonRow";
 import Spinner from "@/components/ui/Spinner";
 import TabBar from "@/components/ui/TabBar";
 import Text from "@/components/ui/Text";
+import Thumbnail from "@/components/ui/Thumbnail";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
@@ -62,6 +67,26 @@ export default async function ShowcasePage() {
             </>
           }
         />
+      </section>
+
+      <section>
+        <Text as="h2" variant="small" tone="subtle">ListRow: link, static with a button, called off, a choice, no picture; then SkeletonRow</Text>
+        <SectionHeading>Hôm nay</SectionHeading>
+        <ul>
+          <ListRow href="/ui" leading={<Thumbnail><Users /></Thumbnail>} title="Học Kinh Thánh" subtitle="Đã tham gia" />
+          <ListRow leading={<Thumbnail><Users /></Thumbnail>} title="Nhóm Thanh Niên" trailing={<Button variant="quiet">Xin tham gia</Button>} />
+          <ListRow href="/ui" leading={<Thumbnail>7:00 PM</Thumbnail>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
+          <ListRow href="/ui" leading={<Thumbnail>19:00</Thumbnail>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
+          <ListRow href="/ui" title="Tiếng Việt" current trailing={<Check aria-hidden className="shrink-0 text-action" />} />
+          <ListRow href="/ui" title="English" trailing={null} />
+          <SkeletonRow />
+        </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">EmptyState: alone, with a next step</Text>
+        <EmptyState message="Không có sự kiện nào trong vài tuần tới." />
+        <EmptyState message="Xin tham gia một nhóm trước."><Button>Xem các nhóm</Button></EmptyState>
       </section>
 
       <section className="flex flex-col gap-2">

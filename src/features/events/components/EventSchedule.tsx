@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
 import { isoDate, toInstant } from "@/lib/churchTime";
@@ -17,16 +19,14 @@ export default function EventSchedule({ occurrences }: Props) {
   const { t, language } = useLanguage(); // I18N
   const [open, setOpen] = useState<Occurrence | null>(null);
 
-  if (occurrences.length === 0) {
-    return <p className="p-4 text-center text-gray-500">{t(STRINGS.emptyState)}</p>;
-  }
+  if (occurrences.length === 0) return <EmptyState message={t(STRINGS.emptyState)} />;
 
   return (
-    <div className="p-4">
+    <div>
       {groupByDay(occurrences).map(([day, ofThatDay]) => (
-        <section key={day} className="mb-6">
-          <h2 className="mb-2 border-b pb-1 text-lg font-semibold">{dayLabel(day, language, t)}</h2>
-          <ul className="space-y-2">
+        <section key={day}>
+          <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
+          <ul>
             {ofThatDay.map((occurrence) => (
               <EventRow
                 key={`${occurrence.event.id}-${occurrence.startsAt.toISOString()}`}

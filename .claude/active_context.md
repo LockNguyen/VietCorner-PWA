@@ -184,7 +184,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] 1 Frame (branch `ui-1-frame`): `TopBar`, `TabBar`, `IconLink`, `PhotoTile`; Home with three tiles; the
         assistant and Settings at the top right; opens on Home; "Góc Việt" and a placeholder icon. Seen in
         `/ui` and on the sign-in screen at phone width. NOT seen: any signed-in screen, an installed iPhone app.
-  - [ ] 2 Lists: row, thumbnail, avatar, skeleton, empty state → Groups, Events, Settings
+  - [x] 2 Lists (branch `ui-2-lists`): `ListRow`, `Thumbnail`, `SectionHeading`, `EmptyState`, `SkeletonRow` →
+        Groups, the event schedule, Settings, the notification toggle, loading. Seen in `/ui` and on the sign-in
+        screen. NOT seen: the three signed-in screens themselves. `Avatar` moves to slice 5 (first used there).
+        Open: a not-joined group's name wraps tightly beside the picture and the "Ask to join" button.
   - [ ] 3 Banners → replace every inline error
   - [ ] 4 Forms and the sheet → sign-in, admin sections, the event editor as a full screen
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
@@ -192,8 +195,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the app, sign in, and look at the frame: Home's tiles, the four tabs (five as admin), the
-   top-right icons, the back arrow from the assistant, Settings and a group's chat. On an iPhone: does the
-   blue bar run up behind the status bar? Say go, or what to change.
-2. Claude: slice 2, lists: `ListRow`, `Thumbnail`, `Avatar`, `SkeletonRow`, `EmptyState` → Groups, Events, Settings.
-3. Slice 3, banners.
+1. User: sign in and look at Groups, Events and Settings; decide the tight not-joined group row (shorter
+   button words, or no picture on those rows). Say go, or what to change.
+2. Claude: slice 3, banners: `Banner` + `useBanner`, replacing every inline error and adding "Saved".
+3. Slice 4, forms and the sheet.

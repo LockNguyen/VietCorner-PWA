@@ -1,5 +1,15 @@
-// Shown instantly while any page renders on the server.
-// Why: dynamic pages (they read cookies) aren't prefetched, so without this a tap shows nothing until the server responds.
+import SkeletonRow from "@/components/ui/SkeletonRow";
+
+const ROWS = [1, 2, 3, 4, 5, 6];
+
+// Shown at once while any page renders on the server: dynamic pages are not prefetched, so without it a
+// tap shows nothing until the server answers.
 export default function Loading() {
-  return <p className="p-4 text-lg text-gray-500">Loading…</p>;
+  return (
+    <ul aria-busy="true">
+      {ROWS.map((row) => (
+        <SkeletonRow key={row} />
+      ))}
+    </ul>
+  );
 }

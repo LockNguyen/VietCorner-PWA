@@ -4,6 +4,8 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   joinButton: { en: "Ask to join", vi: "Xin tham gia" } satisfies Text,
   pending: { en: "Waiting for approval", vi: "Đang chờ duyệt" } satisfies Text,
+  joined: { en: "Joined", vi: "Đã tham gia" } satisfies Text,
+  noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
   // Admin section
   adminHeading: { en: "Groups", vi: "Nhóm" } satisfies Text,

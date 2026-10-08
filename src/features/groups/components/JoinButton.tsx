@@ -1,6 +1,6 @@
 "use client";
 
-import ActionButton from "@/components/ui/ActionButton";
+import Button from "@/components/ui/Button";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { useRefresh } from "@/lib/useRefresh";
@@ -22,12 +22,8 @@ export default function JoinButton({ groupId }: { groupId: string }) {
   }
 
   return (
-    <ActionButton
-      pending={pending === "join"}
-      onClick={() => run("join", handleClick)}
-      className="rounded bg-blue-500 px-4 py-1 text-white"
-    >
+    <Button variant="quiet" pending={pending === "join"} onClick={() => run("join", handleClick)}>
       {t(STRINGS.joinButton)}
-    </ActionButton>
+    </Button>
   );
 }
