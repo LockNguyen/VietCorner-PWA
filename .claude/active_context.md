@@ -198,14 +198,19 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         admin page, the editor's screen (save, back to the list, cancel for good) and both sheets in place.
         Debt: a join request shows the full email beside two buttons and wraps to three lines (names in
         slice 5 shorten it); date and time fields not seen on an iPhone.
+  - [x] 5 Names (branch `ui-5-names`): foundation `profiles` (table + trigger + RLS, `getNames`, `useNames`,
+        `NameStep` shown by the layout, `NameSection` in Settings), `ui/Avatar`; chat, its notification, prayer
+        (`prayer_feed.author_name`) and join requests show names. RLS cases written (5 new, 1 changed).
+        **WAITS ON THE USER: run `features/profiles/schema.sql`, then section 4 of `features/prayer/schema.sql`.**
+        NOT run: `npm run test:rls` (needs that SQL). NOT seen: any of it on screen. `Avatar` has no screen
+        yet (slice 6). Debt: backlog B34 (email copies still stored).
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
   - [ ] 6 Conversations: bubbles → chat, prayer (by week, then person), assistant
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: sign in as an admin and walk the Admin tab: open an event, save with the title emptied (the red
-   line), save properly (back to the list), cancel and undo a date, add and remove a reminder and a group.
-   Then tap an event on the schedule and the X on a prayer request (the two sheets). Say go, or what to change.
-2. Claude: slice 5, names: the name-only step after the first sign-in, `Avatar`, names in place of emails.
-   The only slice with a database change (the user runs the SQL).
-3. Slice 6, conversations: chat, prayer, the assistant.
+1. User: run `src/features/profiles/schema.sql` (whole file), then section 4 of
+   `src/features/prayer/schema.sql`, both copied from the editor. Then `npm run test:rls` (expect 46).
+2. User: open the app (the name question appears once), answer it, check Settings → Name, a chat, the
+   prayer list. Say go, or what to change.
+3. Claude: slice 6, conversations: `Bubble`, `BubbleRun`, `TimeLine`, `Composer` → chat, prayer, the assistant.

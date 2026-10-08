@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { Names } from "@/features/profiles/types"; // PROFILES
 import type { Message } from "../types";
 
-type Props = { messages: Message[]; myUserId: string };
+type Props = { messages: Message[]; names: Names; myUserId: string };
 
 // Chat bubbles: mine on the right in blue, others on the left in gray. Scrolls to the newest message.
-export default function MessageList({ messages, myUserId }: Props) {
+export default function MessageList({ messages, names, myUserId }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -20,7 +21,7 @@ export default function MessageList({ messages, myUserId }: Props) {
           const mine = message.sender_id === myUserId;
           return (
             <li key={message.id} className={mine ? "text-right" : ""}>
-              <div className="text-xs text-gray-500">{message.sender_email}</div>
+              <div className="text-xs text-gray-500">{names[message.sender_id]}</div>
               <div className={`inline-block rounded-lg px-3 py-2 text-lg ${mine ? "bg-blue-500 text-white" : "bg-gray-100"}`}>
                 {message.body}
               </div>

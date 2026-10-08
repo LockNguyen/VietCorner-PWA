@@ -27,13 +27,15 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
 | `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
+| `Avatar` | A person's picture: the same default one for everybody until pictures can be set | `size`: `regular`, `small` | |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
 ## Conventions the list relies on
 - A component may render `next/link`'s `Link`, the app's anchor element. It never uses the router's hooks.
 - Icons come from `lucide-react` and are passed in as children by the screen; a component does not pick one.
-  The one exception is the chevron `ListRow` draws itself: it is part of what a row that opens something looks like.
+  The two exceptions: the chevron `ListRow` draws itself (it is part of what a row that opens something
+  looks like) and the figure inside `Avatar` (it is the default picture).
 - `ListRow` does not extend a native element's props, because it is one of three elements (link, button,
   plain) depending on what it does. Its props are the short list in the table.
 - `TextInput`, `TextArea` and `Select` share one look, the constant in `controlLook.ts`. It is the only file

@@ -3,6 +3,7 @@ import PageHeader from "@/components/PageHeader";
 import ChatRoom from "@/features/chat/components/ChatRoom"; // CHAT
 import { getChatRoom } from "@/features/chat/server/queries"; // CHAT
 import { getGroup } from "@/features/groups/server/queries";
+import { getNames } from "@/features/profiles/server/queries"; // PROFILES
 import { createClient } from "@/lib/supabase/server";
 
 // A group's page is its chat. The group itself comes from `groups`, the conversation from `chat`.
@@ -11,11 +12,12 @@ export default async function GroupPage({ params }: { params: Promise<{ groupId:
   const supabase = await createClient();
   const [group, room] = await Promise.all([getGroup(supabase, groupId), getChatRoom(supabase, groupId)]);
   if (!group) notFound();
+  const names = await getNames(supabase, room.messages.map((message) => message.sender_id)); // PROFILES
 
   return (
     <>
       <PageHeader title={group.name} backHref="/groups" />
-      <ChatRoom groupId={groupId} myUserId={room.userId} initialMessages={room.messages} />
+      <ChatRoom groupId={groupId} myUserId={room.userId} initialMessages={room.messages} initialNames={names} />
     </>
   );
 }

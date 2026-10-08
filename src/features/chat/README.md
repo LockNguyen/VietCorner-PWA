@@ -27,7 +27,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Shell | `src/app/groups/[groupId]/page.tsx` | The group's page: the group from `groups`, the room from here (`// CHAT` lines) |
 
 **Data:** `messages(id, group_id, sender_id, sender_email, body, created_at)`. `sender_id` and `sender_email` default from
-the login token, so nobody can post as someone else.
+the login token, so nobody can post as someone else. The sender is shown by name, looked up in `profiles`
+by `sender_id` (lines marked `PROFILES`); `sender_email` is only a record now.
 
 ## How "real time" works (two delivery paths)
 | App state | Path | Technology |
@@ -65,7 +66,7 @@ There is no WebRTC: that is for peer-to-peer media, and chat is client ↔ serve
 |---|---|---|
 | ~200 Realtime connections | Supabase | One per open chat screen |
 | ~500 MB database | Supabase | Text messages are tiny |
-| ~4 KB push payload | Push services | Body + email fits |
+| ~4 KB push payload | Push services | Body + name fits |
 | ~10 s function timeout | Netlify | Sending ~300 ms; big groups make fan-out slower |
 | Project pauses after ~7 idle days | Supabase free | No login, chat or push while paused (B9) |
 

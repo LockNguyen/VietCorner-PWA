@@ -88,7 +88,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Text | `Text` | Every piece of text outside a control | `tile`, `body`, `small`; tone `ink`, `subtle`, `danger` |
 | List | `ListRow` | Thumbnail, title, subtitle, trailing chevron or control | link, static |
 | | `Thumbnail` | A picture, or a tinted tile with an icon or letter | |
-| | `Avatar` | A person's picture, or the default one (built with names, slice 5) | `small` (chat), `regular` |
+| | `Avatar` | A person's picture: the default one for everybody today | `small` (chat), `regular` |
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
 | Controls | `Button` | Any button; shows the turning circle while pending | `primary`, `quiet`, `danger`, `text` |
@@ -125,7 +125,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
-  before the @. Nobody is greeted and no form of address is used.
+  before the @. A row that already carries two buttons (a join request) shows the name without the avatar. Nobody is greeted and no form of address is used.
 - **Pictures** are placeholders drawn in code until photos are planned (backlog B32).
 - **Icons:** `lucide-react`, outline. Always with a label in the tab bar; alone in the top bar.
 

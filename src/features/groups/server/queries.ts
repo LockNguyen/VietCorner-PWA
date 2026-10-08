@@ -28,7 +28,7 @@ export async function getGroups(supabase: SupabaseClient): Promise<GroupWithMemb
 export async function getJoinRequests(supabase: SupabaseClient): Promise<JoinRequest[]> {
   const { data } = await supabase
     .from("group_join_requests")
-    .select("group_id, user_id, user_email, requested_at")
+    .select("group_id, user_id, requested_at")
     .order("requested_at");
   return data ?? [];
 }

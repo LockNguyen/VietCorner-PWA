@@ -20,6 +20,5 @@ export type GroupWithMembership = Group & { joined: boolean; pending: boolean };
 export type JoinRequest = {
   group_id: string;
   user_id: string;
-  user_email: string;
   requested_at: string;
 };

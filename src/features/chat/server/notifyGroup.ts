@@ -1,4 +1,5 @@
 import "server-only";
+import { getNames } from "@/features/profiles/server/queries"; // PROFILES
 import { sendPush } from "@/features/push/server/sendPush"; // PUSH
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Message } from "../types";
@@ -9,16 +10,17 @@ import type { Message } from "../types";
 export async function notifyGroup(message: Message) {
   const admin = createAdminClient();
 
-  const [{ data: members }, { data: group }] = await Promise.all([
+  const [{ data: members }, { data: group }, names] = await Promise.all([
     admin.from("group_members").select("user_id").eq("group_id", message.group_id).neq("user_id", message.sender_id),
     admin.from("groups").select("name").eq("id", message.group_id).single(),
+    getNames(admin, [message.sender_id]), // PROFILES
   ]);
 
   await sendPush(
     (members ?? []).map((member) => member.user_id),
     {
       title: group?.name ?? "New message",
-      body: `${message.sender_email}: ${message.body}`,
+      body: `${names[message.sender_id]}: ${message.body}`,
       url: `/groups/${message.group_id}`,
       topic: `chat:${message.group_id}`, // per group: a quiet minute here does not silence another group
     },

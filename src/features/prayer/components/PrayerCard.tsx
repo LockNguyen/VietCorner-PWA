@@ -13,7 +13,7 @@ export default function PrayerCard({ request, canPray, onPray, onManage }: Props
   const { t, language } = useLanguage(); // I18N
   const body = useExpandableText<HTMLParagraphElement>(request.body);
 
-  const author = request.author_email ?? t(STRINGS.anonymous);
+  const author = request.author_name ?? t(STRINGS.anonymous);
   const date = new Date(request.created_at).toLocaleDateString(LOCALES[language], { day: "numeric", month: "short" });
 
   return (

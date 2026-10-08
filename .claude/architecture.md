@@ -68,9 +68,9 @@ feature README lists its own files.
 The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The rules that keep it honest:
 
 - **Features never import each other's internals.** Composition happens in `src/app/**`.
-- **Four features are foundations, not leaves.** `groups` and `permissions` are depended on in SQL (a
-  membership check, `has_permission`). `i18n` and `push` are imported directly, on lines marked `// I18N` and
-  `// PUSH`. A leaf feature never imports another leaf.
+- **Five features are foundations, not leaves.** `groups` and `permissions` are depended on in SQL (a
+  membership check, `has_permission`). `i18n`, `push` and `profiles` are imported directly, on lines marked
+  `// I18N`, `// PUSH` and `// PROFILES`. A leaf feature never imports another leaf.
 - **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`),
   or the steps under **Remove** in its README.
 - **Layers point one way:** page → components → hooks → `api.ts` → Supabase, and page → `server/queries.ts`;
@@ -110,7 +110,7 @@ The empty installable app every feature plugs into.
 
 | File | Job |
 |---|---|
-| `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata |
+| `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata. Shows the name question (`profiles`) in place of any page until it is answered. |
 | `src/app/manifest.ts` | `/manifest.webmanifest`: "Góc Việt" under the icon, icons, `display: standalone`, `start_url: /` |
 | `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`) |
 | `src/app/loading.tsx` | Grey placeholder rows at once while a dynamic page renders, so a tap gives feedback and the screen does not jump |
@@ -174,6 +174,13 @@ when there is no topic. It also owns the scheduler's side: `POST /api/reminders/
 minutes by a Supabase cron job, and `sendPushOnce` makes each reminder go out once. Tables:
 `push_subscriptions`, `push_cooldowns`, `push_sent_once` (the last two server-only).
 
+### 6.10 profiles → [README](../src/features/profiles/README.md)
+What a person is called. `profiles` holds one row per account, made by a database trigger and named after
+the email until the person answers "What is your name?", which `layout.tsx` shows in place of every screen
+after the first sign-in. Any signed-in user reads every name; each changes only their own (Settings → Name).
+Names are looked up by user id, never copied onto a message: pages call `getNames`, chat keeps up with new
+senders through `useNames`, and the prayer feed joins them in its view. Table: `profiles`.
+
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
 The language is stored per user in `user_settings`, chosen on the login screen before the account exists
@@ -225,13 +232,14 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
+| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Any signed-in user reads; the owner updates `name`; nobody inserts or deletes. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
 | `prayer_requests` | prayer | Members insert (3 columns), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
-| `prayer_feed` (view) | prayer | What members read: their groups' unanswered requests, without the author of an anonymous one and without the count. |
+| `prayer_feed` (view) | prayer | What members read: their groups' unanswered requests, with the author's name (`profiles`), without the author of an anonymous one and without the count. |
 | `prayer_reminders` | prayer | A weekly nudge per group, several allowed. Read and written only with `prayer.reminders`. |
 
 Every table is covered by `tests/rls.test.ts`.
@@ -283,6 +291,9 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
+| Names are looked up from one `profiles` table, not copied onto each message as emails were | A corrected name is corrected everywhere, old messages included; one place to protect | One more read per screen that shows people; chat fetches the name of a sender it has not met |
+| A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
+| The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
 | The event editor is a route (`/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
 | One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
@@ -351,3 +362,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: event rows: the time moved out of the picture into `RowLabel`, a bold fixed-width box before it; the picture is a plain grey tile. The join button reads "Join" / "Tham gia".
 - 2026-10-08: UI revamp, slice 3, banners: `Banner`, `useBanner` (+ `BannerProvider`, `BannerHost`), `useSave`. Every result of a tap is now a banner: sign-in errors, chat send failures, the notification toggle, groups and join requests, prayer (share, edit, answered, delete, reminders), events (save, cancel, undo, reminders). Inline error lines and their `failed` states are gone. Closes backlog B30.
 - 2026-10-08: UI revamp, slice 4, forms and the sheet: `Field`, `TextInput`, `TextArea`, `Select`, `Switch`, `Sheet` (adds `@radix-ui/react-dialog`), `LogoMark`. Sign-in in its new layout with its own error wording; the three admin sections as rows and labelled fields; the event editor moved from an overlay to its own screen (`/admin/events/[eventId]`, `hooks/useEventChanges.ts`); a form says what is wrong beside the field once Save was tried; event details and the prayer options are sheets. `ActionButton` deleted.
+- 2026-10-08: UI revamp, slice 5, names: new foundation `profiles` (table, trigger, RLS; `getNames`, `useNames`, `NameStep`, `NameSection`) and `ui/Avatar`. The layout asks "What is your name?" once after sign-in. Chat, the chat notification, prayer requests (`prayer_feed.author_name`) and join requests show names instead of emails. Needs `features/profiles/schema.sql` and section 4 of `features/prayer/schema.sql` to be run.

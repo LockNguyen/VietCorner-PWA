@@ -7,6 +7,8 @@ import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I
 import { getLanguage } from "@/features/i18n/server/queries"; // I18N
 import { DEFAULT_LANGUAGE } from "@/features/i18n/types"; // I18N
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
+import NameStep from "@/features/profiles/components/NameStep"; // PROFILES
+import { getMyProfile } from "@/features/profiles/server/queries"; // PROFILES
 import { createClient } from "@/lib/supabase/server";
 import { BannerProvider } from "@/lib/useBanner";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
@@ -31,16 +33,19 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const storedLanguage = user ? await getLanguage(supabase) : null;
   // PERMISSIONS: read once per page load, from the login token. Anyone who may manage something gets the tab.
   const permissions = user ? await getMyPermissions(supabase) : [];
+  // PROFILES: someone who has not given their name yet is asked before they see anything else.
+  const profile = user ? await getMyProfile(supabase, user.id) : null;
+  const askName = profile !== null && !profile.named;
 
   return (
     <html lang={storedLanguage ?? DEFAULT_LANGUAGE}>
       <body className="bg-surface text-ink">
         <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
           <BannerProvider>
-            <main className="mx-auto max-w-column pb-24">{children}</main>
+            <main className="mx-auto max-w-column pb-24">{askName ? <NameStep /> : children}</main>
             <BannerHost />
           </BannerProvider>
-          {user && <AppTabs showAdmin={permissions.length > 0} />}
+          {user && !askName && <AppTabs showAdmin={permissions.length > 0} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
         </LanguageProvider>
         <ServiceWorkerRegister />

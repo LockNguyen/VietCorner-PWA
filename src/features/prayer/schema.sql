@@ -1,4 +1,5 @@
--- PRAYER feature schema. Run once in Supabase → SQL Editor, after features/groups/schema.sql.
+-- PRAYER feature schema. Run once in Supabase → SQL Editor, after features/groups/schema.sql and
+-- features/profiles/schema.sql (the feed shows authors by name).
 -- Copy this file from the editor, not from terminal output (PowerShell garbles non-ASCII text).
 --
 -- Security in one sentence: members cannot read `prayer_requests` at all. They read `prayer_feed`, a view
@@ -90,6 +91,8 @@ insert into public.role_permissions (role, permission) values ('admin', 'prayer.
 -- RLS hides rows, not columns, so a policy alone could not keep `author_id` away from other members.
 -- This view is the only way to read requests. It runs with its owner's rights (it has to: members have no
 -- grant on the table), which means the `where` clause below IS the security. tests/rls.test.ts attacks it.
+-- This section can be run again by itself: it is how the view is changed (dropped, then made anew).
+drop view if exists public.prayer_feed;
 create view public.prayer_feed with (security_invoker = false) as
 select
   r.id,
@@ -100,10 +103,12 @@ select
   r.created_at,
   -- Lets the app show the author their own controls without ever sending an author id.
   r.author_id = auth.uid() as is_mine,
-  case when r.is_anonymous then null else r.author_email end as author_email
+  -- The name as it is today (`profiles`), so a corrected name shows on older requests too.
+  case when r.is_anonymous then null else p.name end as author_name
   -- `prayer_count` is deliberately absent: the author hears it in a notification, nobody reads it here.
 from public.prayer_requests r
 join public.groups g on g.id = r.group_id
+join public.profiles p on p.user_id = r.author_id
 where r.deleted_at is null
   and r.answered_at is null
   and g.deleted_at is null -- a removed group's requests leave the feed with it

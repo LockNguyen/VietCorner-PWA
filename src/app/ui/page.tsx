@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Settings, Users } from "lucide-react";
+import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
 import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
@@ -126,7 +127,7 @@ export default async function ShowcasePage() {
       <section>
         <Text as="h2" variant="small" tone="subtle">Rows as the admin screens compose them: a request, a reminder, a date on and off; then a group's name</Text>
         <ul>
-          <ListRow title="theauthenticmember@gmail.com" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
+          <ListRow title="Nguyễn Văn An" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
           <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Gỡ bỏ</Button>} />
           <ListRow title="Thứ Tư, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
           <ListRow title="Thứ Tư, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
@@ -139,9 +140,10 @@ export default async function ShowcasePage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">Sheet, LogoMark</Text>
+        <Text as="h2" variant="small" tone="subtle">Sheet, LogoMark, Avatar: regular and small</Text>
         <SheetDemo />
         <LogoMark />
+        <div className="flex items-center gap-2"><Avatar /><Avatar size="small" /></div>
       </section>
 
       <section className="flex flex-col gap-2">

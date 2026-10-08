@@ -6,9 +6,10 @@ be told when someone prays for yours.
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
 
 ## Setup
-Run `features/groups/schema.sql` and `features/push/schema.sql` first if they have not been run, then this
+Run `features/groups/schema.sql`, `features/profiles/schema.sql` and `features/push/schema.sql` first if they
+have not been run, then this
 `schema.sql` in Supabase → SQL Editor. Copy it from the editor, not from terminal output. It is **not** safe
-to run twice (plain `create`).
+to run twice (plain `create`), except section 4, the view, which is how the view is changed.
 
 ## Files
 | Layer | File | Job |
@@ -43,8 +44,8 @@ RLS hides **rows**, not columns. If members could read `prayer_requests`, any of
 console and select `author_id` for an "anonymous" request. So:
 
 1. Members have **no select grant** on the table beyond `id`, and a policy that shows them only their own ids.
-2. Everything is read through the **`prayer_feed` view**, which returns `null` for the email of an anonymous
-   request and carries no author id at all.
+2. Everything is read through the **`prayer_feed` view**, which returns `null` for the name of an anonymous
+   request and carries no author id at all. A named request shows the author's current name (`profiles`).
 3. The view's `is_mine` column answers the one question the app needs the author for ("is this mine?"), so
    the X button can be shown to the author without sending anyone an id.
 4. The author cannot be forged either: `author_id` and `author_email` have no insert or update grant and
@@ -88,8 +89,8 @@ And a small group can guess from timing or wording — no software fixes that.
 
 ## Expected behavior
 - With no group joined: "Join a group first…" and no composer.
-- Posting puts the request at the top. With "Hide my name", others see "Anonymous"; the author sees
-  "Anonymous (you)".
+- Posting puts the request at the top, under the author's name. With "Hide my name", others see
+  "Anonymous"; the author sees "Anonymous (you)".
 - A request longer than three lines on this screen shows "more…"; a shorter one shows no link.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author

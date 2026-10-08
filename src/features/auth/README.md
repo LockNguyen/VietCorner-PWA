@@ -56,6 +56,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   underneath (observed in the preview at phone width, 2026-10-08). A failure raises a banner in the app's
   own words: "Could not send the code…" or "That code did not work…", whatever the server said.
 - Reloading or closing the app keeps you signed in.
+- The first sign-in is followed by one question, the person's name (the `profiles` README).
 - Settings shows "Signed in as <email>"; signing out returns to `/login`.
 - The tab bar also shows on `/login`; tapping a tab just redirects back. Left as is so the shell needs no
   knowledge of auth.

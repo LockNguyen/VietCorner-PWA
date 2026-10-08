@@ -8,11 +8,11 @@ import { approveJoinRequest, declineJoinRequest } from "../api";
 import { STRINGS } from "../strings";
 import type { JoinRequest } from "../types";
 
-type Props = { request: JoinRequest; groupName: string | undefined };
+type Props = { request: JoinRequest; name: string; groupName: string | undefined };
 
 // One person waiting to join one group, with the two answers a manager can give.
 // A row of its own, so answering one request never blocks the requests around it.
-export default function JoinRequestRow({ request, groupName }: Props) {
+export default function JoinRequestRow({ request, name, groupName }: Props) {
   const { t } = useLanguage(); // I18N
   const { pending, save } = useSave<"approve" | "decline">();
   const failed = t(STRINGS.couldNotSave);
@@ -20,7 +20,7 @@ export default function JoinRequestRow({ request, groupName }: Props) {
 
   return (
     <ListRow
-      title={request.user_email}
+      title={name}
       subtitle={groupName}
       trailing={
         <>

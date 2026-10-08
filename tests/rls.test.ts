@@ -335,6 +335,51 @@ describe("user_settings (i18n)", () => {
   });
 });
 
+describe("profiles", () => {
+  const standIn = (user: TestUser) => user.email.split("@")[0];
+
+  it("exist for every account from the moment it is made, named after the email until the person is asked", async () => {
+    const { data } = await alice.client.from("profiles").select("name, named_at").eq("user_id", alice.id).single();
+
+    expect(data).toEqual({ name: standIn(alice), named_at: null });
+  });
+
+  it("are read by any signed-in user, and by nobody signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const { data: asBob } = await bob.client.from("profiles").select("name").eq("user_id", alice.id);
+    const { data: signedOut } = await anonymous.from("profiles").select("name");
+
+    expect(asBob).toEqual([{ name: standIn(alice) }]);
+    expect(signedOut ?? []).toEqual([]);
+  });
+
+  it("are changed by their owner, and by nobody else", async () => {
+    const { error: own } = await bob.client.from("profiles").update({ name: "Bob" }).eq("user_id", bob.id);
+    await bob.client.from("profiles").update({ name: "Hacked" }).eq("user_id", alice.id); // RLS: matches no row
+    const { data } = await admin.from("profiles").select("user_id, name").in("user_id", [alice.id, bob.id]);
+
+    expect(own).toBeNull();
+    expect(data?.find((row) => row.user_id === bob.id)?.name).toBe("Bob");
+    expect(data?.find((row) => row.user_id === alice.id)?.name).toBe(standIn(alice));
+  });
+
+  it("cannot be moved onto another account, created or deleted by a user", async () => {
+    const { error: moved } = await bob.client.from("profiles").update({ user_id: alice.id }).eq("user_id", bob.id);
+    const { error: created } = await bob.client.from("profiles").insert({ user_id: bob.id, name: "Second" });
+    const { error: deleted } = await bob.client.from("profiles").delete().eq("user_id", bob.id);
+
+    expect([moved, created, deleted].every((error) => error !== null)).toBe(true);
+  });
+
+  it("refuse an empty name", async () => {
+    const { error } = await bob.client.from("profiles").update({ name: "   " }).eq("user_id", bob.id);
+
+    expect(error).not.toBeNull();
+  });
+});
+
 describe("events", () => {
   // Alice is a member of the seeded group; Bob never joined it. The admin client stands in for the admin
   // page, which does not exist yet.
@@ -523,8 +568,8 @@ describe("prayer requests", () => {
     const anonymous = feed.find((request) => request.id === anonymousId);
     const named = feed.find((request) => request.id === namedId);
 
-    expect(named?.author_email).toBe(alice.email);
-    expect(anonymous?.author_email).toBeNull();
+    expect(named?.author_name).toBe(alice.email.split("@")[0]); // her stand-in name: she was never asked
+    expect(anonymous?.author_name).toBeNull();
     expect(anonymous?.is_mine).toBe(false);
     expect(JSON.stringify(anonymous)).not.toContain(alice.id); // no column carries the author's id
   });
