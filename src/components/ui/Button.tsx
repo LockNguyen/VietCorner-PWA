@@ -8,7 +8,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BASE =
-  "relative inline-flex min-h-touch items-center justify-center gap-2 rounded-control px-4 text-body font-medium " +
+  "relative inline-flex min-h-touch items-center justify-center rounded-control px-4 text-body font-medium " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action disabled:opacity-50";
 const VARIANTS = {
   primary: "bg-action text-on-action",
@@ -22,10 +22,13 @@ export default function Button({ variant = "primary", pending = false, pendingLa
   return (
     <button {...button} disabled={pending || disabled} aria-busy={pending} className={`${BASE} ${VARIANTS[variant]}`}>
       {pending && pendingLabel ? (
-        <>
-          <Spinner />
+        // One line of text with the circle in it, so the circle lines up with the letters, not the box.
+        <span>
+          <span className="pe-2">
+            <Spinner />
+          </span>
           {pendingLabel}
-        </>
+        </span>
       ) : (
         <>
           {/* Hidden, not removed: the button keeps its width while the circle sits on top. */}

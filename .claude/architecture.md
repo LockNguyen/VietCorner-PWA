@@ -335,3 +335,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: `docs/design-questions.md`: every design decision for the UI revamp, with the reference app's patterns written down and the questions it answers filled in. Nothing is implemented from it yet.
 - 2026-10-08: design decisions closed. `docs/design-system.md` holds the tokens (one accent `#1976D2`, system font, 17 base), the frame, the component list and the cross-component rules; `docs/design-questions.md` keeps the reasons. Still nothing implemented.
 - 2026-10-08: UI revamp, slice 0: design tokens in `globals.css` (colours, text sizes on a scalable root, px spacing, radii), `Text`, `Button` (with the pending state), `Spinner`, the `/ui` showcase and the component README. No existing screen restyled; `ActionButton` stays until its screens move.
+- 2026-10-08: `Spinner` aligns to the middle of the text beside it (it sat 1.5 to 3 px high), in a busy button's label and inline.

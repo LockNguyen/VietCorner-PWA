@@ -10,7 +10,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 |---|---|---|---|
 | `Text` | Any text outside a control | `variant`: `tile`, `body`, `small` · `tone`: `ink`, `subtle`, `danger` | `as`: `p`, `span`, `h1`, `h2`, `h3` |
 | `Button` | Any button | `primary`, `quiet`, `danger`, `text` | `pending`, `pendingLabel` |
-| `Spinner` | The turning circle | | |
+| `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
 ## Being replaced
 `ActionButton` is the busy button from before the design system. Screens move to `Button` as each is
