@@ -8,7 +8,8 @@ question here has an answer. When all are answered, the decided values move into
 - **REF** — taken from the reference app. Decided unless you object.
 - **PROPOSED** — the reference does not show it; my proposal, consistent with what it does show. Needs your yes.
 - **YOU** — only you can answer.
-- **DECIDED** — answered by you (2026-10-08).
+- **DECIDED** — answered or agreed by you (2026-10-08). Every proposal was agreed on that date; the decided
+  values are collected in [design-system.md](design-system.md).
 
 ---
 
@@ -97,13 +98,13 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 6 | Main colour | One mid-blue, close to the reference's (about `#2196F3`, which is already our status-bar colour). Final shade after Q4 and a contrast check with white text. | REF |
+| 6 | Main colour | One mid-blue, `#1976D2`. The reference's own blue (about `#2196F3`) gives white text a contrast of 3.1, under the standard minimum of 4.5, so this is the nearest blue that passes (4.6). | REF |
 | 7 | Background | Pure white. | REF |
 | 8 | How colourful | One accent on white, near-black and two greys. | REF |
 | 9 | A colour per feature? | No. All features share the one accent. | REF |
-| 10 | Dark mode | Not now. The reference is light only. Tokens are named so it can be added later. | PROPOSED |
-| 11 | Contrast target | Titles and body text at the stricter level (AAA). Grey subtitles at least the standard level (AA), which is darker than the reference's grey. See N5. | PROPOSED |
-| 12 | Destructive, success, warning colours | A plain red for destructive actions and errors, a green for success, used as text or a filled button only, never as a tinted background. The reference shows none. | PROPOSED |
+| 10 | Dark mode | Not now. The reference is light only. Tokens are named so it can be added later. | DECIDED |
+| 11 | Contrast target | Titles and body text at the stricter level (AAA). Grey subtitles at least the standard level (AA), which is darker than the reference's grey. See N5. | DECIDED |
+| 12 | Destructive, success, warning colours | A plain red for destructive actions and errors, a green for success, used as text or a filled button only, never as a tinted background. The reference shows none. | DECIDED |
 
 ## C. Type
 
@@ -122,7 +123,7 @@ rules (flat, one accent, system font, the same paddings).
 | 18 | Corners | Nearly square. About 4 pt on thumbnails and controls; photo tiles square. | REF |
 | 19 | Depth | Flat. Hairline dividers and white space; no shadows. | REF |
 | 20 | Density | Medium-airy: list rows about 72 pt, 12 pt side padding, 20 pt margins around tiles. | REF |
-| 21 | Smallest tappable thing | 48 pt. Rows are taller than that already; this governs buttons and icons. | PROPOSED |
+| 21 | Smallest tappable thing | 48 pt. Rows are taller than that already; this governs buttons and icons. | DECIDED |
 | 22 | Between list rows | A hairline divider starting at the row's content, not edge to edge. No cards. | REF |
 
 ## E. Icons and imagery
@@ -143,19 +144,19 @@ rules (flat, one accent, system font, the same paddings).
 | 29 | Which five tabs, in what order, and which opens first | Home, Events, Prayer, Groups, in that order; admins also get Admin. The app opens on **Home**. The assistant and Settings are two icons at the top right of the top bar. | DECIDED |
 | 30 | Top bar | Blue, centred white title. Left: nothing, or a back arrow on a sub-screen. Right: the assistant and Settings icons. | DECIDED |
 | 31 | Sub-screens | Full screen with a back arrow: every row's chevron implies "go in". Sheets only for a short choice (the prayer options). | REF |
-| 32 | Tablet and computer | A centred column at phone width. | PROPOSED |
-| 33 | Where the language toggle lives | On the login screen and in Settings (reached from the top-right icon). | PROPOSED |
+| 32 | Tablet and computer | A centred column at phone width. | DECIDED |
+| 33 | Where the language toggle lives | On the login screen and in Settings (reached from the top-right icon). | DECIDED |
 
 ## G. Controls and forms (not shown in the reference)
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 34 | Button styles | Four: **primary** (filled blue, white text), **quiet** (white, hairline border, dark text), **danger** (filled red), **text** (blue words, no box). All 48 pt tall, 4 pt corners, flat. | PROPOSED |
-| 35 | Field labels | Always above the field, in the subtitle grey. | PROPOSED |
-| 36 | Date and time pickers | The phone's own. | PROPOSED |
-| 37 | Few choices | Tappable rows with a tick, in the reference's row pattern, when five or fewer; a dropdown beyond that. | PROPOSED |
-| 38 | When a form says what is wrong | On submit, and then live while the field is being fixed. | PROPOSED |
-| 39 | On/off settings | Switches, as iPhone settings use. | PROPOSED |
+| 34 | Button styles | Four: **primary** (filled blue, white text), **quiet** (white, hairline border, dark text), **danger** (filled red), **text** (blue words, no box). All 48 pt tall, 4 pt corners, flat. | DECIDED |
+| 35 | Field labels | Always above the field, in the subtitle grey. | DECIDED |
+| 36 | Date and time pickers | The phone's own. | DECIDED |
+| 37 | Few choices | Tappable rows with a tick, in the reference's row pattern, when five or fewer; a dropdown beyond that. | DECIDED |
+| 38 | When a form says what is wrong | On submit, and then live while the field is being fixed. | DECIDED |
+| 39 | On/off settings | Switches, as iPhone settings use. | DECIDED |
 
 ## H. Feedback (not shown in the reference)
 
@@ -163,10 +164,10 @@ rules (flat, one accent, system font, the same paddings).
 |---|---|---|---|
 | 40 | Error banner (backlog B30): top or bottom, timed or tapped away | At the bottom, above the tab bar. It goes away by itself after a time and can be tapped away sooner. Several stack; tapping the stack shows all of them; tapping one removes it. One reusable piece any feature can raise (backlog B30 moves into the revamp). How long it stays is F5. | DECIDED |
 | 41 | Announce success ("Saved")? | Yes. Success uses the same banner as errors, in a different colour. | DECIDED |
-| 42 | Loading | Grey placeholder rows in the shape of the list being loaded, so the frame never jumps. | PROPOSED |
+| 42 | Loading | Grey placeholder rows in the shape of the list being loaded, so the frame never jumps. | DECIDED |
 | 43 | Tap feedback (backlog B31): vibration, sound, both, visual only | Not now. Stays in the backlog (B31). | DECIDED |
-| 44 | Animation | Subtle: screens slide, sheets rise, nothing bounces. The phone's "reduce motion" setting is honoured. | PROPOSED |
-| 45 | Empty screens | One plain sentence and, where there is one, the next step as a button. | PROPOSED |
+| 44 | Animation | Subtle: screens slide, sheets rise, nothing bounces. The phone's "reduce motion" setting is honoured. | DECIDED |
+| 45 | Empty screens | One plain sentence and, where there is one, the next step as a button. | DECIDED |
 
 ## I. Screen by screen
 
@@ -192,32 +193,32 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 56 | Home Screen name and icon of the installed app: see F4. |  | PROPOSED |
+| 56 | Home Screen name and icon of the installed app: see F4. |  | DECIDED |
 | 57 | Status bar and splash colour | The accent blue, so the top bar runs to the top of the phone. | REF |
 
 ## L. How we build it
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 58 | Roll-out | The frame first (top bar, tab bar, list row), then one feature at a time. | PROPOSED |
-| 59 | A showcase page of every component, for admins | Yes. | PROPOSED |
-| 60 | Dialogs, menus, sheets: hand-built or a small unstyled library | A small unstyled library for those three only. | PROPOSED |
-| 61 | Shared components never translate; the screen passes text in | Yes. | PROPOSED |
-| 62 | Shared components take no `className` | Yes. | PROPOSED |
-| 63 | Feature screens style layout only, never colour or type | Yes. | PROPOSED |
-| 64 | Catching visual breakage | Your review of the showcase page per change; automation later. | PROPOSED |
-| 65 | Which icon set (one dependency) | An outline set that ships single icons, so only the ones used are downloaded. | PROPOSED |
+| 58 | Roll-out | The frame first (top bar, tab bar, list row), then one feature at a time. | DECIDED |
+| 59 | A showcase page of every component, for admins | Yes. | DECIDED |
+| 60 | Dialogs, menus, sheets: hand-built or a small unstyled library | A small unstyled library for those three only. | DECIDED |
+| 61 | Shared components never translate; the screen passes text in | Yes. | DECIDED |
+| 62 | Shared components take no `className` | Yes. | DECIDED |
+| 63 | Feature screens style layout only, never colour or type | Yes. | DECIDED |
+| 64 | Catching visual breakage | Your review of the showcase page per change; automation later. | DECIDED |
+| 65 | Which icon set (one dependency) | An outline set that ships single icons, so only the ones used are downloaded. | DECIDED |
 
 ## N. New questions the reference raises
 
 | # | Question | Answer | Status |
 |---|---|---|---|
 | N1 | **A home screen.** The reference opens on "This week": a banner and big tiles into each area. We open straight on Groups. Do we add a home tab like it, and what are its tiles? | Yes. A Home tab with a house icon and three tiles: Events, Prayer, Groups. It becomes a dashboard later. The app opens on it. | DECIDED |
-| N2 | **Thumbnails.** Every reference row has a picture; we have none. Options: (a) admins upload a picture per group and event, which is a new feature (storage, an upload control, moderation); (b) a coloured tile with an icon or the first letter, no upload; (c) no tile at all, text-only rows. | (b) to start: it keeps the row's shape and the left alignment without a new feature. | PROPOSED |
+| N2 | **Thumbnails.** Every reference row has a picture; we have none. Options: (a) admins upload a picture per group and event, which is a new feature (storage, an upload control, moderation); (b) a coloured tile with an icon or the first letter, no upload; (c) no tile at all, text-only rows. | (b) to start: it keeps the row's shape and the left alignment without a new feature. | DECIDED |
 | N3 | **The menu.** What sits behind the top-left menu? | No menu for now. | DECIDED |
-| N4 | **Tab label size.** Follow the reference's small labels (about 10 pt) exactly, or enlarge them to about 12–13 pt for older eyes? Larger labels with five tabs means short words, especially in Vietnamese. | Enlarge. | PROPOSED |
-| N5 | **Subtitle grey.** Match the reference's light grey exactly, or darken it until it passes the standard contrast level? | Darken. It keeps the two-level look and stays readable. | PROPOSED |
-| N6 | **Text over photos.** Only if we use photo tiles (N1): always under a dark overlay strong enough for any photo? | Yes. | PROPOSED |
+| N4 | **Tab label size.** Follow the reference's small labels (about 10 pt) exactly, or enlarge them to about 12–13 pt for older eyes? Larger labels with five tabs means short words, especially in Vietnamese. | Enlarge. | DECIDED |
+| N5 | **Subtitle grey.** Match the reference's light grey exactly, or darken it until it passes the standard contrast level? | Darken. It keeps the two-level look and stays readable. | DECIDED |
+| N6 | **Text over photos.** Only if we use photo tiles (N1): always under a dark overlay strong enough for any photo? | Yes. | DECIDED |
 | N7 | **Top-bar actions.** The reference has two icons at the right. Do we want any (add, search), or keep the right side empty until a screen needs one? | Two: the assistant and Settings (Q29). | DECIDED |
 
 ## F. Follow-ups from your answers (2026-10-08)
@@ -228,14 +229,14 @@ rules (flat, one accent, system font, the same paddings).
 | F1 | **Names, avatars and form of address need a place to live and a moment to be asked.** Today an account is only an email. (a) Is a "What is your name, and how should we address you?" step right after the first sign-in part of this revamp? (b) Which forms of address are offered: cô, chú, bác, anh, chị, ông, bà, em, "by my name"? (c) Where does the app use it: a greeting on Home, notifications? (d) Until someone has answered, they are shown as the part of their email before the @. | A step right after the first sign-in asks for the person's **name only**. No form of address is asked or stored, and nothing greets them. Until someone has answered they are shown as the part of their email before the @. Avatars: a default one for everybody; setting one comes later. | DECIDED |
 | F2 | **Prayer grouping.** (a) Week labels: your list has "last month" between "3 weeks ago" and "Week of 10/2/2025", which overlaps both. Proposed rule: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>". (b) A week starts on Sunday, church time. (c) Inside a week, people are ordered by their newest request. (d) With twenty loaded at a time, a later page can add to a person's group already on screen. | As proposed: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>"; weeks start on Sunday in church time; people within a week ordered by their newest request; a later page can add to a group already on screen. | DECIDED |
 | F3 | **Prayer bubbles.** Where do Pray and the author's X go? Proposed: Pray as a small button under the bubble; the author's options by pressing the X at the bubble's corner, as now. | As proposed. | DECIDED |
-| F4 | Home Screen name and icon of the installed app (Q56). | Name on the phone: "Góc Việt" (a Home Screen label fits about twelve characters and cannot change with the language). Full name where there is room: "Góc Việt · VietCorners". Icon: a placeholder mark I draw, until the logo exists. | PROPOSED |
+| F4 | Home Screen name and icon of the installed app (Q56). | Name on the phone: "Góc Việt" (a Home Screen label fits about twelve characters and cannot change with the language). Full name where there is room: "Góc Việt · VietCorners". Icon: a placeholder mark I draw, until the logo exists. | DECIDED |
 | F5 | **How long a banner stays.** Proposed: success 4 seconds, errors 8 seconds, because an error an elderly member did not finish reading is worse than one that lingers. | Success 2 seconds, errors 8 seconds. | DECIDED |
 | F6 | **Home tiles.** "The other four pages": Events, Prayer, Groups, and which fourth — the assistant? | Three tiles: Events, Prayer, Groups. | DECIDED |
 | F7 | **Opening on Events while there is a Home tab.** The Home tab is first in the bar but the app opens on the second. Intended? The alternative is that Home opens first and shows this week's events on it. | The app opens on Home. | DECIDED |
 | F8 | **Banners and forms.** Banners are for what happened after a tap (saved, failed). A form's own hints ("Add a title in at least one language") stay beside the field, where the eye already is. | Yes: hints stay beside the field. The banner is one reusable piece that takes its content as parameters (the message, whether it is a success or an error, how long it stays), so any feature can raise any message through it. | DECIDED |
 | F9 | **Top-right icons have no labels** in the reference. It is the one place it breaks "every icon has a word". Keep them bare, or add a small word under each? | Icons only, with names a screen reader announces ("Assistant", "Settings"). | DECIDED |
-| F10 | **Placeholder images.** I draw them in code: a neutral mark for the logo, a plain avatar, soft tinted tiles for photos. No downloads needed, and nothing with unclear rights ends up in the app. Real photos from the web need a licence that allows use. | As proposed. | PROPOSED |
-| F11 | **Corner roundness of controls.** The first reference shows only thumbnails (about 4 pt). Messenger shows the controls themselves: pill bubbles, and fields and buttons at about 12 pt. Proposed: bubbles are pills; fields and buttons 12 pt; thumbnails and tiles stay 4 pt. This replaces the "4 pt corners" in Q18 and Q34 for controls. | As proposed. | PROPOSED |
-| F12 | **Hints inside fields, or labels above?** Messenger's sign-in puts the hint inside the field. That is fine for one field under a sentence that says what to enter, but in a long form the hint disappears as soon as typing starts. Proposed: sign-in follows Messenger (hint inside, under its sentence); every other form keeps a label above the field (Q35), with the same light-grey filled field. | As proposed. | PROPOSED |
-| F13 | **Times in chat.** Messenger shows none on bubbles. Proposed: a small centred time line where a conversation resumes after a break (an hour or more), and none on each bubble. | As proposed. | PROPOSED |
+| F10 | **Placeholder images.** I draw them in code: a neutral mark for the logo, a plain avatar, soft tinted tiles for photos. No downloads needed, and nothing with unclear rights ends up in the app. Real photos from the web need a licence that allows use. | As proposed. | DECIDED |
+| F11 | **Corner roundness of controls.** The first reference shows only thumbnails (about 4 pt). Messenger shows the controls themselves: pill bubbles, and fields and buttons at about 12 pt. Proposed: bubbles are pills; fields and buttons 12 pt; thumbnails and tiles stay 4 pt. This replaces the "4 pt corners" in Q18 and Q34 for controls. | As proposed. | DECIDED |
+| F12 | **Hints inside fields, or labels above?** Messenger's sign-in puts the hint inside the field. That is fine for one field under a sentence that says what to enter, but in a long form the hint disappears as soon as typing starts. Proposed: sign-in follows Messenger (hint inside, under its sentence); every other form keeps a label above the field (Q35), with the same light-grey filled field. | As proposed. | DECIDED |
+| F13 | **Times in chat.** Messenger shows none on bubbles. Proposed: a small centred time line where a conversation resumes after a break (an hour or more), and none on each bubble. | As proposed. | DECIDED |
 

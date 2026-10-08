@@ -180,8 +180,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - The follow-up rewrite can narrow a question that already stood alone: measure on the eval set before tuning.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run the one-line cron timeout change if not done; try the busy buttons (login, an admin list).
-   Say when to merge `double-tap` and push `main` (one Netlify build for everything since 7aec5b8).
-2. After the deploy: read `net._http_response` for `tookMs` and no more timeouts; phone session (chat push,
-   "prayed for you", cancellation and undo, join request and approval, an event reminder).
-3. Choose the next larger piece: launch readiness (B9), UI/UX revamp (B18), or account settings (B19).
+1. User: approve (or change) the UI revamp build plan: seven slices, a review pause after each. Confirm the
+   Cancel -> Undo fix on `double-tap`, which `ui-revamp` is stacked on.
+2. Claude: slice 0 (tokens, `Text`, `Button`, the showcase page), then slice 1 (top bar, tab bar, Home).
+3. Unshipped and waiting: `main` is 4 commits ahead of GitHub; `double-tap` and `ui-revamp` are not merged.
