@@ -2,7 +2,7 @@ import type { Text } from "@/features/i18n/types"; // I18N
 
 // Every word this feature shows a user, in both languages. Group names are data, not labels.
 export const STRINGS = {
-  joinButton: { en: "Ask to join", vi: "Xin tham gia" } satisfies Text,
+  joinButton: { en: "Join", vi: "Tham gia" } satisfies Text,
   pending: { en: "Waiting for approval", vi: "Đang chờ duyệt" } satisfies Text,
   joined: { en: "Joined", vi: "Đã tham gia" } satisfies Text,
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,

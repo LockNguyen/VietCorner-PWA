@@ -4,6 +4,7 @@ import Button from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
+import RowLabel from "@/components/ui/RowLabel";
 import PhotoTile from "@/components/ui/PhotoTile";
 import SectionHeading from "@/components/ui/SectionHeading";
 import SkeletonRow from "@/components/ui/SkeletonRow";
@@ -70,13 +71,14 @@ export default async function ShowcasePage() {
       </section>
 
       <section>
-        <Text as="h2" variant="small" tone="subtle">ListRow: link, static with a button, called off, a choice, no picture; then SkeletonRow</Text>
+        <Text as="h2" variant="small" tone="subtle">ListRow: link, with a button, with a RowLabel (called off, two-word time, long title), a choice; then SkeletonRow</Text>
         <SectionHeading>Hôm nay</SectionHeading>
         <ul>
           <ListRow href="/ui" leading={<Thumbnail><Users /></Thumbnail>} title="Học Kinh Thánh" subtitle="Đã tham gia" />
-          <ListRow leading={<Thumbnail><Users /></Thumbnail>} title="Nhóm Thanh Niên" trailing={<Button variant="quiet">Xin tham gia</Button>} />
-          <ListRow href="/ui" leading={<Thumbnail>7:00 PM</Thumbnail>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
-          <ListRow href="/ui" leading={<Thumbnail>19:00</Thumbnail>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
+          <ListRow leading={<Thumbnail><Users /></Thumbnail>} title="Nhóm Thanh Niên" trailing={<Button variant="quiet">Tham gia</Button>} />
+          <ListRow href="/ui" leading={<><RowLabel>7:00 PM</RowLabel><Thumbnail /></>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
+          <ListRow href="/ui" leading={<><RowLabel>10:30 AM</RowLabel><Thumbnail /></>} title="Sunday service" subtitle="Main hall" />
+          <ListRow href="/ui" leading={<><RowLabel>19:00</RowLabel><Thumbnail /></>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
           <ListRow href="/ui" title="Tiếng Việt" current trailing={<Check aria-hidden className="shrink-0 text-action" />} />
           <ListRow href="/ui" title="English" trailing={null} />
           <SkeletonRow />

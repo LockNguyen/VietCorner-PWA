@@ -98,8 +98,9 @@ every case the list has to handle (see **Seed data** below).
 
 ## Expected behavior
 - The Events tab lists every upcoming date, oldest first, grouped under Today / Tomorrow / a weekday. Each
-  row shows the time where a picture would be, the title, and beneath it the location and whether it is a
-  group event.
+  row starts with the time in bold, in a box of fixed width ("7:00" over "PM"), then the picture, then the
+  title with the location and whether it is a group event beneath. Times, pictures and titles line up down
+  the list.
 - A cancelled date is grey, struck through and says "Cancelled" beneath, not hidden.
 - Group events show a small "Group event" badge and only appear for members of that group.
 - Tapping a row opens a panel with the full date, end time, location and description; tapping outside closes it.

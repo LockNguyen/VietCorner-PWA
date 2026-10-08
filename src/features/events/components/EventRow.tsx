@@ -1,6 +1,7 @@
 "use client";
 
 import ListRow from "@/components/ui/ListRow";
+import RowLabel from "@/components/ui/RowLabel";
 import Thumbnail from "@/components/ui/Thumbnail";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { formatTime } from "../formatting";
@@ -9,7 +10,7 @@ import type { Occurrence } from "../types";
 
 type Props = { occurrence: Occurrence; onOpen: () => void };
 
-// One line of the schedule: the time where a picture would be, the title, and what else matters at a glance.
+// One line of the schedule: the time, the picture, the title, and what else matters at a glance.
 export default function EventRow({ occurrence, onOpen }: Props) {
   const { t, language } = useLanguage(); // I18N
   const { event, startsAt, canceled } = occurrence;
@@ -18,7 +19,12 @@ export default function EventRow({ occurrence, onOpen }: Props) {
   return (
     <ListRow
       onClick={onOpen}
-      leading={<Thumbnail>{formatTime(startsAt, language)}</Thumbnail>}
+      leading={
+        <>
+          <RowLabel>{formatTime(startsAt, language)}</RowLabel>
+          <Thumbnail />
+        </>
+      }
       title={event.text.title}
       subtitle={notes.filter(Boolean).join(" · ")}
       tone={canceled ? "off" : "normal"}

@@ -187,7 +187,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] 2 Lists (branch `ui-2-lists`): `ListRow`, `Thumbnail`, `SectionHeading`, `EmptyState`, `SkeletonRow` →
         Groups, the event schedule, Settings, the notification toggle, loading. Seen in `/ui` and on the sign-in
         screen. NOT seen: the three signed-in screens themselves. `Avatar` moves to slice 5 (first used there).
-        Open: a not-joined group's name wraps tightly beside the picture and the "Ask to join" button.
+        After review: the join button reads "Join"; event times sit in a bold fixed-width box before a plain picture (`RowLabel`).
   - [ ] 3 Banners → replace every inline error
   - [ ] 4 Forms and the sheet → sign-in, admin sections, the event editor as a full screen
   - [ ] 5 Names: the name step after first sign-in; names and default avatars everywhere (any signed-in member can see a name)
