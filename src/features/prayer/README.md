@@ -30,10 +30,10 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
 | State | `hooks/useWhenVisible.ts` | "Call this when the element scrolls into view" |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
-| UI | `components/PrayerComposer.tsx` | The words, the group, "Hide my name" |
+| UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words, the group, "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
 | UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
-| UI | `components/PrayerBubble.tsx` | One request: someone else's carries Pray as a chip on its corner; my own opens its options when tapped |
+| UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip on its right edge; my own opens its options when tapped |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -76,7 +76,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - **Editing changes the words only.** The group and "Hide my name" stay as posted. An edit leaves no mark.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
-- **A request is shown whole.** No "more…": nothing sits between two requests but the Pray chip, which is what makes it plain which request a button belongs to (decided 2026-10-08, after two layouts that were not).
+- **A request is shown whole.** No "more…", no date and no group between requests: only the Pray chip, which overlaps the bubble it belongs to (decided 2026-10-08, after three layouts that were unclear).
 - **A prayer reminder is a weekly nudge to a group**, set by whoever holds `prayer.reminders`: a weekday and a
   church-time hour, several per group. It says the group's name and "Time to pray together", in each
   member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
@@ -101,7 +101,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
-- Someone else's request has a small Pray chip on its lower corner. Your own has none: tapping the bubble opens Answered / Edit / Delete / Cancel.
+- Someone else's request has a round purple Pray chip overlapping its right edge; after a tap it is a green tick that takes no taps, for an hour. Your own has none: tapping the bubble opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but
@@ -126,7 +126,7 @@ real notification arriving on a phone.**
 - An author gets at most one "prayed for you" notification a minute, across all their requests (the `push`
   README). The next one carries the running total, so no prayer goes uncounted, only unannounced.
 - Two members with the same name share a group within a week: the feed carries no author id to tell them apart.
-- The Pray chip is 32 high, below the 48 the rest of the app keeps: accepted for this one control (decided 2026-10-08).
+- A request is written in a sheet opened by the round plus at the top right; sharing closes it, a failure leaves the words in place.
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
 ## Not built yet

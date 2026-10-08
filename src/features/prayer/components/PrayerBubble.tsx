@@ -1,5 +1,6 @@
 "use client";
 
+import { Check } from "lucide-react";
 import Bubble from "@/components/ui/Bubble";
 import Chip from "@/components/ui/Chip";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -8,8 +9,8 @@ import type { PrayerRequest } from "../types";
 
 type Props = { request: PrayerRequest; canPray: boolean; onPray: () => void; onManage: () => void };
 
-// One request. Someone else's carries Pray on its corner; my own opens its options when tapped.
-// Nothing sits between two requests, so there is no doubt which one a button belongs to.
+// One request. Someone else's has the round Pray button on its right edge, which turns into a green tick
+// once prayed; my own opens its options when tapped.
 export default function PrayerBubble({ request, canPray, onPray, onManage }: Props) {
   const { t } = useLanguage(); // I18N
 
@@ -22,18 +23,20 @@ export default function PrayerBubble({ request, canPray, onPray, onManage }: Pro
   }
 
   return (
-    // The padding is the room the chip takes below the bubble.
-    <div className="flex w-full flex-col items-start pb-6">
-      <Bubble
-        tone="theirs"
-        corner={
-          <Chip tone={canPray ? "idle" : "done"} onClick={onPray} disabled={!canPray}>
-            {t(canPray ? STRINGS.prayButton : STRINGS.prayed)}
+    <div className="flex w-full items-end">
+      <Bubble tone="theirs">{request.body}</Bubble>
+      {/* Pulled over the bubble's edge, so it plainly belongs to this request and no other. */}
+      <div className="-ms-3">
+        {canPray ? (
+          <Chip tone="pray" label={t(STRINGS.prayButton)} onClick={onPray}>
+            🙏
           </Chip>
-        }
-      >
-        {request.body}
-      </Bubble>
+        ) : (
+          <Chip tone="done" label={t(STRINGS.prayed)} disabled>
+            <Check aria-hidden />
+          </Chip>
+        )}
+      </div>
     </div>
   );
 }

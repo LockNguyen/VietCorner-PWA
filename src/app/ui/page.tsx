@@ -153,7 +153,7 @@ export default async function ShowcasePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the Pray chip on the corner (idle, done), my own; Composer is held above the tabs</Text>
+        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the round Pray chip on the edge (to give, given), my own; Composer is held above the tabs</Text>
         <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
           <Bubble tone="theirs">Chào cả nhà</Bubble>
@@ -170,15 +170,17 @@ export default async function ShowcasePage() {
         </BubbleRun>
         <TimeLine>Tuần này</TimeLine>
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
-          <div className="flex w-full flex-col items-start pb-6">
-            <Bubble tone="theirs" corner={<Chip>🙏 Cầu nguyện</Chip>}>Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
+          <div className="flex w-full items-end">
+            <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
+            <div className="-ms-3"><Chip tone="pray" label="Pray">🙏</Chip></div>
           </div>
-          <div className="flex w-full flex-col items-start pb-6">
-            <Bubble tone="theirs" corner={<Chip tone="done" disabled>🙏 Đã cầu nguyện</Chip>}>Amen</Bubble>
+          <div className="flex w-full items-end">
+            <Bubble tone="theirs">Amen</Bubble>
+            <div className="-ms-3"><Chip tone="done" label="Prayed" disabled><Check aria-hidden /></Chip></div>
           </div>
         </BubbleRun>
         <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>
-          <Bubble tone="theirs" onClick={undefined}>Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
+          <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
         </BubbleRun>
         <ComposerDemo />
       </section>

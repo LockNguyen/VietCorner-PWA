@@ -214,11 +214,18 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] **UI-wide review before the merge.** Code and security passes done; all 16 findings fixed on the
         user's word (the comment trim left the assistant's hooks alone: mentor-mode code). SQL for the names
         policy is run; `npm run test:rls` 49/49, `npm test` 90/90, build clean on Next.js 16.4.0.
-        NOT done: the on-screen pass. Claude in Chrome lists no connected browser, and the built-in browser
-        pane is not signed in. Seen in `/ui` only: the Pray chip (after moving it off the text), the tick.
+        Prayer screen redone on the user's direction: round purple Pray chip on the bubble's edge, green
+        tick once given; a round plus opens the new-request sheet.
+        On-screen pass, partly done in the user's Chrome (a member's account, tab in the background, so page
+        content and measurements only, no screenshots): Home, Events (server output), Prayer (chips, both
+        sheets), Groups, a chat, Settings, the assistant's empty state; /admin answers 404 to a member.
+        NOT seen: anything as a picture; the admin screens; the name question; a real save.
+        Found: Settings shows "Name" twice (heading and field label).
+  - [ ] **Admins approve names** (asked for 2026-10-08): a name change becomes a request an admin answers,
+        like a join request. Needs a plan and the user's answers first; nothing built.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: either connect the Claude in Chrome extension (it lists no browser), or sign in at
-   localhost:3000 inside the app's own Browser pane.
-2. Claude: the on-screen pass of every screen, both languages; report findings first.
-3. User decides: emails beside names in chat and prayer; then the merge of `ui-0` … `ui-6` into `main`.
+1. User: answer the questions on admin-approved names; bring the Chrome tab to the front (or sign in as an
+   admin there) if screenshots and the admin screens are wanted.
+2. Claude: plan, then build, admin-approved names (a database change; the user runs the SQL).
+3. User decides: the merge of `ui-0` … `ui-6` into `main`.

@@ -30,11 +30,14 @@ Defined once in `src/app/globals.css` (`@theme`). Components use the token name,
 | `subtle` | `#5F5F5F` | Subtitles, labels, inactive tabs, hints inside fields | 6.4 on white, 5.6 on `fill` |
 | `line` | `#E0E0E0` | Hairline dividers and quiet borders | |
 | `danger` | `#C62828` | Destructive buttons, error banners | 5.6 with white |
-| `success` | `#2E7D32` | Success banners | 5.1 with white |
+| `success` | `#2E7D32` | Success banners; the tick of a prayer already given | 5.1 with white |
+| `success-soft` | `#E8F5E9` | Behind that tick | |
+| `pray` | `#7B1FA2` | The outline of the Pray chip (decided 2026-10-08: purple, the colour of the praying hands) | |
+| `pray-soft` | `#F3E5F5` | Behind the Pray chip | |
 
 - The reference's own blue (`#2196F3`) gives white text a contrast of 3.1, below the standard minimum of
   4.5, so `action` is the nearest blue that passes. The tab bar is pure white for the same reason.
-- No other colour exists. A feature never gets its own.
+- No other colour exists. A feature never gets its own; `pray` is the one exception, asked for by name.
 
 ### Type
 The phone's system font. Sentence case; never capitals-only.
@@ -104,7 +107,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Overlay | `Sheet` | A short choice, or a few details, rising from the bottom | |
 | Conversation | `Bubble` | One message | `mine`, `theirs`, `failed` (an answer that did not come) |
 | | `BubbleRun` | One speaker's consecutive messages: name above, avatar beside the last | |
-| | `Chip` | A reaction on the corner of a bubble (Pray) | `idle`, `done` |
+| | `Chip` | A round reaction beside a bubble (Pray) | `pray`, `done` |
 | | `TimeLine` | A small centred time or week label | |
 | | `Composer` | The pill field and send button, held at the bottom above the tab bar | |
 | Placeholder | `LogoMark` | The stand-in logo until the church has one | |
@@ -125,8 +128,9 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   `ink` text; mine at the right on `action` with `on-action` text. Bubbles at most 70% wide. 4 between
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person,
-  as runs like chat's. Nothing sits between two requests: Pray is a `Chip` on the bubble's corner, my own
-  request opens its options when tapped, and the list shows no date or group.
+  as runs like chat's. Nothing sits between two requests: Pray is a round `Chip` overlapping the bubble's
+  right edge (purple; a green tick once given), my own request opens its options when tapped, and the list
+  shows no date or group. A request is written in a sheet, opened by the round plus at the top right.
   A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
   before the @. A row that already carries two buttons (a join request) shows the name without the avatar. Nobody is greeted and no form of address is used.

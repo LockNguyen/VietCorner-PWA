@@ -13,6 +13,7 @@ export const STRINGS = {
   deleted: { en: "Deleted", vi: "Đã xóa" } satisfies Text,
 
   // Composer
+  addRequest: { en: "New prayer request", vi: "Lời xin cầu nguyện mới" } satisfies Text,
   bodyPlaceholder: { en: "What can we pray for?", vi: "Bạn cần cầu nguyện cho điều gì?" } satisfies Text,
   shareWith: { en: "Share with", vi: "Chia sẻ với" } satisfies Text,
   postAnonymously: { en: "Hide my name", vi: "Ẩn tên tôi" } satisfies Text,
@@ -26,8 +27,8 @@ export const STRINGS = {
   // One request
   anonymous: { en: "Anonymous", vi: "Ẩn danh" } satisfies Text,
   you: { en: "you", vi: "bạn" } satisfies Text,
-  prayButton: { en: "🙏 Pray", vi: "🙏 Cầu nguyện" } satisfies Text,
-  prayed: { en: "🙏 Prayed", vi: "🙏 Đã cầu nguyện" } satisfies Text,
+  prayButton: { en: "Pray", vi: "Cầu nguyện" } satisfies Text,
+  prayed: { en: "Prayed", vi: "Đã cầu nguyện" } satisfies Text,
   manage: { en: "Options for this request", vi: "Tùy chọn cho lời xin này" } satisfies Text,
   yourWords: { en: "Your request", vi: "Lời xin của bạn" } satisfies Text,
   loadingOlder: { en: "Loading…", vi: "Đang tải…" } satisfies Text,

@@ -1,7 +1,9 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
+import IconButton from "@/components/ui/IconButton";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
@@ -18,7 +20,7 @@ import RequestOptions from "./RequestOptions";
 
 type Props = { initialRequests: PrayerRequest[]; groups: PostableGroup[]; userId: string };
 
-// The Prayer tab: the composer, then every request from my groups, by week and then by person.
+// The Prayer tab: the button that adds a request, then every request from my groups, by week and by person.
 // It connects the two hooks to the components below it; each of those only renders.
 export default function PrayerBoard({ initialRequests, groups, userId }: Props) {
   const { t } = useLanguage(); // I18N
@@ -26,6 +28,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
   const cooldown = usePrayerCooldown(userId);
   const showBanner = useBanner();
   const [managing, setManaging] = useState<PrayerRequest | null>(null); // whose options are open
+  const [writing, setWriting] = useState(false); // the sheet for a new request is open
 
   // Says how an action went, then passes its answer on. `done` is left out where the screen already shows it.
   async function report(action: Promise<boolean>, done?: Text): Promise<boolean> {
@@ -45,7 +48,11 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
 
   return (
     <div className="flex flex-col gap-4">
-      <PrayerComposer groups={groups} onPost={(request) => report(feed.post(request), STRINGS.shared)} />
+      <div className="flex justify-end px-3 pt-2">
+        <IconButton tone="filled" label={t(STRINGS.addRequest)} onClick={() => setWriting(true)}>
+          <Plus />
+        </IconButton>
+      </div>
 
       {feed.requests.length === 0 ? (
         <EmptyState message={t(STRINGS.emptyState)} />
@@ -56,6 +63,14 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
       )}
 
       {feed.hasMore && <OlderRequestsMarker onReached={() => report(feed.loadOlder())} loadedSoFar={feed.requests.length} />}
+
+      {writing && (
+        <PrayerComposer
+          groups={groups}
+          onPost={(request) => report(feed.post(request), STRINGS.shared)}
+          onClose={() => setWriting(false)}
+        />
+      )}
 
       {managing && (
         <RequestOptions

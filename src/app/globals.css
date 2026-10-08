@@ -11,6 +11,9 @@
   --color-line: #e0e0e0;
   --color-danger: #c62828;
   --color-success: #2e7d32;
+  --color-success-soft: #e8f5e9;
+  --color-pray: #7b1fa2;
+  --color-pray-soft: #f3e5f5;
 
   /* Sizes in rem follow the root size below, so one setting scales all text. 1rem = 17px by default. */
   --text-tile: 1.1765rem;
