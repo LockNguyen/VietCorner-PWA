@@ -9,8 +9,8 @@ import type { PrayerRequest } from "../types";
 
 type Props = { request: PrayerRequest; canPray: boolean; onPray: () => void; onManage: () => void };
 
-// One request. Someone else's has the round Pray button on its right edge, which turns into a green tick
-// once prayed; my own opens its options when tapped.
+// One request. Someone else's has the round Pray button beside it, level with its middle, which turns
+// into a green tick once prayed; my own opens its options when tapped.
 export default function PrayerBubble({ request, canPray, onPray, onManage }: Props) {
   const { t } = useLanguage(); // I18N
 
@@ -23,20 +23,17 @@ export default function PrayerBubble({ request, canPray, onPray, onManage }: Pro
   }
 
   return (
-    <div className="flex w-full items-end">
+    <div className="flex w-full items-center gap-2">
       <Bubble tone="theirs">{request.body}</Bubble>
-      {/* Pulled over the bubble's edge, so it plainly belongs to this request and no other. */}
-      <div className="-ms-3">
-        {canPray ? (
-          <Chip tone="pray" label={t(STRINGS.prayButton)} onClick={onPray}>
-            🙏
-          </Chip>
-        ) : (
-          <Chip tone="done" label={t(STRINGS.prayed)} disabled>
-            <Check aria-hidden />
-          </Chip>
-        )}
-      </div>
+      {canPray ? (
+        <Chip tone="pray" label={t(STRINGS.prayButton)} onClick={onPray}>
+          🙏
+        </Chip>
+      ) : (
+        <Chip tone="done" label={t(STRINGS.prayed)} disabled>
+          <Check aria-hidden />
+        </Chip>
+      )}
     </div>
   );
 }

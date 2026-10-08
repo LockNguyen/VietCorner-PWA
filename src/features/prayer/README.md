@@ -33,7 +33,7 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words, the group, "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
 | UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
-| UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip on its right edge; my own opens its options when tapped |
+| UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip beside it; my own opens its options when tapped |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -76,7 +76,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - **Editing changes the words only.** The group and "Hide my name" stay as posted. An edit leaves no mark.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
-- **A request is shown whole.** No "more…", no date and no group between requests: only the Pray chip, which overlaps the bubble it belongs to (decided 2026-10-08, after three layouts that were unclear).
+- **A request is shown whole.** No "more…", no date and no group between requests: only the Pray chip, which sits on the same line as the bubble it belongs to (decided 2026-10-08, after three layouts that were unclear).
 - **A prayer reminder is a weekly nudge to a group**, set by whoever holds `prayer.reminders`: a weekday and a
   church-time hour, several per group. It says the group's name and "Time to pray together", in each
   member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
@@ -94,14 +94,15 @@ And a small group can guess from timing or wording — no software fixes that.
   "Anonymous"; the author sees "Anonymous (you)".
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
-  their name, people in the order of their newest request; anonymous requests share one group. Every
+  their name: my own named requests first, then people in the order of their newest request; anonymous
+  requests share one group (my anonymous ones stay there, or their place would give them away). Every
   request is at the left, mine included; my own named group says "(you)".
   (This layout has not been looked at on any screen yet, 2026-10-08.)
 - A request shows in full, as a grey bubble. No date and no group name on the list: the week label is the time.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
-- Someone else's request has a round purple Pray chip overlapping its right edge; after a tap it is a green tick that takes no taps, for an hour. Your own has none: tapping the bubble opens Answered / Edit / Delete / Cancel.
+- Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has none: tapping the bubble opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but

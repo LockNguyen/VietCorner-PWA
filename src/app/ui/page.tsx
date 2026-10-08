@@ -170,13 +170,13 @@ export default async function ShowcasePage() {
         </BubbleRun>
         <TimeLine>Tuần này</TimeLine>
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
-          <div className="flex w-full items-end">
+          <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
-            <div className="-ms-3"><Chip tone="pray" label="Pray">🙏</Chip></div>
+            <Chip tone="pray" label="Pray">🙏</Chip>
           </div>
-          <div className="flex w-full items-end">
+          <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Amen</Bubble>
-            <div className="-ms-3"><Chip tone="done" label="Prayed" disabled><Check aria-hidden /></Chip></div>
+            <Chip tone="done" label="Prayed" disabled><Check aria-hidden /></Chip>
           </div>
         </BubbleRun>
         <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>

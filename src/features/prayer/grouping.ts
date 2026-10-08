@@ -28,7 +28,8 @@ function weekStartDay(instant: Date): number {
 }
 
 // `requests` are newest first, as the feed holds them. That order is kept: the newest week first, people
-// in a week by their newest request, and a person's requests newest first.
+// in a week by their newest request, and a person's requests newest first. One exception (decided
+// 2026-10-08): in every week my own named requests come before everyone else's.
 export function byWeekThenPerson(requests: PrayerRequest[], now = new Date()): WeekGroup[] {
   const thisWeek = weekStartDay(now);
   const weeks: WeekGroup[] = [];
@@ -49,6 +50,9 @@ export function byWeekThenPerson(requests: PrayerRequest[], now = new Date()): W
 
     person.requests.push(request);
   }
+
+  // A stable sort: only my group moves, to the front; the others keep the order they arrived in.
+  for (const week of weeks) week.people.sort((a, b) => Number(b.mine) - Number(a.mine));
 
   return weeks;
 }

@@ -128,8 +128,8 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   `ink` text; mine at the right on `action` with `on-action` text. Bubbles at most 70% wide. 4 between
   bubbles of one run, 16 between runs. No time on a bubble; a `TimeLine` where a conversation resumes after
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person,
-  as runs like chat's. Nothing sits between two requests: Pray is a round `Chip` overlapping the bubble's
-  right edge (purple; a green tick once given), my own request opens its options when tapped, and the list
+  as runs like chat's. Nothing sits between two requests: Pray is a round `Chip` on the bubble's
+  own line, 8 to its right and level with its middle (purple; a green tick once given), my own request opens its options when tapped, and the list
   shows no date or group. A request is written in a sheet, opened by the round plus at the top right.
   A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email

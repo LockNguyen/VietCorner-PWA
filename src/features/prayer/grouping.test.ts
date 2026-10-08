@@ -74,6 +74,19 @@ describe("the prayer list by week, then by person", () => {
     ]);
   });
 
+  it("puts my own named requests first in a week, however old, and leaves the others in order", () => {
+    const [week] = byWeekThenPerson(
+      [
+        request("2026-10-14T15:00:00Z", "Binh"),
+        request("2026-10-13T15:00:00Z", "An"),
+        request("2026-10-12T15:00:00Z", "Chi", true),
+      ],
+      NOW,
+    );
+
+    expect(week.people.map((person) => person.name)).toEqual(["Chi", "Binh", "An"]);
+  });
+
   it("keeps a person apart from themselves in another week", () => {
     const weeks = byWeekThenPerson([request("2026-10-13T15:00:00Z", "An"), request("2026-10-06T15:00:00Z", "An")], NOW);
 
