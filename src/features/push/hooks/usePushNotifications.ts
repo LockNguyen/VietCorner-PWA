@@ -15,10 +15,8 @@ export function usePushNotifications() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return setStatus("unsupported");
     if (Notification.permission === "denied") return setStatus("blocked");
 
-    // Already subscribed → save it again. Why: the server can only push to subscriptions stored in the
-    // database, and that row may be gone (deleted after a 410, another user signed in on this device) or
-    // the browser may have replaced the subscription. Re-saving on every open repairs this silently.
-    // `serviceWorker.ready` waits for sw.js, because subscriptions belong to the service worker.
+    // Already subscribed → save it again: the stored row may be gone or the browser may have replaced the
+    // subscription (the push README). `serviceWorker.ready` waits for sw.js, which owns subscriptions.
     navigator.serviceWorker.ready
       .then((registration) => registration.pushManager.getSubscription())
       .then((subscription) => {

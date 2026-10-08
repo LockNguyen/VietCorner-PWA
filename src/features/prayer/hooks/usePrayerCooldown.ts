@@ -8,11 +8,8 @@ import { loadPrayedAt, savePrayedAt } from "../storage";
 // on screen. A timer per request would be many timers to start, resume and cancel for the same result.
 const CLOCK_TICK_MS = 30_000;
 
-// Which requests this device may pray for right now.
-//
-// Nothing here counts down. The device remembers WHEN it prayed (storage.ts), and this hook only keeps a
-// reading of the clock fresh, so the answer is right however long the app was closed. That is what makes
-// the pause impossible to leave stuck: there is no timer whose loss would matter.
+// Which requests this device may pray for right now. Nothing counts down: the device remembers WHEN it
+// prayed, and this hook keeps a reading of the clock fresh (the prayer README, "a timestamp, not a timer").
 export function usePrayerCooldown(userId: string) {
   const [prayedAt, setPrayedAt] = useState<PrayedAt>({});
   // null until this device's memory has been read: on the server and on the first paint nobody knows yet
@@ -39,9 +36,8 @@ export function usePrayerCooldown(userId: string) {
     };
   }, [userId]);
 
-  // Every change goes through here, so the screen and the device can never disagree. It builds on the
-  // latest state, not the one a tap handler captured: two prayers answered out of order both survive.
-  // Saving inside the updater is deliberate: React may run it twice, and writing the same map twice is harmless.
+  // Every change goes through here and builds on the latest state, so two prayers answered out of order
+  // both survive. Saving inside the updater is deliberate: React may run it twice, and that is harmless.
   function change(update: (current: PrayedAt) => PrayedAt) {
     setPrayedAt((current) => {
       const next = update(current);

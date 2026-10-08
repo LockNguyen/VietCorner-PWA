@@ -8,7 +8,8 @@ This is an MVP to prove 3 features are possible. It is not a finished product.
 - Build the feature, not the polish. Ugly UI is fine.
 - **Feature isolation:** each feature lives in its own `src/features/<name>/` folder (see Feature Shape). Removing a feature = delete its folder + a few marked lines elsewhere. Code in one feature never imports from another feature's internals.
 - Removable features: `auth`, `chat` (messages), `events`, `prayer`, `assistant` (voice + RAG).
-  Foundations the others build on: `groups` (membership), `i18n` (language), `push` (notification delivery).
+  Foundations the others build on: `groups` (membership), `i18n` (language), `push` (notification delivery),
+  `permissions` (who may manage what), `profiles` (names).
 - Obvious names, small files, one job per file. Comment *why*, not *what*.
 - If a change would couple features or add complexity, stop and propose a simpler option first.
 - **Thin routes:** `route.ts` files only parse input, verify the user, call a plain function in `src/features/<name>/server/`, and return JSON. Those server functions never import Next.js APIs, so they can move to a separate backend unchanged.

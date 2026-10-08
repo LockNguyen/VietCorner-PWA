@@ -42,7 +42,7 @@ export default function PrayerWeek({ week, canPrayFor, onPray, onManage }: Props
     <section className="flex flex-col gap-4 px-3">
       <TimeLine>{label()}</TimeLine>
       {week.people.map((person) => (
-        <BubbleRun key={`${person.name}-${person.mine}`} side="theirs" name={nameOf(person)} avatar={<Avatar size="small" />}>
+        <BubbleRun key={`${person.name}-${person.mine}`} side="theirs" name={nameOf(person)} avatar={<Avatar />}>
           {person.requests.map((request) => (
             <PrayerBubble
               key={request.id}

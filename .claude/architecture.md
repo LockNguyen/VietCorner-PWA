@@ -49,6 +49,7 @@ src/
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
+  lib/README.md      Why the hooks below exist and how they work.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
   lib/useWhenDrawn.ts  Starts a router change and resolves when its result is drawn. Under the next two.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
@@ -377,3 +378,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: review before the merge, first fixes: a join request shows "name (email)"; saving an event stays busy until the list is drawn (`useGoTo`, `useWhenDrawn`); a missing name no longer prints "undefined" in the chat notification.
 - 2026-10-08: names are read only within a shared group and by group managers (`shares_a_group_with`; needs section 4 of `features/profiles/schema.sql`). Sign-in failures are told apart: no connection, too many tries, a bad address, a wrong or expired code (`auth/errors.ts`). Shared words moved to `i18n/common.ts`.
 - 2026-10-08: prayer list, third layout (the user chose bubbles as in Messenger): Pray is a chip on the bubble's corner (`ui/Chip`), my own bubble opens its options when tapped, requests show whole; no date, group or X on the list. `useExpandableText` deleted.
+- 2026-10-08: review, should-fix items: `Composer` leaves its own room under the messages (no screen hard-codes its height); the layout's three reads run together; the tick of a chosen row is `ListRow`'s; unused variants and strings removed (`Avatar` size, `IconLink` tone, two i18n words); the browser's name lookup is in `profiles/api.ts`, not borrowed from `server/`; comments over two lines moved to the READMEs (new `src/lib/README.md`); `CLAUDE.md` lists all five foundations. The Pray chip hangs under the bubble's text instead of over its last line.

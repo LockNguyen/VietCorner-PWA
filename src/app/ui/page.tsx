@@ -95,7 +95,7 @@ export default async function ShowcasePage() {
           <ListRow href="/ui#7" leading={<><RowLabel>7:00 PM</RowLabel><Thumbnail /></>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
           <ListRow href="/ui#8" leading={<><RowLabel>10:30 AM</RowLabel><Thumbnail /></>} title="Sunday service" subtitle="Main hall" />
           <ListRow href="/ui#9" leading={<><RowLabel>19:00</RowLabel><Thumbnail /></>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
-          <ListRow href="/ui#10" title="Tiếng Việt" current trailing={<Check aria-hidden className="shrink-0 text-action" />} />
+          <ListRow href="/ui#10" title="Tiếng Việt" current />
           <ListRow href="/ui#11" title="English" trailing={null} />
           <SkeletonRow />
         </ul>
@@ -146,16 +146,16 @@ export default async function ShowcasePage() {
       </section>
 
       <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">Sheet, LogoMark, Avatar: regular and small</Text>
+        <Text as="h2" variant="small" tone="subtle">Sheet, LogoMark, Avatar</Text>
         <SheetDemo />
         <LogoMark />
-        <div className="flex items-center gap-2"><Avatar /><Avatar size="small" /></div>
+        <Avatar />
       </section>
 
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the Pray chip on the corner (idle, done), my own; Composer is held above the tabs</Text>
         <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
-        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar size="small" />}>
+        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
           <Bubble tone="theirs">Chào cả nhà</Bubble>
           <Bubble tone="theirs">Tối nay học Kinh Thánh lúc 7 giờ tại hội trường chính, xin mọi người nhớ mang theo sách và đến sớm mười phút.</Bubble>
         </BubbleRun>
@@ -169,15 +169,15 @@ export default async function ShowcasePage() {
           <Bubble tone="theirs"><Spinner /></Bubble>
         </BubbleRun>
         <TimeLine>Tuần này</TimeLine>
-        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar size="small" />}>
-          <div className="flex w-full flex-col items-start pb-4">
+        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
+          <div className="flex w-full flex-col items-start pb-6">
             <Bubble tone="theirs" corner={<Chip>🙏 Cầu nguyện</Chip>}>Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
           </div>
-          <div className="flex w-full flex-col items-start pb-4">
+          <div className="flex w-full flex-col items-start pb-6">
             <Bubble tone="theirs" corner={<Chip tone="done" disabled>🙏 Đã cầu nguyện</Chip>}>Amen</Bubble>
           </div>
         </BubbleRun>
-        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar size="small" />}>
+        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>
           <Bubble tone="theirs" onClick={undefined}>Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
         </BubbleRun>
         <ComposerDemo />
@@ -197,13 +197,6 @@ export default async function ShowcasePage() {
         <Text as="h2" variant="small" tone="subtle">EmptyState: alone, with a next step</Text>
         <EmptyState message="Không có sự kiện nào trong vài tuần tới." />
         <EmptyState message="Xin tham gia một nhóm trước."><Button>Xem các nhóm</Button></EmptyState>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">IconLink: on the bar, on white</Text>
-        <div className="flex gap-2">
-          <IconLink href="/ui#12" label="Home" tone="ink"><House /></IconLink>
-        </div>
       </section>
 
       <section className="flex flex-col gap-6">

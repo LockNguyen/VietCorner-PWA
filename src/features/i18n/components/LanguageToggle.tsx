@@ -1,6 +1,5 @@
 "use client";
 
-import { Check } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "../hooks/useLanguage";
@@ -17,18 +16,15 @@ export default function LanguageToggle() {
     <section>
       <SectionHeading>{t(STRINGS.languageLabel)}</SectionHeading>
       <ul>
-        {OPTIONS.map((option) => {
-          const chosen = language === option;
-          return (
-            <ListRow
-              key={option}
-              title={LANGUAGE_NAMES[option]}
-              onClick={() => setLanguage(option)}
-              current={chosen}
-              trailing={chosen ? <Check aria-hidden className="shrink-0 text-action" /> : null}
-            />
-          );
-        })}
+        {OPTIONS.map((option) => (
+          <ListRow
+            key={option}
+            title={LANGUAGE_NAMES[option]}
+            onClick={() => setLanguage(option)}
+            current={language === option}
+            trailing={null}
+          />
+        ))}
       </ul>
     </section>
   );

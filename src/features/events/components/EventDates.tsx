@@ -12,9 +12,8 @@ type Props = {
   onRestoreDate: (churchDate: string) => Promise<void>;
 };
 
-// An event's next dates. On a weekly event each date can be called off by itself, and a date that was
-// called off shows Undo in the same place. A one-off event has one date and no button here: calling that
-// date off is calling the event off, which is the red button below this list.
+// An event's next dates. A weekly event's dates are called off one by one, with Undo in the same place.
+// A one-off event has no button here: calling its date off is calling the event off, the red button below.
 export default function EventDates({ event, onCancelDate, onRestoreDate }: Props) {
   const { t } = useLanguage(); // I18N
 

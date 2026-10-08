@@ -15,7 +15,7 @@ const TONES = {
 } as const;
 
 // One message. Which side it sits on is its run's business (`BubbleRun`); its colour says whose it is.
-// With `onClick` it is a button. `corner` hangs half below its bottom edge: leave 16 under it.
+// With `onClick` it is a button. `corner` hangs from its bottom edge, over the padding only: leave 24 under it.
 export default function Bubble({ tone, onClick, corner, children }: Props) {
   if (onClick) {
     return (
@@ -28,7 +28,7 @@ export default function Bubble({ tone, onClick, corner, children }: Props) {
   return (
     <div className={`${BASE} ${TONES[tone]}`}>
       {children}
-      {corner && <span className="absolute -bottom-4 left-4">{corner}</span>}
+      {corner && <span className="absolute -bottom-6 left-4">{corner}</span>}
     </div>
   );
 }

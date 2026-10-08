@@ -23,7 +23,7 @@ export default function EnableNotificationsButton() {
   if (status === "loading") return null;
 
   return (
-    <div className="flex flex-col gap-2 border-b border-line p-3">
+    <div className="flex flex-col gap-2 p-3">
       {status === "on" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsOn)}</Text>}
       {status === "blocked" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsBlocked)}</Text>}
       {status === "unsupported" && <Text variant="small" tone="subtle">{t(STRINGS.notificationsUnsupported)}</Text>}

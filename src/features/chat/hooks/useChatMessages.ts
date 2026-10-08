@@ -4,15 +4,8 @@ import { useEffect, useState } from "react";
 import { getLatestMessages, sendMessage, subscribeToNewMessages } from "../api";
 import type { Message } from "../types";
 
-// Keeps one group's message list in sync. This file is the ONLY place that decides how.
-//
-// Where messages come from:
-//   1. Initial load   messages rendered on the server, passed in by the page
-//   2. Live           Realtime delivers each new row while connected
-//   3. (Re)connected  refetch, because Realtime doesn't replay what was missed while disconnected
-//   4. Back in view   refetch when the app returns to the foreground (the phone may have slept)
-//   5. Own send       the API's response, so your message shows even if Realtime is slow
-// All five go through mergeMessages, so a message never shows twice.
+// Keeps one group's message list in sync, and is the ONLY place that decides how. The five sources are
+// numbered below and listed in the chat README; all go through mergeMessages, so nothing shows twice.
 export function useChatMessages(groupId: string, initialMessages: Message[]) {
   const [messages, setMessages] = useState(initialMessages); // 1
 

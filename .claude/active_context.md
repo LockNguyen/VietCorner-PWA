@@ -211,17 +211,14 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         NOT seen: the three screens themselves; the fixed composer over a phone keyboard; the assistant's
         bottom area (`pb-48` is a measured guess at its height).
         Prayer list layout redone after the user's review (it was cramped and confusing): see the prayer README.
-  - [ ] **UI-wide review before the merge.** Done: code and security passes (read), 16 findings reported;
-        fixed on the user's word: findings 1-3, decisions 5-8, `npm audit fix`, prayer list as bubbles with a
-        Pray chip. NOT done: the on-screen pass (Claude in Chrome was not connected), should-fix items 9-13,
-        15, 16 (not yet approved). The prayer chip layout has not been seen on any screen.
-        **WAITS ON THE USER: section 4 of `features/profiles/schema.sql`; restart `npm run dev` (Next.js was
-        upgraded under it); connect Chrome.** `npm run test:rls` expects 49 and fails until that SQL is run.
-  - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
+  - [ ] **UI-wide review before the merge.** Code and security passes done; all 16 findings fixed on the
+        user's word (the comment trim left the assistant's hooks alone: mentor-mode code). SQL for the names
+        policy is run; `npm run test:rls` 49/49, `npm test` 90/90, build clean on Next.js 16.4.0.
+        NOT done: the on-screen pass. Claude in Chrome lists no connected browser, and the built-in browser
+        pane is not signed in. Seen in `/ui` only: the Pray chip (after moving it off the text), the tick.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: restart `npm run dev`; run section 4 of `src/features/profiles/schema.sql`; connect Claude in Chrome
-   and sign in at localhost:3000.
-2. Claude: `npm run test:rls` (49), then the on-screen pass of every screen; report what is found.
-3. User decides: should-fix items 9-13, 15, 16; whether chat and prayer also show an email beside a name;
-   then the merge of `ui-0` … `ui-6` into `main`.
+1. User: either connect the Claude in Chrome extension (it lists no browser), or sign in at
+   localhost:3000 inside the app's own Browser pane.
+2. Claude: the on-screen pass of every screen, both languages; report findings first.
+3. User decides: emails beside names in chat and prayer; then the merge of `ui-0` … `ui-6` into `main`.

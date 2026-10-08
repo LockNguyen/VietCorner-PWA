@@ -23,7 +23,7 @@ export default function PrayerBubble({ request, canPray, onPray, onManage }: Pro
 
   return (
     // The padding is the room the chip takes below the bubble.
-    <div className="flex w-full flex-col items-start pb-4">
+    <div className="flex w-full flex-col items-start pb-6">
       <Bubble
         tone="theirs"
         corner={

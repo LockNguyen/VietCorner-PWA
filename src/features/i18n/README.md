@@ -55,3 +55,9 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 Delete this folder and `src/components/strings.ts`, remove the `// I18N` lines in `src/app/layout.tsx`,
 `src/components/AppTabs.tsx` and the pages, convert each feature's `strings.ts` values back to plain strings,
 and run `drop table public.user_settings;`.
+
+## Why `AdoptDeviceLanguage` exists, and why here
+The language is chosen on the login screen, before an account exists, so nothing can be written then. On the
+first signed-in page load, if the account has no language yet, the device's choice becomes the account's.
+It is not done in the auth feature because that would make auth import i18n: account creation stays unaware,
+and this feature picks the choice up afterwards.

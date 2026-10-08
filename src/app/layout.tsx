@@ -27,14 +27,15 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // I18N: one read per page load. Null means signed out, or signed in without a choice yet.
+  // A null language means signed out, or signed in without a choice yet.
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const storedLanguage = user ? await getLanguage(supabase) : null;
-  // PERMISSIONS: read once per page load, from the login token. Anyone who may manage something gets the tab.
-  const permissions = user ? await getMyPermissions(supabase) : [];
+  // Read together, once per page load:
+  // I18N the stored language · PERMISSIONS who may manage something gets the Admin tab · PROFILES the name.
+  const [storedLanguage, permissions, profile] = user
+    ? await Promise.all([getLanguage(supabase), getMyPermissions(supabase), getMyProfile(supabase, user.id)])
+    : [null, [], null];
   // PROFILES: someone who has not given their name yet is asked before they see anything else.
-  const profile = user ? await getMyProfile(supabase, user.id) : null;
   const askName = profile !== null && !profile.named;
 
   return (

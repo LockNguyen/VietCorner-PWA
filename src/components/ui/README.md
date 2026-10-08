@@ -12,9 +12,9 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Button` | Any button | `primary`, `quiet`, `danger`, `text` | `pending`, `pendingLabel` |
 | `TopBar` | The bar at the top: centred title, a slot for icons at each end | | `title`, `left`, `right` |
 | `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
-| `IconLink` | A link shown as an icon alone | `tone`: `onAction`, `ink` | `label` (read by screen readers) |
+| `IconLink` | A link shown as an icon alone, on the top bar | | `label` (read by screen readers) |
 | `PhotoTile` | A large tile that opens an area; grey stands in for its photo (B32) | | `title`; children are the artwork |
-| `ListRow` | One line of any list: picture, title over subtitle, something at the right end. Renders its own `<li>`; put it in a `<ul>`. | `tone`: `normal`, `off` (called off: grey, struck through) | `title`, `subtitle`, `leading`, `trailing`, `current`, and `href` (a link) or `onClick` (a button); either adds a chevron unless `trailing` is passed (`null` for nothing) |
+| `ListRow` | One line of any list: picture, title over subtitle, something at the right end. Renders its own `<li>`; put it in a `<ul>`. | `tone`: `normal`, `off` (called off: grey, struck through) | `title`, `subtitle`, `leading`, `trailing`, `current`, and `href` (a link) or `onClick` (a button); either adds a chevron unless `trailing` is passed (`null` for nothing); the `current` one of a set of choices ends in a tick |
 | `Thumbnail` | The picture at the start of a row: a tinted tile holding an icon or a few characters, until photos exist (B32) | | |
 | `RowLabel` | A short bold label that starts a row (a time), in a box of one width so the picture and title after it line up on every row | | |
 | `SectionHeading` | The small grey heading above a group of rows | | |
@@ -27,11 +27,11 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
 | `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
-| `Avatar` | A person's picture: the same default one for everybody until pictures can be set | `size`: `regular`, `small` | |
-| `Bubble` | One message, at most 70% wide. With `onClick` it is a button. | `tone`: `mine`, `theirs`, `failed` | `onClick`, `corner` (hangs half below the bottom edge: leave 16 under it) |
+| `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
+| `Bubble` | One message, at most 70% wide. With `onClick` it is a button. | `tone`: `mine`, `theirs`, `failed` | `onClick`, `corner` (hangs from the bottom edge: leave 24 under it) |
 | `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |
 | `TimeLine` | A small centred label between messages: a time, or a week | | |
-| `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. The screen leaves room under its messages (`pb-16`). | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
+| `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. Leaves room for its own row under the messages; a screen that adds children above the field adds room for those. | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
 | `IconButton` | A button shown as an icon alone | `tone`: `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
 | `Chip` | A small pill button on the corner of a bubble: a reaction to it. 32 high, the one control below `touch`. | `tone`: `idle`, `done` | |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
@@ -40,7 +40,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 ## Conventions the list relies on
 - A component may render `next/link`'s `Link`, the app's anchor element. It never uses the router's hooks.
 - Icons come from `lucide-react` and are passed in as children by the screen; a component does not pick one.
-  The exceptions, each part of what the component is: the chevron of a `ListRow` that opens something, the
+  The exceptions, each part of what the component is: the chevron and the tick of a `ListRow`, the
   figure inside `Avatar`, and the arrow on `Composer`'s send button.
 - `ListRow` does not extend a native element's props, because it is one of three elements (link, button,
   plain) depending on what it does. Its props are the short list in the table.

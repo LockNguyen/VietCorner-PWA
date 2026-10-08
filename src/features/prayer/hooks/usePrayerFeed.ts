@@ -4,11 +4,8 @@ import { useRef, useState } from "react";
 import { createRequest, deleteRequest, editRequest, getRequests, markAnswered, prayFor } from "../api";
 import { PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "../types";
 
-// The list of requests on screen, and everything that changes it.
-//
-// There are no live updates on purpose: the list is what the server sent when the page opened, plus what
-// this member did since. Each action below resolves to whether it worked; saying so on screen is the
-// board's job, which is why nothing here knows about banners or wording.
+// The list of requests on screen, and everything that changes it. No live updates, on purpose.
+// Each action resolves to whether it worked; saying so on screen is the board's job.
 export function usePrayerFeed(initialRequests: PrayerRequest[]) {
   const [requests, setRequests] = useState(initialRequests);
   // A full page means there may be another one; a short page is the end.

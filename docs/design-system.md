@@ -88,7 +88,7 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Text | `Text` | Every piece of text outside a control | `tile`, `body`, `small`; tone `ink`, `subtle`, `danger` |
 | List | `ListRow` | Thumbnail, title, subtitle, trailing chevron or control | link, static |
 | | `Thumbnail` | A picture, or a tinted tile with an icon or letter | |
-| | `Avatar` | A person's picture: the default one for everybody today | `small` (chat), `regular` |
+| | `Avatar` | A person's picture: the default one for everybody today | |
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
 | | `SectionHeading` | The small grey heading above a group of rows | |
 | Controls | `Button` | Any button; shows the turning circle while pending | `primary`, `quiet`, `danger`, `text` |

@@ -75,3 +75,12 @@ There is no WebRTC: that is for peer-to-peer media, and chat is client ↔ serve
 Delete this folder, `src/app/groups/[groupId]/` and `src/app/api/chat/`, and make `GroupList` stop linking
 to the group page. Run the DROP statement at the bottom of `schema.sql`. Groups, push, events and prayer
 keep working: none of them depends on chat.
+
+## Where messages come from (`hooks/useChatMessages.ts`)
+1. **Initial load:** messages rendered on the server, passed in by the page.
+2. **Live:** Realtime delivers each new row while connected.
+3. **(Re)connected:** refetch, because Realtime does not replay what was missed while disconnected.
+4. **Back in view:** refetch when the app returns to the foreground (the phone may have slept).
+5. **Own send:** the API's response, so your message shows even if Realtime is slow.
+
+All five go through `mergeMessages`, so a message never shows twice.

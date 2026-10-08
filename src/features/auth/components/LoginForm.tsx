@@ -13,9 +13,8 @@ import { usePending } from "@/lib/usePending";
 import { problemWith } from "../errors";
 import { PROBLEMS, STRINGS } from "../strings";
 
-// Two steps: 1) enter email → a code is emailed. 2) type the code → signed in.
-// Why a typed code instead of a clicked link: on iPhone, email links open in Safari,
-// which does not share its login with the app installed on the Home Screen.
+// Two steps: enter an email and a code is sent; type the code and you are signed in.
+// A typed code, not a link: on iPhone a link opens in Safari, which does not share its login with the installed app.
 export default function LoginForm() {
   const router = useRouter();
   const { t } = useLanguage(); // I18N

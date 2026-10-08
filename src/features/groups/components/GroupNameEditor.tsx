@@ -11,8 +11,7 @@ import { STRINGS } from "../strings";
 import { MAX_GROUP_NAME_LENGTH, type Group } from "../types";
 
 // One group: its name, editable in place, and a button that removes the group.
-// Save is enabled only when the name actually changed. Remove asks nothing (decided: fewer taps); the
-// group is kept in the database, so a mistaken tap is undone there.
+// Remove asks nothing (decided: fewer taps): the group is kept in the database, where a mistake is undone.
 export default function GroupNameEditor({ group }: { group: Group }) {
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState(group.name);

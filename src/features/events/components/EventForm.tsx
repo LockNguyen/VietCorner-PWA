@@ -28,9 +28,8 @@ const TEXT_FIELDS = [
   { field: "description", label: STRINGS.descriptionField },
 ] as const;
 
-// Adding or changing an event. Each piece of text is asked in one language and then the other, so a
-// translation is written with the original just above it; a language left without a title is not stored.
-// Times are church time whatever device the admin holds (draft.ts converts).
+// Adding or changing an event. Each text is asked in one language, then the other, so a translation is
+// written under its original. Times are church time whatever device the admin holds (draft.ts converts).
 export default function EventForm({ initial, groups, onSave }: Props) {
   const { t } = useLanguage(); // I18N
   const [draft, setDraft] = useState(initial);

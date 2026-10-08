@@ -21,8 +21,8 @@ export default function AssistantChat({ userId }: Props) {
   const voice = useVoiceQuestion((question) => chat.send(question, { byVoice: true }));
 
   return (
-    // The bottom padding is the room the microphone and the field take, so the last answer is not under them.
-    <div className="flex flex-col pb-48">
+    // The bottom padding is the room the microphone takes above the field; the field leaves its own.
+    <div className="flex flex-col pb-28">
       <div className="flex justify-end px-3">
         <Button variant="text" onClick={chat.newChat}>
           {t(STRINGS.newChat)}

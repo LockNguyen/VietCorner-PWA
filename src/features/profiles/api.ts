@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/client";
-import { getNames as readNames } from "./server/queries";
 import type { Names } from "./types";
 
 // Every browser → backend call for this foundation. Both are simple, with no side effects, so they go
@@ -17,6 +16,8 @@ export async function saveName(name: string): Promise<void> {
 }
 
 // GET the names of these people: for someone who appears on a screen after it loaded (a first chat message).
-export function getNames(userIds: string[]): Promise<Names> {
-  return readNames(createClient(), userIds); // the same read as the server's, with the browser's client
+// The same read as server/queries.ts makes for the page, here with the browser's client.
+export async function getNames(userIds: string[]): Promise<Names> {
+  const { data } = await createClient().from("profiles").select("user_id, name").in("user_id", userIds);
+  return Object.fromEntries((data ?? []).map((row) => [row.user_id, row.name]));
 }

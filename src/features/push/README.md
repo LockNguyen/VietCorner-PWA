@@ -95,3 +95,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 Remove the senders first (`// PUSH` lines in chat and prayer). Then delete this folder, the `PUSH` lines in
 `public/sw.js` and `src/app/groups/page.tsx`, run the DROP statement in `schema.sql`, and remove the VAPID
 env vars.
+
+## Why the subscription is saved again on every open
+The server can only push to subscriptions stored in the database, and that row may be gone (deleted after a
+410, or another user signed in on this device), or the browser may have replaced the subscription.
+Re-saving on every open repairs this silently.

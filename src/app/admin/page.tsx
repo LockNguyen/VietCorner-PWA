@@ -14,9 +14,8 @@ import { getPrayerReminders } from "@/features/prayer/server/queries";
 import { MANAGE_PRAYER_REMINDERS } from "@/features/prayer/types";
 import { createClient } from "@/lib/supabase/server";
 
-// The admin page is a list of sections, one per thing that can be managed. Each feature brings its own
-// section and names the permission it needs; this page only decides which sections this user gets.
-// So a future "post writer" sees this page with one section, and removing a feature removes its section.
+// A list of sections, one per thing that can be managed. Each feature brings its section and names the
+// permission it needs; this page only decides which sections this user gets (the admin README).
 export default async function AdminPage() {
   const supabase = await createClient();
   const permissions = await getMyPermissions(supabase);

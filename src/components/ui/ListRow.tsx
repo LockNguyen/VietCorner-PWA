@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -18,7 +18,8 @@ const ROW = "flex min-h-row w-full items-center gap-3 py-2 pe-3 text-start focus
 const TONES = { normal: "text-ink", off: "text-subtle line-through" } as const;
 
 // One line of any list: a picture, a title over a subtitle, and something at its right end.
-// With `href` it is a link, with `onClick` a button. Both end in a chevron unless `trailing` is passed.
+// With `href` it is a link, with `onClick` a button. Both end in a chevron unless `trailing` is passed;
+// the `current` one of a set of choices ends in a tick instead.
 export default function ListRow({ title, subtitle, leading, trailing, tone = "normal", current, href, onClick }: Props) {
   const opens = Boolean(href || onClick);
   const content = (
@@ -28,7 +29,13 @@ export default function ListRow({ title, subtitle, leading, trailing, tone = "no
         <span className={`text-body ${TONES[tone]}`}>{title}</span>
         {subtitle && <span className="text-small text-subtle">{subtitle}</span>}
       </span>
-      {trailing !== undefined ? trailing : opens && <ChevronRight aria-hidden className="shrink-0 text-line" />}
+      {current ? (
+        <Check aria-hidden className="shrink-0 text-action" />
+      ) : trailing !== undefined ? (
+        trailing
+      ) : (
+        opens && <ChevronRight aria-hidden className="shrink-0 text-line" />
+      )}
     </>
   );
 

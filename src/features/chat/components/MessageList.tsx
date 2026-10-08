@@ -31,7 +31,7 @@ export default function MessageList({ messages, names, myUserId }: Props) {
     });
 
   return (
-    <div role="log" className="flex flex-col gap-4 px-3 pt-2 pb-16">
+    <div role="log" className="flex flex-col gap-4 px-3 pt-2">
       {intoRuns(messages).map((item) => {
         if (item.kind === "time") return <TimeLine key={`time-${item.at}`}>{when(item.at)}</TimeLine>;
 
@@ -41,7 +41,7 @@ export default function MessageList({ messages, names, myUserId }: Props) {
             key={item.messages[0].id}
             side={mine ? "mine" : "theirs"}
             name={mine ? undefined : names[item.senderId]}
-            avatar={mine ? undefined : <Avatar size="small" />}
+            avatar={mine ? undefined : <Avatar />}
           >
             {item.messages.map((message) => (
               <Bubble key={message.id} tone={mine ? "mine" : "theirs"}>
