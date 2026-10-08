@@ -12,9 +12,14 @@ export const REMINDER_GRACE_MS = 60 * 60 * 1000;
 // Due on its weekday, from its time, for one hour: all in church time.
 // (A reminder set later than 11 PM loses the part of its hour that falls after midnight. Nobody sets one then.)
 export function isDue(reminder: PrayerReminder, now: Date): boolean {
-  const today = isoDate(now);
-  if (new Date(`${today}T00:00:00Z`).getUTCDay() !== reminder.weekday) return false;
+  if (churchWeekday(now) !== reminder.weekday) return false;
 
-  const dueAt = toInstant(`${today}T${reminder.send_at.slice(0, 5)}`).getTime();
+  const dueAt = toInstant(`${isoDate(now)}T${reminder.send_at.slice(0, 5)}`).getTime();
   return dueAt <= now.getTime() && now.getTime() < dueAt + REMINDER_GRACE_MS;
+}
+
+// The day of the week at church right now: 0 = Sunday … 6 = Saturday, as reminders store it.
+// Read off the church's calendar date, so 8 PM Sunday there is still Sunday although UTC says Monday.
+export function churchWeekday(now: Date): number {
+  return new Date(`${isoDate(now)}T00:00:00Z`).getUTCDay();
 }

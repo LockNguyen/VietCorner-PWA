@@ -91,6 +91,7 @@ grant execute on function public.claim_push_once (text) to service_role;
 -- select cron.schedule('send-reminders', '*/15 * * * *', $cron$
 --   select net.http_post(
 --     url := 'https://<SITE>/api/reminders/send',
+--     timeout_milliseconds := 25000, -- the site can take several seconds to wake; the default wait is 5
 --     headers := jsonb_build_object('Authorization', 'Bearer <CRON_SECRET>')
 --   );
 -- $cron$);

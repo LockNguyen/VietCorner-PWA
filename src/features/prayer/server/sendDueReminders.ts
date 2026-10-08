@@ -19,23 +19,29 @@ export async function sendDuePrayerReminders(now = new Date()): Promise<number> 
   const due = ((reminders ?? []) as PrayerReminder[]).filter((reminder) => isDue(reminder, now));
   if (due.length === 0) return 0;
 
-  let sent = 0;
-  for (const reminder of due) {
-    const [{ data: group }, { data: members }] = await Promise.all([
-      admin.from("groups").select("name").eq("id", reminder.group_id).is("deleted_at", null).maybeSingle(),
-      admin.from("group_members").select("user_id").eq("group_id", reminder.group_id),
-    ]);
-    if (!group) continue; // the group was removed
+  // Side by side, not one after another: the scheduler's call has a few seconds, and each reminder is
+  // several trips to the database. They are independent, so nothing is lost by not waiting in line.
+  const sentPerReminder = await Promise.all(due.map((reminder) => sendOne(admin, reminder, isoDate(now))));
+  return sentPerReminder.reduce((total, sent) => total + sent, 0);
+}
 
-    const readers = await splitByLanguage(admin, (members ?? []).map((member) => member.user_id as string));
-    for (const language of LANGUAGES) {
-      const wasSent = await sendPushOnce(`prayer-reminder:${reminder.id}:${isoDate(now)}:${language}`, readers[language], {
+// One group's reminder, to its members, once per language. Answers how many notifications it sent (0 to 2).
+async function sendOne(admin: ReturnType<typeof createAdminClient>, reminder: PrayerReminder, churchDate: string) {
+  const [{ data: group }, { data: members }] = await Promise.all([
+    admin.from("groups").select("name").eq("id", reminder.group_id).is("deleted_at", null).maybeSingle(),
+    admin.from("group_members").select("user_id").eq("group_id", reminder.group_id),
+  ]);
+  if (!group) return 0; // the group was removed
+
+  const readers = await splitByLanguage(admin, (members ?? []).map((member) => member.user_id as string));
+  const wasSent = await Promise.all(
+    LANGUAGES.map((language) =>
+      sendPushOnce(`prayer-reminder:${reminder.id}:${churchDate}:${language}`, readers[language], {
         title: group.name,
         body: translate(STRINGS.timeToPray, language),
         url: "/prayer",
-      });
-      if (wasSent) sent++;
-    }
-  }
-  return sent;
+      }),
+    ),
+  );
+  return wasSent.filter(Boolean).length;
 }

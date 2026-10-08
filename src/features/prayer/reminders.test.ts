@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isDue } from "./reminders";
+import { churchWeekday, isDue } from "./reminders";
 import type { PrayerReminder } from "./types";
 
 // Wednesdays at 7 PM church time. 14 October 2026 is a Wednesday; 7 PM there is 23:00 UTC (summer time).
@@ -28,5 +28,12 @@ describe("a weekly prayer reminder", () => {
     // 4 November is winter time: 7 PM is 00:00 UTC the next day.
     expect(isDue(reminder, at("2026-11-04T23:10:00Z"))).toBe(false);
     expect(isDue(reminder, at("2026-11-05T00:10:00Z"))).toBe(true);
+  });
+});
+
+describe("today's weekday, for the form's starting choice", () => {
+  it("is the church's, not UTC's", () => {
+    expect(churchWeekday(at("2026-10-14T23:00:00Z"))).toBe(3); // Wednesday evening there
+    expect(churchWeekday(at("2026-10-15T02:00:00Z"))).toBe(3); // still Wednesday there, Thursday in UTC
   });
 });

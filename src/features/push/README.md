@@ -66,6 +66,11 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - The cron job `send-reminders` runs every 15 minutes; its first run on 2026-10-07 got
   `200 {"sent":{"events":0,"prayer":0}}` from the live site, so the secret matches on both sides.
   **Not yet observed: a reminder arriving on a phone.**
+- First evening live (2026-10-07): the two 5 PM prayer reminders were sent once each, on time. But 16 of 22
+  scheduler calls gave up at Supabase's default 5-second wait, and one got a 502. The site was asleep
+  between calls: a first request after ~11 idle minutes took 2.7 s to be refused, a second 0.5 s. Since
+  then the cron call waits 25 s, due reminders are sent side by side, and the answer includes `tookMs`
+  (or the error), readable for a few hours in Supabase's `net._http_response`.
 - Two messages in one group within a minute: one notification. A message in another group, or a prayer, in
   that same minute: its own notification. **Proven in the database (8-check dry run, 2026-10-06); not yet
   observed on a phone**, including whether the tag replaces the older notification on iOS.
@@ -81,6 +86,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - **Deploy order:** run the SQL before deploying this code. Without `claim_push_turns`, `sendPush` fails and
   no notification is sent at all (messages and prayers still save).
 - A user cannot mute a group or change the minute yet (backlog B4).
+- The site sleeps between scheduler calls, so every call pays a start-up of a few seconds. A run that the
+  host cuts off (Netlify allows a function about 10 s) can lose the reminders it had not reached.
 - If Supabase pauses the project (free tier, after about a week idle) the clock stops with it (backlog B9).
 - `push_sent_once` grows by a few rows a week and is never cleaned. Small enough to ignore for years.
 

@@ -5,6 +5,7 @@ import { useState, type FormEvent } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES, type Text } from "@/features/i18n/types"; // I18N
 import { addReminder, removeReminder } from "../api";
+import { churchWeekday } from "../reminders";
 import { STRINGS } from "../strings";
 import type { PostableGroup, PrayerReminder } from "../types";
 
@@ -19,7 +20,9 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
   const router = useRouter();
   const { t, language } = useLanguage(); // I18N
   const [groupId, setGroupId] = useState(groups[0]?.id ?? "");
-  const [weekday, setWeekday] = useState(0);
+  // Starts on today (at church): a reminder is most often set for the day it is thought of, and a list
+  // that starts on Sunday made "add one for tonight" land four days away.
+  const [weekday, setWeekday] = useState(() => churchWeekday(new Date()));
   const [sendAt, setSendAt] = useState("19:00");
   const [problem, setProblem] = useState<Text | null>(null); // what to tell the admin, when a change did not happen
   const [saving, setSaving] = useState(false); // one change at a time: a second tap waits for the first

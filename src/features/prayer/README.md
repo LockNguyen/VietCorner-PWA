@@ -97,7 +97,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - Your own request has no Pray button and an X, which opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
-  with Remove, and a row to add one. A group can have several reminders on one day at different times, but
+  with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but
   not the same day and time twice; trying to shows "That group already has a reminder at that day and time."
   The buttons are disabled while a change is being saved.
   **Not yet exercised on screen; no reminder has been seen arriving.**
