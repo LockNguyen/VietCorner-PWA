@@ -1,6 +1,7 @@
 "use client";
 
 import SectionHeading from "@/components/ui/SectionHeading";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS } from "../strings";
 import NameForm from "./NameForm";
@@ -13,7 +14,7 @@ export default function NameSection({ name }: { name: string }) {
     <section>
       <SectionHeading>{t(STRINGS.nameField)}</SectionHeading>
       <div className="px-3">
-        <NameForm name={name} submitLabel={t(STRINGS.save)} />
+        <NameForm name={name} submitLabel={t(COMMON.save)} />
       </div>
     </section>
   );

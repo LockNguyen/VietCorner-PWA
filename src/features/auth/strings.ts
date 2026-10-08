@@ -1,18 +1,11 @@
 import type { Text } from "@/features/i18n/types"; // I18N
+import type { SignInProblem } from "./errors";
 
 // Every word this feature shows a user, in both languages. Components read them through
 // `useLanguage().t`, so adding a language means editing this file, not the components.
 export const STRINGS = {
   emailPrompt: { en: "Enter your email to get a sign-in code", vi: "Nhập email để nhận mã đăng nhập" } satisfies Text,
   codeLabel: { en: "Code", vi: "Mã" } satisfies Text,
-  couldNotSendCode: {
-    en: "Could not send the code. Check the email address and try again.",
-    vi: "Không gửi được mã. Xin kiểm tra địa chỉ email và thử lại.",
-  } satisfies Text,
-  wrongCode: {
-    en: "That code did not work. Check it, or ask for a new one.",
-    vi: "Mã không đúng hoặc đã hết hạn. Xin kiểm tra lại, hoặc xin mã mới.",
-  } satisfies Text,
   emailLabel: { en: "Email", vi: "Email" } satisfies Text,
   sendCodeButton: { en: "Send me a code", vi: "Gửi mã cho tôi" } satisfies Text,
   sendingCode: { en: "Sending…", vi: "Đang gửi…" } satisfies Text,
@@ -26,4 +19,19 @@ export const STRINGS = {
     en: "Enter the code sent to",
     vi: "Nhập mã đã gửi tới",
   } satisfies Text,
+};
+
+// What to tell someone whose sign-in step failed, keyed by cause (errors.ts decides which applies).
+export const PROBLEMS: Record<SignInProblem, Text> = {
+  offline: { en: "No internet connection. Check it and try again.", vi: "Không có kết nối mạng. Xin kiểm tra và thử lại." },
+  tooMany: {
+    en: "Too many tries. Wait a minute, then ask for a new code.",
+    vi: "Thử quá nhiều lần. Xin chờ một phút rồi xin mã mới.",
+  },
+  badEmail: { en: "That email address does not look right. Check it and try again.", vi: "Địa chỉ email chưa đúng. Xin kiểm tra và thử lại." },
+  badCode: {
+    en: "That code is wrong or has expired. Check it, or ask for a new one.",
+    vi: "Mã không đúng hoặc đã hết hạn. Xin kiểm tra lại, hoặc xin mã mới.",
+  },
+  other: { en: "Something went wrong. Please try again.", vi: "Có lỗi xảy ra. Xin thử lại." },
 };

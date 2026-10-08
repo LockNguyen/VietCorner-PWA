@@ -50,7 +50,9 @@ src/
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
+  lib/useWhenDrawn.ts  Starts a router change and resolves when its result is drawn. Under the next two.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
+  lib/useGoTo.ts     Moves to another screen and resolves when it is on screen.
   lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
   lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
@@ -178,7 +180,8 @@ minutes by a Supabase cron job, and `sendPushOnce` makes each reminder go out on
 ### 6.10 profiles → [README](../src/features/profiles/README.md)
 What a person is called. `profiles` holds one row per account, made by a database trigger and named after
 the email until the person answers "What is your name?", which `layout.tsx` shows in place of every screen
-after the first sign-in. Any signed-in user reads every name; each changes only their own (Settings → Name).
+after the first sign-in. A name is read by its owner, by people in a group with them and by group managers;
+each person changes only their own (Settings → Name).
 Names are looked up by user id, never copied onto a message: pages call `getNames`, chat keeps up with new
 senders through `useNames`, and the prayer feed joins them in its view. Table: `profiles`.
 
@@ -233,7 +236,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
-| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Any signed-in user reads; the owner updates `name`; nobody inserts or deletes. |
+| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; the owner updates `name`; nobody inserts or deletes. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
@@ -292,6 +295,9 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
+| Names are readable within a shared group and by group managers, not by every signed-in user | Sign-up is open: "signed in" is anyone with an email | A former member's old messages lose their name; one function call per row read |
+| A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
+| Words every feature says alike (Save, Saved, Could not save) live once, in `i18n/common.ts` | "Saved" cannot be worded five ways | Removing a feature no longer removes all of its words |
 | Names are looked up from one `profiles` table, not copied onto each message as emails were | A corrected name is corrected everywhere, old messages included; one place to protect | One more read per screen that shows people; chat fetches the name of a sender it has not met |
 | A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
 | The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
@@ -367,3 +373,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: UI revamp, slice 5, names: new foundation `profiles` (table, trigger, RLS; `getNames`, `useNames`, `NameStep`, `NameSection`) and `ui/Avatar`. The layout asks "What is your name?" once after sign-in. Chat, the chat notification, prayer requests (`prayer_feed.author_name`) and join requests show names instead of emails. Needs `features/profiles/schema.sql` and section 4 of `features/prayer/schema.sql` to be run.
 - 2026-10-08: UI revamp, slice 6, conversations: `Bubble`, `BubbleRun`, `TimeLine`, `Composer`, `IconButton`, `useScrollToEnd`. Chat is runs of bubbles with names, avatars and a time after an hour of silence (`chat/runs.ts`); the prayer list is grouped by church week and then by person (`prayer/grouping.ts`), every request at the left; the assistant uses the same bubbles, with icons in place of emoji on the microphone. No old styling is left in any component.
 - 2026-10-08: prayer list layout fixed after the user's review: a person's avatar and name head their requests; day, then Pray, each on its own line under the bubble; the group's name only for a member of several groups; dates in church time.
+- 2026-10-08: `npm audit fix`: Next.js 16.3.5 → 16.4.0 (one critical advisory) and two transitive packages; 0 advisories left.
+- 2026-10-08: review before the merge, first fixes: a join request shows "name (email)"; saving an event stays busy until the list is drawn (`useGoTo`, `useWhenDrawn`); a missing name no longer prints "undefined" in the chat notification.
+- 2026-10-08: names are read only within a shared group and by group managers (`shares_a_group_with`; needs section 4 of `features/profiles/schema.sql`). Sign-in failures are told apart: no connection, too many tries, a bad address, a wrong or expired code (`auth/errors.ts`). Shared words moved to `i18n/common.ts`.
+- 2026-10-08: prayer list, third layout (the user chose bubbles as in Messenger): Pray is a chip on the bubble's corner (`ui/Chip`), my own bubble opens its options when tapped, requests show whole; no date, group or X on the list. `useExpandableText` deleted.

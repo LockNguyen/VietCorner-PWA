@@ -5,6 +5,7 @@ import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
 import SectionHeading from "@/components/ui/SectionHeading";
 import TextInput from "@/components/ui/TextInput";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Names } from "@/features/profiles/types"; // PROFILES
 import { useSave } from "@/lib/useSave";
@@ -25,7 +26,7 @@ export default function GroupAdmin({ groups, requests, names }: Props) {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    const says = { done: t(STRINGS.saved), failed: t(STRINGS.couldNotSave) };
+    const says = { done: t(COMMON.saved), failed: t(COMMON.couldNotSave) };
     if (await save("add", () => createGroup(name.trim()), says)) setName("");
   }
 

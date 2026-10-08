@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Settings, Square, Users, X } from "lucide-react";
+import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Settings, Square, Users } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
 import Bubble from "@/components/ui/Bubble";
 import BubbleRun from "@/components/ui/BubbleRun";
 import Button from "@/components/ui/Button";
+import Chip from "@/components/ui/Chip";
 import EmptyState from "@/components/ui/EmptyState";
 import Field from "@/components/ui/Field";
 import IconButton from "@/components/ui/IconButton";
@@ -152,7 +153,7 @@ export default async function ShowcasePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then a prayer request as it is composed; Composer is held above the tabs</Text>
+        <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the Pray chip on the corner (idle, done), my own; Composer is held above the tabs</Text>
         <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar size="small" />}>
           <Bubble tone="theirs">Chào cả nhà</Bubble>
@@ -168,24 +169,23 @@ export default async function ShowcasePage() {
           <Bubble tone="theirs"><Spinner /></Bubble>
         </BubbleRun>
         <TimeLine>Tuần này</TimeLine>
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2"><Avatar size="small" /><Text>Trần Thị Bình (bạn)</Text></div>
-          <div className="flex flex-col items-start gap-1">
-            <div className="flex w-full items-start">
-              <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện.</Bubble>
-              <IconButton label="Options"><X /></IconButton>
-            </div>
-            <div className="ps-4"><Text variant="small" tone="subtle">Nhóm Thanh Niên · 14 thg 10</Text></div>
-            <Button variant="quiet">🙏 Cầu nguyện</Button>
+        <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar size="small" />}>
+          <div className="flex w-full flex-col items-start pb-4">
+            <Bubble tone="theirs" corner={<Chip>🙏 Cầu nguyện</Chip>}>Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
           </div>
-        </div>
+          <div className="flex w-full flex-col items-start pb-4">
+            <Bubble tone="theirs" corner={<Chip tone="done" disabled>🙏 Đã cầu nguyện</Chip>}>Amen</Bubble>
+          </div>
+        </BubbleRun>
+        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar size="small" />}>
+          <Bubble tone="theirs" onClick={undefined}>Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
+        </BubbleRun>
         <ComposerDemo />
       </section>
 
       <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">IconButton: quiet, action, filled and danger at the large size, disabled</Text>
+        <Text as="h2" variant="small" tone="subtle">IconButton: action, filled and danger at the large size, disabled</Text>
         <div className="flex items-center gap-2">
-          <IconButton label="Close"><X /></IconButton>
           <IconButton label="Send" tone="action"><Check /></IconButton>
           <IconButton label="Speak" tone="filled" size="large"><Mic className="size-8" /></IconButton>
           <IconButton label="Stop" tone="danger" size="large"><Square className="size-8" /></IconButton>

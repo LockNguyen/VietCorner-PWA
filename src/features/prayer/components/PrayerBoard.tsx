@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
@@ -50,7 +51,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
         <EmptyState message={t(STRINGS.emptyState)} />
       ) : (
         byWeekThenPerson(feed.requests).map((week) => (
-          <PrayerWeek key={week.start} week={week} showGroup={groups.length > 1} canPrayFor={cooldown.canPrayFor} onPray={pray} onManage={setManaging} />
+          <PrayerWeek key={week.start} week={week} canPrayFor={cooldown.canPrayFor} onPray={pray} onManage={setManaging} />
         ))
       )}
 
@@ -60,7 +61,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
         <RequestOptions
           request={managing}
           onAnswered={() => report(feed.answer(managing.id), STRINGS.markAnswered)}
-          onEdit={(body) => report(feed.edit(managing.id, body), STRINGS.saved)}
+          onEdit={(body) => report(feed.edit(managing.id, body), COMMON.saved)}
           onDelete={() => report(feed.remove(managing.id), STRINGS.deleted)}
           onClose={() => setManaging(null)}
         />

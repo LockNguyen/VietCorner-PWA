@@ -344,15 +344,40 @@ describe("profiles", () => {
     expect(data).toEqual({ name: standIn(alice), named_at: null });
   });
 
-  it("are read by any signed-in user, and by nobody signed out", async () => {
+  it("are read by their owner and by nobody signed out", async () => {
     const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
     });
-    const { data: asBob } = await bob.client.from("profiles").select("name").eq("user_id", alice.id);
+    const { data: own } = await bob.client.from("profiles").select("name").eq("user_id", bob.id);
     const { data: signedOut } = await anonymous.from("profiles").select("name");
 
-    expect(asBob).toEqual([{ name: standIn(alice) }]);
+    expect(own).toHaveLength(1);
     expect(signedOut ?? []).toEqual([]);
+  });
+
+  it("are hidden from a signed-in stranger, and shown to someone in a group with their owner", async () => {
+    const aliceAsSeenByBob = () => bob.client.from("profiles").select("name").eq("user_id", alice.id);
+
+    const { data: asStranger } = await aliceAsSeenByBob();
+    await makeMember(bob, groupId);
+    const { data: asFellowMember } = await aliceAsSeenByBob();
+    await admin.from("group_members").delete().eq("group_id", groupId).eq("user_id", bob.id); // as he was
+
+    expect(asStranger).toEqual([]);
+    expect(asFellowMember).toEqual([{ name: standIn(alice) }]);
+  });
+
+  it("are shown to someone who manages groups, whoever the owner is", async () => {
+    // Alice was made an admin by the permissions tests above, and shares no group with Bob.
+    const { data } = await alice.client.from("profiles").select("user_id").eq("user_id", bob.id);
+
+    expect(data).toEqual([{ user_id: bob.id }]);
+  });
+
+  it("do not let anyone ask whether two other people share a group", async () => {
+    const { data } = await bob.client.rpc("shares_a_group_with", { other: alice.id });
+
+    expect(data).toBe(false); // it only ever answers about the caller, who shares none with her
   });
 
   it("are changed by their owner, and by nobody else", async () => {

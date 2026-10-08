@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import Text from "@/components/ui/Text";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
@@ -16,7 +17,7 @@ export default function EnableNotificationsButton() {
   const showBanner = useBanner();
 
   async function turnOn() {
-    if (!(await enable())) showBanner({ kind: "error", message: t(STRINGS.couldNotSave) });
+    if (!(await enable())) showBanner({ kind: "error", message: t(COMMON.couldNotSave) });
   }
 
   if (status === "loading") return null;

@@ -10,9 +10,7 @@ export const STRINGS = {
   emptyState: { en: "No prayer requests yet.", vi: "Chưa có lời xin cầu nguyện nào." } satisfies Text,
   failed: { en: "Something went wrong. Please try again.", vi: "Có lỗi xảy ra. Xin thử lại." } satisfies Text,
   shared: { en: "Shared", vi: "Đã chia sẻ" } satisfies Text,
-  saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
   deleted: { en: "Deleted", vi: "Đã xóa" } satisfies Text,
-  removed: { en: "Removed", vi: "Đã gỡ bỏ" } satisfies Text,
 
   // Composer
   bodyPlaceholder: { en: "What can we pray for?", vi: "Bạn cần cầu nguyện cho điều gì?" } satisfies Text,
@@ -28,8 +26,6 @@ export const STRINGS = {
   // One request
   anonymous: { en: "Anonymous", vi: "Ẩn danh" } satisfies Text,
   you: { en: "you", vi: "bạn" } satisfies Text,
-  showMore: { en: "more…", vi: "xem thêm…" } satisfies Text,
-  showLess: { en: "less", vi: "thu gọn" } satisfies Text,
   prayButton: { en: "🙏 Pray", vi: "🙏 Cầu nguyện" } satisfies Text,
   prayed: { en: "🙏 Prayed", vi: "🙏 Đã cầu nguyện" } satisfies Text,
   manage: { en: "Options for this request", vi: "Tùy chọn cho lời xin này" } satisfies Text,
@@ -39,8 +35,6 @@ export const STRINGS = {
   // The author's options
   markAnswered: { en: "Answered", vi: "Đã được nhậm lời" } satisfies Text,
   editRequest: { en: "Edit", vi: "Sửa" } satisfies Text,
-  saveEdit: { en: "Save", vi: "Lưu" } satisfies Text,
-  saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 

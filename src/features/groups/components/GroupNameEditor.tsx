@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
 import TextInput from "@/components/ui/TextInput";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { removeGroup, renameGroup } from "../api";
@@ -17,11 +18,11 @@ export default function GroupNameEditor({ group }: { group: Group }) {
   const [name, setName] = useState(group.name);
   const unchanged = name.trim() === group.name;
   const { pending, save } = useSave<"rename" | "remove">();
-  const failed = t(STRINGS.couldNotSave);
+  const failed = t(COMMON.couldNotSave);
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save("rename", () => renameGroup(group.id, name.trim()), { done: t(STRINGS.saved), failed });
+    save("rename", () => renameGroup(group.id, name.trim()), { done: t(COMMON.saved), failed });
   }
 
   return (
@@ -38,14 +39,14 @@ export default function GroupNameEditor({ group }: { group: Group }) {
           pending={pending === "rename"}
           disabled={pending !== null || unchanged || name.trim() === ""}
         >
-          {t(STRINGS.saveName)}
+          {t(COMMON.save)}
         </Button>
         <Button
           type="button"
           variant="danger"
           pending={pending === "remove"}
           disabled={pending !== null}
-          onClick={() => save("remove", () => removeGroup(group.id), { done: t(STRINGS.removed), failed })}
+          onClick={() => save("remove", () => removeGroup(group.id), { done: t(COMMON.removed), failed })}
         >
           {t(STRINGS.removeGroup)}
         </Button>

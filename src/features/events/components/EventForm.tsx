@@ -7,6 +7,7 @@ import Select from "@/components/ui/Select";
 import Switch from "@/components/ui/Switch";
 import TextArea from "@/components/ui/TextArea";
 import TextInput from "@/components/ui/TextInput";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LANGUAGE_NAMES, LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
@@ -110,8 +111,8 @@ export default function EventForm({ initial, groups, onSave }: Props) {
         </Field>
       )}
 
-      <Button pending={pending === "save"} pendingLabel={t(STRINGS.saving)}>
-        {t(STRINGS.save)}
+      <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)}>
+        {t(COMMON.save)}
       </Button>
     </form>
   );

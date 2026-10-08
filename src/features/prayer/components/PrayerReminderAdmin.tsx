@@ -6,6 +6,7 @@ import Field from "@/components/ui/Field";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Select from "@/components/ui/Select";
 import TextInput from "@/components/ui/TextInput";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
@@ -48,7 +49,7 @@ export default function PrayerReminderAdmin({ reminders, groups }: Props) {
           return showBanner({ kind: "error", message: t(STRINGS.reminderExists) });
         }
         await refresh();
-        showBanner({ kind: "success", message: t(STRINGS.saved) });
+        showBanner({ kind: "success", message: t(COMMON.saved) });
       } catch {
         showBanner({ kind: "error", message: t(STRINGS.failed) });
       }

@@ -1,7 +1,7 @@
 "use client";
 
 import Avatar from "@/components/ui/Avatar";
-import Text from "@/components/ui/Text";
+import BubbleRun from "@/components/ui/BubbleRun";
 import TimeLine from "@/components/ui/TimeLine";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
@@ -12,15 +12,14 @@ import PrayerBubble from "./PrayerBubble";
 
 type Props = {
   week: WeekGroup;
-  showGroup: boolean;
   canPrayFor: (requestId: string) => boolean;
   onPray: (requestId: string) => void;
   onManage: (request: PrayerRequest) => void;
 };
 
-// One week of the prayer list: its label, then each person (picture and name) with their requests beneath.
-// Not chat's two-sided runs: this is a list to read through, so everything keeps to the left.
-export default function PrayerWeek({ week, showGroup, canPrayFor, onPray, onManage }: Props) {
+// One week of the prayer list: its label, then each person's requests as a run of bubbles under their name.
+// All at the left, mine included: this is a list to read through, not a conversation with two sides.
+export default function PrayerWeek({ week, canPrayFor, onPray, onManage }: Props) {
   const { t, language } = useLanguage(); // I18N
 
   // "This week" … "3 weeks ago", then the week's own date: further back, a count stops meaning anything.
@@ -40,25 +39,20 @@ export default function PrayerWeek({ week, showGroup, canPrayFor, onPray, onMana
   }
 
   return (
-    <section className="flex flex-col gap-6 px-3">
+    <section className="flex flex-col gap-4 px-3">
       <TimeLine>{label()}</TimeLine>
       {week.people.map((person) => (
-        <div key={`${person.name}-${person.mine}`} className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <Avatar size="small" />
-            <Text>{nameOf(person)}</Text>
-          </div>
+        <BubbleRun key={`${person.name}-${person.mine}`} side="theirs" name={nameOf(person)} avatar={<Avatar size="small" />}>
           {person.requests.map((request) => (
             <PrayerBubble
               key={request.id}
               request={request}
-              showGroup={showGroup}
               canPray={canPrayFor(request.id)}
               onPray={() => onPray(request.id)}
               onManage={() => onManage(request)}
             />
           ))}
-        </div>
+        </BubbleRun>
       ))}
     </section>
   );

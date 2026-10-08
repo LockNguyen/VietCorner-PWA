@@ -10,7 +10,8 @@ import { sendLoginCode, verifyLoginCode } from "../api";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
-import { STRINGS } from "../strings";
+import { problemWith } from "../errors";
+import { PROBLEMS, STRINGS } from "../strings";
 
 // Two steps: 1) enter email → a code is emailed. 2) type the code → signed in.
 // Why a typed code instead of a clicked link: on iPhone, email links open in Safari,
@@ -31,8 +32,8 @@ export default function LoginForm() {
       try {
         await sendLoginCode(email);
         setCodeSent(true);
-      } catch {
-        showBanner({ kind: "error", message: t(STRINGS.couldNotSendCode) });
+      } catch (error) {
+        showBanner({ kind: "error", message: t(PROBLEMS[problemWith(error)]) });
       }
     });
   }
@@ -44,8 +45,8 @@ export default function LoginForm() {
         await verifyLoginCode(email, code);
         router.replace("/");
         router.refresh(); // re-run the proxy so it sees the new login cookie
-      } catch {
-        showBanner({ kind: "error", message: t(STRINGS.wrongCode) });
+      } catch (error) {
+        showBanner({ kind: "error", message: t(PROBLEMS[problemWith(error)]) });
       }
     });
   }

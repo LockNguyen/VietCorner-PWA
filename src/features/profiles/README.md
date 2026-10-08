@@ -6,7 +6,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 
 ## Setup
 Run `schema.sql` in Supabase → SQL Editor, before `features/prayer/schema.sql` (the prayer feed reads names).
-Copy it from the editor, not from terminal output. It is **not** safe to run twice (plain `create`).
+Copy it from the editor, not from terminal output. It is **not** safe to run twice (plain `create`), except section 4, the policies, which is how they are changed.
 
 ## Files
 | Layer | File | Job |
@@ -23,7 +23,10 @@ Copy it from the editor, not from terminal output. It is **not** safe to run twi
 | Shell | `src/app/layout.tsx`, `src/app/settings/page.tsx` | Lines marked `PROFILES` |
 
 ## Decisions worth knowing
-- **Any signed-in user reads every name** (decided 2026-10-08). Nobody signed out reads any.
+- **A name is read by its owner, by people who share a group with them, and by whoever manages groups**
+  (decided 2026-10-08). Not by every signed-in user: sign-up is open, so that would be anyone with an email
+  address. The check is the function `shares_a_group_with`, because a member cannot see other people's
+  memberships and a plain policy sub-query would therefore never match.
 - **Every account has a row from the moment it exists**, made by a database trigger and named after the part
   of the email before the @. So no screen meets a person without a name and no code needs a fallback.
   `named_at` is null until the person answers; that is what makes the app ask.
@@ -48,7 +51,8 @@ Copy it from the editor, not from terminal output. It is **not** safe to run twi
 ## Edge cases
 - Before `schema.sql` is run the profile cannot be read: nobody is asked, Settings has no Name block, and
   names are blank. The prayer list is empty until its view is recreated.
-- A chat message from someone new shows without a name for the moment the lookup takes.
+- A chat message from someone new shows without a name for the moment the lookup takes. So does one from
+  someone who has since left the group: their name is no longer readable.
 - The email kept on each message, request and join request (`sender_email`, `author_email`, `user_email`) is
   no longer shown anywhere. It stays as a record; dropping those columns is backlog B34.
 

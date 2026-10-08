@@ -26,10 +26,6 @@ export const STRINGS = {
   cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,
   undoCancel: { en: "Undo", vi: "Hoàn tác" } satisfies Text,
   cancelForGood: { en: "Cancel this event permanently", vi: "Hủy hẳn sự kiện này" } satisfies Text,
-  save: { en: "Save", vi: "Lưu" } satisfies Text,
-  saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
-  saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
-  couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 
   // The form
   titleField: { en: "Title", vi: "Tên sự kiện" } satisfies Text,

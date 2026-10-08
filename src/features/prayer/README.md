@@ -28,13 +28,12 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, posting, editing, answering, deleting, praying, one error flag |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
-| State | `hooks/useExpandableText.ts` | Three lines until asked; measures whether there is more to show |
 | State | `hooks/useWhenVisible.ts` | "Call this when the element scrolls into view" |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
 | UI | `components/PrayerComposer.tsx` | The words, the group, "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
-| UI | `components/PrayerWeek.tsx` | One week: its label, then each person (avatar and name) with their requests beneath |
-| UI | `components/PrayerBubble.tsx` | One request, top to bottom: three lines and "more…", its day (and group), then Pray; the author gets the X beside the words |
+| UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
+| UI | `components/PrayerBubble.tsx` | One request: someone else's carries Pray as a chip on its corner; my own opens its options when tapped |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
@@ -49,7 +48,7 @@ console and select `author_id` for an "anonymous" request. So:
 2. Everything is read through the **`prayer_feed` view**, which returns `null` for the name of an anonymous
    request and carries no author id at all. A named request shows the author's current name (`profiles`).
 3. The view's `is_mine` column answers the one question the app needs the author for ("is this mine?"), so
-   the X button can be shown to the author without sending anyone an id.
+   the author's options can be offered to the author without sending anyone an id.
 4. The author cannot be forged either: `author_id` and `author_email` have no insert or update grant and
    default from the login token.
 
@@ -77,7 +76,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - **Editing changes the words only.** The group and "Hide my name" stay as posted. An edit leaves no mark.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
-- **"more…" appears when the text is measured to be clipped**, not guessed from its length.
+- **A request is shown whole.** No "more…": nothing sits between two requests but the Pray chip, which is what makes it plain which request a button belongs to (decided 2026-10-08, after two layouts that were not).
 - **A prayer reminder is a weekly nudge to a group**, set by whoever holds `prayer.reminders`: a weekday and a
   church-time hour, several per group. It says the group's name and "Time to pray together", in each
   member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
@@ -96,14 +95,13 @@ And a small group can guess from timing or wording — no software fixes that.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
   their name, people in the order of their newest request; anonymous requests share one group. Every
-  request is at the left, mine included; my own named group says "(you)". The group's name is shown under a
-  request only to a member of more than one group.
-  (Layout looked at on made-up requests at phone width, 2026-10-08; not yet on the signed-in screen.)
-- A request longer than three lines on this screen shows "more…"; a shorter one shows no link.
+  request is at the left, mine included; my own named group says "(you)".
+  (This layout has not been looked at on any screen yet, 2026-10-08.)
+- A request shows in full, as a grey bubble. No date and no group name on the list: the week label is the time.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
-- Your own request has no Pray button and an X, which opens Answered / Edit / Delete / Cancel.
+- Someone else's request has a small Pray chip on its lower corner. Your own has none: tapping the bubble opens Answered / Edit / Delete / Cancel.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but
@@ -128,7 +126,7 @@ real notification arriving on a phone.**
 - An author gets at most one "prayed for you" notification a minute, across all their requests (the `push`
   README). The next one carries the running total, so no prayer goes uncounted, only unannounced.
 - Two members with the same name share a group within a week: the feed carries no author id to tell them apart.
-- "more…" is measured when the request appears and when its text changes, not when the phone is rotated.
+- The Pray chip is 32 high, below the 48 the rest of the app keeps: accepted for this one control (decided 2026-10-08).
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
 ## Not built yet

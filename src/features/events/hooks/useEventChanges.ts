@@ -1,5 +1,6 @@
 "use client";
 
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
@@ -28,15 +29,15 @@ export function useEventChanges(eventId: string | undefined, listHref: string) {
       // Awaited last: the button stays busy until the list is drawn, so a second tap cannot save twice.
       if (leave) await goTo(listHref);
     } catch {
-      showBanner({ kind: "error", message: t(STRINGS.couldNotSave) });
+      showBanner({ kind: "error", message: t(COMMON.couldNotSave) });
     }
   }
 
   return {
-    save: (draft: EventDraft) => change(() => saveEvent(draft, eventId), STRINGS.saved, true),
+    save: (draft: EventDraft) => change(() => saveEvent(draft, eventId), COMMON.saved, true),
     cancelDate: (churchDate: string) => change(() => cancelEvent(id, churchDate), STRINGS.canceled),
     restoreDate: (churchDate: string) => change(() => restoreDate(id, churchDate), STRINGS.backOn),
-    setReminder: (minutesBefore: number, on: boolean) => change(() => setReminder(id, minutesBefore, on), STRINGS.saved),
+    setReminder: (minutesBefore: number, on: boolean) => change(() => setReminder(id, minutesBefore, on), COMMON.saved),
     cancelForGood: () => change(() => cancelEvent(id), STRINGS.canceled, true),
   };
 }

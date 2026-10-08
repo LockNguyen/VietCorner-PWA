@@ -145,7 +145,7 @@ the page's data, and says how it went in a banner:
 
 ```tsx
 const { pending, save } = useSave<"rename" | "remove">();
-save("rename", () => renameGroup(id, name), { done: t(STRINGS.saved), failed: t(STRINGS.couldNotSave) });
+save("rename", () => renameGroup(id, name), { done: t(COMMON.saved), failed: t(COMMON.couldNotSave) });  // @/features/i18n/common
 ```
 
 It resolves to whether the change happened. Reach for its parts (`usePending`, `useRefresh`, `useBanner`)

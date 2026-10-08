@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import ListRow from "@/components/ui/ListRow";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { approveJoinRequest, declineJoinRequest } from "../api";
@@ -15,7 +16,7 @@ type Props = { request: JoinRequest; name: string | undefined; groupName: string
 export default function JoinRequestRow({ request, name, groupName }: Props) {
   const { t } = useLanguage(); // I18N
   const { pending, save } = useSave<"approve" | "decline">();
-  const failed = t(STRINGS.couldNotSave);
+  const failed = t(COMMON.couldNotSave);
   const { group_id: groupId, user_id: userId } = request;
 
   return (

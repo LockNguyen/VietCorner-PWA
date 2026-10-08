@@ -2,6 +2,7 @@
 
 import Button from "@/components/ui/Button";
 import ListRow from "@/components/ui/ListRow";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { removeReminder } from "../api";
@@ -15,7 +16,7 @@ type Props = { reminder: PrayerReminder; groupName: string | undefined; when: st
 export default function PrayerReminderRow({ reminder, groupName, when }: Props) {
   const { t } = useLanguage(); // I18N
   const { pending, save } = useSave<"remove">();
-  const says = { done: t(STRINGS.removed), failed: t(STRINGS.failed) };
+  const says = { done: t(COMMON.removed), failed: t(STRINGS.failed) };
 
   return (
     <ListRow

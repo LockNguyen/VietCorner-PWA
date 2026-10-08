@@ -28,11 +28,12 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | `size`: `regular`, `small` | |
-| `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
+| `Bubble` | One message, at most 70% wide. With `onClick` it is a button. | `tone`: `mine`, `theirs`, `failed` | `onClick`, `corner` (hangs half below the bottom edge: leave 16 under it) |
 | `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |
 | `TimeLine` | A small centred label between messages: a time, or a week | | |
 | `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. The screen leaves room under its messages (`pb-16`). | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
-| `IconButton` | A button shown as an icon alone | `tone`: `quiet`, `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
+| `IconButton` | A button shown as an icon alone | `tone`: `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
+| `Chip` | A small pill button on the corner of a bubble: a reaction to it. 32 high, the one control below `touch`. | `tone`: `idle`, `done` | |
 | `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 
@@ -58,5 +59,6 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `useSave` | The usual change from tap to result: `usePending`, then the change, `useRefresh`, and a banner saying how it went. Start here. |
 | `usePending` | Which action of a component is on its way; ignores a second tap. Feeds `Button`'s `pending`. |
 | `useRefresh` | Reloads the page's data and resolves when it is on screen, so a button stays busy until then. |
+| `useGoTo` | Moves to another screen and resolves when it is drawn: for a save that ends by leaving. |
 | `useScrollToEnd` | Keeps the newest message of a conversation in view. |
 | `useBanner` | `showBanner({ kind, message, seconds? })` from anywhere. Success stays 2 s, an error 8 s. `BannerProvider` wraps the app once; `src/components/BannerHost.tsx` draws them and handles the stack. |

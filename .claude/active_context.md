@@ -211,11 +211,17 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         NOT seen: the three screens themselves; the fixed composer over a phone keyboard; the assistant's
         bottom area (`pb-48` is a measured guess at its height).
         Prayer list layout redone after the user's review (it was cramped and confusing): see the prayer README.
-  - [ ] **UI-wide review before the merge** (plan given to the user 2026-10-08; runs on their go).
+  - [ ] **UI-wide review before the merge.** Done: code and security passes (read), 16 findings reported;
+        fixed on the user's word: findings 1-3, decisions 5-8, `npm audit fix`, prayer list as bubbles with a
+        Pray chip. NOT done: the on-screen pass (Claude in Chrome was not connected), should-fix items 9-13,
+        15, 16 (not yet approved). The prayer chip layout has not been seen on any screen.
+        **WAITS ON THE USER: section 4 of `features/profiles/schema.sql`; restart `npm run dev` (Next.js was
+        upgraded under it); connect Chrome.** `npm run test:rls` expects 49 and fails until that SQL is run.
   - [ ] Cleanup: delete `ActionButton` and old classes, lock the palette to the tokens, Vietnamese text list for review
 
 ## ➡️ Next 3 Micro-Steps
-1. User: open a group chat (send, receive, scroll), the Prayer tab (weeks, people, Pray, the X, "more…") and
-   the assistant (type, speak, a failure). Say go, or what to change.
-2. Claude: cleanup: the Vietnamese text list for the native-speaker review; check nothing off-token is left.
-3. User decides: merge `ui-0` … `ui-6` into `main`, and when to push (one Netlify build for all of it).
+1. User: restart `npm run dev`; run section 4 of `src/features/profiles/schema.sql`; connect Claude in Chrome
+   and sign in at localhost:3000.
+2. Claude: `npm run test:rls` (49), then the on-screen pass of every screen; report what is found.
+3. User decides: should-fix items 9-13, 15, 16; whether chat and prayer also show an email beside a name;
+   then the merge of `ui-0` … `ui-6` into `main`.

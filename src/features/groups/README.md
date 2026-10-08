@@ -59,7 +59,7 @@ events or prayer: their tables point at `groups`.
 - `/groups` lists the groups as rows: a joined group says "Joined" and opens with a chevron; the others carry
   the button or the waiting note. "Join" turns into "Waiting for approval"; after a manager approves,
   the row becomes a link the next time the page loads.
-- Admin tab → Groups shows "Waiting to join" above the group names when anyone is waiting: their name (`profiles`), the
+- Admin tab → Groups shows "Waiting to join" above the group names when anyone is waiting: their name and email as "name (email)", the
   group, Approve and Decline. Either answer takes the row off the list.
 - A user sees only their own rows in `group_members` and cannot insert any (`tests/rls.test.ts`).
 - Proven in a rolled-back transaction (17 checks, 2026-10-06): a pending request opens nothing, a user

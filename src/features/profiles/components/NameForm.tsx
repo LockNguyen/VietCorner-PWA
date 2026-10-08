@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
 import TextInput from "@/components/ui/TextInput";
+import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useSave } from "@/lib/useSave";
 import { saveName } from "../api";
@@ -23,7 +24,7 @@ export default function NameForm({ name: saved, submitLabel }: Props) {
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    save("save", () => saveName(name.trim()), { done: t(STRINGS.saved), failed: t(STRINGS.couldNotSave) });
+    save("save", () => saveName(name.trim()), { done: t(COMMON.saved), failed: t(COMMON.couldNotSave) });
   }
 
   return (
@@ -38,7 +39,7 @@ export default function NameForm({ name: saved, submitLabel }: Props) {
       </Field>
       <Button
         pending={pending === "save"}
-        pendingLabel={t(STRINGS.saving)}
+        pendingLabel={t(COMMON.saving)}
         disabled={name.trim() === "" || name.trim() === saved}
       >
         {submitLabel}

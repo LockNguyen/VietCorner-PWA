@@ -15,5 +15,4 @@ export const STRINGS = {
     vi: "Để nhận thông báo, hãy thêm ứng dụng vào Màn hình chính (Chia sẻ → Thêm vào MH chính) rồi mở từ đó.",
   } satisfies Text,
   turnOnNotifications: { en: "Turn on notifications", vi: "Bật thông báo" } satisfies Text,
-  couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 };

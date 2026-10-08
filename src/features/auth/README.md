@@ -54,7 +54,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   the error). Before this, a second tap emailed a second, different code.
 - The screen is the logo, one bold sentence, one field and one button, with the other language as a link
   underneath (observed in the preview at phone width, 2026-10-08). A failure raises a banner in the app's
-  own words: "Could not send the code…" or "That code did not work…", whatever the server said.
+  own words, one sentence per cause (`errors.ts`): no connection, too many tries, an address that is not
+  accepted, a code that is wrong or expired, or anything else. Supabase's status and code decide which;
+  the mapping is unit-tested but has not been seen against real failures.
 - Reloading or closing the app keeps you signed in.
 - The first sign-in is followed by one question, the person's name (the `profiles` README).
 - Settings shows "Signed in as <email>"; signing out returns to `/login`.
