@@ -108,7 +108,7 @@ describe("a weekly event", () => {
 describe("the whole schedule", () => {
   it("is one chronological list across events", () => {
     const soon = makeEvent({ id: "soon", starts_at: "2026-10-06T10:00:00Z" });
-    const later = makeEvent({ id: "later", starts_at: "2026-10-08T10:00:00Z" });
+    const later = makeEvent({ id: "later", starts_at: "2026-10-09T10:00:00Z" });
     const weekly = makeEvent({ id: "weekly", starts_at: "2026-10-07T10:00:00Z", repeats_weekly: true });
 
     const schedule = upcomingOccurrences([later, weekly, soon], new Map(), new Date("2026-10-05T00:00:00Z"));
