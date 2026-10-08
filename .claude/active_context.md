@@ -225,9 +225,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         saves at once; in a group (or with a join request waiting) it becomes a request that `groups.manage`
         approves or declines. Database functions hold the rule; two routes notify. 8 new security cases.
         **WAITS ON THE USER: section 5 of `features/profiles/schema.sql`.** Until then saving a name fails
-        and `npm run test:rls` (expects 58) fails. NOT seen on any screen.
+        and `npm run test:rls` (expects 56) fails. NOT seen on any screen.
 
 ## ➡️ Next 3 Micro-Steps
 1. User: run section 5 of `src/features/profiles/schema.sql` (copied from the editor).
-2. Claude: `npm run test:rls` (58). User: change a name as a member, approve it as an admin.
+2. Claude: `npm run test:rls` (56). User: change a name as a member, approve it as an admin.
 3. User decides: the merge of `ui-0` … `ui-6` and `names-approval` into `main`.
