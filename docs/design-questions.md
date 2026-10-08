@@ -58,6 +58,23 @@ approximate (±2 points). They are starting values to be checked on a real phone
 - **White text over photos** depends on the photo. Over a pale image it disappears.
 - **A hamburger menu hides things.** People who do not explore menus never find what is inside.
 
+### The second reference: Facebook Messenger (two screenshots, 2026-10-08)
+
+Followed for **how chat and sign-in are laid out**. The colours, top bar and type stay the first reference's.
+
+| Element | What the screenshots show |
+|---|---|
+| **Bubbles** | Others at the left: light grey, dark text. Mine at the right: blue, white text. Fully rounded ends (a pill, about 18 pt), comfortable padding, never wider than about 70% of the screen. |
+| **Runs** | Messages from one person in a row sit close together (about 4 pt); a change of speaker gets a clear gap (about 16 pt). That gap, not a line, is what separates turns. |
+| **Avatar** | A small round picture at the left of the **last** bubble of another person's run, not on every bubble. None beside my own. |
+| **Times** | No time on each bubble. The conversation stays uncluttered. |
+| **Composer** | One row fixed at the bottom: a pill-shaped light-grey field with a short hint, and the send action at its right. |
+| **Sign-in** | White screen. The logo centred with a lot of air above and below. One bold centred sentence saying what to do. Light-grey filled fields with the hint inside, no border. Full-width buttons, softly rounded (about 12 pt). A quiet text link at the bottom. Nothing else on the screen. |
+
+**Where the two references disagree** (see F11, F12): Messenger's controls are soft (pill bubbles, 12 pt
+fields and buttons, hints inside fields); the first reference is nearly square (4 pt) and shows no
+controls at all.
+
 ### What the screenshots do not show
 
 No form, button, text field, dialog, error, loading state, chat, or empty screen appears in them. Sections
@@ -123,7 +140,7 @@ rules (flat, one accent, system font, the same paddings).
 | # | Question | Answer | Status |
 |---|---|---|---|
 | 28 | Six tabs for an admin | Members have four tabs, admins five (Q29). There is no menu (N3). | DECIDED |
-| 29 | Which five tabs, in what order, and which opens first | Home, Events, Prayer, Groups, in that order; admins also get Admin. The app opens on **Events**. The assistant and Settings are two icons at the top right of the top bar. | DECIDED |
+| 29 | Which five tabs, in what order, and which opens first | Home, Events, Prayer, Groups, in that order; admins also get Admin. The app opens on **Home**. The assistant and Settings are two icons at the top right of the top bar. | DECIDED |
 | 30 | Top bar | Blue, centred white title. Left: nothing, or a back arrow on a sub-screen. Right: the assistant and Settings icons. | DECIDED |
 | 31 | Sub-screens | Full screen with a back arrow: every row's chevron implies "go in". Sheets only for a short choice (the prayer options). | REF |
 | 32 | Tablet and computer | A centred column at phone width. | PROPOSED |
@@ -155,9 +172,9 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 46 | Login | Like Facebook Messenger's sign-in for ease of use, in the reference app's look. **Waiting on the Messenger screenshots** (F0). | YOU |
+| 46 | Login | Messenger's sign-in layout in the reference's look: white screen, the logo centred near the top, one bold centred sentence, the field, a full-width button, the language choice as quiet text at the bottom. Two steps as today (email, then the code). | DECIDED |
 | 47 | Groups | The reference row: a tile at the left, the group's name, a subtitle, a chevron. What the subtitle says (members, last message) is yours; the tile is N2. | REF |
-| 48 | Chat: bubbles, times, names | Like Messenger for ease of use, in the reference's look. Other people's messages at the left in grey with their name and avatar; mine at the right in the accent blue. **Details wait on the Messenger screenshots** (F0). | DECIDED |
+| 48 | Chat: bubbles, times, names | Messenger's layout in the reference's look (see "The second reference" below). Others at the left in light grey with dark text; mine at the right in the accent blue with white text. In a group, the sender's name sits in small grey above the first bubble of their run and their avatar beside the last. The top bar stays the reference's blue bar with a back arrow, not Messenger's white one. | DECIDED |
 | 49 | Events | A list in the reference row, grouped by day. No month calendar. | REF |
 | 50 | Prayer requests: how they differ from chat | Bubbles like chat, but all at the left, mine included. Grouped by week ("This week", "Last week", "2 weeks ago", …), then by person within a week, anonymous requests together; newest first. Twenty at a time, with "Load more" and a turning circle at the bottom. Open points: F2, F3. | DECIDED |
 | 51 | Assistant: its own identity? | Exactly like a group chat for now, with two speakers: the member and the assistant. It will get its own look later. | DECIDED |
@@ -168,14 +185,14 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 54 | How the app addresses people in Vietnamese | Each person chooses at sign-up how they are addressed: a kinship term ("cô", "chú") or their name. Open points: F1. | DECIDED |
+| 54 | How the app addresses people in Vietnamese | No forms of address and no greeting anywhere for now. Text stays neutral, with no pronoun for the reader where Vietnamese allows it. | DECIDED |
 | 55 | A native speaker reviews all Vietnamese text? | Yes. All Vietnamese text is reviewed by a native speaker. | DECIDED |
 
 ## K. Brand and install
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| 56 | Home Screen name and icon of the installed app (today "VietCorner"). Your answer "Home, with a house icon" reads as the Home **tab**, which is recorded under N1; this one is still open (F4). |  | YOU |
+| 56 | Home Screen name and icon of the installed app: see F4. |  | PROPOSED |
 | 57 | Status bar and splash colour | The accent blue, so the top bar runs to the top of the phone. | REF |
 
 ## L. How we build it
@@ -195,7 +212,7 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| N1 | **A home screen.** The reference opens on "This week": a banner and big tiles into each area. We open straight on Groups. Do we add a home tab like it, and what are its tiles? | Yes. A Home tab with a house icon, whose tiles lead to the other areas. Which areas exactly is F6. | DECIDED |
+| N1 | **A home screen.** The reference opens on "This week": a banner and big tiles into each area. We open straight on Groups. Do we add a home tab like it, and what are its tiles? | Yes. A Home tab with a house icon and three tiles: Events, Prayer, Groups. It becomes a dashboard later. The app opens on it. | DECIDED |
 | N2 | **Thumbnails.** Every reference row has a picture; we have none. Options: (a) admins upload a picture per group and event, which is a new feature (storage, an upload control, moderation); (b) a coloured tile with an icon or the first letter, no upload; (c) no tile at all, text-only rows. | (b) to start: it keeps the row's shape and the left alignment without a new feature. | PROPOSED |
 | N3 | **The menu.** What sits behind the top-left menu? | No menu for now. | DECIDED |
 | N4 | **Tab label size.** Follow the reference's small labels (about 10 pt) exactly, or enlarge them to about 12–13 pt for older eyes? Larger labels with five tabs means short words, especially in Vietnamese. | Enlarge. | PROPOSED |
@@ -207,15 +224,18 @@ rules (flat, one accent, system font, the same paddings).
 
 | # | Question | Answer | Status |
 |---|---|---|---|
-| F0 | **The Messenger screenshots did not arrive.** Q46, Q48, Q50 and Q51 say to mimic them. Please attach them again: the sign-in screen, a group chat, and anything else you want followed. | | YOU |
-| F1 | **Names, avatars and form of address need a place to live and a moment to be asked.** Today an account is only an email. (a) Is a "What is your name, and how should we address you?" step right after the first sign-in part of this revamp? (b) Which forms of address are offered: cô, chú, bác, anh, chị, ông, bà, em, "by my name"? (c) Where does the app use it: a greeting on Home, notifications? (d) Until someone has answered, they are shown as the part of their email before the @. | (a) yes, since nothing can show a name without it; (d) yes. | PROPOSED |
-| F2 | **Prayer grouping.** (a) Week labels: your list has "last month" between "3 weeks ago" and "Week of 10/2/2025", which overlaps both. Proposed rule: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>". (b) A week starts on Sunday, church time. (c) Inside a week, people are ordered by their newest request. (d) With twenty loaded at a time, a later page can add to a person's group already on screen. | As proposed. | PROPOSED |
-| F3 | **Prayer bubbles.** Where do Pray and the author's X go? Proposed: Pray as a small button under the bubble; the author's options by pressing the X at the bubble's corner, as now. | As proposed. | PROPOSED |
-| F4 | Home Screen name and icon of the installed app (Q56). | | YOU |
-| F5 | **How long a banner stays.** Proposed: success 4 seconds, errors 8 seconds, because an error an elderly member did not finish reading is worse than one that lingers. | As proposed. | PROPOSED |
-| F6 | **Home tiles.** "The other four pages": Events, Prayer, Groups, and which fourth — the assistant? | | YOU |
-| F7 | **Opening on Events while there is a Home tab.** The Home tab is first in the bar but the app opens on the second. Intended? The alternative is that Home opens first and shows this week's events on it. | | YOU |
-| F8 | **Banners and forms.** Banners are for what happened after a tap (saved, failed). A form's own hints ("Add a title in at least one language") stay beside the field, where the eye already is. | As proposed. | PROPOSED |
-| F9 | **Top-right icons have no labels** in the reference. It is the one place it breaks "every icon has a word". Keep them bare, or add a small word under each? | Bare, with accessible names; they are secondary. | PROPOSED |
+| F0 | **The Messenger screenshots did not arrive.** Q46, Q48, Q50 and Q51 say to mimic them. Please attach them again: the sign-in screen, a group chat, and anything else you want followed. | Received 2026-10-08: a one-to-one chat and the sign-in screen. Recorded below. | DECIDED |
+| F1 | **Names, avatars and form of address need a place to live and a moment to be asked.** Today an account is only an email. (a) Is a "What is your name, and how should we address you?" step right after the first sign-in part of this revamp? (b) Which forms of address are offered: cô, chú, bác, anh, chị, ông, bà, em, "by my name"? (c) Where does the app use it: a greeting on Home, notifications? (d) Until someone has answered, they are shown as the part of their email before the @. | A step right after the first sign-in asks for the person's **name only**. No form of address is asked or stored, and nothing greets them. Until someone has answered they are shown as the part of their email before the @. Avatars: a default one for everybody; setting one comes later. | DECIDED |
+| F2 | **Prayer grouping.** (a) Week labels: your list has "last month" between "3 weeks ago" and "Week of 10/2/2025", which overlaps both. Proposed rule: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>". (b) A week starts on Sunday, church time. (c) Inside a week, people are ordered by their newest request. (d) With twenty loaded at a time, a later page can add to a person's group already on screen. | As proposed: This week, Last week, 2 weeks ago, 3 weeks ago, then "Week of <date>"; weeks start on Sunday in church time; people within a week ordered by their newest request; a later page can add to a group already on screen. | DECIDED |
+| F3 | **Prayer bubbles.** Where do Pray and the author's X go? Proposed: Pray as a small button under the bubble; the author's options by pressing the X at the bubble's corner, as now. | As proposed. | DECIDED |
+| F4 | Home Screen name and icon of the installed app (Q56). | Name on the phone: "Góc Việt" (a Home Screen label fits about twelve characters and cannot change with the language). Full name where there is room: "Góc Việt · VietCorners". Icon: a placeholder mark I draw, until the logo exists. | PROPOSED |
+| F5 | **How long a banner stays.** Proposed: success 4 seconds, errors 8 seconds, because an error an elderly member did not finish reading is worse than one that lingers. | Success 2 seconds, errors 8 seconds. | DECIDED |
+| F6 | **Home tiles.** "The other four pages": Events, Prayer, Groups, and which fourth — the assistant? | Three tiles: Events, Prayer, Groups. | DECIDED |
+| F7 | **Opening on Events while there is a Home tab.** The Home tab is first in the bar but the app opens on the second. Intended? The alternative is that Home opens first and shows this week's events on it. | The app opens on Home. | DECIDED |
+| F8 | **Banners and forms.** Banners are for what happened after a tap (saved, failed). A form's own hints ("Add a title in at least one language") stay beside the field, where the eye already is. | Yes: hints stay beside the field. The banner is one reusable piece that takes its content as parameters (the message, whether it is a success or an error, how long it stays), so any feature can raise any message through it. | DECIDED |
+| F9 | **Top-right icons have no labels** in the reference. It is the one place it breaks "every icon has a word". Keep them bare, or add a small word under each? | Icons only, with names a screen reader announces ("Assistant", "Settings"). | DECIDED |
 | F10 | **Placeholder images.** I draw them in code: a neutral mark for the logo, a plain avatar, soft tinted tiles for photos. No downloads needed, and nothing with unclear rights ends up in the app. Real photos from the web need a licence that allows use. | As proposed. | PROPOSED |
+| F11 | **Corner roundness of controls.** The first reference shows only thumbnails (about 4 pt). Messenger shows the controls themselves: pill bubbles, and fields and buttons at about 12 pt. Proposed: bubbles are pills; fields and buttons 12 pt; thumbnails and tiles stay 4 pt. This replaces the "4 pt corners" in Q18 and Q34 for controls. | As proposed. | PROPOSED |
+| F12 | **Hints inside fields, or labels above?** Messenger's sign-in puts the hint inside the field. That is fine for one field under a sentence that says what to enter, but in a long form the hint disappears as soon as typing starts. Proposed: sign-in follows Messenger (hint inside, under its sentence); every other form keeps a label above the field (Q35), with the same light-grey filled field. | As proposed. | PROPOSED |
+| F13 | **Times in chat.** Messenger shows none on bubbles. Proposed: a small centred time line where a conversation resumes after a break (an hour or more), and none on each bubble. | As proposed. | PROPOSED |
 
