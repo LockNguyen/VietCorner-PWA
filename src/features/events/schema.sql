@@ -149,6 +149,45 @@ create policy "Event managers choose reminders" on public.event_reminders
   using ((select public.has_permission('events.manage')))
   with check ((select public.has_permission('events.manage')));
 
+-- 3b. What the schedule reads, in one trip --------------------------------
+-- This section can be run again by itself: it is how the function is changed.
+--
+-- One call returns every event the caller may see, each with its words in every language it has and the
+-- single weeks that were called off. Before this the page made four or five reads, one after another.
+-- It runs with the CALLER's rights (the default), so the policies above still decide what comes back: this
+-- function opens nothing that a direct read would not. `until` and `cancelled_since` only narrow the answer.
+create or replace function public.upcoming_events(until timestamptz, cancelled_since timestamptz)
+returns table (
+  id uuid,
+  group_id uuid,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  repeats_weekly boolean,
+  repeat_until date,
+  canceled_at timestamptz,
+  texts jsonb,
+  canceled_dates date[]
+)
+language sql stable set search_path = '' as $$
+  select
+    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at,
+    coalesce(
+      (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
+       from public.event_texts t where t.event_id = e.id),
+      '{}'::jsonb
+    ),
+    coalesce((select array_agg(c.occurrence_date) from public.event_cancellations c where c.event_id = e.id), '{}')
+  from public.events e
+  where e.deleted_at is null -- a manager may read removed events; the schedule never shows them
+    and e.starts_at <= until
+    -- A weekly event that started months ago still runs today; the app works out which dates lie ahead.
+    and (e.repeats_weekly or e.starts_at >= now())
+    and (e.canceled_at is null or e.canceled_at >= cancelled_since);
+$$;
+
+revoke execute on function public.upcoming_events (timestamptz, timestamptz) from public, anon;
+grant execute on function public.upcoming_events (timestamptz, timestamptz) to authenticated;
+
 -- 4. Seed data ------------------------------------------------------------
 -- Until the admin page exists, these rows are how the feature is exercised: one normal case and every
 -- edge case the list has to handle.
@@ -243,5 +282,6 @@ join public.event_texts t on t.event_id = e.id and t.language = 'en'
 where t.title in ('Church picnic', 'Sunday service');
 
 -- 5. Undo (removing the feature) ------------------------------------------
+-- drop function if exists public.upcoming_events (timestamptz, timestamptz);
 -- drop table if exists public.event_reminders, public.event_cancellations,
 --   public.event_texts, public.events cascade;

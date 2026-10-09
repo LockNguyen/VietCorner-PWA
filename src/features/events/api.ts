@@ -1,12 +1,21 @@
 import { LANGUAGES } from "@/features/i18n/types"; // I18N
 import { createClient } from "@/lib/supabase/client";
 import { rowOf, textOf } from "./draft";
-import type { EventDraft } from "./types";
+import { scheduleWindow } from "./occurrences";
+import type { EventDraft, ScheduledEvent } from "./types";
 
-// Events API: every call the browser makes for this feature. Members only read, and that happens on the
-// server (server/queries.ts), so everything here is an action of someone with the "events.manage" permission.
+// Events API: every call the browser makes for this feature. Members only read: `getSchedule`. Everything
+// else here is an action of someone with the "events.manage" permission.
 // - Saving, and choosing reminders, go straight to Supabase. RLS in schema.sql refuses anyone without the permission.
 // - Cancelling and undoing go through our API route, because they also notify members (needs secrets).
+
+// GET the schedule again, as the page first read it (server/queries.ts): one call to `upcoming_events()`.
+// For the list to refresh itself on arrival, without reloading the page.
+export async function getSchedule(): Promise<ScheduledEvent[]> {
+  const { data, error } = await createClient().rpc("upcoming_events", scheduleWindow(new Date()));
+  if (error) throw new Error(error.message);
+  return data;
+}
 
 // POST a new event, or PATCH an existing one when `eventId` is given, with its text in each language.
 //

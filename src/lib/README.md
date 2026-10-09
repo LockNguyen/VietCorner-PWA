@@ -12,6 +12,7 @@ hooks behind every button. The short comment in each file says what it is; the l
 | `useRefresh.ts`, `useGoTo.ts` | A reload, a move to another screen, each awaited until drawn |
 | `useSave.ts` | The usual change from tap to result: pending, the change, reload, a banner |
 | `useBanner.tsx` | The banners on screen; raise one from anywhere |
+| `useFresh.ts` | A list shows what the page loaded, then re-reads itself on arrival and on return to the app |
 | `useScrollToEnd.ts` | Keeps the newest message of a conversation in view |
 
 ## `usePending`: why every button goes through it
@@ -38,3 +39,13 @@ as "nothing happened" and invites a second tap; on a new event, that second tap 
 React keeps a transition "pending" until the screen it leads to is drawn, so the change is started inside
 one, and the promise is resolved when that transition ends. If the change takes the component off the
 screen, the promise never resolves, and whatever waited on it simply stays busy until it is gone.
+
+## `useFresh`: why a list refreshes itself instead of the page reloading
+The aim is "show the kept copy at once, fetch a fresh one behind it, swap". Next.js can keep a visited page
+(`staleTimes`), but its only way to renew one, `router.refresh()`, throws away every kept page, not just the
+current one: measured on 2026-10-09, a refresh on one tab made the next two taps fetch again. So the page
+is left alone and the list re-reads its own data: once on arrival, and whenever the app returns to the
+foreground. `read` is the same call the page made, from the feature's `api.ts`.
+
+If a read fails, what is on screen stays. If the page itself loads again (after a save), what it brings
+replaces what the list held.

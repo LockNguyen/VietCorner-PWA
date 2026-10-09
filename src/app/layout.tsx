@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import AppTabs from "@/components/AppTabs";
 import BannerHost from "@/components/BannerHost";
+import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
 import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I18N
 import { getLanguage } from "@/features/i18n/server/queries"; // I18N
@@ -29,7 +30,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // A null language means signed out, or signed in without a choice yet.
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser(supabase); // AUTH
   // Read together, once per page load:
   // I18N the stored language · PERMISSIONS who may manage something gets the Admin tab · PROFILES the name.
   const [storedLanguage, permissions, profile] = user

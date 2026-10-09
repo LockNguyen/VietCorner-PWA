@@ -527,6 +527,28 @@ describe("events", () => {
     await admin.from("events").delete().in("id", [churchWideId, groupOnlyId, deletedId]);
   });
 
+  it("upcoming_events, the schedule's one read, returns what the policies allow and nothing more", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    // Windows as wide as they go: a caller choosing its own dates must not see more than a direct read.
+    const everything = { until: "2999-01-01T00:00:00Z", cancelled_since: "1970-01-01T00:00:00Z" };
+    const idsFor = async (client: SupabaseClient) =>
+      ((await client.rpc("upcoming_events", everything)).data ?? []).map((row: { id: string }) => row.id);
+
+    const [outsider, member, signedOut] = [await idsFor(bob.client), await idsFor(alice.client), await anonymous.rpc("upcoming_events", everything)];
+    const { data: rows } = await bob.client.rpc("upcoming_events", everything);
+    const churchWide = rows?.find((row: { id: string }) => row.id === churchWideId);
+
+    expect(outsider).toContain(churchWideId);
+    expect(outsider).not.toContain(groupOnlyId); // Bob is not in that group
+    expect(member).toContain(groupOnlyId);
+    expect([...outsider, ...member]).not.toContain(deletedId); // removed: hidden even from Alice, a manager
+    expect(signedOut.error).not.toBeNull();
+    expect(Object.keys(churchWide?.texts ?? {})).toEqual(["en"]);
+    expect(churchWide?.canceled_dates).toEqual([]);
+  });
+
   it("church-wide events are visible to every signed-in member", async () => {
     const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
 

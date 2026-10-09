@@ -18,7 +18,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 |---|---|---|
 | Text | `strings.ts` | Every word the user reads in this feature |
 | Browser API | `api.ts` | `sendLoginCode` (`signInWithOtp`), `verifyLoginCode` (`verifyOtp`, type `email`), `signOut` |
-| Server reads | `server/queries.ts` | `getCurrentUser(supabase)`: used by every page that needs the signed-in user |
+| Server reads | `server/queries.ts` | `getCurrentUser(supabase)`: id and email from the login token, checked locally (no trip to Supabase). Used by the layout and every page that needs the signed-in user. Routes that write call `auth.getUser()` instead. |
 | Server logic | `server/refreshSession.ts` | Called by `src/proxy.ts` on every non-static request: refreshes the session cookie and redirects (logged out → `/login`; logged in on `/login` → `HOME_PATH`) |
 | UI | `components/LoginForm.tsx` | Email step → code step; calls `api.ts` |
 | UI | `components/AccountSection.tsx` | "Signed in as …" + `SignOutButton` |

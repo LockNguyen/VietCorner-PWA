@@ -22,7 +22,7 @@ every case the list has to handle (see **Seed data** below).
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
 | Browser API | `api.ts` | `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
-| Server reads | `server/queries.ts` | `getUpcomingSchedule` (members), `getManagedEvents` (admin section) |
+| Server reads | `server/queries.ts` | `getScheduledEvents` (the schedule, one call to `upcoming_events()`), `getManagedEvents` (admin section) |
 | Server logic | `server/changeSchedule.ts` | `cancelDate`, `restoreDate`, `cancelForGood`: each records the change as the **user**, then notifies |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: sends each due reminder once, per language |
 | Server logic | `server/audience.ts` | Who is told about an event: the group, or everyone with notifications on |
@@ -44,7 +44,7 @@ every case the list has to handle (see **Seed data** below).
 | Table | Why separate |
 |---|---|
 | `events` | When it happens. Structure only, so the list query stays small |
-| `event_texts` | One row **per language**. A member downloads their own; a missing one falls back to the other |
+| `event_texts` | One row **per language**. The schedule carries every language an event has; the screen shows the reader's, or the other one when theirs is missing |
 | `event_cancellations` | One skipped week of a recurring event. A row exists only when a week is called off |
 | `event_reminders` | Admin configuration: which reminders an event has. Only `events.manage` can read or write it, so it never reaches a member's device. |
 
@@ -131,7 +131,7 @@ every case the list has to handle (see **Seed data** below).
 Verified 2026-10-06: the rules in a rolled-back transaction (16 checks) and the time and form logic in unit
 tests. **Not yet exercised: the admin screen itself, and a cancellation push arriving on a phone.**
 
-Verified against the seeds on 2026-10-05 by running `getUpcomingSchedule` as real signed-in users:
+Verified against the seeds on 2026-10-05 by running the schedule read of that time as real signed-in users:
 - A Bible Study member gets 20 dates, a non-member 12: the 8 missing ones are exactly the group's.
 - Only the second Bible study week is cancelled; the weeks around it are not.
 - The Vietnamese-only event shows its Vietnamese title to an English reader.
@@ -143,3 +143,19 @@ Bringing back an event that was cancelled for good.
 ## Remove
 Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `eventsTab` in
 `src/components/strings.ts`, then run the DROP statements at the bottom of `schema.sql`.
+
+## How the schedule loads (2026-10-09)
+- **One trip.** The page calls the database function `upcoming_events(until, cancelled_since)` once. It
+  returns each visible event with its words in every language and its called-off weeks. Before, the page
+  made four or five reads in a row (measured on the live site: 447-851 ms per tap, the slowest tab).
+- **The function opens nothing.** It runs with the caller's rights, so the policies in `schema.sql` decide
+  what it returns, exactly as for a direct read. `tests/rls.test.ts` calls it as an outsider, a member, a
+  manager and signed out, with the widest dates a caller could choose.
+- **The list refreshes itself.** `EventSchedule` shows what the page loaded, then calls the same function
+  from the browser (`api.getSchedule`) on arrival and when the app returns to the foreground (`useFresh`).
+  This is what will let a kept copy of the page appear at once and still become current.
+- **Expanding and translating happen on the phone** (`scheduleOf`, pure and tested): weekly events into
+  dates, and each event into the reader's language. So switching language needs no new read.
+- **Both languages are downloaded** (changed from "only the reader's"): a few dozen short texts, and it is
+  what makes the two points above possible.
+- Before section 3b of `schema.sql` is run, the schedule is empty.

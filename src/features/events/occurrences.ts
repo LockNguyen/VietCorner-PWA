@@ -1,5 +1,6 @@
 import { addWeeks, isoDate } from "@/lib/churchTime";
-import type { ChurchEvent, EventRow, Occurrence } from "./types";
+import type { Language } from "@/features/i18n/types"; // I18N
+import type { ChurchEvent, EventRow, Occurrence, ScheduledEvent } from "./types";
 
 // Turning stored events into the dates a member sees.
 //
@@ -57,4 +58,28 @@ export function upcomingOccurrences(
   return events
     .flatMap((event) => occurrencesOf(event, canceledDatesByEvent.get(event.id) ?? new Set(), from))
     .sort((left, right) => left.startsAt.getTime() - right.startsAt.getTime());
+}
+
+// why: an event called off for good stays on the schedule, struck through, long enough for someone who
+// missed the notification to see it at their next weekly visit. After that it is clutter.
+const WEEKS_A_CANCELLED_EVENT_STAYS = 1;
+
+// How far the schedule looks, as the two instants `upcoming_events()` takes.
+export function scheduleWindow(now: Date) {
+  return {
+    until: new Date(now.getTime() + WEEKS_AHEAD * MILLISECONDS_PER_WEEK).toISOString(),
+    cancelled_since: new Date(now.getTime() - WEEKS_A_CANCELLED_EVENT_STAYS * MILLISECONDS_PER_WEEK).toISOString(),
+  };
+}
+
+// The schedule a reader of `language` sees: each event in their language, or in the other one when theirs
+// is missing. An event with no words at all cannot be shown, and is left out rather than drawn blank.
+export function scheduleOf(events: ScheduledEvent[], language: Language, from: Date): Occurrence[] {
+  const readable = events.flatMap((event) => {
+    const text = event.texts[language] ?? Object.values(event.texts)[0];
+    return text ? [{ ...event, text }] : [];
+  });
+  const canceledDates = new Map(events.map((event) => [event.id, new Set(event.canceled_dates)]));
+
+  return upcomingOccurrences(readable, canceledDates, from);
 }

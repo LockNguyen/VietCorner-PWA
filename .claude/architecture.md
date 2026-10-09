@@ -54,6 +54,7 @@ src/
   lib/useWhenDrawn.ts  Starts a router change and resolves when its result is drawn. Under the next two.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
   lib/useGoTo.ts     Moves to another screen and resolves when it is on screen.
+  lib/useFresh.ts    A list shows what the page loaded, then re-reads itself on arrival and on return to the app.
   lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
   lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
@@ -196,7 +197,8 @@ paint is already right. Admin-written content (events) will be translated with `
 Table: `user_settings`.
 
 ### 6.4 events → [README](../src/features/events/README.md)
-The church schedule. Four tables so a phone downloads only what it shows: `events` (when), `event_texts`
+The church schedule, read in one trip through the function `upcoming_events()` and kept fresh by the list
+itself (`useFresh`). Four tables, one job each: `events` (when), `event_texts`
 (one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
@@ -300,6 +302,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
 | A device's push subscription is saved through a route with the service role | The endpoint outlives a sign-out; only the server may move it to the next user of that phone | Anyone who knew an endpoint (a long random address) could claim it; one more route |
+| A page's data comes from one database function, called by the page and again by the list itself (`useFresh`) | One trip instead of several; a kept copy of a page can show at once and still become current; `router.refresh()` cannot do this because it discards every kept page | SQL per page; the list holds a copy of the page's data; one extra small read just after a first visit |
+| Pages read who is signed in from the login token, checked locally; only routes that write ask Supabase | Most of the app is reading, and the round trip bought nothing the database's own check does not | A session ended elsewhere keeps reading for up to an hour |
 | Names are readable within a shared group and by group managers, not by every signed-in user | Sign-up is open: "signed in" is anyone with an email | A former member's old messages lose their name; one function call per row read |
 | Once in a group, a name changes only with a group manager's approval | The manager saw name and email when letting the person in; a later change unseen would undo that check | A wait for an honest correction; one more thing for managers to answer |
 | A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
@@ -395,3 +399,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
   (3) "Turn on notifications" failed on a phone another account had used: the device is now saved by `POST /api/push/subscribe`;
   (4) event reminder switches always failed: the save was an insert-or-update and managers have no update grant; it is now insert-or-nothing.
   Failures behind a "Could not save" banner are also written to the console.
+- 2026-10-09: faster tabs, step 1 (Events): the schedule is one call to `upcoming_events()` instead of four or five reads; `EventSchedule` refreshes itself through `useFresh`; weekly dates and language are worked out on the phone (`scheduleOf`). Pages and the layout read the signed-in user from the token (`getCurrentUser` uses `getClaims`), with no trip to Supabase. Needs section 3b of `features/events/schema.sql`. Pages are not kept yet: that is switched on once Groups and Prayer refresh themselves too.

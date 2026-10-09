@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { isoDate, wallTime } from "@/lib/churchTime";
-import { occurrencesOf, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
-import type { ChurchEvent } from "./types";
+import { occurrencesOf, scheduleOf, scheduleWindow, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
+import type { ChurchEvent, ScheduledEvent } from "./types";
 
 const MONDAY = new Date("2026-10-05T18:00:00Z");
 
@@ -114,5 +114,41 @@ describe("the whole schedule", () => {
     const schedule = upcomingOccurrences([later, weekly, soon], new Map(), new Date("2026-10-05T00:00:00Z"));
 
     expect(schedule.slice(0, 3).map((occurrence) => occurrence.event.id)).toEqual(["soon", "weekly", "later"]);
+  });
+});
+
+describe("the schedule as the database hands it over", () => {
+  const BEFORE = new Date("2026-10-01T00:00:00Z");
+  const stored = (overrides: Partial<ScheduledEvent> = {}): ScheduledEvent => {
+    const { text, ...row } = makeEvent();
+    return { ...row, texts: { en: text }, canceled_dates: [], ...overrides };
+  };
+
+  it("shows each event in the reader's language", () => {
+    const event = stored({ texts: { en: { title: "Prayer", description: null, location: null }, vi: { title: "Cầu nguyện", description: null, location: null } } });
+
+    expect(scheduleOf([event], "vi", BEFORE)[0].event.text.title).toBe("Cầu nguyện");
+    expect(scheduleOf([event], "en", BEFORE)[0].event.text.title).toBe("Prayer");
+  });
+
+  it("falls back to the other language rather than hiding the event", () => {
+    expect(scheduleOf([stored()], "vi", BEFORE)[0].event.text.title).toBe("Prayer evening");
+  });
+
+  it("leaves out an event with no words at all", () => {
+    expect(scheduleOf([stored({ texts: {} })], "vi", BEFORE)).toEqual([]);
+  });
+
+  it("marks the single weeks that were called off", () => {
+    const weekly = stored({ repeats_weekly: true, canceled_dates: [isoDate(new Date(MONDAY.getTime() + 7 * 86_400_000))] });
+
+    expect(scheduleOf([weekly], "en", BEFORE).slice(0, 3).map((date) => date.canceled)).toEqual([false, true, false]);
+  });
+
+  it("asks the database for eight weeks ahead and one week of cancelled events behind", () => {
+    expect(scheduleWindow(new Date("2026-10-08T00:00:00Z"))).toEqual({
+      until: "2026-12-03T00:00:00.000Z",
+      cancelled_since: "2026-10-01T00:00:00.000Z",
+    });
   });
 });

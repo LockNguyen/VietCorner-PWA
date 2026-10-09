@@ -244,9 +244,14 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         "keep long + refresh on arrival" cannot work as two pieces.
         Decided by the user: one database view/function per page; no network login check for reads (keep it
         for writes); stale-while-revalidate, not a fixed stale window; pull-to-refresh is backlog B35.
+  - [ ] **Faster tabs, step 1: Events** (branch `fast-tabs`, on top of `iphone-fixes`; held, not pushed).
+        `upcoming_events()` (one trip), `useFresh`, `scheduleOf`; reads use the token locally. 96 unit tests.
+        **WAITS ON THE USER: section 3b of `features/events/schema.sql`.** Until then the schedule is empty
+        on this branch and one new security case fails. NOT measured yet against the baseline; NOT seen.
+        Still to do: Groups, Prayer, a chat, Admin the same way; then keep pages (`staleTimes`) and make
+        sign-out a full page load.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: choose how the silent refresh is built now that the router's refresh wipes kept tabs (options given
-   2026-10-09), and whether `iphone-fixes` is merged and pushed now or with this work.
-2. Claude: a plan for the chosen option, one tab first (Events: slowest), with its SQL for the user to run.
-3. Measure the same four tabs again after each step, against the baseline above.
+1. User: run section 3b of `src/features/events/schema.sql` (copied from the editor; safe to run again).
+2. Claude: `npm run test:rls` (58), then time Events on a local production build of `main` and of this branch.
+3. If the gain is there: Groups and Prayer the same way, then switch on keeping pages.

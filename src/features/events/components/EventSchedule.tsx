@@ -6,18 +6,24 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
 import { isoDate, toInstant } from "@/lib/churchTime";
+import { useFresh } from "@/lib/useFresh";
+import { getSchedule } from "../api";
 import { formatLongDate } from "../formatting";
+import { scheduleOf } from "../occurrences";
 import { STRINGS } from "../strings";
-import type { Occurrence, SerializedOccurrence } from "../types";
+import type { Occurrence, ScheduledEvent } from "../types";
 import EventDetails from "./EventDetails";
 import EventRow from "./EventRow";
 
-type Props = { occurrences: SerializedOccurrence[] };
+type Props = { events: ScheduledEvent[] }; // as the page loaded them
 
 // The schedule: every date in the next weeks, grouped by day, soonest first. Tapping one opens its details.
-export default function EventSchedule({ occurrences }: Props) {
+// It shows what the page loaded at once, then keeps itself fresh (`useFresh`).
+export default function EventSchedule({ events: loaded }: Props) {
   const { t, language } = useLanguage(); // I18N
   const [open, setOpen] = useState<Occurrence | null>(null);
+  const events = useFresh(loaded, getSchedule);
+  const occurrences = scheduleOf(events, language, new Date());
 
   if (occurrences.length === 0) return <EmptyState message={t(STRINGS.emptyState)} />;
 
@@ -43,15 +49,10 @@ export default function EventSchedule({ occurrences }: Props) {
   );
 }
 
-// Dates arrive as strings over the wire; they become Dates here, grouped under the day they fall on.
-function groupByDay(occurrences: SerializedOccurrence[]): [string, Occurrence[]][] {
+// The dates under the church day each falls on, in the order they arrive (soonest first).
+function groupByDay(occurrences: Occurrence[]): [string, Occurrence[]][] {
   const days = new Map<string, Occurrence[]>();
-  for (const serialized of occurrences) {
-    const occurrence: Occurrence = {
-      ...serialized,
-      startsAt: new Date(serialized.startsAt),
-      endsAt: serialized.endsAt ? new Date(serialized.endsAt) : null,
-    };
+  for (const occurrence of occurrences) {
     const day = isoDate(occurrence.startsAt);
     days.set(day, [...(days.get(day) ?? []), occurrence]);
   }

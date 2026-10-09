@@ -9,11 +9,11 @@ export async function getChatRoom(supabase: SupabaseClient, groupId: string) {
   const [messages, user] = await Promise.all([
     supabase.from("messages").select("*").eq("group_id", groupId)
       .order("created_at", { ascending: false }).limit(50),
-    supabase.auth.getUser(),
+    supabase.auth.getClaims(), // the token, checked locally: no trip to Supabase for a read
   ]);
 
   return {
     messages: ((messages.data ?? []) as Message[]).reverse(), // newest 50, shown oldest first
-    userId: user.data.user?.id ?? "",
+    userId: user.data?.claims.sub ?? "",
   };
 }

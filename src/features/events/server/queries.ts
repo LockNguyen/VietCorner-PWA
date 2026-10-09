@@ -1,47 +1,26 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Language } from "@/features/i18n/types";
 import { isoDate } from "@/lib/churchTime";
-import { isCanceled, startsOf, upcomingOccurrences, WEEKS_AHEAD } from "../occurrences";
-import { EVENT_COLUMNS, type ChurchEvent, type EventRow, type EventText, type ManagedEvent, type Occurrence } from "../types";
+import { isCanceled, scheduleWindow, startsOf } from "../occurrences";
+import { EVENT_COLUMNS, type EventRow, type EventText, type ManagedEvent, type ScheduledEvent } from "../types";
 
 // Server-side reads for this feature. The page creates the client and passes it in.
 //
 // RLS decides what comes back: church-wide events, plus events of the groups this member joined.
 // Someone with the "events.manage" permission gets every group's events, on the schedule too (decided
-// 2026-10-06). The policy that lets them remove an event also lets them read removed ones, so both
-// queries below filter `deleted_at` themselves; for members the policy already did.
+// 2026-10-06), and could also read removed ones, so both reads below leave those out themselves.
 
 type TextRow = EventText & { event_id: string; language: Language };
 
 // why: enough to cancel next week or the one after without scrolling a long list per event.
 const DATES_SHOWN_TO_MANAGERS = 4;
 
-// why: an event called off for good stays on the schedule, struck through, long enough for someone who
-// missed the notification to see it at their next weekly visit. After that it is clutter.
-const DAYS_A_CANCELLED_EVENT_STAYS = 7;
-
-// Everything the schedule page shows: every date in the next few weeks, oldest first.
-export async function getUpcomingSchedule(
-  supabase: SupabaseClient,
-  language: Language,
-  now = new Date(),
-): Promise<Occurrence[]> {
-  // A weekly event that started months ago still runs today, so the window reaches back far enough to
-  // catch those rows, and the expansion decides which dates actually fall ahead of `now`.
-  const horizon = new Date(now.getTime() + WEEKS_AHEAD * 7 * 24 * 60 * 60 * 1000);
-  const cancelledSince = new Date(now.getTime() - DAYS_A_CANCELLED_EVENT_STAYS * 24 * 60 * 60 * 1000);
-  const { data: rows, error } = await supabase
-    .from("events")
-    .select(EVENT_COLUMNS)
-    .is("deleted_at", null)
-    .lte("starts_at", horizon.toISOString())
-    .or(`repeats_weekly.eq.true,starts_at.gte.${now.toISOString()}`)
-    .or(`canceled_at.is.null,canceled_at.gte.${cancelledSince.toISOString()}`); // the two .or() are ANDed
-  if (error || !rows?.length) return [];
-
-  const ids = rows.map((row: EventRow) => row.id);
-  const events = await attachText(supabase, rows as EventRow[], ids, language);
-  return upcomingOccurrences(events, await cancellations(supabase, ids), now);
+// Everything the schedule page shows, in one trip to the database: `upcoming_events()` (schema.sql).
+// The browser makes the same call to refresh the list (api.ts).
+export async function getScheduledEvents(supabase: SupabaseClient, now = new Date()): Promise<ScheduledEvent[]> {
+  const { data, error } = await supabase.rpc("upcoming_events", scheduleWindow(now));
+  if (error) return []; // also the answer before schema.sql has been run
+  return data;
 }
 
 // Everything the admin section lists: every event that still has a date ahead and was not called off for
@@ -80,38 +59,6 @@ export async function getManagedEvents(supabase: SupabaseClient, now = new Date(
         })),
       reminderMinutes: (reminders ?? []).filter((reminder) => reminder.event_id === row.id).map((reminder) => reminder.minutes_before),
     };
-  });
-}
-
-// A member downloads their own language. Only events missing it fall back to the other one, which is why
-// this is two queries rather than one that fetches every translation.
-async function attachText(
-  supabase: SupabaseClient,
-  rows: EventRow[],
-  ids: string[],
-  language: Language,
-): Promise<ChurchEvent[]> {
-  const { data: preferred } = await supabase
-    .from("event_texts")
-    .select("event_id, language, title, description, location")
-    .in("event_id", ids)
-    .eq("language", language);
-
-  const byEvent = new Map<string, EventText>((preferred ?? []).map((text: TextRow) => [text.event_id, text]));
-  const untranslated = ids.filter((id) => !byEvent.has(id));
-
-  if (untranslated.length > 0) {
-    const { data: fallback } = await supabase
-      .from("event_texts")
-      .select("event_id, language, title, description, location")
-      .in("event_id", untranslated);
-    for (const text of (fallback ?? []) as TextRow[]) if (!byEvent.has(text.event_id)) byEvent.set(text.event_id, text);
-  }
-
-  // An event with no text at all cannot be rendered, and is dropped rather than shown as a blank row.
-  return rows.flatMap((row) => {
-    const text = byEvent.get(row.id);
-    return text ? [{ ...row, text }] : [];
   });
 }
 

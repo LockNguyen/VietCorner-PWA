@@ -16,7 +16,7 @@ export type EventRow = {
   canceled_at: string | null;
 };
 
-// What the event SAYS, in one language. A member downloads their language only.
+// What the event SAYS, in one language.
 export type EventText = {
   title: string;
   description: string | null;
@@ -34,11 +34,11 @@ export type Occurrence = {
   canceled: boolean;
 };
 
-// The same thing after crossing the server → client boundary, where a Date becomes a string.
-// The page serializes, `EventSchedule` revives: nothing else needs to know this shape exists.
-export type SerializedOccurrence = Omit<Occurrence, "startsAt" | "endsAt"> & {
-  startsAt: string;
-  endsAt: string | null;
+// One row of `upcoming_events()` (schema.sql): an event a member may see, with its words in every language
+// it has and the single weeks that were called off. The page and the browser's refresh both read this.
+export type ScheduledEvent = EventRow & {
+  texts: Partial<Record<Language, EventText>>;
+  canceled_dates: string[]; // church calendar dates, YYYY-MM-DD
 };
 
 // The `events` columns every read asks for, named once.

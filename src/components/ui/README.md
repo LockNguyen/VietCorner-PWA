@@ -60,5 +60,6 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `usePending` | Which action of a component is on its way; ignores a second tap. Feeds `Button`'s `pending`. |
 | `useRefresh` | Reloads the page's data and resolves when it is on screen, so a button stays busy until then. |
 | `useGoTo` | Moves to another screen and resolves when it is drawn: for a save that ends by leaving. |
+| `useFresh` | A list shows what the page loaded, then re-reads itself on arrival and on return to the app. |
 | `useScrollToEnd` | Keeps the newest message of a conversation in view. |
 | `useBanner` | `showBanner({ kind, message, seconds? })` from anywhere. Success stays 2 s, an error 8 s. `BannerProvider` wraps the app once; `src/components/BannerHost.tsx` draws them and handles the stack. |
