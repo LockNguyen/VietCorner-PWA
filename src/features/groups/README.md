@@ -75,3 +75,11 @@ events or prayer: their tables point at `groups`.
 This is a foundation, not a leaf: chat, events (group events) and prayer stop working without it. Remove those
 first, then delete this folder, `src/app/groups/`, the Groups tab in `AppTabs.tsx`, and run the DROP statement
 at the bottom of `schema.sql`.
+
+## How the group list loads (2026-10-09)
+- **One trip.** `getGroups` calls the database function `my_groups()`: every active group with whether the
+  caller has joined or is waiting. It was three reads. The Groups, Prayer and Admin pages all use it.
+- **The function opens nothing.** It runs with the caller's rights; the policies decide what it can see.
+  It also narrows what a manager gets to their own standing, although they may read everyone's requests.
+- **The list refreshes itself** on arrival and on return to the app (`useFresh` with `api.getMyGroups`).
+- Before section 2b of `schema.sql` is run, the pages that list groups fail to load.

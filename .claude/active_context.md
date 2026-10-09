@@ -244,14 +244,17 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         "keep long + refresh on arrival" cannot work as two pieces.
         Decided by the user: one database view/function per page; no network login check for reads (keep it
         for writes); stale-while-revalidate, not a fixed stale window; pull-to-refresh is backlog B35.
-  - [ ] **Faster tabs, step 1: Events** (branch `fast-tabs`, on top of `iphone-fixes`; held, not pushed).
-        `upcoming_events()` (one trip), `useFresh`, `scheduleOf`; reads use the token locally. 96 unit tests.
-        **WAITS ON THE USER: section 3b of `features/events/schema.sql`.** Until then the schedule is empty
-        on this branch and one new security case fails. NOT measured yet against the baseline; NOT seen.
-        Still to do: Groups, Prayer, a chat, Admin the same way; then keep pages (`staleTimes`) and make
-        sign-out a full page load.
+  - [ ] **Faster tabs** (branch `fast-tabs`, on top of `iphone-fixes`; held, not pushed).
+        Step 1, Events: `upcoming_events()`, `useFresh`, `scheduleOf`; reads use the token locally. SQL run;
+        `npm run test:rls` 58/58. MEASURED (local production build, same database, 8 taps each, median):
+        479 ms on `main` -> 132 ms on this branch; the background refresh on arrival is one call, 118 ms.
+        Step 2, Groups: `my_groups()` and a self-refreshing `GroupList`. 96 unit tests.
+        **WAITS ON THE USER: section 2b of `features/groups/schema.sql`.** Until then Groups, Prayer and Admin
+        fail to load on this branch and two security cases fail. NOT measured, NOT seen.
+        Still to do: Prayer (open question: refreshing a list that has loaded older pages), a chat, Admin;
+        then keep pages (`staleTimes`) and make sign-out a full page load. Backlog B36 added.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run section 3b of `src/features/events/schema.sql` (copied from the editor; safe to run again).
-2. Claude: `npm run test:rls` (58), then time Events on a local production build of `main` and of this branch.
-3. If the gain is there: Groups and Prayer the same way, then switch on keeping pages.
+1. User: run section 2b of `src/features/groups/schema.sql`; answer the Prayer refresh question.
+2. Claude: `npm run test:rls` (59), time Groups before and after, then Prayer.
+3. Keep pages, and the shared-phone check on sign-out; then the user decides the merge and push.

@@ -120,11 +120,35 @@ $$;
 revoke execute on function public.approve_join_request (uuid, uuid) from public, anon;
 grant execute on function public.approve_join_request (uuid, uuid) to authenticated;
 
+-- 2b. What the group list reads, in one trip -------------------------------
+-- This section can be run again by itself: it is how the function is changed.
+--
+-- Every active group, each marked with where the caller stands: joined, or asked to join and waiting.
+-- Before this the page made three reads. It runs with the CALLER's rights (the default), so the policies
+-- above still decide what it can see; the two `auth.uid()` conditions matter for a manager, who is
+-- allowed to see everyone's requests and removed groups, and must still get only their own picture here.
+create or replace function public.my_groups()
+returns table (id uuid, name text, joined boolean, pending boolean)
+language sql stable set search_path = '' as $$
+  select
+    g.id,
+    g.name,
+    exists (select 1 from public.group_members m where m.group_id = g.id and m.user_id = auth.uid()),
+    exists (select 1 from public.group_join_requests r where r.group_id = g.id and r.user_id = auth.uid())
+  from public.groups g
+  where g.deleted_at is null
+  order by g.name;
+$$;
+
+revoke execute on function public.my_groups () from public, anon;
+grant execute on function public.my_groups () to authenticated;
+
 -- 3. Seed data ------------------------------------------------------------
 
 insert into public.groups (name) values ('Test Group'), ('Bible Study');
 
 -- 4. Undo (removing the feature) ------------------------------------------
+-- drop function if exists public.my_groups ();
 -- Everything that shares by group goes with it: `cascade` drops the columns and policies that point here.
 -- drop function if exists public.approve_join_request (uuid, uuid);
 -- drop table if exists public.group_join_requests, public.group_members, public.groups cascade;

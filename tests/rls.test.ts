@@ -118,6 +118,22 @@ describe("group_members", () => {
   });
 });
 
+describe("my_groups, the group list's one read", () => {
+  it("shows each caller their own standing, and nothing to someone signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const standingIn = async (client: SupabaseClient) =>
+      ((await client.rpc("my_groups")).data ?? []).find((group: { id: string }) => group.id === groupId);
+
+    const signedOut = await anonymous.rpc("my_groups");
+
+    expect(await standingIn(alice.client)).toMatchObject({ joined: true, pending: false });
+    expect(await standingIn(bob.client)).toMatchObject({ joined: false, pending: false });
+    expect(signedOut.error).not.toBeNull();
+  });
+});
+
 describe("push_subscriptions", () => {
   it("are invisible to other users", async () => {
     const { data } = await bob.client.from("push_subscriptions").select("endpoint");
@@ -242,6 +258,9 @@ describe("permissions", () => {
       .eq("id", createdGroupId);
 
     const { data: listed } = await bob.client.from("groups").select("id").eq("id", createdGroupId);
+    // The manager who removed it may still read the row, but her group list does not offer it.
+    const { data: managersList } = await alice.client.rpc("my_groups");
+    expect((managersList ?? []).map((group: { id: string }) => group.id)).not.toContain(createdGroupId);
     const { data: readable } = await bob.client.from("messages").select("id").eq("group_id", createdGroupId);
     const { error: postError } = await bob.client.from("messages").insert({ group_id: createdGroupId, body: "after" });
     const { data: kept } = await admin.from("messages").select("body").eq("group_id", createdGroupId);

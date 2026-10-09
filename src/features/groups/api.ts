@@ -1,8 +1,17 @@
 import { createClient } from "@/lib/supabase/client";
+import type { GroupWithMembership } from "./types";
 
 // Groups API: every call the browser makes for this feature. RLS in schema.sql decides what is allowed.
 // - Managing groups and declining a request go straight to Supabase.
 // - Asking to join and approving go through our API routes, because each notifies someone (needs secrets).
+
+// GET the group list again, as the page first read it (server/queries.ts): one call to `my_groups()`.
+// For the list to refresh itself on arrival, without reloading the page.
+export async function getMyGroups(): Promise<GroupWithMembership[]> {
+  const { data, error } = await createClient().rpc("my_groups");
+  if (error) throw new Error(error.message);
+  return data;
+}
 
 // POST a new group. RLS allows it only with the "groups.manage" permission.
 export async function createGroup(name: string) {

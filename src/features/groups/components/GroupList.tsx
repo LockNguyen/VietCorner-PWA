@@ -5,14 +5,17 @@ import EmptyState from "@/components/ui/EmptyState";
 import ListRow from "@/components/ui/ListRow";
 import Thumbnail from "@/components/ui/Thumbnail";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { useFresh } from "@/lib/useFresh";
+import { getMyGroups } from "../api";
 import { STRINGS } from "../strings";
 import type { GroupWithMembership } from "../types";
 import JoinButton from "./JoinButton";
 
 // All groups. A joined group opens its page (`/groups/<id>`, where chat lives); one the user asked to join
-// says so; the others carry the button that asks.
-export default function GroupList({ groups }: { groups: GroupWithMembership[] }) {
+// says so; the others carry the button that asks. Shows what the page loaded, then keeps itself fresh.
+export default function GroupList({ groups: loaded }: { groups: GroupWithMembership[] }) {
   const { t } = useLanguage(); // I18N
+  const groups = useFresh(loaded, getMyGroups);
   if (groups.length === 0) return <EmptyState message={t(STRINGS.noGroups)} />;
 
   return (

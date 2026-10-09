@@ -4,23 +4,12 @@ import type { Group, GroupWithMembership, JoinRequest } from "../types";
 // Group reads for pages (Server Components). They run as the signed-in user, so RLS applies.
 // The page creates `supabase` and passes it in, which keeps these functions free of Next.js.
 
-// All groups, each marked with whether the signed-in user has joined, or is waiting to be let in.
+// All active groups, each marked with whether the signed-in user has joined, or is waiting to be let in.
+// One trip to the database: `my_groups()` (schema.sql). The browser makes the same call to refresh (api.ts).
 export async function getGroups(supabase: SupabaseClient): Promise<GroupWithMembership[]> {
-  // My own id, from the login token. Members only ever receive their own requests (RLS), but a manager
-  // receives everyone's, so "mine" has to be asked for by name.
-  const myId = (await supabase.auth.getClaims()).data?.claims.sub ?? "";
-
-  const [groups, memberships, requests] = await Promise.all([
-    // Members never receive removed groups (RLS). A manager would, so the filter is spelled out.
-    supabase.from("groups").select("id, name").is("deleted_at", null).order("name"),
-    supabase.from("group_members").select("group_id"), // RLS returns only my memberships
-    supabase.from("group_join_requests").select("group_id").eq("user_id", myId),
-  ]);
-  if (groups.error) throw new Error(groups.error.message);
-
-  const joined = new Set((memberships.data ?? []).map((membership) => membership.group_id));
-  const pending = new Set((requests.data ?? []).map((request) => request.group_id));
-  return groups.data.map((group) => ({ ...group, joined: joined.has(group.id), pending: pending.has(group.id) }));
+  const { data, error } = await supabase.rpc("my_groups");
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 // Everyone waiting to be let into a group, longest wait first. Returns more than the caller's own requests
