@@ -52,6 +52,8 @@ name), which can each be run again by themselves: that is how they are changed.
   asked for a name: their first answer is a request too.
 - **The rule lives in the database.** There is no update grant on `profiles`; `set_my_name` decides between
   saving and requesting, and `approve_name_request` checks the permission. A browser cannot skip either.
+- **"Names waiting for approval" reads itself again on every arrival** at the Admin page (`api.getNameRequests`),
+  so a manager never looks at an old list.
 - **One request per person; asking again replaces it.** A decline deletes it, tells nobody, and the person
   may ask again. An approval tells the person; a new request tells the managers (at most once a minute).
 

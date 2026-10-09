@@ -83,3 +83,5 @@ at the bottom of `schema.sql`.
   It also narrows what a manager gets to their own standing, although they may read everyone's requests.
 - **The list refreshes itself** on arrival and on return to the app (`useFresh` with `api.getMyGroups`).
 - Before section 2b of `schema.sql` is run, the pages that list groups fail to load.
+- **"Waiting to join" on the Admin page reads itself again on every arrival** (`api.getJoinRequests`), with the
+  name of anyone new. The rest of the Admin page can be up to ten minutes old when returned to.

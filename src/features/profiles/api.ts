@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
-import type { NameOutcome, Names } from "./types";
+import type { NameOutcome, NameRequest, Names } from "./types";
 
 // Every browser → backend call for this foundation.
 // - Setting a name and approving one go through our API routes, because each notifies someone (needs secrets).
@@ -20,6 +20,17 @@ export async function approveNameRequest(userId: string): Promise<void> {
 export async function declineNameRequest(userId: string): Promise<void> {
   const { error } = await createClient().from("name_requests").delete().eq("user_id", userId);
   if (error) throw new Error(error.message);
+}
+
+// GET everyone waiting for a name to be approved, as the Admin page first read it (server/queries.ts).
+// For the list to refresh itself on arrival.
+export async function getNameRequests(): Promise<NameRequest[]> {
+  const { data, error } = await createClient()
+    .from("name_requests")
+    .select("user_id, user_email, name, requested_at")
+    .order("requested_at");
+  if (error) throw new Error(error.message);
+  return data;
 }
 
 // GET the names of these people: for someone who appears on a screen after it loaded (a first chat message).

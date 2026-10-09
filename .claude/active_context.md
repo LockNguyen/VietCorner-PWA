@@ -255,8 +255,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         Step 4: pages kept ten minutes (`staleTimes`), sign-out a full page load. OBSERVED on a local
         production build in the user's Chrome: first visit to Events/Groups/Prayer = 1 page request each;
         every return = 0 page requests and 1 refresh call, content on screen. NOT exercised: sign-out with
-        two accounts on one phone (it would end the user's session). Known cost: Settings and Admin can be
-        up to ten minutes old when returned to.
+        two accounts on one phone (it would end the user's session). Known cost: Settings, and Admin's
+        events, reminders and group names, can be up to ten minutes old when returned to. Admin's two waiting
+        lists refresh on every arrival (NOT seen: the Chrome account is not an admin). Placeholders kept a
+        day (`staleTimes.static`; NOT verified: prefetching does not run in a background tab). B37 added.
         Still to do: Admin's reads (8 to 10 in a row) and the chat page. Backlog B36 added.
 
 ## ➡️ Next 3 Micro-Steps
