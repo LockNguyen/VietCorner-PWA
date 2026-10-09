@@ -180,3 +180,7 @@ Each follows `docs/adding-a-feature.md` and gets its own folder, `schema.sql` wi
 
 ## B34. Drop the email copies kept on messages, requests and join requests
 **Why:** since names (2026-10-08) nothing shows `messages.sender_email`, `prayer_requests.author_email` or `group_join_requests.user_email`, but every insert still fills them, and the chat insert policy still checks one. **What:** drop the three columns, the policy clause and the RLS test that forges `sender_email`. **Trade-offs:** loses a record of the email an account had when it wrote; a schema change for no visible gain. **Done when:** the columns are gone, `npm run test:rls` passes, and the three READMEs no longer mention them.
+
+## B35. Pull down to refresh (optional)
+**Why:** asked for by the user 2026-10-09. Once pages are kept and refreshed silently on arrival, the only way to force a fresh look at the tab you are on is to leave it and come back, which nobody would guess. **What:** pulling the page down at its top reloads the current tab's data, with the turning circle while it loads; this needs the page's rubber band back (it was switched off in the iPhone fixes). **Trade-offs:** its own gesture code and one more thing to get right on iPhone; little to do if the silent refresh works well. **Done when:** on an installed iPhone, a pull at the top of Events, Prayer and Groups reloads that list and nothing else moves.
+
