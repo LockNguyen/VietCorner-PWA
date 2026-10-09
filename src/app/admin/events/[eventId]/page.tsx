@@ -17,8 +17,8 @@ export default async function EventEditorPage({ params }: { params: Promise<{ ev
   // Courtesy, not security, as on the admin page: the database refuses every save without the permission.
   if (!(await getMyPermissions(supabase)).includes(MANAGE_EVENTS)) notFound();
 
-  // The whole list is read to show one event: it is a handful of rows, and it is the query that already
-  // works out each event's next dates and reminders.
+  // The whole list is read to show one event: it is a handful of rows in one trip (`managed_events()`),
+  // and it is the read that already works out each event's next dates and reminders.
   const [events, groups] = await Promise.all([getManagedEvents(supabase), getGroups(supabase)]);
   const event = events.find((managed) => managed.id === eventId);
   if (!event && eventId !== "new") notFound();

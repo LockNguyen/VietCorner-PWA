@@ -22,7 +22,7 @@ every case the list has to handle (see **Seed data** below).
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
 | Browser API | `api.ts` | `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
-| Server reads | `server/queries.ts` | `getScheduledEvents` (the schedule, one call to `upcoming_events()`), `getManagedEvents` (admin section) |
+| Server reads | `server/queries.ts` | `getScheduledEvents` (the schedule, one call to `upcoming_events()`), `getManagedEvents` (the admin section and the editor, one call to `managed_events()`) |
 | Server logic | `server/changeSchedule.ts` | `cancelDate`, `restoreDate`, `cancelForGood`: each records the change as the **user**, then notifies |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: sends each due reminder once, per language |
 | Server logic | `server/audience.ts` | Who is told about an event: the group, or everyone with notifications on |
@@ -158,4 +158,7 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
   dates, and each event into the reader's language. So switching language needs no new read.
 - **Both languages are downloaded** (changed from "only the reader's"): a few dozen short texts, and it is
   what makes the two points above possible.
-- Before section 3b of `schema.sql` is run, the schedule is empty.
+- Before section 3b of `schema.sql` is run, the schedule is empty.- **The admin list is one trip too** (`managed_events()`, section 3c of `schema.sql`): every event that can
+  still be managed, with its words, called-off weeks and reminder choices. It was four reads. The editor
+  screen uses the same read. A member calling it gets no reminders and only the events they may see.
+- Before section 3c is run, the Admin tab lists no events and the editor answers 404.

@@ -188,6 +188,47 @@ $$;
 revoke execute on function public.upcoming_events (timestamptz, timestamptz) from public, anon;
 grant execute on function public.upcoming_events (timestamptz, timestamptz) to authenticated;
 
+-- 3c. What the admin section reads, in one trip ----------------------------
+-- This section can be run again by itself: it is how the function is changed.
+--
+-- Every event that can still be managed (not removed, not called off for good, with a date ahead), soonest
+-- first, each with its words in every language, its called-off weeks and its reminder choices. Before this
+-- the Admin page and the editor made four reads. Like `upcoming_events`, it runs with the CALLER's rights:
+-- a member calling it gets only the events they may see, and no reminders at all, because the policy on
+-- `event_reminders` shows them none.
+create or replace function public.managed_events()
+returns table (
+  id uuid,
+  group_id uuid,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  repeats_weekly boolean,
+  repeat_until date,
+  canceled_at timestamptz,
+  texts jsonb,
+  canceled_dates date[],
+  reminder_minutes int[]
+)
+language sql stable set search_path = '' as $$
+  select
+    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at,
+    coalesce(
+      (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
+       from public.event_texts t where t.event_id = e.id),
+      '{}'::jsonb
+    ),
+    coalesce((select array_agg(c.occurrence_date) from public.event_cancellations c where c.event_id = e.id), '{}'),
+    coalesce((select array_agg(r.minutes_before) from public.event_reminders r where r.event_id = e.id), '{}')
+  from public.events e
+  where e.deleted_at is null
+    and e.canceled_at is null -- called off for good = gone from here; it cannot be brought back from the app
+    and (e.repeats_weekly or e.starts_at >= now())
+  order by e.starts_at;
+$$;
+
+revoke execute on function public.managed_events () from public, anon;
+grant execute on function public.managed_events () to authenticated;
+
 -- 4. Seed data ------------------------------------------------------------
 -- Until the admin page exists, these rows are how the feature is exercised: one normal case and every
 -- edge case the list has to handle.
@@ -283,5 +324,6 @@ where t.title in ('Church picnic', 'Sunday service');
 
 -- 5. Undo (removing the feature) ------------------------------------------
 -- drop function if exists public.upcoming_events (timestamptz, timestamptz);
+-- drop function if exists public.managed_events ();
 -- drop table if exists public.event_reminders, public.event_cancellations,
 --   public.event_texts, public.events cascade;

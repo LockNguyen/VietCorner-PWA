@@ -41,7 +41,7 @@ export type ScheduledEvent = EventRow & {
   canceled_dates: string[]; // church calendar dates, YYYY-MM-DD
 };
 
-// The `events` columns every read asks for, named once.
+// The `events` columns the reminder scheduler asks for (server/sendDueReminders.ts), named once.
 export const EVENT_COLUMNS = "id, group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at";
 
 // How long before an event a reminder can be sent, in minutes.

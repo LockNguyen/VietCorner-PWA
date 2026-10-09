@@ -568,6 +568,27 @@ describe("events", () => {
     expect(churchWide?.canceled_dates).toEqual([]);
   });
 
+  it("managed_events, the admin section's one read, gives a member no reminders and no more events than they may see", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    type Row = { id: string; reminder_minutes: number[]; texts: Record<string, unknown> };
+    const rowsFor = async (client: SupabaseClient) => ((await client.rpc("managed_events")).data ?? []) as Row[];
+
+    const [asManager, asMember, signedOut] = [await rowsFor(alice.client), await rowsFor(bob.client), await anonymous.rpc("managed_events")];
+    const find = (rows: Row[], id: string) => rows.find((row) => row.id === id);
+
+    // Alice manages events: every event that can still be managed, with its reminders and its words.
+    expect(find(asManager, churchWideId)?.reminder_minutes).toContain(60);
+    expect(Object.keys(find(asManager, churchWideId)?.texts ?? {})).toEqual(["en"]);
+    expect(find(asManager, groupOnlyId)).toBeDefined();
+    expect(find(asManager, deletedId)).toBeUndefined();
+    // Bob is a member outside that group: the church-wide event only, and never a reminder.
+    expect(find(asMember, churchWideId)?.reminder_minutes).toEqual([]);
+    expect(find(asMember, groupOnlyId)).toBeUndefined();
+    expect(signedOut.error).not.toBeNull();
+  });
+
   it("church-wide events are visible to every signed-in member", async () => {
     const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
 

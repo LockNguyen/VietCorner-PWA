@@ -259,10 +259,13 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         events, reminders and group names, can be up to ten minutes old when returned to. Admin's two waiting
         lists refresh on every arrival (NOT seen: the Chrome account is not an admin). Placeholders kept a
         day (`staleTimes.static`; NOT verified: prefetching does not run in a background tab). B37 added.
-        Still to do: Admin's reads (8 to 10 in a row) and the chat page. Backlog B36 added.
+        Step 5, Admin: independent reads run together; `managed_events()` replaces four reads for the admin
+        list and the editor. 101 unit tests. **WAITS ON THE USER: section 3c of `features/events/schema.sql`.**
+        Until then the Admin tab lists no events on this branch and one security case fails (60 expected).
+        NOT measured (needs an admin account in the browser), NOT seen.
+        Still to do: the chat page's reads. Backlog B36, B37 added.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: merge and push `iphone-fixes` + `fast-tabs` (one Netlify build)? Then on the phones: the iPhone
-   fixes, tab switching, and the shared-phone check (sign out, sign in as someone else, nothing of the first).
-2. Claude: measure the live site again against the 2026-10-09 baseline.
-3. Admin's reads and the chat page, the same way, if the Admin tab still feels slow.
+1. User: run section 3c of `src/features/events/schema.sql` (copied from the editor; safe to run again).
+2. Claude: `npm run test:rls` (60). Timing Admin needs an admin signed in on localhost in the connected Chrome.
+3. User decides: merge and push `iphone-fixes` + `fast-tabs` (one Netlify build); JWT expiry (B37).

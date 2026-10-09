@@ -24,25 +24,27 @@ export default async function AdminPage() {
   // render, and every save would still be refused by the database.
   if (permissions.length === 0) notFound();
 
-  // Groups are read once: the Groups section edits them, and the other sections offer them as a choice.
-  const groups = await getGroups(supabase);
-  const groupChoices = groups.map(({ id, name }) => ({ id, name }));
-  // Who is waiting to join or to be renamed, and what they are called now. PROFILES
   const managesGroups = permissions.includes(MANAGE_GROUPS);
-  const [requests, nameRequests] = managesGroups
-    ? await Promise.all([getJoinRequests(supabase), getNameRequests(supabase)])
-    : [[], []];
+  const nothing = Promise.resolve([]);
+
+  // Read together: none of these needs another's answer. A section the user may not manage is not read.
+  // Groups are read once: the Groups section edits them, and the other sections offer them as a choice.
+  const [groups, events, reminders, requests, nameRequests] = await Promise.all([
+    getGroups(supabase),
+    permissions.includes(MANAGE_EVENTS) ? getManagedEvents(supabase) : nothing,
+    permissions.includes(MANAGE_PRAYER_REMINDERS) ? getPrayerReminders(supabase) : nothing,
+    managesGroups ? getJoinRequests(supabase) : nothing,
+    managesGroups ? getNameRequests(supabase) : nothing, // PROFILES
+  ]);
+  const groupChoices = groups.map(({ id, name }) => ({ id, name }));
+  // What the people waiting are called now: the one read that needs the two lists first. PROFILES
   const names = await getNames(supabase, [...requests, ...nameRequests].map((request) => request.user_id));
 
   return (
     <>
       <PageHeader title={SHELL_STRINGS.adminTab} />
-      {permissions.includes(MANAGE_EVENTS) && (
-        <EventAdmin events={await getManagedEvents(supabase)} groups={groupChoices} editorPath="/admin/events" />
-      )}
-      {permissions.includes(MANAGE_PRAYER_REMINDERS) && (
-        <PrayerReminderAdmin reminders={await getPrayerReminders(supabase)} groups={groupChoices} />
-      )}
+      {permissions.includes(MANAGE_EVENTS) && <EventAdmin events={events} groups={groupChoices} editorPath="/admin/events" />}
+      {permissions.includes(MANAGE_PRAYER_REMINDERS) && <PrayerReminderAdmin reminders={reminders} groups={groupChoices} />}
       {managesGroups && <NameRequestAdmin requests={nameRequests} names={names} />} {/* PROFILES */}
       {managesGroups && <GroupAdmin groups={groups} requests={requests} names={names} />}
     </>
