@@ -245,16 +245,18 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         Decided by the user: one database view/function per page; no network login check for reads (keep it
         for writes); stale-while-revalidate, not a fixed stale window; pull-to-refresh is backlog B35.
   - [ ] **Faster tabs** (branch `fast-tabs`, on top of `iphone-fixes`; held, not pushed).
-        Step 1, Events: `upcoming_events()`, `useFresh`, `scheduleOf`; reads use the token locally. SQL run;
-        `npm run test:rls` 58/58. MEASURED (local production build, same database, 8 taps each, median):
-        479 ms on `main` -> 132 ms on this branch; the background refresh on arrival is one call, 118 ms.
-        Step 2, Groups: `my_groups()` and a self-refreshing `GroupList`. 96 unit tests.
-        **WAITS ON THE USER: section 2b of `features/groups/schema.sql`.** Until then Groups, Prayer and Admin
-        fail to load on this branch and two security cases fail. NOT measured, NOT seen.
-        Still to do: Prayer (open question: refreshing a list that has loaded older pages), a chat, Admin;
-        then keep pages (`staleTimes`) and make sign-out a full page load. Backlog B36 added.
+        Done: Events (`upcoming_events()`), Groups (`my_groups()`), Prayer (refreshes its newest twenty, keeps
+        older ones); each list refreshes itself (`useFresh`, `useOnArrival`); reads use the token locally.
+        Both SQL sections are run. `npm run test:rls` 59/59, `npm test` 101/101.
+        MEASURED, local production build, same database, 8 taps per tab, median, `main` -> this branch:
+        Events 479 -> 132 ms, Groups 128 -> 97 ms, Prayer 142 -> 124 ms. One background refresh per arrival
+        (Events 118 ms, Groups 163 ms, Prayer 273 ms), after the screen is already showing.
+        NOT measured: the live site (not deployed), a phone, Admin. NOT seen as a picture.
+        Still to do: a chat and Admin; then keep pages (`staleTimes`) and make sign-out a full page load.
+        Backlog B36 added (everything behind views and functions).
 
 ## ➡️ Next 3 Micro-Steps
-1. User: run section 2b of `src/features/groups/schema.sql`; answer the Prayer refresh question.
-2. Claude: `npm run test:rls` (59), time Groups before and after, then Prayer.
-3. Keep pages, and the shared-phone check on sign-out; then the user decides the merge and push.
+1. Claude, on the user's go: keep pages (`staleTimes`), sign-out as a full page load, and the shared-phone
+   check; this is the step that makes returning to a tab instant.
+2. Then Admin's reads (8 to 10, in a row) and the chat page.
+3. User decides the merge and push of `iphone-fixes` + `fast-tabs` (one Netlify build), then measures on a phone.
