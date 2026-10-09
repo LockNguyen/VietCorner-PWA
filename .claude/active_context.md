@@ -234,9 +234,19 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         `npm run test:rls` 57/57, `npm test` 91/91. Reminder error reproduced and its fix proven against
         the database. NOT verified: anything on an iPhone. The element that was a few points too wide on
         every page was not identified; the page now clips it. NOT pushed.
+  - [ ] **Tab switching is slow (B27, B29): measured and tested 2026-10-09, nothing built.**
+        Baseline, live site, signed in as a member, desktop Chrome on broadband, warm, 3 runs per tab, one
+        request per tap: Home 182-215 ms, Groups 225-298, Prayer 282-383, Events 447-851. First byte
+        133-214 ms on every tab (Netlify + the local login check); the rest is database reads. Not measured:
+        a phone on LTE, the Admin tab, a cold start. Headers: `private, no-store`; Netlify reports a miss.
+        Experiment (throwaway branch, production build, `staleTimes.dynamic = 300`): a kept tab re-opens with
+        0 requests; `router.refresh()` on one tab WIPES every kept tab (the next taps fetched again). So
+        "keep long + refresh on arrival" cannot work as two pieces.
+        Decided by the user: one database view/function per page; no network login check for reads (keep it
+        for writes); stale-while-revalidate, not a fixed stale window; pull-to-refresh is backlog B35.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: say whether to merge `iphone-fixes` into `main` and push (one Netlify build).
-2. User, on both iPhones after the deploy: a chat (field above the tabs, no strip, no sideways scroll, pull
-   down), Admin → an event (date fields, a reminder switch), Groups → Turn on notifications.
-3. If the strip or the gap under the tab bar is still there: screenshots, and Claude looks for the wide element.
+1. User: choose how the silent refresh is built now that the router's refresh wipes kept tabs (options given
+   2026-10-09), and whether `iphone-fixes` is merged and pushed now or with this work.
+2. Claude: a plan for the chosen option, one tab first (Events: slowest), with its SQL for the user to run.
+3. Measure the same four tabs again after each step, against the baseline above.
