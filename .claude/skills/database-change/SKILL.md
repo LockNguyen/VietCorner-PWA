@@ -27,6 +27,11 @@ Pick the pattern (full SQL in `docs/adding-a-feature.md` §3):
 - `with check` on every insert/update policy. Without it a user can write rows they cannot read.
 - DROP statements at the bottom of the same `schema.sql`, so removal is copy-paste.
 - A case in `tests/rls.test.ts` per new table: the owner can read/write, another signed-in user cannot.
+- The test makes **the same call `api.ts` makes**. An `upsert` is an insert *and* an update: it needs the
+  update grant and passes the update policy, even when no row exists yet. A test that used `insert` passed
+  while the app's `upsert` was refused on every tap (event reminders, 2026-10-09).
+- A row keyed by something that outlives a sign-in (a device's push endpoint) can belong to the previous
+  user: decide who may take it over, and test that case.
 - `npm run test:rls` passes before the work is called done.
 - The table listed in `.claude/architecture.md` §7.
 

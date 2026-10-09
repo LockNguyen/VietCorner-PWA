@@ -1,11 +1,12 @@
-import { createClient } from "@/lib/supabase/client";
+// Push API: every call the browser makes for this feature.
 
-// Push API: every call the browser makes for this feature. RLS in schema.sql decides what is allowed.
-
-// PUT this device's push subscription. Upsert keyed by endpoint, so there's one row per device.
+// POST this device's push subscription. Through our API route, not straight to Supabase: on a phone someone
+// else was signed in on, the row belongs to them, and only the server may hand the device over.
 export async function savePushSubscription(subscription: PushSubscription) {
-  const { error } = await createClient()
-    .from("push_subscriptions")
-    .upsert({ endpoint: subscription.endpoint, subscription: subscription.toJSON() });
-  if (error) throw new Error(error.message);
+  const response = await fetch("/api/push/subscribe", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ subscription: subscription.toJSON() }),
+  });
+  if (!response.ok) throw new Error((await response.json()).error);
 }

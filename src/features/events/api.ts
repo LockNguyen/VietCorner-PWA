@@ -40,7 +40,12 @@ export async function saveEvent(draft: EventDraft, eventId?: string): Promise<vo
 export async function setReminder(eventId: string, minutesBefore: number, on: boolean): Promise<void> {
   const reminders = createClient().from("event_reminders");
   const { error } = on
-    ? await reminders.upsert({ event_id: eventId, minutes_before: minutesBefore }, { onConflict: "event_id,minutes_before" })
+    ? await reminders.upsert(
+        { event_id: eventId, minutes_before: minutesBefore },
+        // Already on = nothing to do. Without `ignoreDuplicates` this is an insert-or-UPDATE, and managers
+        // have no update grant on this table, so Postgres refused every switch (found on a phone, 2026-10-09).
+        { onConflict: "event_id,minutes_before", ignoreDuplicates: true },
+      )
     : await reminders.delete().eq("event_id", eventId).eq("minutes_before", minutesBefore);
   if (error) throw new Error(error.message);
 }

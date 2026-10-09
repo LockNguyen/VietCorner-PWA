@@ -28,7 +28,8 @@ export function useEventChanges(eventId: string | undefined, listHref: string) {
       showBanner({ kind: "success", message: t(done) });
       // Awaited last: the button stays busy until the list is drawn, so a second tap cannot save twice.
       if (leave) await goTo(listHref);
-    } catch {
+    } catch (error) {
+      console.error("changing an event failed", error);
       showBanner({ kind: "error", message: t(COMMON.couldNotSave) });
     }
   }

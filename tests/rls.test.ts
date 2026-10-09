@@ -60,7 +60,8 @@ let groupId: string;
 beforeAll(async () => {
   [alice, bob] = await Promise.all([createTestUser("alice"), createTestUser("bob")]);
 
-  const { data: group } = await admin.from("groups").select("id").limit(1).single();
+  // An active group: a removed one would hide every membership in it, and with it half of these tests.
+  const { data: group } = await admin.from("groups").select("id").is("deleted_at", null).limit(1).single();
   if (!group) throw new Error("no groups: run features/groups/schema.sql first");
   groupId = group.id;
 
@@ -128,6 +129,18 @@ describe("push_subscriptions", () => {
     const { data } = await alice.client.from("push_subscriptions").select("endpoint");
 
     expect(data).toHaveLength(1);
+  });
+
+  it("cannot be taken over by the next person to sign in on that device: the server does that", async () => {
+    // A shared phone keeps its endpoint when someone else signs in. The browser's own save then meets a row
+    // it may not touch, which is why saving goes through /api/push/subscribe (the push README).
+    const { error } = await bob.client
+      .from("push_subscriptions")
+      .upsert({ endpoint: `https://push.test/${alice.id}`, subscription: { endpoint: "y" } });
+    const { data: owner } = await admin.from("push_subscriptions").select("user_id").eq("endpoint", `https://push.test/${alice.id}`).single();
+
+    expect(error).not.toBeNull();
+    expect(owner?.user_id).toBe(alice.id);
   });
 });
 
@@ -605,6 +618,14 @@ describe("events", () => {
     const { error: memberAdds } = await bob.client.from("event_reminders").insert({ event_id: churchWideId, minutes_before: 30 });
     const { data: asManager } = await alice.client.from("event_reminders").select("minutes_before").eq("event_id", churchWideId);
     const { error: managerAdds } = await alice.client.from("event_reminders").insert({ event_id: churchWideId, minutes_before: 30 });
+    // The call api.ts makes, twice: switching a reminder on must work, and again when it is already on.
+    const switchOn = () =>
+      alice.client
+        .from("event_reminders")
+        .upsert({ event_id: churchWideId, minutes_before: 120 }, { onConflict: "event_id,minutes_before", ignoreDuplicates: true });
+    const { error: switchedOn } = await switchOn();
+    const { error: switchedOnAgain } = await switchOn();
+    expect([switchedOn, switchedOnAgain]).toEqual([null, null]);
 
     expect(asMember).toEqual([]);
     expect(memberAdds).not.toBeNull();
@@ -633,7 +654,7 @@ describe("prayer requests", () => {
   }
 
   beforeAll(async () => {
-    const { data: other } = await admin.from("groups").select("id").neq("id", groupId).limit(1).single();
+    const { data: other } = await admin.from("groups").select("id").is("deleted_at", null).neq("id", groupId).limit(1).single();
     if (!other) throw new Error("needs two groups: run features/groups/schema.sql first");
     sharedGroupId = other.id;
     await makeMember(alice, sharedGroupId);

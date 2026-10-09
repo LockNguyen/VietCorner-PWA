@@ -48,7 +48,8 @@ export function usePushNotifications() {
       await savePushSubscription(subscription);
       setStatus("on");
       return true;
-    } catch {
+    } catch (error) {
+      console.error("saving the push subscription failed", error);
       setStatus("off");
       return false;
     }

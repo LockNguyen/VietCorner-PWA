@@ -299,6 +299,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Service-role client for push | RLS correctly hides other users' subscriptions and memberships | A powerful key on the server, used only in `server/` files that send a notification |
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
+| A device's push subscription is saved through a route with the service role | The endpoint outlives a sign-out; only the server may move it to the next user of that phone | Anyone who knew an endpoint (a long random address) could claim it; one more route |
 | Names are readable within a shared group and by group managers, not by every signed-in user | Sign-up is open: "signed in" is anyone with an email | A former member's old messages lose their name; one function call per row read |
 | Once in a group, a name changes only with a group manager's approval | The manager saw name and email when letting the person in; a later change unseen would undo that check | A wait for an honest correction; one more thing for managers to answer |
 | A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
@@ -388,3 +389,9 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-08: prayer list: my own request has a pencil button beside it (the bubble itself is no longer a button); its options sheet is a two-by-two grid.
 - 2026-10-08: prayer list: the pencil beside my own request is a small round grey chip (32 across), not a rectangular button.
 - 2026-10-08: admins approve names: `name_requests`, `set_my_name`, `approve_name_request` (no direct write on `profiles` any more); `POST /api/names/request` and `/approve` with a push to managers and to the approved person; Settings shows the waiting name; Admin tab → "Names waiting for approval". Settings no longer shows "Name" twice. Needs section 5 of `features/profiles/schema.sql`.
+- 2026-10-09: found on two installed iPhones after the first production deploy of the revamp, and fixed:
+  (1) the chat's message field sat under the tab bar: its utility was named `bottom-tabs`, a class Tailwind already generates from `--spacing-tabs`, so the phone's bottom inset was lost (renamed `bottom-over-tabs`);
+  (2) a strip at the right and under the tab bar, and sideways scrolling: something wider than the screen made the iPhone shrink the page; the page now clips sideways overflow, date and time fields no longer size themselves, and pulling down no longer drags the top bar;
+  (3) "Turn on notifications" failed on a phone another account had used: the device is now saved by `POST /api/push/subscribe`;
+  (4) event reminder switches always failed: the save was an insert-or-update and managers have no update grant; it is now insert-or-nothing.
+  Failures behind a "Could not save" banner are also written to the console.

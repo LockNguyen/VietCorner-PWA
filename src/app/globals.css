@@ -54,14 +54,33 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Where the composer sits: on top of the tab bar. */
-@utility bottom-tabs {
+/* Where the composer sits: on top of the tab bar.
+   NOT named `bottom-tabs`: `--spacing-tabs` above already makes Tailwind generate that class (bottom: 56px),
+   and the generated one won, without the phone's bottom inset. On an iPhone the tab bar then covered the
+   message field. A custom utility must never be `<property>-<a theme key>`. */
+@utility bottom-over-tabs {
   bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom));
 }
 
 /* Where banners sit: just clear of the tab bar and the phone's home indicator. */
 @utility bottom-above-tabs {
   bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom) + 8px);
+}
+
+/* An installed app, not a web page: nothing scrolls sideways and nothing rubber-bands.
+   - `overflow-x: clip`: one element wider than the screen made the iPhone shrink the whole page to fit it,
+     leaving a strip at the right and under the tab bar, and letting the page slide sideways.
+   - `overscroll-behavior: none`: pulling down no longer drags the blue bar away from the top.
+   - The blue behind everything is what shows if either ever fails: it matches the bar, not a white gap. */
+html {
+  background: var(--color-action);
+  overflow-x: clip;
+  overscroll-behavior: none;
+}
+body {
+  min-height: 100dvh;
+  overflow-x: clip;
+  overscroll-behavior: none;
 }
 
 /* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */

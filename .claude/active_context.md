@@ -228,9 +228,15 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [x] **Merged and pushed (2026-10-08, on the user's word):** `main` fast-forwarded to `17e82b5` (the whole UI
         revamp, the review fixes, admin-approved names) and pushed to GitHub; Netlify builds from it.
         NOT checked: that the Netlify build passed, or anything on the live site.
+  - [x] **iPhone fixes after the first production look** (branch `iphone-fixes`, 2026-10-09): message field under
+        the tab bar (utility name collision), the shrunken page and sideways scroll (overflow clipped, date
+        fields), notifications on a re-used phone (server-side save), reminder switches (insert-or-nothing).
+        `npm run test:rls` 57/57, `npm test` 91/91. Reminder error reproduced and its fix proven against
+        the database. NOT verified: anything on an iPhone. The element that was a few points too wide on
+        every page was not identified; the page now clips it. NOT pushed.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: check the Netlify deploy finished, then on a phone: sign in, the Prayer tab, a chat, Settings → Name,
-   and as an admin the Admin tab (a join request, a name request, an event).
-2. Still unseen by anyone as a picture: the admin screens, the name question, the composer over a phone keyboard.
-3. Open: backlog B24 (prayer moderation, on hold), B34 (email copies), the Vietnamese text review (the user's).
+1. User: say whether to merge `iphone-fixes` into `main` and push (one Netlify build).
+2. User, on both iPhones after the deploy: a chat (field above the tabs, no strip, no sideways scroll, pull
+   down), Admin → an event (date fields, a reminder switch), Groups → Turn on notifications.
+3. If the strip or the gap under the tab bar is still there: screenshots, and Claude looks for the wide element.

@@ -85,6 +85,11 @@ export default function Button({ variant = "primary", size = "regular", ...butto
 - Native elements first (`button`, `label`, `dialog`); every input has a visible label.
 - Touch targets at least the `touch` token; visible focus; text contrast as set in the design system.
 - Check at phone width, in both languages (Vietnamese runs longer), with the longest real content.
+- A custom `@utility` is never named `<property>-<a theme key>` (`bottom-tabs`, `h-bar`): Tailwind already
+  generates that class from the theme, and the generated one wins silently.
+- A desktop browser has no notch, no home indicator and no iPhone form controls. Anything that touches the
+  screen's edges, a fixed bar, or a date or time field is **not verified** until it has been seen in the
+  app installed on an iPhone. Say so in the report, and ask for that look before a release.
 
 ## 7. Finish
 - Add or update the component's row in `src/components/ui/README.md` (name, job, variants, props).

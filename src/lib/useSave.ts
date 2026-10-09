@@ -18,7 +18,8 @@ export function useSave<Action extends string>() {
         await refresh();
         showBanner({ kind: "success", message: says.done });
         return true;
-      } catch {
+      } catch (error) {
+        console.error(`"${action}" failed`, error); // the banner is for the person, this is for whoever debugs it
         showBanner({ kind: "error", message: says.failed });
         return false;
       }

@@ -16,7 +16,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 |---|---|---|
 | Data | `schema.sql` | `push_subscriptions` (one row per device, owner-only RLS); `push_cooldowns` + `claim_push_turns` and `push_sent_once` + `claim_push_once` (server-only); the cron job; the DROPs |
 | Types | `types.ts` | `PushNotification`: `{ title, body, url, topic? }`, the fields `sw.js` reads |
-| Browser API | `api.ts` | `savePushSubscription` (upsert by endpoint: one row per device) |
+| Browser API | `api.ts` | `savePushSubscription` (POST `/api/push/subscribe`) |
+| Server logic | `server/saveSubscription.ts` | **Admin** client: stores the device under the verified user, taking it over from whoever had it |
+| Routes | `src/app/api/push/subscribe/route.ts` | Verify (401) → validate (400) → `saveSubscription` → 204 |
 | State | `hooks/usePushNotifications.ts` | Status (`unsupported/blocked/off/on/error`), re-saves the subscription on every open, `enable()` |
 | UI | `components/EnableNotificationsButton.tsx` | The toggle, shown on the Groups page |
 | Text | `strings.ts` | The toggle's labels |
@@ -100,3 +102,10 @@ env vars.
 The server can only push to subscriptions stored in the database, and that row may be gone (deleted after a
 410, or another user signed in on this device), or the browser may have replaced the subscription.
 Re-saving on every open repairs this silently.
+
+## Why a device is saved by the server, not by the browser
+A phone keeps its push endpoint when someone else signs in on it (a shared phone, or one person with two
+accounts). The row for that endpoint then belongs to the previous user, and RLS, correctly, stops the new
+user's browser from touching it. Saving straight from the browser therefore failed with "Could not save"
+on exactly those phones (found on two iPhones, 2026-10-09). The route verifies who is signed in and hands
+the device over. `tests/rls.test.ts` keeps the direct takeover refused.
