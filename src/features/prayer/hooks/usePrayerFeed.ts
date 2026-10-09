@@ -1,17 +1,28 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useOnArrival } from "@/lib/useOnArrival";
 import { createRequest, deleteRequest, editRequest, getRequests, markAnswered, prayFor } from "../api";
+import { withNewest } from "../feed";
 import { PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "../types";
 
-// The list of requests on screen, and everything that changes it. No live updates, on purpose.
-// Each action resolves to whether it worked; saying so on screen is the board's job.
+// The list of requests on screen, and everything that changes it. Each action resolves to whether it
+// worked; saying so is the board's job. Refreshed on arrival, not live (the prayer README).
 export function usePrayerFeed(initialRequests: PrayerRequest[]) {
   const [requests, setRequests] = useState(initialRequests);
   // A full page means there may be another one; a short page is the end.
   const [hasMore, setHasMore] = useState(initialRequests.length === PAGE_SIZE);
   // A ref, not state: reaching the bottom can fire twice before a re-render, and the second call must see it.
   const loadingOlder = useRef(false);
+
+  useOnArrival(() => {
+    getRequests()
+      .then((newest) => {
+        setRequests((current) => withNewest(current, newest));
+        if (newest.length < PAGE_SIZE) setHasMore(false); // a short page is the whole list
+      })
+      .catch(() => {}); // offline or a hiccup: what is on screen stays, and the next arrival tries again
+  });
 
   function takeOffScreen(requestId: string) {
     setRequests((current) => current.filter((request) => request.id !== requestId));

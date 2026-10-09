@@ -17,6 +17,7 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
 | Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH` |
 | Pure logic | `reminders.ts` | `isDue`: whether a group's weekly reminder should go out now (church time) |
+| Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`, `COOLDOWN_MS`: the one-hour pause, worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
@@ -82,8 +83,10 @@ And a small group can guess from timing or wording — no software fixes that.
   member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
   per reminder. It reads no request, so it does not depend on who may see them (backlog B24).
   Due from its time for one hour; a removed group gets none.
-- **The list does not update live.** It is what the server sent when the page opened, plus this member's own
-  actions. Reopening the tab refreshes it.
+- **The list does not update live, but it refreshes itself** on arrival and when the app returns to the
+  foreground (decided 2026-10-09). It reads the newest twenty again: new requests appear on top, and older
+  ones the reader had scrolled to stay, so nobody loses their place (`feed.ts`, `withNewest`). A request
+  answered or deleted further down than the newest twenty stays until the tab is opened afresh.
 - **Requests are not translated**: members write them, and they are shown as written.
 - **Pages are cut by `created_at`**, not by offset, so a request posted while someone scrolls cannot shift
   the pages and show a row twice.

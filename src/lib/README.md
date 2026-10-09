@@ -12,6 +12,7 @@ hooks behind every button. The short comment in each file says what it is; the l
 | `useRefresh.ts`, `useGoTo.ts` | A reload, a move to another screen, each awaited until drawn |
 | `useSave.ts` | The usual change from tap to result: pending, the change, reload, a banner |
 | `useBanner.tsx` | The banners on screen; raise one from anywhere |
+| `useOnArrival.ts` | Runs something when a screen is arrived at and when the app returns to the foreground |
 | `useFresh.ts` | A list shows what the page loaded, then re-reads itself on arrival and on return to the app |
 | `useScrollToEnd.ts` | Keeps the newest message of a conversation in view |
 
@@ -46,6 +47,9 @@ The aim is "show the kept copy at once, fetch a fresh one behind it, swap". Next
 current one: measured on 2026-10-09, a refresh on one tab made the next two taps fetch again. So the page
 is left alone and the list re-reads its own data: once on arrival, and whenever the app returns to the
 foreground. `read` is the same call the page made, from the feature's `api.ts`.
+
+`useOnArrival` is the timing alone, for a list that merges what it reads instead of replacing it (the
+prayer list keeps older pages the reader has scrolled to).
 
 If a read fails, what is on screen stays. If the page itself loads again (after a save), what it brings
 replaces what the list held.

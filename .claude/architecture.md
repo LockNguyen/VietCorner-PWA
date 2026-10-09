@@ -54,6 +54,7 @@ src/
   lib/useWhenDrawn.ts  Starts a router change and resolves when its result is drawn. Under the next two.
   lib/useRefresh.ts  Reloads the page's server data and resolves when it is on screen.
   lib/useGoTo.ts     Moves to another screen and resolves when it is on screen.
+  lib/useOnArrival.ts  Runs something on arrival at a screen and on return to the app.
   lib/useFresh.ts    A list shows what the page loaded, then re-reads itself on arrival and on return to the app.
   lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
@@ -401,3 +402,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
   Failures behind a "Could not save" banner are also written to the console.
 - 2026-10-09: faster tabs, step 1 (Events): the schedule is one call to `upcoming_events()` instead of four or five reads; `EventSchedule` refreshes itself through `useFresh`; weekly dates and language are worked out on the phone (`scheduleOf`). Pages and the layout read the signed-in user from the token (`getCurrentUser` uses `getClaims`), with no trip to Supabase. Needs section 3b of `features/events/schema.sql`. Pages are not kept yet: that is switched on once Groups and Prayer refresh themselves too.
 - 2026-10-09: faster tabs, step 2 (Groups): the group list is one call to `my_groups()` instead of three reads, and `GroupList` refreshes itself. Needs section 2b of `features/groups/schema.sql`. Measured for Events on a local production build against the same database, 8 taps each: 479 ms before, 132 ms after (median).
+- 2026-10-09: faster tabs, step 3 (Prayer): the list reads its newest twenty again on arrival and on return to the app, keeping older requests already loaded (`prayer/feed.ts`, `useOnArrival`). Its page was already two parallel reads once Groups became one call; no new SQL.
