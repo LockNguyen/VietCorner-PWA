@@ -59,7 +59,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   the mapping is unit-tested but has not been seen against real failures.
 - Reloading or closing the app keeps you signed in.
 - The first sign-in is followed by one question, the person's name (the `profiles` README).
-- Settings shows "Signed in as <email>"; signing out returns to `/login`.
+- Settings shows "Signed in as <email>"; signing out returns to `/login` with a full page load, which empties
+  the pages kept in memory: the next person to sign in on that phone starts with nothing of the last one's.
+  (Not exercised: it needs two accounts on one phone.)
 - The tab bar also shows on `/login`; tapping a tab just redirects back. Left as is so the shell needs no
   knowledge of auth.
 

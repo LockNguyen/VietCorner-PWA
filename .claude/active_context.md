@@ -252,11 +252,15 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         Events 479 -> 132 ms, Groups 128 -> 97 ms, Prayer 142 -> 124 ms. One background refresh per arrival
         (Events 118 ms, Groups 163 ms, Prayer 273 ms), after the screen is already showing.
         NOT measured: the live site (not deployed), a phone, Admin. NOT seen as a picture.
-        Still to do: a chat and Admin; then keep pages (`staleTimes`) and make sign-out a full page load.
-        Backlog B36 added (everything behind views and functions).
+        Step 4: pages kept ten minutes (`staleTimes`), sign-out a full page load. OBSERVED on a local
+        production build in the user's Chrome: first visit to Events/Groups/Prayer = 1 page request each;
+        every return = 0 page requests and 1 refresh call, content on screen. NOT exercised: sign-out with
+        two accounts on one phone (it would end the user's session). Known cost: Settings and Admin can be
+        up to ten minutes old when returned to.
+        Still to do: Admin's reads (8 to 10 in a row) and the chat page. Backlog B36 added.
 
 ## ➡️ Next 3 Micro-Steps
-1. Claude, on the user's go: keep pages (`staleTimes`), sign-out as a full page load, and the shared-phone
-   check; this is the step that makes returning to a tab instant.
-2. Then Admin's reads (8 to 10, in a row) and the chat page.
-3. User decides the merge and push of `iphone-fixes` + `fast-tabs` (one Netlify build), then measures on a phone.
+1. User: merge and push `iphone-fixes` + `fast-tabs` (one Netlify build)? Then on the phones: the iPhone
+   fixes, tab switching, and the shared-phone check (sign out, sign in as someone else, nothing of the first).
+2. Claude: measure the live site again against the 2026-10-09 baseline.
+3. Admin's reads and the chat page, the same way, if the Admin tab still feels slow.
