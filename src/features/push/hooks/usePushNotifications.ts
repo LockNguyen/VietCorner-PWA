@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { savePushSubscription } from "../api";
+import { removePushSubscription, savePushSubscription } from "../api";
 
 export type PushStatus = "loading" | "unsupported" | "blocked" | "off" | "on";
 
-// Push notifications for this device: works out the current state, and turns them on when asked.
+// Push notifications for this device: works out the current state, and turns them on or off when asked.
 export function usePushNotifications() {
   const [status, setStatus] = useState<PushStatus>("loading");
 
@@ -42,6 +42,24 @@ export function usePushNotifications() {
     return save(subscription);
   }
 
+  // Turns this device off. The phone forgets the subscription first: from that moment nothing can arrive,
+  // whatever happens next. If our own row then cannot be removed, the next send finds it dead and removes it.
+  async function disable(): Promise<boolean> {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await subscription.unsubscribe();
+        await removePushSubscription(subscription.endpoint).catch(() => {});
+      }
+      setStatus("off");
+      return true;
+    } catch (error) {
+      console.error("turning notifications off failed", error);
+      return false;
+    }
+  }
+
   // A subscription the server does not hold is as good as none, so a failed save leaves the state "off".
   async function save(subscription: PushSubscription): Promise<boolean> {
     try {
@@ -55,7 +73,7 @@ export function usePushNotifications() {
     }
   }
 
-  return { status, enable };
+  return { status, enable, disable };
 }
 
 // The Push API wants the VAPID public key as bytes. Some browsers (older Safari) reject the text form.

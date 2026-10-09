@@ -266,6 +266,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         Fixed after the user saw it: an answered join request flashing on every return to Admin (lists now
         start from what they last showed, not from the kept page). NOT seen fixed: Chrome was not connected.
         Chat still starts from its kept copy, so recent messages appear a moment after returning to a chat.
+        Notifications moved to Settings as an on/off switch (asked 2026-10-09); `npm run test:rls` 61/61.
+        NOT seen on screen or on a phone. Note: nothing on the Groups page now invites people to turn them on.
         Still to do: the chat page's reads. Backlog B36, B37 added.
 
 ## ➡️ Next 3 Micro-Steps

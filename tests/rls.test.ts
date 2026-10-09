@@ -147,6 +147,20 @@ describe("push_subscriptions", () => {
     expect(data).toHaveLength(1);
   });
 
+  it("can be removed by their owner, which is how a device is turned off, and by nobody else", async () => {
+    const endpoint = `https://push.test/${bob.id}-to-remove`;
+    await admin.from("push_subscriptions").insert({ endpoint, user_id: bob.id, subscription: { endpoint } });
+
+    await alice.client.from("push_subscriptions").delete().eq("endpoint", endpoint); // RLS: matches no row
+    const { data: afterStranger } = await admin.from("push_subscriptions").select("endpoint").eq("endpoint", endpoint);
+    const { error } = await bob.client.from("push_subscriptions").delete().eq("endpoint", endpoint);
+    const { data: afterOwner } = await admin.from("push_subscriptions").select("endpoint").eq("endpoint", endpoint);
+
+    expect(afterStranger).toHaveLength(1);
+    expect(error).toBeNull();
+    expect(afterOwner).toEqual([]);
+  });
+
   it("cannot be taken over by the next person to sign in on that device: the server does that", async () => {
     // A shared phone keeps its endpoint when someone else signs in. The browser's own save then meets a row
     // it may not touch, which is why saving goes through /api/push/subscribe (the push README).

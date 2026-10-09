@@ -11,6 +11,7 @@ import { getMyPermissions } from "@/features/permissions/server/queries"; // PER
 import NameStep from "@/features/profiles/components/NameStep"; // PROFILES
 import { getMyProfile } from "@/features/profiles/server/queries"; // PROFILES
 import { createClient } from "@/lib/supabase/server";
+import KeepSubscribed from "@/features/push/components/KeepSubscribed"; // PUSH
 import { BannerProvider } from "@/lib/useBanner";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </BannerProvider>
           {user && !askName && <AppTabs showAdmin={permissions.length > 0} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
+          {user && <KeepSubscribed />} {/* PUSH */}
         </LanguageProvider>
         <ServiceWorkerRegister />
       </body>

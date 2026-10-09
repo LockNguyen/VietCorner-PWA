@@ -16,11 +16,12 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 |---|---|---|
 | Data | `schema.sql` | `push_subscriptions` (one row per device, owner-only RLS); `push_cooldowns` + `claim_push_turns` and `push_sent_once` + `claim_push_once` (server-only); the cron job; the DROPs |
 | Types | `types.ts` | `PushNotification`: `{ title, body, url, topic? }`, the fields `sw.js` reads |
-| Browser API | `api.ts` | `savePushSubscription` (POST `/api/push/subscribe`) |
+| Browser API | `api.ts` | `savePushSubscription` (POST `/api/push/subscribe`), `removePushSubscription` (delete, own row only) |
 | Server logic | `server/saveSubscription.ts` | **Admin** client: stores the device under the verified user, taking it over from whoever had it |
 | Routes | `src/app/api/push/subscribe/route.ts` | Verify (401) → validate (400) → `saveSubscription` → 204 |
 | State | `hooks/usePushNotifications.ts` | Status (`unsupported/blocked/off/on/error`), re-saves the subscription on every open, `enable()` |
-| UI | `components/EnableNotificationsButton.tsx` | The toggle, shown on the Groups page |
+| UI | `components/NotificationSection.tsx` | The Settings block: one switch, on or off for this device, and a line when the phone stands in the way |
+| UI | `components/KeepSubscribed.tsx` | Draws nothing: saves the device's subscription again on every opening of the app (root layout) |
 | Text | `strings.ts` | The toggle's labels |
 | Server logic | `server/sendPush.ts` | `sendPush(userIds, notification)`: **admin** client → who is due (the pause) → their devices → `web-push`. Deletes rows on 404/410. |
 | Server logic | `server/sendPushOnce.ts` | `sendPushOnce(key, userIds, notification)`: sends the first time a key is seen, never again |
@@ -109,3 +110,15 @@ accounts). The row for that endpoint then belongs to the previous user, and RLS,
 user's browser from touching it. Saving straight from the browser therefore failed with "Could not save"
 on exactly those phones (found on two iPhones, 2026-10-09). The route verifies who is signed in and hands
 the device over. `tests/rls.test.ts` keeps the direct takeover refused.
+
+## Turning notifications on and off (Settings, 2026-10-09)
+- The switch is in Settings → Notifications, no longer on the Groups page.
+- **On:** the phone asks for permission (first time), the device is subscribed and saved.
+- **Off:** the phone forgets the subscription first, so nothing can arrive from that moment; then our row
+  is removed. If that removal fails, the next send finds the dead subscription and removes it.
+- **Blocked in the phone's settings, or the app not on the Home Screen:** the switch is off and cannot be
+  moved, and a line says what to do.
+- The switch is per device: turning it off on one phone leaves the others on.
+- The repair that used to run when the Groups page opened now runs once per opening of the app
+  (`KeepSubscribed`), for anyone signed in.
+- **Not seen on a phone or on screen (2026-10-09).**

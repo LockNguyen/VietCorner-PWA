@@ -5,7 +5,7 @@ export const SHELL_STRINGS = {
   homeTab: { en: "Home", vi: "Trang chủ" } satisfies Text,
   back: { en: "Back", vi: "Quay lại" } satisfies Text,
   groupsTab: { en: "Groups", vi: "Nhóm" } satisfies Text,
-  eventsTab: { en: "Events", vi: "Sự kiện" } satisfies Text,
+  eventsTab: { en: "Events", vi: "Lịch" } satisfies Text,
   prayerTab: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
   assistantTab: { en: "Assistant", vi: "Trợ lý" } satisfies Text,
   settingsTab: { en: "Settings", vi: "Cài đặt" } satisfies Text,
