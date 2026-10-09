@@ -263,6 +263,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         list and the editor. 101 unit tests. **WAITS ON THE USER: section 3c of `features/events/schema.sql`.**
         Until then the Admin tab lists no events on this branch and one security case fails (60 expected).
         NOT measured (needs an admin account in the browser), NOT seen.
+        Fixed after the user saw it: an answered join request flashing on every return to Admin (lists now
+        start from what they last showed, not from the kept page). NOT seen fixed: Chrome was not connected.
+        Chat still starts from its kept copy, so recent messages appear a moment after returning to a chat.
         Still to do: the chat page's reads. Backlog B36, B37 added.
 
 ## ➡️ Next 3 Micro-Steps

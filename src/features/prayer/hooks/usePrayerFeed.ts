@@ -1,15 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOnArrival } from "@/lib/useOnArrival";
 import { createRequest, deleteRequest, editRequest, getRequests, markAnswered, prayFor } from "../api";
 import { withNewest } from "../feed";
 import { PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "../types";
 
+// The list as it was last shown. It outlives leaving the tab, so coming back starts from it and not from
+// the page's kept, older copy (src/lib/README.md); a full page load (signing out) empties it.
+let lastShown: PrayerRequest[] | undefined;
+
 // The list of requests on screen, and everything that changes it. Each action resolves to whether it
 // worked; saying so is the board's job. Refreshed on arrival, not live (the prayer README).
 export function usePrayerFeed(initialRequests: PrayerRequest[]) {
-  const [requests, setRequests] = useState(initialRequests);
+  const [requests, setRequests] = useState(lastShown ?? initialRequests);
+  useEffect(() => {
+    lastShown = requests;
+  }, [requests]);
   // A full page means there may be another one; a short page is the end.
   const [hasMore, setHasMore] = useState(initialRequests.length === PAGE_SIZE);
   // A ref, not state: reaching the bottom can fire twice before a re-render, and the second call must see it.

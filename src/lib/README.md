@@ -53,3 +53,14 @@ prayer list keeps older pages the reader has scrolled to).
 
 If a read fails, what is on screen stays. If the page itself loads again (after a save), what it brings
 replaces what the list held.
+
+### Why a list remembers what it last showed
+A kept copy of a page is frozen: it holds the data the server sent when the page was loaded, and the list's
+own refresh cannot change it. Without a memory, every return to the tab started from that old data and then
+corrected itself, so something already dealt with flashed up and vanished, every time, for as long as the
+copy was kept (seen 2026-10-09: an answered join request on the Admin page). So `useFresh` remembers the
+newest value each list has shown and starts from that. The prayer list does the same in its own hook.
+
+What is left: after something changes while you are elsewhere, the first return shows the old value for the
+moment the refresh takes, once. And when a kept copy has expired and the server sends a newer page, the
+list still starts from its memory for that same moment before the refresh lands.
