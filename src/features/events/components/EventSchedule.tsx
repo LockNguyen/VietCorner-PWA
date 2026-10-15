@@ -1,7 +1,10 @@
 "use client";
 
+import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
+import IconButton from "@/components/ui/IconButton";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
@@ -15,20 +18,40 @@ import type { Occurrence, ScheduledEvent } from "../types";
 import EventDetails from "./EventDetails";
 import EventRow from "./EventRow";
 
-type Props = { events: ScheduledEvent[] }; // as the page loaded them
+type Props = {
+  events: ScheduledEvent[]; // as the page loaded them
+  canManage: boolean; // an admin: a + for a new event, and a tap opens the event's editor
+};
 
-// The schedule: every date in the next weeks, grouped by day, soonest first. Tapping one opens its details.
-// It shows what the page loaded at once, then keeps itself fresh (`useFresh`).
-export default function EventSchedule({ events: loaded }: Props) {
+// The schedule: every date in the next weeks, grouped by day, soonest first. Tapping one opens its details,
+// or, for an admin, its editor. It shows what the page loaded at once, then keeps itself fresh (`useFresh`).
+export default function EventSchedule({ events: loaded, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
+  const router = useRouter();
   const [open, setOpen] = useState<Occurrence | null>(null);
   const events = useFresh(loaded, getSchedule);
   const occurrences = scheduleOf(events, language, new Date());
 
-  if (occurrences.length === 0) return <EmptyState message={t(STRINGS.emptyState)} />;
+  const add = canManage && (
+    <div className="flex justify-end px-3 pt-2">
+      <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.push("/events/new")}>
+        <Plus />
+      </IconButton>
+    </div>
+  );
+
+  if (occurrences.length === 0) {
+    return (
+      <div>
+        {add}
+        <EmptyState message={t(STRINGS.emptyState)} />
+      </div>
+    );
+  }
 
   return (
     <div>
+      {add}
       {groupByDay(occurrences).map(([day, ofThatDay]) => (
         <section key={day}>
           <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
@@ -37,7 +60,7 @@ export default function EventSchedule({ events: loaded }: Props) {
               <EventRow
                 key={`${occurrence.event.id}-${occurrence.startsAt.toISOString()}`}
                 occurrence={occurrence}
-                onOpen={() => setOpen(occurrence)}
+                onOpen={() => (canManage ? router.push(`/events/${occurrence.event.id}`) : setOpen(occurrence))}
               />
             ))}
           </ul>

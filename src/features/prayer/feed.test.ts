@@ -12,6 +12,7 @@ function request(n: number): PrayerRequest {
     is_anonymous: false,
     created_at: new Date(START + n * 60_000).toISOString(),
     is_mine: false,
+    prayer_count: null,
     author_name: "An",
   };
 }

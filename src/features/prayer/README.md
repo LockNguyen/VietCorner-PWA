@@ -153,3 +153,21 @@ statements at the bottom of `schema.sql`.
   a prayer is still counted, and nobody is told. The reminders above are the one prayer notification left on.
 - An existing database needs sections 3b, 4 and 5 of `schema.sql`, in that order.
 - **Not exercised (2026-10-12):** the SQL is not run yet, so neither the security tests nor any signed-in screen.
+
+## The bell (2026-10-14)
+For someone with `prayer.reminders`, a bell sits left of the + on the Prayer tab and opens the weekly reminders
+on their own screen (`src/app/prayer/reminders/page.tsx`, `PrayerReminderAdmin`); the Admin tab's section is
+gone. The two sheets are calmer: the new request's words are inside the box; a request's options are one blue
+"answered", a quiet "edit" and a small red "delete" that asks once (`OptionButtons`). NOT seen signed in.
+
+## How many prayed, and a thank-you (2026-10-14)
+- **My own requests** show "3 🙏" (`ui/CountPill`) between the bubble and the pencil. The count comes from
+  `prayer_feed.prayer_count`, which section 5b of `schema.sql` gives **to the author only** (null for everyone
+  else), so nobody can compare requests by how many prayed. This reverses the 2026-10-06 decision that kept the
+  count off the screen; the notification to the author stays.
+- **Praying** plays a short reward on the chip that was tapped (`ui/Celebrate`): the tick pops in, a purple
+  ring spreads and fades, "+1" floats up and fades; a light buzz on phones that allow it (`navigator.vibrate`,
+  Android only). No confetti (the user's word). Only the tap that just happened celebrates, not a reload.
+- **Before section 5b is run, the Prayer tab is empty** (the feed asks for a column the view does not have yet).
+- Seen in `/ui` at phone width: the pill 32 px tall, the pencil's grey, level with it; the reward's three parts
+  playing after a tap. NOT seen on the Prayer tab signed in.

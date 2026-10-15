@@ -9,6 +9,11 @@ export const STRINGS = {
   when: { en: "When", vi: "Thời gian" } satisfies Text,
   where: { en: "Where", vi: "Địa điểm" } satisfies Text,
   notes: { en: "Notes", vi: "Ghi chú" } satisfies Text,
+  savePhoto: { en: "Save to phone", vi: "Lưu về máy" } satisfies Text, // the viewer's download button
+  pickDay: { en: "Day", vi: "Ngày" } satisfies Text, // the weekday picker before a day is chosen
+  time: { en: "Time", vi: "Giờ" } satisfies Text,
+  addGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text, // the + on the Groups tab
+  moreMembers: { en: "more members", vi: "thành viên khác" } satisfies Text, // after "+N", read by screen readers
   membersLabel: { en: "Members", vi: "Thành viên" } satisfies Text,
   nothingYet: { en: "No details yet.", vi: "Chưa có thông tin." } satisfies Text,
   notSaid: { en: "Not said yet", vi: "Chưa có" } satisfies Text,

@@ -256,6 +256,13 @@ create policy "Event managers manage event pictures" on storage.objects
   using (bucket_id = 'event-thumbnails' and (select public.has_permission('events.manage')))
   with check (bucket_id = 'event-thumbnails' and (select public.has_permission('events.manage')));
 
+-- 3f. An event outlives the account that made it (2026-10-14) -------------------
+-- This section can be run again by itself. Without it, removing an admin's account (the people feature)
+-- would be refused for as long as an event they created exists.
+alter table public.events drop constraint if exists events_created_by_fkey;
+alter table public.events add constraint events_created_by_fkey
+  foreign key (created_by) references auth.users (id) on delete set null;
+
 -- 4. Seed data ------------------------------------------------------------
 -- Until the admin page exists, these rows are how the feature is exercised: one normal case and every
 -- edge case the list has to handle.

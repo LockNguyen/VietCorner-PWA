@@ -11,6 +11,7 @@ import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useSave } from "@/lib/useSave";
 import { useGroupPhotos } from "../hooks/useGroupPhotos";
+import { savePhoto } from "../savePhoto";
 import { STRINGS } from "../strings";
 import type { Photo } from "../types";
 import AddPhotoForm from "./AddPhotoForm";
@@ -24,7 +25,7 @@ type Props = {
 };
 
 // A group's pictures inside its sheet: a strip that scrolls sideways and loads more at its end, the large
-// view a tap opens, adding a picture (the group's people and managers) and removing one (managers).
+// view a tap opens (with saving a picture to the phone), adding a picture (the group's people and managers) and removing one (managers).
 // Nothing at all for a reader of a group that has no pictures.
 export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: Props) {
   const { t, language } = useLanguage(); // I18N
@@ -76,7 +77,13 @@ export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: P
           src={open.fullUrl}
           alt={altFor(open)}
           caption={captionFor(open)}
-          labels={{ previous: t(STRINGS.previousPhoto), next: t(STRINGS.nextPhoto), close: t(COMMON.close) }}
+          labels={{
+            previous: t(STRINGS.previousPhoto),
+            next: t(STRINGS.nextPhoto),
+            close: t(COMMON.close),
+            download: t(STRINGS.savePhoto),
+          }}
+          onDownload={() => void savePhoto(open.fullUrl, `${groupName} ${open.taken_on ?? open.id}.jpg`)}
           onPrevious={index > 0 ? () => setOpenId(photos[index - 1].id) : undefined}
           onNext={index < photos.length - 1 ? () => setOpenId(photos[index + 1].id) : undefined}
           onClose={() => setOpenId(null)}

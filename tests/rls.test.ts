@@ -167,6 +167,34 @@ describe("account_exists, asked by the sign-in screen", () => {
   });
 });
 
+describe("people: the Admin tab's list of everyone (people/schema.sql)", () => {
+  it("lists nobody, and changes nothing, for a member without users.manage", async () => {
+    const list = await bob.client.rpc("people_list");
+    expect(list.data ?? []).toEqual([]);
+
+    const promote = await bob.client.rpc("set_person_role", { user_id: bob.id, role: "admin", given: true });
+    expect(promote.error).not.toBeNull();
+    const { data: roles } = await admin.from("user_roles").select("role").eq("user_id", bob.id);
+    expect(roles?.map((row) => row.role)).not.toContain("admin");
+
+    const remove = await bob.client.rpc("remove_person", { user_id: carol.id });
+    expect(remove.error).not.toBeNull();
+    const { data: still } = await admin.auth.admin.getUserById(carol.id);
+    expect(still.user).not.toBeNull();
+  });
+});
+
+describe("group cards: members' initials (group-info/schema.sql, section 7)", () => {
+  it("are given to an approved member, and to nobody signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const { data: initials } = await bob.client.rpc("group_member_initials", { group_id: groupId });
+    expect(Array.isArray(initials) && initials.length).toBeGreaterThan(0); // Alice is in it
+    expect((await anonymous.rpc("group_member_initials", { group_id: groupId })).error).not.toBeNull();
+  });
+});
+
 describe("push_subscriptions", () => {
   it("are invisible to other users", async () => {
     const { data } = await bob.client.from("push_subscriptions").select("endpoint");

@@ -9,7 +9,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | Component | Job | Variants | Props beyond the native element's |
 |---|---|---|---|
 | `Text` | Any text outside a control | `variant`: `tile`, `body`, `small` · `tone`: `ink`, `subtle`, `danger` | `as`: `p`, `span`, `h1`, `h2`, `h3` |
-| `Button` | Any button | `primary`, `quiet`, `danger`, `text` | `pending`, `pendingLabel` |
+| `Button` | Any button | `primary`, `quiet`, `danger`, `text`, `dangerText` (the small red line under a sheet's or screen's main button: remove, delete, call off) | `pending`, `pendingLabel` |
 | `TopBar` | The bar at the top: centred title, a slot for icons at each end | | `title`, `left`, `right` |
 | `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
 | `IconLink` | A link shown as an icon alone, on the top bar | | `label` (read by screen readers) |
@@ -26,7 +26,13 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `TextArea` | Several lines of typed input | | |
 | `Select` | One choice from a list, in the phone's own picker; children are `<option>`s | | |
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
-| `Sheet` | A short choice or a few details, rising from the bottom the way an iPhone sheet does. Open while rendered; the X at the top right, Escape or a tap outside closes it. It has no Close button at the bottom, and its callers add none. | | `title`, `closeLabel`, `onClose` |
+| `Sheet` | A short choice or a few details, rising from the bottom (built on `vaul`). At most 60% of the screen (`max-h-sheet`): the title and X stay put, the rest scrolls. Closes on the X, a swipe down, a tap outside or Escape, always sliding away first; `onClose` runs once it is gone. Children may be a function that receives `close`, for an action that ends by closing (Post). | | `title`, `closeLabel`, `onClose` |
+| `CountPill` | A small grey pill with a number and an icon ("3 🙏"), the height and grey of the small `Chip`, so they sit level. Not a button | | `label` (read by screen readers) |
+| `Celebrate` | A moment of thanks around what it wraps: it pops in, a ring spreads out and fades, `burst` floats up and fades. Plays once when rendered; nothing moves with reduced motion | | `burst` |
+| `Card` | A large tappable card: a picture across the top (about 70%), then a title with an optional badge before it, a grey line, and children | | `src`, `placeholder`, `title`, `badge`, `subtitle` |
+| `LiveDot` | A small green dot with a light green ring pulsing out of it: something lively. Decorative | | |
+| `MemberCircles` | A row of small circles, one per person: initials first, empty figures for the rest, "+N" past `max` | | `initials`, `total`, `max`, `label` |
+| `BilingualInput` | One text in two languages as one grey box: the first language on top, a hairline, the other below; an empty half shows its language | | `top`, `bottom` (`value`, `onChange`, `placeholder`, `label`), `rows` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
 | `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
@@ -68,3 +74,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `useFresh` | A list shows what the page loaded, then re-reads itself on arrival and on return to the app. |
 | `useScrollToEnd` | Keeps the newest message of a conversation in view. |
 | `useBanner` | `showBanner({ kind, message, seconds? })` from anywhere. Success stays 2 s, an error 8 s. `BannerProvider` wraps the app once; `src/components/BannerHost.tsx` draws them and handles the stack. |
+
+2026-10-14: `IconButton` has the tone `onDark` (a plain white icon, no circle, over a dark veil). `Lightbox` puts
+download (`onDownload`) and a white X above the picture's top-right corner, the arrows under it at its left and
+right edges with the caption between them, and closes on a tap on the dark around it.

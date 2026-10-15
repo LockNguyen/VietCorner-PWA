@@ -31,6 +31,7 @@ import { getMyPermissions } from "@/features/permissions/server/queries"; // PER
 import { managesSomething } from "@/features/permissions/types"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
+import CardDemo from "./CardDemo";
 import ComposerDemo from "./ComposerDemo";
 import PhotoDemo from "./PhotoDemo";
 import SheetDemo from "./SheetDemo";
@@ -233,6 +234,11 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-2">
         <Text as="h2" variant="small" tone="subtle">Spinner</Text>
         <Text tone="subtle"><Spinner /> takes the colour of its text</Text>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">Card, LiveDot, MemberCircles, BilingualInput, dangerText</Text>
+        <CardDemo />
       </section>
 
       <section className="flex flex-col gap-2">

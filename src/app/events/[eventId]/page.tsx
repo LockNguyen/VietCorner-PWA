@@ -7,13 +7,13 @@ import { MANAGE_EVENTS } from "@/features/events/types";
 import { getMyPermissions } from "@/features/permissions/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
-const ADMIN = "/admin";
+const SCHEDULE = "/events"; // where the editor came from, and where saving leads back to
 
-// The editor for one event, or for a new one at `/admin/events/new`.
+// The editor for one event, or for a new one at `/events/new`. Opened from the Events tab by an admin.
 export default async function EventEditorPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
   const supabase = await createClient();
-  // Courtesy, not security, as on the admin page: the database refuses every save without the permission.
+  // Courtesy, not security: the database refuses every save without the permission.
   if (!(await getMyPermissions(supabase)).includes(MANAGE_EVENTS)) notFound();
 
   // The whole list is read to show one event: it is a handful of rows in one trip (`managed_events()`),
@@ -23,8 +23,8 @@ export default async function EventEditorPage({ params }: { params: Promise<{ ev
 
   return (
     <>
-      <PageHeader title={event ? STRINGS.editEvent : STRINGS.newEvent} backHref={ADMIN} />
-      <EventEditor event={event} listHref={ADMIN} />
+      <PageHeader title={event ? STRINGS.editEvent : STRINGS.newEvent} backHref={SCHEDULE} />
+      <EventEditor event={event} listHref={SCHEDULE} />
     </>
   );
 }

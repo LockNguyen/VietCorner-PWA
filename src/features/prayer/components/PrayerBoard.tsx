@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import IconButton from "@/components/ui/IconButton";
@@ -18,12 +19,17 @@ import PrayerComposer from "./PrayerComposer";
 import PrayerWeek from "./PrayerWeek";
 import RequestOptions from "./RequestOptions";
 
-type Props = { initialRequests: PrayerRequest[]; userId: string };
+type Props = {
+  initialRequests: PrayerRequest[];
+  userId: string;
+  canManageReminders: boolean; // an admin: a bell beside the + opens the weekly reminders
+};
 
 // The Prayer tab: the button that adds a request, then every request in the church, by week and by person.
 // It connects the two hooks to the components below it; each of those only renders.
-export default function PrayerBoard({ initialRequests, userId }: Props) {
+export default function PrayerBoard({ initialRequests, userId, canManageReminders }: Props) {
   const { t } = useLanguage(); // I18N
+  const router = useRouter();
   const feed = usePrayerFeed(initialRequests);
   const cooldown = usePrayerCooldown(userId);
   const showBanner = useBanner();
@@ -40,13 +46,19 @@ export default function PrayerBoard({ initialRequests, userId }: Props) {
 
   // The pause starts before the server answers, so a second tap cannot slip in while the first travels.
   async function pray(requestId: string) {
+    navigator.vibrate?.(15); // a light tap felt in the hand, where the phone allows it (Android; not iPhone)
     cooldown.startPause(requestId);
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end px-3 pt-2">
+      <div className="flex justify-end gap-3 px-3 pt-2">
+        {canManageReminders && (
+          <IconButton label={t(STRINGS.remindersHeading)} onClick={() => router.push("/prayer/reminders")}>
+            <Bell />
+          </IconButton>
+        )}
         <IconButton tone="filled" label={t(STRINGS.addRequest)} onClick={() => setWriting(true)}>
           <Plus />
         </IconButton>

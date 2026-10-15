@@ -34,9 +34,10 @@ export async function getJoinRequests(): Promise<JoinRequest[]> {
 }
 
 // POST a new group. RLS allows it only with the "groups.manage" permission.
-export async function createGroup(name: string) {
-  const { error } = await createClient().from("groups").insert({ name });
+export async function createGroup(name: string): Promise<string> {
+  const { data, error } = await createClient().from("groups").insert({ name }).select("id").single();
   if (error) throw new Error(error.message);
+  return data.id; // the new group's editor opens next
 }
 
 // PATCH a group's name and how many people it has (null = not said). Needs "groups.manage".

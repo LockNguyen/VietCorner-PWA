@@ -182,6 +182,59 @@ create policy "Group managers erase group pictures" on storage.objects
 -- The function the earlier rules shared. Dropped last: by now no policy uses it.
 drop function if exists public.may_write_group_info (uuid);
 
+-- 7. Cards: a meeting day and time, and members' initials (2026-10-14) -------
+-- This section can be run again by itself. Run it after sections 1-5.
+
+-- When a group meets, as a weekday and a time (church time) instead of free text, so the app can write it
+-- the same way in both languages ("Tuesdays @ 7:30 PM"). `meets_at` stays for what was typed before.
+alter table public.group_info add column if not exists meets_weekday smallint check (meets_weekday between 0 and 6); -- 0 = Sunday
+alter table public.group_info add column if not exists meets_time time;
+grant insert (meets_weekday, meets_time), update (meets_weekday, meets_time) on public.group_info to authenticated;
+
+-- The initials of a group's members, for the circles on its card. Initials only: a member may not read who
+-- is in another group (group_members shows each person their own rows), so this hands out the least that
+-- draws the circles. It runs as its owner to see the memberships, and answers only an approved member.
+create or replace function public.group_member_initials(group_id uuid) returns text[]
+language sql stable security definer set search_path = '' as $$
+  select coalesce(array_agg(
+           upper(left(btrim(p.name), 1)
+                 || case when btrim(p.name) like '% %' then left(regexp_replace(btrim(p.name), '^.*\s', ''), 1) else '' end)
+           order by m.joined_at), '{}')
+  from public.group_members m
+  join public.profiles p on p.user_id = m.user_id
+  where m.group_id = group_member_initials.group_id and (select public.has_permission('app.use'));
+$$;
+revoke execute on function public.group_member_initials (uuid) from public, anon;
+grant execute on function public.group_member_initials (uuid) to authenticated;
+
+-- The Groups page's one read, now with the two new columns and the initials.
+drop function if exists public.group_directory ();
+create function public.group_directory()
+returns table (
+  id uuid, name text, member_count integer, thumbnail_path text, is_member boolean,
+  meets_at text, meets_weekday smallint, meets_time time, location text, notes text, member_initials text[]
+)
+language sql stable set search_path = '' as $$
+  select
+    g.id,
+    g.name,
+    g.member_count,
+    g.thumbnail_path,
+    exists (select 1 from public.group_members m where m.group_id = g.id and m.user_id = auth.uid()),
+    i.meets_at,
+    i.meets_weekday,
+    i.meets_time,
+    i.location,
+    i.notes,
+    public.group_member_initials(g.id)
+  from public.groups g
+  left join public.group_info i on i.group_id = g.id
+  where g.deleted_at is null
+  order by g.name;
+$$;
+revoke execute on function public.group_directory () from public, anon;
+grant execute on function public.group_directory () to authenticated;
+
 -- 6. Undo (removing the feature) ------------------------------------------
 -- Empty the bucket in the dashboard first (Storage → group-photos): a bucket with files cannot be deleted.
 -- drop policy if exists "Approved members look at group pictures" on storage.objects;

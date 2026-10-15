@@ -21,8 +21,11 @@ events or prayer: their tables point at `groups`.
 | Routes | `src/app/api/groups/join/route.ts`, `approve/route.ts` | Verify (401) → validate (400) → the step (403 when refused) → 204 |
 | UI | `components/GroupList.tsx`, `JoinButton.tsx` | The list of groups; asking to join one; "Waiting for approval" |
 | UI | `components/JoinRequests.tsx`, `JoinRequestRow.tsx` | The admin section's list of who is waiting; one person, with Approve and Decline |
-| UI | `components/GroupAdmin.tsx` | The admin page's section: one row per group (name, size), "Has no group" last, the box that adds a group; which sheet is open |
-| UI | `components/GroupSheet.tsx` | One group's sheet: composes the three below, and removes the group |
+| UI | `components/NewGroupForm.tsx` | A new group's name, then Create, which opens its editor |
+| UI | `components/GroupPeople.tsx` | On a group's editor: who is in it (each with Remove), and adding someone |
+| UI | `components/RemoveGroupButton.tsx` | The small red line at the bottom of a group's editor (asks once) |
+| UI | `components/UnassignedCard.tsx` | The last card on the Groups tab, for an admin: everyone in no group yet |
+| UI | `components/PersonGroups.tsx` | On a person's screen (Admin): a switch per group |
 | UI | `components/GroupThumbnail.tsx` | The group's picture: choose or replace, remove |
 | UI | `components/GroupDetailsForm.tsx`, `GroupMemberRow.tsx`, `AddMemberForm.tsx` | Name and size with one Save; one person with Remove; the list of people to add |
 | UI | `components/UnassignedSheet.tsx` | Everyone in no group yet |
@@ -141,3 +144,11 @@ at the bottom of `schema.sql`.
 - `tests/rls.test.ts`, "thumbnails": a manager sets and removes; a member or a waiting account cannot
   upload, change the path or erase the file; the bucket refuses a non-JPEG and an oversized file.
 - **Not exercised (2026-10-12):** the SQL is not run, so neither the security tests nor the screen.
+
+## Managed on the Groups tab (2026-10-14)
+The Admin tab's Groups section is gone (`GroupAdmin`, `GroupSheet` removed). An admin now works on the
+Groups tab: a + (`/groups/manage/new`: a name, then Create opens the editor), and a tap on a group's card
+opens its editor (`src/app/groups/manage/[groupId]/page.tsx`), which composes this feature's picture, name
+and size, people and remove with group-info's when/where/notes and pictures. "Chưa vào nhóm" (in no group)
+is the last card. A person's groups can also be switched on their screen in the Admin tab (`PersonGroups`).
+`createGroup` now returns the new id. NOT seen signed in.

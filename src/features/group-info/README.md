@@ -82,7 +82,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - **Not moderated before showing.** A group's own people and admins add; an admin removes what should not be there.
 
 ## Expected behavior
-- Groups tab: every active group by name, each row its picture (set by an admin on the Admin tab; the
+- (Before 2026-10-14.) Groups tab: every active group by name, each row its picture (set by an admin; the
   people icon until then), the name, and beneath it "Your group" (if I am
   in it), "12 members" (if an admin typed a number) and when it meets (if said). A chevron at the right.
 - Tapping a row opens a sheet titled with the group's name: Members, When, Where, Notes, each a small label
@@ -122,3 +122,24 @@ Delete this folder and the `// GROUP-INFO` lines in `src/app/groups/page.tsx` (t
 `oldGroupsPage` on, or its entries removed from `AppTabs.tsx` and `HomeTiles.tsx`). Run the DROP at the
 bottom of `schema.sql` (empty the bucket in the dashboard first). The three picture components in
 `src/components/ui/` and their demo on `/ui` can stay or go with it.
+
+## Cards, and when a group meets (2026-10-14)
+- **Cards** (`GroupDirectory`): a card per group (`ui/Card`): its picture, a pulsing green dot (always on),
+  the name, "Tuesdays @ 7:30 PM · Hall", and a circle per person (`ui/MemberCircles`): initials of those who
+  have the app (`group_member_initials()`), empty circles up to the typed number, "+N" past eight.
+- **Members** tap a card for a read-only sheet (`GroupInfoSheet`): when, where, notes, members, pictures;
+  a group's own people may add pictures. The pencils are gone (`GroupDetail`, `GroupDetailForm` removed).
+- **Admins** tap a card for the group's editor (see the groups README); this feature brings `GroupInfoForm`
+  (a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
+- **When:** `group_info.meets_weekday` (0 = Sunday) and `meets_time`, written by `meeting.ts` as "Tuesdays @
+  7:30 PM" / "Thứ Ba @ 19:30" (tested). The old free-text `meets_at` is shown until a day and time are saved.
+- **Why initials only:** a member may not read who is in another group (group_members shows each person their
+  own rows), so the database hands out the least that draws the circles, and only to approved members.
+- **SQL:** section 7 of `schema.sql` (safe to run again). Until it is run the Groups tab is empty.
+- Seen in `/ui` at phone width: a card with the dot, three initials, four empty circles and "+5". NOT seen: the
+  Groups tab signed in, the editor, a real picture.
+
+## Saving a picture (2026-10-14)
+The large view has a download button (`savePhoto.ts`): on an iPhone it opens the share sheet, whose "Save
+Image" puts the picture in Photos (a web page cannot write there itself); on a computer it downloads the file.
+NOT tried on a phone.

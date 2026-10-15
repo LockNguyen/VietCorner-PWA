@@ -32,6 +32,9 @@
   --spacing-bar: 48px;
   --spacing-tabs: 56px;
   --spacing-column: 480px;
+  /* The tallest a sheet gets (decided by the user 2026-10-14): its X stays within reach of a thumb, and what
+     does not fit scrolls under the fixed title. */
+  --spacing-sheet: 60dvh;
 
   --radius-thumb: 4px;
   --radius-control: 12px;
@@ -49,6 +52,44 @@
   --animate-fade: fade 300ms ease-out;
   @keyframes fade {
     from {
+      opacity: 0;
+    }
+  }
+
+  /* The reward for praying (asked for by the user, 2026-10-14, "no confetti"): the tick pops in, a ring
+     spreads out from it and fades, and "+1" floats up and fades. About two thirds of a second, once.
+     The one place something springs past its size: a moment of thanks, not a screen moving. */
+  --animate-pop: pop 450ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  @keyframes pop {
+    0% {
+      transform: scale(0.4);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+  --animate-ring: ring 700ms ease-out forwards;
+  @keyframes ring {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(2.2);
+      opacity: 0;
+    }
+  }
+  --animate-float: float 900ms ease-out forwards;
+  @keyframes float {
+    0% {
+      transform: translateY(0);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-28px);
       opacity: 0;
     }
   }

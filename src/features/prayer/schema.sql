@@ -126,7 +126,7 @@ select
   r.author_id = auth.uid() as is_mine,
   -- The name as it is today (`profiles`), so a corrected name shows on older requests too.
   case when r.is_anonymous then null else p.name end as author_name
-  -- `prayer_count` is deliberately absent: the author hears it in a notification, nobody reads it here.
+  -- `prayer_count` was absent here; since 2026-10-14 section 5b adds it, for the author only.
 from public.prayer_requests r
 join public.profiles p on p.user_id = r.author_id
 where r.deleted_at is null
@@ -161,6 +161,25 @@ $$;
 
 revoke execute on function public.pray_for_request (uuid) from public, anon;
 grant execute on function public.pray_for_request (uuid) to authenticated;
+
+-- 5b. The author sees how many prayed (2026-10-14) ------------------------------
+-- This section can be run again by itself. The same view as section 4 with one column added at the end
+-- (`create or replace view` allows that): the count, for the request's author only. Everyone else gets null,
+-- so nobody can compare requests by how many prayed for them.
+create or replace view public.prayer_feed with (security_invoker = false) as
+select
+  r.id,
+  r.body,
+  r.is_anonymous,
+  r.created_at,
+  r.author_id = auth.uid() as is_mine,
+  case when r.is_anonymous then null else p.name end as author_name,
+  case when r.author_id = auth.uid() then r.prayer_count end as prayer_count
+from public.prayer_requests r
+join public.profiles p on p.user_id = r.author_id
+where r.deleted_at is null
+  and r.answered_at is null
+  and (select public.has_permission('app.use'));
 
 -- 6. Seed data ------------------------------------------------------------
 -- Requests are not seeded: each needs a signed-in author, and the SQL Editor has none. Post them in the app.

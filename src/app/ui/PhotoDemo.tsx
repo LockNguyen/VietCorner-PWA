@@ -37,7 +37,8 @@ export default function PhotoDemo() {
           src={PICTURES[open].src}
           alt={`Picture ${open + 1}`}
           caption={PICTURES[open].caption}
-          labels={{ previous: "Previous photo", next: "Next photo", close: "Close" }}
+          labels={{ previous: "Previous photo", next: "Next photo", close: "Close", download: "Save to phone" }}
+          onDownload={() => {}}
           onPrevious={open > 0 ? () => setOpen(open - 1) : undefined}
           onNext={open < PICTURES.length - 1 ? () => setOpen(open + 1) : undefined}
           onClose={() => setOpen(null)}

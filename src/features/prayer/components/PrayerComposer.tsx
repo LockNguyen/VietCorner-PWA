@@ -2,7 +2,6 @@
 
 import { useState, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
-import Field from "@/components/ui/Field";
 import Sheet from "@/components/ui/Sheet";
 import Switch from "@/components/ui/Switch";
 import TextArea from "@/components/ui/TextArea";
@@ -25,27 +24,39 @@ export default function PrayerComposer({ onPost, onClose }: Props) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const { pending, run } = usePending<"post">();
 
-  function handleSubmit(event: FormEvent) {
+  // Only a request that was saved closes the sheet: after a failure the words are still there to resend.
+  function submit(event: FormEvent, close: () => void) {
     event.preventDefault();
     run("post", async () => {
-      // Only a request that was saved closes the sheet: after a failure the words are still there to resend.
-      if (await onPost({ body: body.trim(), isAnonymous })) onClose();
+      if (await onPost({ body: body.trim(), isAnonymous })) close();
     });
   }
 
   return (
     <Sheet title={t(STRINGS.addRequest)} closeLabel={t(COMMON.close)} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <Field label={t(STRINGS.bodyPlaceholder)}>
-          <TextArea value={body} onChange={(event) => setBody(event.target.value)} maxLength={MAX_BODY_LENGTH} rows={4} autoFocus />
-        </Field>
+      {(close) => (
+        <form onSubmit={(event) => submit(event, close)} className="flex flex-col gap-3">
+          <TextArea
+            placeholder={t(STRINGS.bodyPlaceholder)}
+            aria-label={t(STRINGS.bodyPlaceholder)}
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            maxLength={MAX_BODY_LENGTH}
+            rows={4}
+            autoFocus
+          />
 
-        <Switch label={t(STRINGS.postAnonymously)} checked={isAnonymous} onChange={(event) => setIsAnonymous(event.target.checked)} />
+          <Switch
+            label={t(STRINGS.postAnonymously)}
+            checked={isAnonymous}
+            onChange={(event) => setIsAnonymous(event.target.checked)}
+          />
 
-        <Button pending={pending === "post"} disabled={body.trim() === ""}>
-          {t(STRINGS.postButton)}
-        </Button>
-      </form>
+          <Button pending={pending === "post"} disabled={body.trim() === ""}>
+            {t(STRINGS.postButton)}
+          </Button>
+        </form>
+      )}
     </Sheet>
   );
 }

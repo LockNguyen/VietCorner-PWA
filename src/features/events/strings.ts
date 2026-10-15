@@ -6,9 +6,9 @@ import type { DraftProblem } from "./draft";
 export const STRINGS = {
   // The event's picture (admin editor)
   pictureHeading: { en: "Picture", vi: "Hình" } satisfies Text,
-  choosePicture: { en: "Choose a picture", vi: "Chọn hình" } satisfies Text,
-  changePicture: { en: "Choose another picture", vi: "Chọn hình khác" } satisfies Text,
-  removePicture: { en: "Remove the picture", vi: "Gỡ hình" } satisfies Text,
+  choosePicture: { en: "Choose picture", vi: "Chọn hình" } satisfies Text,
+  changePicture: { en: "Change picture", vi: "Chọn hình khác" } satisfies Text,
+  removePicture: { en: "Remove picture", vi: "Xóa hình" } satisfies Text,
 
   emptyState: {
     en: "No events in the next weeks.",
@@ -23,21 +23,21 @@ export const STRINGS = {
   // Admin section
   adminHeading: { en: "Events", vi: "Sự kiện" } satisfies Text,
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
-  untitled: { en: "(no title)", vi: "(chưa có tên)" } satisfies Text,
+  untitled: { en: "(no title)", vi: "(không tên)" } satisfies Text,
   editEvent: { en: "Edit event", vi: "Sửa sự kiện" } satisfies Text,
   nextDates: { en: "Next dates", vi: "Các buổi sắp tới" } satisfies Text,
   cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,
   undoCancel: { en: "Undo", vi: "Hoàn tác" } satisfies Text,
-  cancelForGood: { en: "Cancel this event permanently", vi: "Hủy hẳn sự kiện này" } satisfies Text,
+  cancelForGood: { en: "Cancel all event dates", vi: "Hủy tất cả các buổi" } satisfies Text,
 
   // The form
   titleField: { en: "Title", vi: "Tên sự kiện" } satisfies Text,
   descriptionField: { en: "Description", vi: "Mô tả" } satisfies Text,
-  startsField: { en: "Starts (church time)", vi: "Bắt đầu (giờ hội thánh)" } satisfies Text,
-  endsField: { en: "Ends (optional)", vi: "Kết thúc (không bắt buộc)" } satisfies Text,
-  repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (không bắt buộc)" } satisfies Text,
+  startsField: { en: "Starts", vi: "Bắt đầu" } satisfies Text,
+  endsField: { en: "Ends (optional)", vi: "Kết thúc (nếu có)" } satisfies Text,
+  repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (nếu có)" } satisfies Text,
 
-  remindersHeading: { en: "Remind members", vi: "Nhắc thành viên" } satisfies Text,
+  remindersHeading: { en: "Remind members", vi: "Nhắc nhở Hội Thánh" } satisfies Text,
 
   // The notification members get (server/notifyScheduleChange.ts): "Cancelled: <when>" or "Back on: <when>"
   backOn: { en: "Back on", vi: "Diễn ra trở lại" } satisfies Text,

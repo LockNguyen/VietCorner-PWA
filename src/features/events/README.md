@@ -37,8 +37,7 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
-| Shell | `src/app/admin/page.tsx` | Shows `EventAdmin` to someone with `events.manage` |
-| Shell | `src/app/admin/events/[eventId]/page.tsx` | The editor's screen for one event, or for `new`; 404 without `events.manage` |
+| Shell | `src/app/events/[eventId]/page.tsx` | The editor's screen for one event, or for `new`, opened from the Events tab; 404 without `events.manage` |
 
 ## Four tables, on purpose
 | Table | Why separate |
@@ -110,11 +109,12 @@ every case the list has to handle (see **Seed data** below).
 - Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
   outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
-- **Admin tab → Events** (with `events.manage`): a "New event" row, then every upcoming event,
-  soonest first. A row opens that event's own screen (`/admin/events/<id>`) with a back arrow: the fields
-  (title, location and description, each in English and then Vietnamese), then "Remind members", the next
-  four dates, and a red "Cancel this event permanently". Save with something missing says what, in red under
-  the field concerned, and from then on as the fields change. Save goes back to the Admin tab. On a weekly
+- **Events tab, for someone with `events.manage`** (since 2026-10-14; it was the Admin tab): a round blue + at
+  the top right opens a new event; tapping an event opens its own screen (`/events/<id>`) with a back arrow:
+  the picture, then the fields (title, location and description, each one grey box with Vietnamese on top
+  and English below), then "Remind members", the next
+  four dates, and a small red "Cancel this event permanently" that asks once ("Tap again to confirm"). Save with something missing says what, in red under
+  the field concerned, and from then on as the fields change. Save goes back to the Events tab. On a weekly
   event each date has Cancel, and a cancelled date has Undo in its place; the screen stays and shows the
   change. A one-off event's date has no button. "New event" opens the same screen with the fields only.
   Back with unsaved changes loses them without asking.
@@ -194,3 +194,8 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
 - `tests/rls.test.ts`, "thumbnails": a manager sets and removes; a member or a waiting account cannot
   upload, change the path or erase the file; the bucket refuses a non-JPEG and an oversized file.
 - **Not exercised (2026-10-12):** the SQL is not run, so neither the security tests nor the screen.
+
+## Editing on the Events tab (2026-10-14)
+- A weekly event is one row, so any change from its editor, picture included, applies to every week.
+- An event with no date left in the coming weeks no longer appears anywhere to edit (the Admin list is gone).
+- `EventAdmin` and `EventAdminRow` were removed. NOT seen signed in (needs an admin in the preview).

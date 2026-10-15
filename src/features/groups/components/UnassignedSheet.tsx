@@ -9,7 +9,7 @@ import type { Person } from "../types";
 import { COMMON } from "@/features/i18n/common"; // I18N
 
 // Everyone who is in no group yet, which is where a newly approved person starts: name over email.
-// Only a list: a person is put into a group from that group's sheet.
+// Only a list: a person is put into a group from that group's editor.
 export default function UnassignedSheet({ people, onClose }: { people: Person[]; onClose: () => void }) {
   const { t } = useLanguage(); // I18N
 

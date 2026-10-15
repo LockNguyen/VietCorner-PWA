@@ -7,8 +7,8 @@ import {
   PHOTO_URL_SECONDS,
   photoPaths,
   SMALL_SIDE,
-  type DetailField,
   type DirectoryGroup,
+  type GroupInfoDraft,
   type NewPhoto,
   type Photo,
 } from "./types";
@@ -24,19 +24,21 @@ export async function getGroupDirectory(): Promise<DirectoryGroup[]> {
   return data;
 }
 
-// PUT one of a group's details (an empty box = "not said"). The group's row is made the first time and
-// changed after that; the other details are left as they are. Needs the "groups.manage" permission.
-export async function saveGroupDetail(groupId: string, field: DetailField, text: string): Promise<void> {
+// PUT when, where and notes for a group, from its editor (an empty field = "not said"). The group's row is
+// made the first time and changed after that. Needs the "groups.manage" permission (schema.sql, section 3).
+export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Promise<void> {
   const { error } = await createClient()
     .from("group_info")
-    .upsert({ group_id: groupId, [field]: text.trim() || null }, { onConflict: "group_id" });
-  if (error) throw new Error(error.message);
-}
-
-// PATCH how many people a group has (null = not said). The number lives on the group itself, so this
-// writes the groups feature's table; its policy allows it only with the "groups.manage" permission.
-export async function saveMemberCount(groupId: string, memberCount: number | null): Promise<void> {
-  const { error } = await createClient().from("groups").update({ member_count: memberCount }).eq("id", groupId);
+    .upsert(
+      {
+        group_id: groupId,
+        meets_weekday: draft.meetsWeekday === "" ? null : Number(draft.meetsWeekday),
+        meets_time: draft.meetsTime || null,
+        location: draft.location.trim() || null,
+        notes: draft.notes.trim() || null,
+      },
+      { onConflict: "group_id" },
+    );
   if (error) throw new Error(error.message);
 }
 

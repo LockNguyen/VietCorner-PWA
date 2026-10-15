@@ -50,6 +50,15 @@ delete.
 | Notifications | Three kinds left on: prayer reminders, "someone signed up" (admins), "you were approved". The rest are switched off in `src/lib/switches.ts`, not deleted. |
 | Joining a group | Switched off. Admins will assign people (next slice). Replaces "Needs an admin's approval" above. |
 
-The page now shows, top to bottom: people waiting to be let in, Events, Prayer reminders, names waiting, Groups.
+The page now shows, top to bottom (since 2026-10-14): people waiting to be let in, names waiting, join requests
+(while joining is on), then everyone with an account (the `people` feature). Events, groups and prayer
+reminders are managed on their own tabs.
 | Putting people into groups | Admins do it, from each group's sheet on the Admin tab: add from a list of everyone approved (name and email), remove with one tap; a person may be in several groups. "Has no group" lists the rest. Nobody is notified. |
 | A group's size | A number an admin types, because many who come do not use the app. Until typed, the row shows the accounts in the group. |
+
+## Admin on the tabs (2026-10-14, the user's word)
+| Decision | Why |
+|---|---|
+| Events, groups and prayer reminders are managed on their own tabs (a + and a bell; a tap opens the editor) | One place for each thing; the Admin tab had become a long page of everything |
+| The Admin tab keeps what waits for an answer on top, then a list of everyone | A person's rights and groups are changed in one place |
+| Big editors are screens, sheets only for short things | Squeezed into 60% of the screen, an editor scrolls forever |

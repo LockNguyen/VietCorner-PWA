@@ -81,3 +81,5 @@ route answers 404 on its first line, a sender returns before sending, a tab is l
 
 - `useBanner`: `showBanner({ kind, message, seconds?, action? })`. `action: { label, onAct }` ends the message
   with a link ("Forgot password?"); tapping it puts the banner away and runs `onAct` (2026-10-14).
+- `useConfirmTap(action)` (2026-10-14): "tap again to confirm" without a pop-up. The first tap arms it (the
+  button's words change to `COMMON.tapAgain` for 4 s), the second runs `action`. For the small red lines.

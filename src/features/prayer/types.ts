@@ -5,6 +5,7 @@ export type PrayerRequest = {
   is_anonymous: boolean;
   created_at: string;
   is_mine: boolean; // decided by the database, so the author's id never reaches the browser
+  prayer_count: number | null; // how many prayed: given to the author only (schema.sql 5b), null for everyone else
   author_name: string | null; // null when the request is anonymous
 };
 
@@ -15,7 +16,7 @@ export type NewPrayerRequest = {
 };
 
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.
-export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name";
+export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count";
 
 // why: enough to fill several screens of a phone, small enough to arrive fast on a slow connection.
 // Older requests load when the reader reaches the bottom.

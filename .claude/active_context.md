@@ -393,6 +393,35 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       deploys from it. Before the push, a read-only check found every table, function, bucket and column the
       code uses in the database. NOT run: `npm run test:rls` against today's SQL.
 
+- [x] **Sheets and admin on the tabs** (branch `sheets-and-admin`, off `main` at `7ad2229`; built 2026-10-14, NOT committed).
+      Built all four steps. Checked in `/ui` at phone width (the user's dev server on port 3000): the card with
+      the dot, initials, empty circles and "+5"; the bilingual box; the red line; the sheet capped at 487 of 812 px
+      (60%), opening again after each close (a bug found and fixed: vaul never reported the X's slide-out), a
+      simulated swipe down closing it, gone ~0.55 s after closing. `npm test` 116/116, build clean.
+      **WAITS ON THE USER: SQL: `docs/sql-to-run-2026-10-14.sql` (events 3f, group-info 7, people, prayer 5b);
+      then `npm run test:rls` (2 new cases).** Until it is run the Groups and Prayer tabs are empty.
+      Then (same day): Admin tile on Home; "3 🙏" on my own requests; pray reward; picture viewer redone. Seen in
+      `/ui` at phone width (measured to the pixel: X flush with the picture's right edge, arrows with its edges).
+      Slow launch: measured server 3.3 s cold / 0.4 s warm; 30 s on the phone not explained by the server. Until section 7 is run the Groups tab is empty.
+      NOT seen signed in: any admin screen (Events +, event editor, group cards for real, group editor, prayer bell,
+      reminders screen, Admin people list, person screen). Hidden preview windows only hydrate after a screenshot.
+      Decided with the user 2026-10-14: swipe-to-close with the `vaul` library; big editors (event, group with
+      members, a user) are their own screens, sheets only for short things; Admin keeps the waiting lists on top,
+      then a list of users (details, permissions, groups, remove); the group card's green dot is always on.
+      Defaults stated: members with the app show initials, the rest empty circles up to the typed count, "+N"
+      after 8. Order: (1) Sheet: smooth exit (internal open state + vaul `onAnimationEnd`, a context close for
+      actions inside a sheet), swipe, max 60% height with fixed title and X; (2) the clean design on every sheet
+      and editor, bilingual box (VI top, divider, EN bottom, placeholders); (3) Groups tab (cards, editing,
+      members, unassigned last, +, picture, weekday+time picker: DB change), Events tab (+, tap to edit),
+      Prayer tab (bell for reminders); (4) Admin = user list. Netlify badge: injected by Netlify
+      (`/.netlify/scripts/hud?variant=public`), a dashboard setting, not our code.
+
+- [ ] **B28 slow iPhone launch: measuring** (2026-10-14). Found: Funnel 8443 proxies port **3000**, which was
+      the `npm run dev` server (Turbopack, no-store), not the 3005 production build. Live site: HTML 3–4.7 s cold,
+      0.4 s warm; JS/CSS 260 KB as sent (br), already `immutable` for a year. **TEMPORARY, remove after:**
+      `src/components/LaunchTiming.tsx` + its 2 marked lines in `src/app/layout.tsx` (an on-screen timing box).
+      Production build now runs on port 3000 (`prod` in `.claude/launch.json` moved from 3005 to 3000).
+
 ## ➡️ Next 3 Micro-Steps
 1. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include
    `https://vietcorners.netlify.app/login/**` (sign-up and reset links on the live site depend on it).

@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
+import BilingualInput from "@/components/ui/BilingualInput";
 import Switch from "@/components/ui/Switch";
-import TextArea from "@/components/ui/TextArea";
+import Text from "@/components/ui/Text";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { LANGUAGE_NAMES, LANGUAGES, type Language } from "@/features/i18n/types"; // I18N
+import { LANGUAGE_NAMES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
 import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
@@ -26,8 +27,8 @@ const TEXT_FIELDS = [
   { field: "description", label: STRINGS.descriptionField },
 ] as const;
 
-// Adding or changing an event. Each text is asked in one language, then the other, so a translation is
-// written under its original. Times are church time whatever device the admin holds (draft.ts converts).
+// Adding or changing an event. Each text is one grey box, Vietnamese on top and English under it, so a
+// translation is written right under its original. Times are church time whatever device the admin holds (draft.ts converts).
 export default function EventForm({ initial, onSave }: Props) {
   const { t } = useLanguage(); // I18N
   const [draft, setDraft] = useState(initial);
@@ -49,23 +50,22 @@ export default function EventForm({ initial, onSave }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-3 pt-4">
-      {TEXT_FIELDS.map(({ field, label }) =>
-        LANGUAGES.map((language) => {
-          const control = {
-            value: draft.texts[language][field],
-            onChange: (change: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setText(language, field, change.target.value),
-          };
-          return (
-            <Field
-              key={`${field}-${language}`}
-              label={`${t(label)} · ${LANGUAGE_NAMES[language]}`}
-              problem={field === "title" && language === LANGUAGES[0] ? said("noTitle") : undefined}
-            >
-              {field === "description" ? <TextArea rows={3} {...control} /> : <TextInput {...control} />}
-            </Field>
-          );
-        }),
-      )}
+      {TEXT_FIELDS.map(({ field, label }) => {
+        const part = (language: Language) => ({
+          value: draft.texts[language][field],
+          onChange: (value: string) => setText(language, field, value),
+          placeholder: LANGUAGE_NAMES[language],
+          label: `${t(label)} · ${LANGUAGE_NAMES[language]}`,
+        });
+        const problem = field === "title" ? said("noTitle") : undefined;
+        return (
+          <div key={field} className="flex flex-col gap-1">
+            <Text variant="small" tone="subtle">{t(label)}</Text>
+            <BilingualInput top={part("vi")} bottom={part("en")} rows={field === "description" ? 3 : undefined} />
+            {problem && <Text variant="small" tone="danger">{problem}</Text>}
+          </div>
+        );
+      })}
 
       <Field label={t(STRINGS.startsField)} problem={said("noStart")}>
         <TextInput

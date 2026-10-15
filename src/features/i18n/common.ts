@@ -7,6 +7,7 @@ export const COMMON = {
   saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
   saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
   removed: { en: "Removed", vi: "Đã gỡ bỏ" } satisfies Text,
+  tapAgain: { en: "Tap again to confirm", vi: "Bấm lần nữa để xác nhận" } satisfies Text, // useConfirmTap
   close: { en: "Close", vi: "Đóng" } satisfies Text, // the X of every sheet, read by screen readers
   couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 };

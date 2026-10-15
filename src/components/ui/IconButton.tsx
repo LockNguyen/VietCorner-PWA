@@ -13,6 +13,7 @@ const TONES = {
   action: "text-action",
   filled: "bg-action text-on-action",
   danger: "bg-danger text-on-action",
+  onDark: "text-on-action", // a plain white icon over a dark veil (the picture viewer): no circle behind it
 } as const;
 const SIZES = { regular: "size-touch", large: "size-20" } as const;
 

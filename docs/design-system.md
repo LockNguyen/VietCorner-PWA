@@ -150,3 +150,26 @@ Each is installed in the slice that first uses it, not before.
 - The church's logo and the app icon: placeholders until the look is settled.
 - Dark mode, tap feedback (B31), photos and their cache (B32): later.
 - The Vietnamese wording is reviewed by a native speaker before launch.
+
+## Sheets, editors and cards (2026-10-14, the user's word)
+- **A sheet is for something short** (details, a few options, a new prayer request). It has a grab handle,
+  a title and the X, which stay put; it is at most 60% of the screen tall and the rest scrolls. It slides
+  in, and slides away on the X, a swipe down, a tap outside or Escape. Built on `vaul`.
+- **A big editor is its own screen**, with a back arrow: an event, a group (picture, name and size, when and
+  where, people, pictures), a person (what they may do, their groups).
+- **Calm forms:** words inside the fields where the screen says what they are; no helper sentences; one blue
+  button; what cannot be undone is a small red line under it (`Button` `dangerText`) that asks once by
+  changing its words ("Tap again to confirm"). Errors are banners.
+- **Bilingual text** is one grey box (`BilingualInput`): Vietnamese on top, a hairline, English below, each
+  half saying its language while empty.
+- **Admins manage things where they live:** a round blue + at the top right of the Events and Groups tabs
+  (and Prayer's, for everyone), a bell beside Prayer's + for the weekly reminders, and a tap on an event or a
+  group opens its editor. The Admin tab keeps what waits for an answer, then everyone with an account.
+- **Groups are cards** (`Card`): the picture on top, a pulsing green dot (`LiveDot`, always on) before the
+  name, when and where it meets, then a circle per person (`MemberCircles`): initials for those who have the
+  app, empty ones up to the typed number, "+N" past eight.
+
+- **The one celebration:** praying for someone plays a short reward (`Celebrate`): a pop, a ring, a floating
+  "+1". The only motion in the app that springs past its size: a moment of thanks (the user asked for it,
+  2026-10-14). Never confetti. Off with reduced motion.
+- **Admins get a fourth Home tile, Admin** (2026-10-14), its icon on grey until a photo is chosen.

@@ -15,6 +15,7 @@ const VARIANTS = {
   quiet: "border border-line bg-surface text-ink",
   danger: "bg-danger text-on-action",
   text: "text-action",
+  dangerText: "text-danger", // the small red line under a sheet's button: remove, delete, call off
 } as const;
 
 // A button. While `pending` it takes no taps and shows the circle, with `pendingLabel` beside it if given.

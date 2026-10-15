@@ -12,6 +12,8 @@ export const STRINGS = {
   newGroupField: { en: "Name of the new group", vi: "Tên nhóm mới" } satisfies Text,
   groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
   addGroup: { en: "Add group", vi: "Thêm nhóm" } satisfies Text,
+  newGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text,
+  createGroup: { en: "Create group", vi: "Tạo nhóm" } satisfies Text,
   removeGroup: { en: "Remove this group", vi: "Gỡ bỏ nhóm này" } satisfies Text,
   pictureHeading: { en: "Picture", vi: "Hình" } satisfies Text,
   choosePicture: { en: "Choose a picture", vi: "Chọn hình" } satisfies Text,
