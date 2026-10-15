@@ -387,8 +387,19 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       /login/confirm now load (0 missing). RULE for the test server: never build while it runs; build, then
       start, then fetch every file a page asks for over the Funnel before handing over.
 
+- [x] **Merged and pushed to production (2026-10-14, on the user's word "I approve of everything").** One commit
+      `f04e1be` on `church-wide` (the pastor's review + the sign-in and setup work; the commit hook ran the build
+      and the tests), `main` fast-forwarded through `iphone-fixes`, `fast-tabs`, `church-wide`, pushed; Netlify
+      deploys from it. Before the push, a read-only check found every table, function, bucket and column the
+      code uses in the database. NOT run: `npm run test:rls` against today's SQL.
+
 ## ➡️ Next 3 Micro-Steps
-1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
+1. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include
+   `https://vietcorners.netlify.app/login/**` (sign-up and reset links on the live site depend on it).
+2. User: one sign-up and one password reset on the live site from an iPhone, Safari first; then `npm run test:rls`.
+3. Turn off the test address when done: `tailscale funnel --https=8443 off` (the AI service keeps the root address).
+
+Older, still open: 1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
    the Netlify address), the new "Confirm signup" template (auth README, Setup 3 and 5).
 2. User + Claude: one fresh account end to end on an iPhone (install → language → create → email → name →
    notifications → waiting) and one password reset; check "Save password?" appears on both phones.
