@@ -8,6 +8,7 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static files so the app can install and the service worker loads even when logged out.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icons/).*)"],
+  // Skip static files so the app can install and the service worker loads even when logged out, and so
+  // the app's own pictures (public/images) do not each wait on a login check.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|icons/|images/).*)"],
 };

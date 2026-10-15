@@ -6,6 +6,7 @@ hooks behind every button. The short comment in each file says what it is; the l
 | File | Job |
 |---|---|
 | `supabase/` | The only Supabase clients: `client.ts` (browser), `server.ts` (server), `admin.ts` (service role, server-only) |
+| `switches.ts` | What is switched off for now: one constant per feature or notification, read where it is turned off |
 | `churchTime.ts` | The wall clock in Winston-Salem; every date the app schedules by |
 | `usePending.ts` | Which action of a component is running; ignores a second tap |
 | `useWhenDrawn.ts` | Starts a router change and resolves when its result is on screen |
@@ -14,6 +15,9 @@ hooks behind every button. The short comment in each file says what it is; the l
 | `useBanner.tsx` | The banners on screen; raise one from anywhere |
 | `useOnArrival.ts` | Runs something when a screen is arrived at and when the app returns to the foreground |
 | `useFresh.ts` | A list shows what the page loaded, then re-reads itself on arrival and on return to the app |
+| `shrinkImage.ts` | A photo → a smaller JPEG, in the browser, before upload; `shrinkToThumbnail` for a row's picture |
+| `publicFileUrl.ts` | The address of a file in a public storage bucket (row pictures) |
+| `useWhenVisible.ts` | Calls back when an element scrolls into view: "load more" at the end of a list or a strip |
 | `useScrollToEnd.ts` | Keeps the newest message of a conversation in view |
 
 ## `usePending`: why every button goes through it
@@ -64,3 +68,16 @@ newest value each list has shown and starts from that. The prayer list does the 
 What is left: after something changes while you are elsewhere, the first return shows the old value for the
 moment the refresh takes, once. And when a kept copy has expired and the server sends a newer page, the
 list still starts from its memory for that same moment before the refresh lands.
+
+## `switches.ts`: why "off" is a constant and not a deleted folder
+After the pastor's review (2026-10-12) several things had to stop without being lost: chat, joining a group,
+most notifications. Each is one `false` in `switches.ts`, read at the door of what it turns off: a page or a
+route answers 404 on its first line, a sender returns before sending, a tab is left out of the list.
+- **Phones download nothing of an off screen**: its code is only fetched when its page renders, and it never does.
+- **The code still compiles and is still type-checked**, so it cannot rot while it is off. The cost is that
+  it stays in the server build.
+- **The database is untouched.** Off is an app decision; the tables and their rules stay as they were.
+- Back on is `true`. Search for the switch's name to see every place it is read.
+
+- `useBanner`: `showBanner({ kind, message, seconds?, action? })`. `action: { label, onAct }` ends the message
+  with a link ("Forgot password?"); tapping it puts the banner away and runs `onAct` (2026-10-14).

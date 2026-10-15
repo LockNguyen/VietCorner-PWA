@@ -13,19 +13,20 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `TopBar` | The bar at the top: centred title, a slot for icons at each end | | `title`, `left`, `right` |
 | `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
 | `IconLink` | A link shown as an icon alone, on the top bar | | `label` (read by screen readers) |
-| `PhotoTile` | A large tile that opens an area; grey stands in for its photo (B32) | | `title`; children are the artwork |
+| `PhotoTile` | A large tile that opens an area: a photo under a dark veil (`src`), or flat grey without one | | `title`, `src`; children are the artwork above the title |
 | `ListRow` | One line of any list: picture, title over subtitle, something at the right end. Renders its own `<li>`; put it in a `<ul>`. | `tone`: `normal`, `off` (called off: grey, struck through) | `title`, `subtitle`, `leading`, `trailing`, `current`, and `href` (a link) or `onClick` (a button); either adds a chevron unless `trailing` is passed (`null` for nothing); the `current` one of a set of choices ends in a tick |
-| `Thumbnail` | The picture at the start of a row: a tinted tile holding an icon or a few characters, until photos exist (B32) | | |
+| `Thumbnail` | The picture at the start of a row: `src` cropped to fill the tile, or a tinted tile holding an icon or a few characters | | `src` |
 | `RowLabel` | A short bold label that starts a row (a time), in a box of one width so the picture and title after it line up on every row | | |
 | `SectionHeading` | The small grey heading above a group of rows | | |
 | `EmptyState` | What a screen shows with nothing to list | | `message`; children are the next step |
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
 | `Field` | A label above one control; under it, what is wrong, once the form has been tried | | `label`, `problem` |
 | `TextInput` | One line of typed input. Also a date, a time, or both: set `type` | | |
+| `PasswordInput` | A password field with an eye at its end that shows or hides the letters; the field look of `TextInput` | | `shown`, `onToggle`, `toggleLabel` |
 | `TextArea` | Several lines of typed input | | |
 | `Select` | One choice from a list, in the phone's own picker; children are `<option>`s | | |
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
-| `Sheet` | A short choice or a few details, rising from the bottom. Open while rendered; Escape or a tap outside closes it. | | `title`, `onClose` |
+| `Sheet` | A short choice or a few details, rising from the bottom the way an iPhone sheet does. Open while rendered; the X at the top right, Escape or a tap outside closes it. It has no Close button at the bottom, and its callers add none. | | `title`, `closeLabel`, `onClose` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
 | `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
@@ -34,8 +35,12 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Composer` | Where a message is written: a pill field and send, held at the bottom above the tabs. Leaves room for its own row under the messages; a screen that adds children above the field adds room for those. | | `value`, `onChange`, `onSend`, `placeholder`, `sendLabel`, `disabled`, `maxLength`; children sit above the field |
 | `IconButton` | A button shown as an icon alone | `tone`: `action`, `filled`, `danger` · `size`: `regular`, `large` | `label` (read by screen readers) |
 | `Chip` | A round button beside a bubble: Pray, the tick once given, the author's small grey pencil | `tone`: `pray`, `done`, `quiet` · `size`: `regular`, `small` (32, below `touch`: asked for) | `label` (read by screen readers) |
-| `Banner` | A message about what just happened; a button, so a tap puts it away | `kind`: `success`, `error` | `message`, `more` (how many wait behind it) |
+| `Banner` | A message about what just happened; a button, so a tap puts it away. With an action, the message ends in a link and the cross is its own button | `kind`: `success`, `error` | `message`, `more` (how many wait behind it), `actionLabel` + `onAction` |
+| `ProgressBar` | How far along a series of steps: a grey track filling with `action` from the left. Its width is the one inline style in the kit (a computed value). | | `value`, `max` |
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
+| `PhotoStrip` | A row of pictures that scrolls sideways and fades out at the right. Children are `PhotoThumb`s (and other `<li>`s). | | |
+| `PhotoThumb` | One small square picture in a strip, cropped to fill; a button. Three tenths of the strip wide, so a fourth shows its edge. | | `src`, `alt` |
+| `Lightbox` | One picture, whole, over a darkened screen, with arrows to its neighbours and an X. Open while rendered; Escape closes. Children go under the caption. | | `src`, `alt`, `caption`, `labels`, `onPrevious`, `onNext`, `onClose` |
 
 ## Conventions the list relies on
 - A component may render `next/link`'s `Link`, the app's anchor element. It never uses the router's hooks.
@@ -46,7 +51,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
   plain) depending on what it does. Its props are the short list in the table.
 - `TextInput`, `TextArea` and `Select` share one look, the constant in `controlLook.ts`. It is the only file
   here that is not a component.
-- `Sheet` is the only component built on a library (`@radix-ui/react-dialog`): keeping focus inside an
+- `Sheet` and `Lightbox` are the only components built on a library (`@radix-ui/react-dialog`): keeping focus inside an
   overlay and telling a screen reader about it is easy to get subtly wrong by hand.
 - Which button: `primary` for the one main action of a screen or sheet, `danger` for what cannot be undone
   from the app, `quiet` for everything else, `text` for backing out.

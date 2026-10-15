@@ -3,10 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const LOGIN_PATH = "/login";
 const HOME_PATH = "/";
+const LINK_PAGES = ["/login/confirm", "/login/confirmed"]; // what the sign-up and reset emails open
 
 // Called by src/proxy.ts before every request.
 // 1) Refreshes the login cookie so users stay signed in.
-// 2) Sends logged-out users to /login, and logged-in users away from it.
+// 2) Sends logged-out users to /login, and logged-in users away from it (except the email-link pages).
 export async function refreshSession(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -37,7 +38,10 @@ export async function refreshSession(request: NextRequest) {
   const isOpenShowcase = process.env.NODE_ENV !== "production" && request.nextUrl.pathname === "/ui";
 
   if (!isLoggedIn && !isOnLoginPage && !isApi && !isOpenShowcase) return redirectTo(request, LOGIN_PATH);
-  if (isLoggedIn && isOnLoginPage) return redirectTo(request, HOME_PATH);
+  // The pages an email link opens show even in a signed-in browser: on an iPhone that is Safari, not the
+  // app, and sending it Home would swallow the link (found 2026-10-14: a reset link "did nothing").
+  const isLinkPage = LINK_PAGES.includes(request.nextUrl.pathname);
+  if (isLoggedIn && isOnLoginPage && !isLinkPage) return redirectTo(request, HOME_PATH);
   return response;
 }
 

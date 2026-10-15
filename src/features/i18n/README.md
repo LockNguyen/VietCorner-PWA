@@ -27,11 +27,13 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | State | `components/LanguageProvider.tsx` | Holds the language for the whole app; writes the device copy and the database |
 | State | `hooks/useLanguage.ts` | `{ language, setLanguage, t }` for client components |
 | UI | `components/LanguageToggle.tsx` | One row per language, each written in its own language (Settings) |
-| UI | `components/LanguageLink.tsx` | The other language as one quiet link (the sign-in screen) |
+| UI | `components/LanguageLink.tsx` | The other language as one quiet link, at the top right (sign-in, the install guide) |
 | UI | `components/AdoptDeviceLanguage.tsx` | Renders nothing: copies the pre-sign-in choice into a new account once |
 | Shell | `src/app/layout.tsx` | Reads the language once per page load and wraps the app in the provider (`// I18N` lines) |
 
 ## Decisions worth knowing
+- **Signed out, the device's choice is adopted on load** (`LanguageProvider`). The server only knows the
+  default; without this an iPhone reloading the app on return from an email would switch English to Vietnamese.
 - **Fixed labels live in code, not the database.** They change only when a developer changes a screen, so a
   table would add caching, fallbacks and a deploy-free edit path nobody needs. Admin-written *content* is
   different: that is data and gets `_en` / `_vi` columns.
@@ -61,3 +63,15 @@ The language is chosen on the login screen, before an account exists, so nothing
 first signed-in page load, if the account has no language yet, the device's choice becomes the account's.
 It is not done in the auth feature because that would make auth import i18n: account creation stays unaware,
 and this feature picks the choice up afterwards.
+
+## Hard-coded text review (2026-10-14)
+Every screen, banner, field hint, screen-reader label, picture description and notification was searched for
+words not read from a `strings.ts`. Found and fixed: chat's notification fallback "New message" (now the app's
+name) and the service worker's fallback "VietCorner" (now "Viet Corners", kept equal to `APP_NAME`).
+Left as they are, on purpose:
+- `/ui`, the component showcase: sample content to look at components, not a screen members use.
+- API routes' `error` texts ("Not signed in", "groupId is required"): for developers; no screen shows them,
+  each screen says its own translated sentence instead.
+- The two language names, each written in its own language (`LANGUAGE_NAMES`), and the app's name (`APP_NAME`).
+- Codes and keys (`"wrongPassword"`, storage keys, `vi-VN`): never shown.
+- The sign-up and reset emails: their bilingual text lives in Supabase's email templates (auth README, Setup).

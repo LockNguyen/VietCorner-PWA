@@ -5,10 +5,11 @@ import PhotoTile from "@/components/ui/PhotoTile";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { SHELL_STRINGS } from "./strings";
 
+// The photos are files in public/images/home, chosen by the user (2026-10-14).
 const TILES = [
-  { href: "/events", title: SHELL_STRINGS.eventsTab, Icon: CalendarDays },
-  { href: "/prayer", title: SHELL_STRINGS.prayerTab, Icon: HandHeart },
-  { href: "/groups", title: SHELL_STRINGS.groupsTab, Icon: Users },
+  { href: "/events", title: SHELL_STRINGS.eventsTab, Icon: CalendarDays, photo: "/images/home/events.png" },
+  { href: "/prayer", title: SHELL_STRINGS.prayerTab, Icon: HandHeart, photo: "/images/home/prayer.png" },
+  { href: "/groups", title: SHELL_STRINGS.groupsTab, Icon: Users, photo: "/images/home/groups.png" },
 ];
 
 // Home's content for now: one large tile into each area. It becomes a dashboard later.
@@ -17,8 +18,8 @@ export default function HomeTiles() {
 
   return (
     <div className="flex flex-col gap-6 p-5">
-      {TILES.map(({ href, title, Icon }) => (
-        <PhotoTile key={href} href={href} title={t(title)}>
+      {TILES.map(({ href, title, Icon, photo }) => (
+        <PhotoTile key={href} href={href} title={t(title)} src={photo}>
           <Icon className="size-8" />
         </PhotoTile>
       ))}

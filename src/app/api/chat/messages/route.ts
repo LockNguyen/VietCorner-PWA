@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { SWITCHES } from "@/lib/switches";
 import { sendMessage } from "@/features/chat/server/sendMessage";
 
 // POST { groupId, body } → saves the message and pushes it to the group's other members.
 export async function POST(request: Request) {
+  if (!SWITCHES.chat) return NextResponse.json({ error: "Switched off" }, { status: 404 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });

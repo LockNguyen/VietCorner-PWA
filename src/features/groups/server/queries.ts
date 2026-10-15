@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Group, GroupWithMembership, JoinRequest } from "../types";
+import type { Group, GroupWithMembership, JoinRequest, Person } from "../types";
 
 // Group reads for pages (Server Components). They run as the signed-in user, so RLS applies.
 // The page creates `supabase` and passes it in, which keeps these functions free of Next.js.
@@ -22,11 +22,19 @@ export async function getJoinRequests(supabase: SupabaseClient): Promise<JoinReq
   return data ?? [];
 }
 
+// Everyone who may use the app, with their email and the groups they are in, by name: `group_people()`
+// (schema.sql). Empty for anyone without the "groups.manage" permission: the function checks it.
+export async function getGroupPeople(supabase: SupabaseClient): Promise<Person[]> {
+  const { data, error } = await supabase.rpc("group_people");
+  if (error) return []; // also the answer before section 2c of schema.sql has been run
+  return data;
+}
+
 // One group, or null if it does not exist or was removed.
 export async function getGroup(supabase: SupabaseClient, groupId: string): Promise<Group | null> {
   const { data } = await supabase
     .from("groups")
-    .select("id, name")
+    .select("id, name, member_count, thumbnail_path")
     .eq("id", groupId)
     .is("deleted_at", null)
     .maybeSingle();

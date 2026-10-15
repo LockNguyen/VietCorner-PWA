@@ -8,6 +8,7 @@ import { usePending } from "@/lib/usePending";
 import { STRINGS } from "../strings";
 import type { PrayerRequest } from "../types";
 import RequestEditor from "./RequestEditor";
+import { COMMON } from "@/features/i18n/common"; // I18N
 
 type Props = {
   request: PrayerRequest;
@@ -17,7 +18,7 @@ type Props = {
   onClose: () => void;
 };
 
-// What an author can do with their own request: mark it answered, edit it, delete it, or change their mind.
+// What an author can do with their own request: mark it answered, edit it, or delete it. The sheet's X backs out.
 // One tap each, with no "are you sure?": the sheet itself is the second step after the pencil.
 export default function RequestOptions({ request, onAnswered, onEdit, onDelete, onClose }: Props) {
   const { t } = useLanguage(); // I18N
@@ -33,7 +34,7 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
   }
 
   return (
-    <Sheet title={t(STRINGS.manage)} onClose={onClose}>
+    <Sheet title={t(STRINGS.manage)} closeLabel={t(COMMON.close)} onClose={onClose}>
       {editing ? (
         <RequestEditor
           body={request.body}
@@ -42,7 +43,7 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
           onCancel={onClose}
         />
       ) : (
-        // Two by two: the two that keep the request above the two that end it or back out.
+        // The two that keep the request side by side, above the one that ends it.
         <div className="grid grid-cols-2 gap-3">
           <Button pending={pending === "answered"} disabled={pending !== null} onClick={() => finish("answered", onAnswered)}>
             {t(STRINGS.markAnswered)}
@@ -50,12 +51,11 @@ export default function RequestOptions({ request, onAnswered, onEdit, onDelete, 
           <Button variant="quiet" disabled={pending !== null} onClick={() => setEditing(true)}>
             {t(STRINGS.editRequest)}
           </Button>
-          <Button variant="danger" pending={pending === "delete"} disabled={pending !== null} onClick={() => finish("delete", onDelete)}>
-            {t(STRINGS.deleteRequest)}
-          </Button>
-          <Button variant="quiet" onClick={onClose}>
-            {t(STRINGS.cancel)}
-          </Button>
+          <div className="col-span-2 flex flex-col">
+            <Button variant="danger" pending={pending === "delete"} disabled={pending !== null} onClick={() => finish("delete", onDelete)}>
+              {t(STRINGS.deleteRequest)}
+            </Button>
+          </div>
         </div>
       )}
     </Sheet>

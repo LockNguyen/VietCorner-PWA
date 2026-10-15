@@ -9,19 +9,18 @@ import { removeReminder } from "../api";
 import { STRINGS } from "../strings";
 import type { PrayerReminder } from "../types";
 
-type Props = { reminder: PrayerReminder; groupName: string | undefined; when: string }; // when: "Wednesday · 19:00"
+type Props = { reminder: PrayerReminder; when: string }; // when: "Wednesday · 19:00"
 
 // One reminder, with the button that removes it.
 // A row of its own, so removing one never blocks the reminders around it.
-export default function PrayerReminderRow({ reminder, groupName, when }: Props) {
+export default function PrayerReminderRow({ reminder, when }: Props) {
   const { t } = useLanguage(); // I18N
   const { pending, save } = useSave<"remove">();
   const says = { done: t(COMMON.removed), failed: t(STRINGS.failed) };
 
   return (
     <ListRow
-      title={groupName ?? ""}
-      subtitle={when}
+      title={when}
       trailing={
         <Button
           variant="quiet"

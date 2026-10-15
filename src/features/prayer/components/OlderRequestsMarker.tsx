@@ -3,7 +3,7 @@
 import Spinner from "@/components/ui/Spinner";
 import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { useWhenVisible } from "../hooks/useWhenVisible";
+import { useWhenVisible } from "@/lib/useWhenVisible";
 import { STRINGS } from "../strings";
 
 type Props = { onReached: () => void; loadedSoFar: number };

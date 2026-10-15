@@ -270,7 +270,134 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
         NOT seen on screen or on a phone. Note: nothing on the Groups page now invites people to turn them on.
         Still to do: the chat page's reads. Backlog B36, B37 added.
 
+- [ ] **The pastor's review (2026-10-12)** (branch `church-wide`, on top of `fast-tabs`; nothing committed or pushed).
+      Decided with the user: the email link signs the app in by hand-off (the link confirms, the app that
+      asked picks it up); a person may be in several groups; a group's member count is typed by an admin;
+      prayer requests and events once saved for one group show to everyone.
+  - [x] 1 Switches (`src/lib/switches.ts`): chat, joining, the old Groups page, and every notification but
+        prayer reminders are off. Observed signed out: the three off routes answer 404.
+  - [x] 2 Church-wide: events and prayer lose the group (code + SQL written); prayer reminders go to all
+        approved members.
+  - [x] 3 Sign-up approval: new feature `approval` (permission `app.use`, the door on ten tables, waiting
+        screen, admin section, two notifications).
+        `npm run build` clean, `npm test` 101/101. `tests/rls.test.ts` rewritten to 67 cases, **NOT run**.
+        SQL run by the user; `npm run test:rls` 67/67 (run by the user, 2026-10-12). NOT seen: any signed-in screen.
+        The preview now starts on a free port (`autoPort`): port 3000 on this PC is another project.
+  - [x] 4 Email link with hand-off to the installed app (the typed code is gone). `npm test` 104/104, build
+        clean; one security case added (68 expected). Seen on the user's dev server (port 3001), signed out:
+        `/login`, `/login/confirm` asking and refusing, the two routes answering 400 to bad input.
+        **WAITS ON THE USER: `auth/schema.sql`, the redirect URLs, both email templates** (auth README, Setup).
+        NOT exercised: a real email, the hand-off end to end, an iPhone, Android's same-browser path.
+  - [x] 5 Admin groups: rows (name, typed member count, chevron) → a sheet (name, number, people with
+        Remove, a list to add from by name and email, remove the group); "Chưa vào nhóm" last.
+        `npm run build` clean, `npm test` 104/104; 72 security cases written.
+        **WAITS ON THE USER: `groups/schema.sql` section 2c, then 2b again.**
+        NOT seen: the section or the sheets (no admin is signed in where Claude can look).
+  - [x] 5b The admin Groups section reads itself again on every arrival (asked by the user).
+  - [x] 6 New Groups page: new feature `group-info`. A row per group; a sheet with the number of members,
+        When / Where / Notes; Edit for someone in the group. The Groups tab and Home tile are back.
+        `npm run build` clean, `npm test` 104/104; 76 security cases written.
+        **WAITS ON THE USER: the SQL in the next steps.** NOT seen: the page or the sheet.
+  - [x] 6b Group details: a pencil per line; admins change any group's details and its number of members
+        (asked by the user after seeing the plan for one Edit button).
+  - [x] 7 Group photos (built with the user away, on Claude's recommendations; they review on return):
+        private bucket, shrunk on the phone, six at a time, a strip that fades at the right, a full-screen
+        view with arrows, add (picture + optional date and words) and remove for the group's people and admins.
+        `npm run build` clean, `npm test` 104/104; 85 security cases written.
+        Seen on `/ui` at phone width: the strip and the large view. NOT seen: anything signed in; a real upload.
+        **WAITS ON THE USER: the SQL in the next steps.** Rough edges written down as B40.
+  - [x] 8 Row pictures: admins set, replace and remove an event's picture (the event editor) and a
+        group's picture (the group's sheet on the Admin tab); the schedule and the Groups tab draw them.
+        Public buckets, a new file name per picture. "Group admins" was read as whoever holds
+        `groups.manage` (there is no per-group admin role). `npm run build` clean, `npm test` 104/104;
+        91 security cases written. NOT seen signed in; no real upload tried.
+  - [x] 9 Group rules, final (the user's word): only admins (`groups.manage`) edit when / where / notes and
+        remove pictures; a group's own people add pictures. Read as: "group admins" = `groups.manage`,
+        "any member" = anyone in that group. 91 security cases written, NOT run.
+  Known and written down: no Decline for a sign-up (B38); off features still accept direct writes (B39).
+
+- [x] **Elderly-friendly setup (2026-10-14, branch `church-wide`, nothing committed).** Decided with the user:
+      passwords replace sign-in links (links only to confirm an account and reset a password); the install
+      guide for every browser visit, only a computer may skip; name after the email confirmation; email
+      confirmation kept. Built: `install` feature, `/login` = guide → language → have an account? → sign in /
+      create / forgot → check your email; `/settings/password`; `push/NotificationStep` (device cookie) between
+      name and waiting; "Step n / 7" on every setup screen. `npm test` 113/113, build clean.
+      Seen in the preview (phone width, signed out): the Android guide, language, account question, sign-in
+      form, a wrong-password banner, forgot (email kept), the waiting screen surviving a reload in English.
+      **WAITS ON THE USER: Supabase → Providers → Email (confirm on, min length 6), the "Confirm signup" and
+      "Reset Password" templates (auth README, Setup 4-6).** NOT exercised: a real email, the hand-off end to
+      end, "Save password?" on a real iPhone/Android, the notification step, the name/waiting steps' new bar,
+      the iPhone install steps (iOS 26 Safari menus quoted from memory).
+      Debt: on setup screens (no blue top bar) the white iPhone clock sits on white (`black-translucent`).
+      First iPhone test (2026-10-14, production build on Tailscale Funnel, port 8443): the sign-up email
+      pointed at `localhost:3000` (Supabase's Site URL fallback: the Funnel address was not in Redirect URLs).
+      Decided with the user: sign-up link needs no tap (Safari shows "Email confirmed, go back to the app";
+      the app signs in with the password it holds, every 15 s and on return); reset keeps one tap. Built,
+      `npm test` 113/113, build clean, `/login/confirmed` seen in both states. **WAITS ON THE USER: Redirect
+      URL `…ts.net:8443/login/**`, and the new "Confirm signup" template (`{{ .ConfirmationURL }}`).**
+      Second iPhone test (2026-10-14): (1) wrong password → "Forgot password?" offered to save it. Tried:
+      submit only once accepted; the third test then showed no offer after a correct new password either
+      (Safari ignores a submit from code). Undone on the user's word: one tap, and the wrong-password offer
+      is accepted (Key Decisions). (2) the reset link opened the web app instead of its page: the proxy sent a signed-in Safari Home;
+      `/login/confirm` and `/login/confirmed` are now exempt. Build clean, 113/113. NOT seen on the iPhone.
+
+  - [x] Tab bar too high on a cold start of the installed iPhone app (user's screenshot, 2026-10-14): iOS lays out a
+        short page as if the see-through status bar took space; `html` min-height now 100% + top inset.
+        NOT verified on an iPhone (needs a deploy); the earlier iPhone fix was a different cause (a too-wide element).
+
+- [x] **Signed-out redesign (2026-10-14, on the user's walk-through).** Sign-in first (one screen, no bar,
+      Vietnamese with "English" top right); "no account yet → Create an account" from `account_exists()`;
+      sign-up = name + email + password ("Step 2 / 6", Next off until filled) → email (3) → notifications (4,
+      new members only) → waiting (5); "done" (6) never shown. Seen in the preview (production build, text
+      only: the window was hidden). Build clean, `npm test` 113/113. **WAITS ON THE USER: `auth/schema.sql`
+      section 3 and `profiles/schema.sql` section 2, then `npm run test:rls`** (one case added).
+      Next round (same day): no "Save password?" after a correct sign-in → sign-in and new password now
+      move to Home inside the page (Safari offered on form removal, not after a reload). Reset page says
+      "reset", language top right on every signed-out screen (`SignedOutFrame`). Sign-in screen calmed
+      (messaging-app pattern, `ui/PasswordInput` with an eye). Measured in the preview at 375 px; screenshots
+      failed (window hidden). NOT seen on the iPhone: the save offer, autofill.
+      Still no save offer → sign-in and new password are now real form posts (routes, 303 back or Home).
+      Seen in the preview: wrong password → `/login?problem=wrongPassword`, reason shown, email kept.
+      Sign-up redone in the same calm shape (measured at 375 px). NOT seen on the iPhone.
+      Note: an unknown email still said "wrong password" in the preview: `account_exists` is not in the
+      database yet (auth/schema.sql section 3).
+      iPhone report after that (2026-10-14): no save offer in six sign-ins; sign-up link page spun, then
+      Next's "couldn't load"; name asked again; notifications skipped. Evidence (database, read-only):
+      `account_exists` missing and `create_profile` not replaced (name "Loc win" was sent at sign-up, profile
+      named 2.5 min later from NameStep) = today's SQL not run; the link DID confirm (9 s after sign-up).
+      Notifications skipped: this phone answered the question in an earlier test (device cookie).
+      Temporary instrumentation (`src/app/global-error.tsx`, `src/app/api/debug-log/`) was used, then removed. Waiting on the user: the SQL, one more sign-up (error text), and the
+      save-offer checks (AutoFill setting, Passwords app, the same sign-in in Safari).
+      Save-offer A/B test (2026-10-14): nothing was ever committed, so no commit to go back to. The old
+      sign-in (page code signs in, banner, "Forgot password?" swaps screens) was rebuilt in a throwaway copy
+      (scratchpad `old-signin`, webpack build), served on port 3006 and Funnel port 10000. **TEMPORARY: remove
+      the `old-signin` entry in `.claude/launch.json` and run `tailscale funnel --https=10000 off` after.**
+      RESULT: in the installed app neither version offers to save or fills in; in Safari it offers; signing in
+      in Safari then installing opens the app signed in. Built "Safari first" (install guide after sign-in,
+      sign-up link signs in where it opens) and banner errors with links. Test copy, its launch entry and
+      port 10000 removed; 8443 serves the current app again. Seen: sign-in at 375 px with the "no account"
+      banner (picture), its link opens sign-up. NOT seen on the iPhone: the whole Safari-first path.
+      The temporary error catcher was removed before the commit (2026-10-14).
+      Hard-coded text review (the user's translation pass is next): two fixed, the rest listed in the i18n README.
+      iPhone: stuck on the install guide in Safari (signed in, no way out) → "Sign out" under the guide. NOT seen.
+      iPhone: `/login/confirmed` showed only the logo and "English" (no styling). Reproduced over the Funnel: the
+      page asked for 3 files (its CSS, 2 scripts) that answered 404. Cause: the server on 3005 was serving one
+      build while the files on disk were from a later one (server started 1:29:12, build written 1:29:52).
+      Not a code bug. Fixed by one clean build, then a restart; all files of /login, /login/confirmed and
+      /login/confirm now load (0 missing). RULE for the test server: never build while it runs; build, then
+      start, then fetch every file a page asks for over the Funnel before handing over.
+
 ## ➡️ Next 3 Micro-Steps
-1. User: run section 3c of `src/features/events/schema.sql` (copied from the editor; safe to run again).
-2. Claude: `npm run test:rls` (60). Timing Admin needs an admin signed in on localhost in the connected Chrome.
-3. User decides: merge and push `iphone-fixes` + `fast-tabs` (one Netlify build); JWT expiry (B37).
+1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
+   the Netlify address), the new "Confirm signup" template (auth README, Setup 3 and 5).
+2. User + Claude: one fresh account end to end on an iPhone (install → language → create → email → name →
+   notifications → waiting) and one password reset; check "Save password?" appears on both phones.
+3. Then: code review and security pass over the whole branch before any commit (nothing is committed yet).
+
+Earlier, still open: SQL, in order (each safe to run again): `groups/schema.sql` 2c, 2d, then 2b · `events/schema.sql` 3e,
+   then 3b and 3c · `group-info/schema.sql` (all) · the `group_info` and `group_photos` lines of
+   `approval/schema.sql` section 3 · `auth/schema.sql`. Then `npm run test:rls` (91 expected).
+   All of it is in one file: `docs/sql-to-run-2026-10-12.sql` (safe to run again if an earlier copy was run).
+   Still open from slice 4: the redirect URLs, both email templates, one real sign-in on an iPhone.
+Also open: review signed in: Admin → Groups (picture, people), an event's editor (picture), the Groups tab
+   (pencils, photos from a phone), the schedule (pictures).

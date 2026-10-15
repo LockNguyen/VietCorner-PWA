@@ -3,10 +3,6 @@ import type { Text } from "@/features/i18n/types"; // I18N
 // Every word this feature shows a user, in both languages. The requests themselves are not here: members
 // write those, and they are shown as written.
 export const STRINGS = {
-  noGroups: {
-    en: "Join a group first. Prayer requests are shared inside a group.",
-    vi: "Xin tham gia một nhóm trước. Lời xin cầu nguyện được chia sẻ trong nhóm.",
-  } satisfies Text,
   emptyState: { en: "No prayer requests yet.", vi: "Chưa có lời xin cầu nguyện nào." } satisfies Text,
   failed: { en: "Something went wrong. Please try again.", vi: "Có lỗi xảy ra. Xin thử lại." } satisfies Text,
   shared: { en: "Shared", vi: "Đã chia sẻ" } satisfies Text,
@@ -15,7 +11,6 @@ export const STRINGS = {
   // Composer
   addRequest: { en: "New prayer request", vi: "Lời xin cầu nguyện mới" } satisfies Text,
   bodyPlaceholder: { en: "What can we pray for?", vi: "Bạn cần cầu nguyện cho điều gì?" } satisfies Text,
-  shareWith: { en: "Share with", vi: "Chia sẻ với" } satisfies Text,
   postAnonymously: { en: "Hide my name", vi: "Ẩn tên tôi" } satisfies Text,
   postButton: { en: "Share", vi: "Chia sẻ" } satisfies Text,
 
@@ -39,21 +34,20 @@ export const STRINGS = {
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 
-  // Admin section: when each group is reminded to pray
+  // Admin section: when the church is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
-  groupField: { en: "Group", vi: "Nhóm" } satisfies Text,
   dayField: { en: "Day", vi: "Ngày" } satisfies Text,
   timeField: { en: "Time (church time)", vi: "Giờ (giờ hội thánh)" } satisfies Text,
   addReminder: { en: "Add reminder", vi: "Thêm lời nhắc" } satisfies Text,
   removeReminder: { en: "Remove", vi: "Gỡ bỏ" } satisfies Text,
   reminderExists: {
-    en: "That group already has a reminder at that day and time.",
-    vi: "Nhóm này đã có lời nhắc vào ngày và giờ đó.",
+    en: "There already is a reminder at that day and time.",
+    vi: "Đã có lời nhắc vào ngày và giờ đó.",
   } satisfies Text,
-  // The notification a group gets at that time (server/sendDueReminders.ts). The group's name is the title.
+  // The notification everyone gets at that time (server/sendDueReminders.ts), under `notificationTitle`.
   timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
 
-  // The notification an author gets (server/notifyAuthor.ts)
+  // The title of both notifications: the reminder, and the one an author gets (server/notifyAuthor.ts)
   notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };
 

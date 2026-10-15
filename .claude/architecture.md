@@ -8,9 +8,11 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 
 | Feature | Folder | README | Status |
 |---|---|---|---|
-| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Done, QA passed |
-| Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. The sharing unit chat, events and prayer build on |
-| Group chat | `src/features/chat/` | [chat](../src/features/chat/README.md) | Done, live on Netlify, phone QA passed |
+| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Email link with hand-off built 2026-10-12 (replaces the typed code); not tried with a real email or on an iPhone |
+| Sign-up approval | `src/features/approval/` | [approval](../src/features/approval/README.md) | Built 2026-10-12; SQL not run, nothing seen signed in |
+| Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. Joining and the old Groups page are **switched off**; admins put people into groups |
+| Groups page | `src/features/group-info/` | [group-info](../src/features/group-info/README.md) | Built 2026-10-12 with pictures; SQL not run, nothing seen signed in |
+| Group chat | `src/features/chat/` | [chat](../src/features/chat/README.md) | **Switched off** 2026-10-12 (`SWITCHES.chat`). Was live, phone QA passed |
 | Push delivery | `src/features/push/` | [push](../src/features/push/README.md) | Done (moved out of chat 2026-10-05; not re-tested on a phone since the move) |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
@@ -18,6 +20,8 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 | Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven. The screen and a real notification are not exercised yet |
 | Roles and permissions | `src/features/permissions/` | [permissions](../src/features/permissions/README.md) | Built; the token hook must be switched on in the dashboard |
 | Admin page | `src/app/admin/` | [admin](../src/features/admin/README.md) | Tab, page, and the Events and Groups sections built; reminders to come. Prayer moderation is on hold (B24). |
+
+**Switched off, not removed** (the pastor's review, 2026-10-12): `src/lib/switches.ts` lists them, and §4 says how off works.
 
 Still planned: the admin dashboard, account settings, and a UI/UX revamp. Each follows [docs/adding-a-feature.md](../docs/adding-a-feature.md).
 
@@ -48,6 +52,7 @@ src/
   components/   The app shell (PageHeader, AppTabs, HomeTiles, ServiceWorkerRegister) and ui/, the component library.
   features/     One folder per removable feature. The only place feature logic lives.
   lib/supabase/ client.ts (browser), server.ts (server), admin.ts (service role, server-only).
+  lib/switches.ts    What is switched off for now, one constant each. Read at the door of what it turns off.
   lib/churchTime.ts  The wall clock in Winston-Salem. Events and prayer both schedule by it.
   lib/README.md      Why the hooks below exist and how they work.
   lib/usePending.ts  Which action of a component is on its way to the server; ignores a second tap.
@@ -56,6 +61,9 @@ src/
   lib/useGoTo.ts     Moves to another screen and resolves when it is on screen.
   lib/useOnArrival.ts  Runs something on arrival at a screen and on return to the app.
   lib/useFresh.ts    A list shows what the page loaded, then re-reads itself on arrival and on return to the app.
+  lib/shrinkImage.ts   A photo → a smaller JPEG in the browser, before upload.
+  lib/publicFileUrl.ts The address of a file in a public storage bucket.
+  lib/useWhenVisible.ts  Calls back when an element scrolls into view: "load more" (prayer, group pictures).
   lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
   lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
@@ -77,8 +85,11 @@ The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The 
 - **Five features are foundations, not leaves.** `groups` and `permissions` are depended on in SQL (a
   membership check, `has_permission`). `i18n`, `push` and `profiles` are imported directly, on lines marked
   `// I18N`, `// PUSH` and `// PROFILES`. A leaf feature never imports another leaf.
-- **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`),
-  or the steps under **Remove** in its README.
+- **Removing a feature = deleting its folder plus marked lines** (`// AUTH`, `// CHAT`, `// ASSISTANT`,
+  `// APPROVAL`, `// GROUP-INFO`), or the steps under **Remove** in its README.
+- **Switching a feature off = one `false` in `src/lib/switches.ts`.** Its page or route answers 404 on its
+  first line, its sender returns before sending, its tab is left out. Why: the code keeps compiling and
+  phones download nothing of it; the database is untouched (`src/lib/README.md`).
 - **Layers point one way:** page → components → hooks → `api.ts` → Supabase, and page → `server/queries.ts`;
   routes → `server/<action>.ts`.
 - **`@/lib/supabase/*` is imported only by `api.ts`, `server/*` and `src/app/**`** — never by a component or hook.
@@ -95,6 +106,10 @@ The full recipe is [docs/adding-a-feature.md](../docs/adding-a-feature.md). The 
 | Server Components, `route.ts` | Server | Yes | Each route verifies the user itself; holds secrets |
 | AI service | Server (Docker) | Yes | Requires `Bearer SERVICE_TOKEN`; holds `DATABASE_URL` and AI keys |
 | Supabase RLS policies | Database | Yes | **The real boundary.** The anon key is public, so only RLS stops reads. |
+
+**Sign-up is open; using the app is not.** An account no admin approved lacks the permission `app.use`,
+and every table a member can reach carries a restrictive policy that asks for it (the `approval` README).
+A new table needs its line there, or it is open to anyone with an email address.
 
 **How Supabase decides what a browser can reach** (three gates, in order):
 1. **Exposed schema:** only `public` is served. `auth.users` is unreachable.
@@ -116,9 +131,10 @@ The empty installable app every feature plugs into.
 
 | File | Job |
 |---|---|
-| `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata. Shows the name question (`profiles`) in place of any page until it is answered. |
-| `src/app/manifest.ts` | `/manifest.webmanifest`: "Góc Việt" under the icon, icons, `display: standalone`, `start_url: /` |
-| `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`) |
+| `src/app/layout.tsx` | Root HTML, the centred column, `AppTabs` (signed in only), `ServiceWorkerRegister`, iOS metadata. Shows the signed-in setup steps in place of any page, in order: name (`profiles`), notifications (`push`, once per device), waiting for an admin (`approval`). |
+| `src/components/SetupProgress.tsx` | "Step 2 / 6" over a `ui/ProgressBar` on every setup screen. Holds the one ordered list of setup steps (sign in, name, email, notifications, waiting, done: the last never shown). |
+| `src/app/manifest.ts` | `/manifest.webmanifest`: "Viet Corners" under the icon (`APP_NAME`), icons, `display: standalone`, `start_url: /` |
+| `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`), each a photo from `public/images/home` under a dark veil |
 | `src/app/loading.tsx` | Grey placeholder rows at once while a dynamic page renders, so a tap gives feedback and the screen does not jump |
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
 | `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
@@ -157,11 +173,38 @@ sign-in so the library can be looked at without an account). The design tokens l
 ## 6. Features
 Each feature's README holds its files, flows, expected behavior, edge cases and removal steps.
 
+### 6.11 approval → [README](../src/features/approval/README.md)
+A new account waits until an admin lets it in. Approving gives it the role `member`, whose permission
+`app.use` rides in the login token; the database refuses everything else without it, through one
+restrictive policy per table. `layout.tsx` shows the waiting screen in place of every page, after the name
+question; the screen renews the token on every return to the app, so nobody signs in twice. Admins are
+told once per account, the person is told when approved. No tables: "waiting" is "named, and without
+`app.use`". Functions: `waiting_accounts()`, `approve_account()`. Routes: `POST /api/approval/request`,
+`/approve`.
+
 ### 6.1 auth → [README](../src/features/auth/README.md)
-Email + one-time code, because iPhone Home Screen apps don't share Safari's cookies. Sessions live in `sb-*`
-cookies for up to 400 days; `src/proxy.ts` refreshes them and redirects logged-out visitors. No tables of our own.
+Email + a password the phone saves (real `<form>`s with `autoComplete`, plus Chrome's
+`navigator.credentials.store`). `/login` opens on sign-in (no bar); "create an account" asks name, email
+and password on one screen (the name goes in as metadata, saved by the profiles trigger); "Forgot password?".
+A failed sign-in asks `account_exists()` to say "no account yet" instead of "wrong password". Creating and resetting each send one email with a link. A sign-up link
+confirms the address at Supabase and opens `/login/confirmed` ("go back to the app"); the app, still holding
+the password, signs in once that works. A reset link uses the hand-off below. An iPhone
+opens links in Safari, which shares no login with the Home Screen app, so the link hands the sign-in to the
+device that asked (resets only): the app keeps a secret key and puts only its hash in the
+link; the browser that opens the link leaves Supabase's one-time token under that hash, after a tap; the app
+collects it with the key and signs in (a reset then opens `/settings/password`). Sessions live in `sb-*`
+cookies for up to 400 days, renewed on every visit; `src/proxy.ts`
+refreshes them and redirects logged-out visitors. Table: `login_handoffs` (server-only).
+Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the README says what guards them).
+
+### 6.13 install → [README](../src/features/install/README.md)
+`/login` in a browser tab shows how to put the app on the Home Screen before the setup: Chrome's own
+Install dialog behind one button where it offers one, otherwise numbered steps for iPhone (Share → Add to
+Home Screen), Android (⋮ menu) or a chat app's browser (open in a real browser first). Only a computer may
+"Continue in this browser". No data, no server code; `device.ts` reads the user agent (tested).
 
 ### 6.2 chat → [README](../src/features/chat/README.md)
+**Switched off (2026-10-12):** its page and its route answer 404. What follows is how it works when on.
 Messages inside a group. Live updates come from Supabase Realtime (WebSocket, RLS-aware); members with the
 app closed are told by push. Sending goes through an API route because it must also notify, which needs the
 service-role key. Table: `messages`.
@@ -178,7 +221,10 @@ Web Push delivery: the device's subscription, the toggle, the service-worker han
 only delivers, at most one notification per user per topic (`chat:<group>`, `prayer`) per minute, or always
 when there is no topic. It also owns the scheduler's side: `POST /api/reminders/send` is called every 15
 minutes by a Supabase cron job, and `sendPushOnce` makes each reminder go out once. Tables:
-`push_subscriptions`, `push_cooldowns`, `push_sent_once` (the last two server-only).
+`push_subscriptions`, `push_cooldowns`, `push_sent_once` (the last two server-only). Since 2026-10-12 only
+three kinds are sent: prayer reminders, "someone signed up" and "you were approved" (the push README lists
+what is off and where). `NotificationStep` is a setup screen: asked once per device after the name, until
+notifications are on or the person taps "not now"; the answer is a device cookie the layout reads.
 
 ### 6.10 profiles → [README](../src/features/profiles/README.md)
 What a person is called. `profiles` holds one row per account, made by a database trigger and named after
@@ -202,25 +248,35 @@ The church schedule, read in one trip through the function `upcoming_events()` a
 itself (`useFresh`). Four tables, one job each: `events` (when), `event_texts`
 (one row per language), `event_cancellations` (a skipped week), `event_reminders` (admin configuration, with
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
-Visibility is RLS: no group means church-wide, a group means its members only, and soft-deleted rows are
-excluded by the policy. Whoever holds `events.manage` creates, edits (each text in English, then Vietnamese) and
+Visibility is RLS: every event is church-wide (no group since 2026-10-12), read by every approved member,
+and soft-deleted rows are excluded by the policy. Whoever holds `events.manage` creates, edits (each text in English, then Vietnamese) and
 cancels from the Admin tab, where each event opens its own screen (`/admin/events/<id>`, or `/new`): one date (undoable), or the whole event for good, which members then see struck
-through for a week. Cancelling goes through a route and pushes to the members who could see the event, each
-in their language, outside the one-minute pause. Every date and time is church time (`America/New_York`), computed in
-one file, `churchTime.ts`. Reminders are stored but not sent yet.
+through for a week. Cancelling goes through a route; its push to the church, and the reminders before an event, are
+switched off for now (`eventChangePush`, `eventReminders`). Every date and time is church time (`America/New_York`), computed in
+one file, `churchTime.ts`.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
-The church's groups and who joined which: `groups` and `group_members`, the list page and the Join button.
-Everything shared "with my group" (messages, group events, prayer requests) is decided by a membership check
-against these two tables inside an RLS policy, so the rule lives in one place.
+The church's groups and who is in which: `groups` and `group_members`. Since 2026-10-12 only chat shares
+"with my group" (a membership check inside an RLS policy); events and prayer are church-wide. Asking to
+join and the old list page are switched off (`joining`, `oldGroupsPage`). Whoever holds `groups.manage`
+puts people into groups from the Admin tab (a sheet per group: name, a typed number of members, add and
+remove people), reading everyone approved through `group_people()`.
+
+### 6.12 group-info → [README](../src/features/group-info/README.md)
+The Groups tab: every group, each opening a sheet with its number of members, when and where it meets,
+notes and pictures. One read for the list, `group_directory()`. Everyone approved reads; whoever holds
+`groups.manage` changes the details (a pencil per line) and removes pictures; a group's own people add
+pictures (`may_add_group_photo()`, one rule for a picture's row and its file). Pictures live in a private Storage bucket,
+shrunk on the phone before upload, shown through addresses signed for an hour, six at a time.
+Depends on `groups` in SQL only. Tables: `group_info`, `group_photos`. Bucket: `group-photos`.
 
 ### 6.6 prayer → [README](../src/features/prayer/README.md)
-Requests shared inside a group, with or without the author's name. Members cannot read the table: they read
+Requests shared with the whole church (since 2026-10-12), with or without the author's name. Members cannot read the table: they read
 the `prayer_feed` view, which leaves out who wrote an anonymous request. Praying goes through a route: the
-`pray_for_request` function adds exactly one, then the author is told by push ("N people prayed for you");
-the count is shown nowhere. The one-hour pause between prayers is a timestamp on the device, not a timer.
+`pray_for_request` function adds exactly one, then the author would be told by push ("N people prayed for you", switched off:
+`prayedForPush`); the count is shown nowhere. The one-hour pause between prayers is a timestamp on the device, not a timer.
 Authors edit, delete, or mark a request answered; an answered one leaves the list but stays in the table.
-Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant, nothing sends them yet).
+Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
 
 ### 6.7 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -233,11 +289,16 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | Table | Owner | Notes |
 |---|---|---|
 | `auth.users` | Supabase | Built in; one row per account, created on first sign-in |
-| `role_permissions`, `user_roles` | permissions | **Server-only.** Read by Supabase Auth while it builds a token; rows added by hand. |
-| `groups` | groups | Active groups readable by any signed-in user; created, renamed and removed (`deleted_at`, never erased) with `groups.manage` |
-| `group_members` | groups | Users see only their own rows, and only in active groups: this is what silences a removed group everywhere. No member can insert; the way in is `approve_join_request`. |
+| `role_permissions`, `user_roles` | permissions | **Server-only.** Read by Supabase Auth while it builds a token. An admin's role is added by hand; `member` (the permission `app.use`) by `approve_account`. |
+| `groups` | groups | Active groups readable by any approved member, with `member_count` (typed by an admin) and `thumbnail_path` (its picture); created, renamed, sized, pictured and removed (`deleted_at`, never erased) with `groups.manage` |
+| `group_members` | groups | Users see only their own rows, and only in active groups: this is what silences a removed group everywhere. No member can insert or delete; `groups.manage` adds, removes and sees everyone's. |
 | `group_join_requests` | groups | Someone asked to join. Users insert and see their own; `groups.manage` sees all, declines (delete) and approves (function). |
+| `group_info` | group-info | One row per group: when and where it meets, notes, as free text. Every approved member reads; only `groups.manage` inserts and updates. |
+| `group_photos` | group-info | One row per picture of a group: optional date and caption, who added it. Every approved member reads; that group's members and `groups.manage` insert; only `groups.manage` deletes; nobody updates. |
+| `storage.objects`, buckets `event-thumbnails`, `group-thumbnails` | events, groups | The picture that starts a row. **Public** to read by address; JPEG only, 200 KB at most; written, listed and erased only with `events.manage` / `groups.manage`. |
+| `storage.objects`, bucket `group-photos` | group-info | The pictures' files, private: JPEG only, 1 MB at most. Read (to sign an address) by approved members; uploaded and erased under the same rules as the rows (the group is read from the file's folder name). |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
+| `login_handoffs` | auth | A sign-in waiting to be collected by the device that asked: the hash of that device's key, and the link's token. **Server-only:** no grants, no policies. Deleted when collected, or after an hour. |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
 | `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
@@ -245,13 +306,17 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; no direct write: `set_my_name` and `approve_name_request` change it; nobody inserts or deletes. |
 | `name_requests` | profiles | A name someone in a group asked for. The owner reads their own; `groups.manage` reads all, declines (delete) and approves (function). Written only by `set_my_name`. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
-| `events` | events | When an event happens. Church-wide when `group_id` is null. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
+| `events` | events | When an event happens, and its picture's path (`thumbnail_path`). Always church-wide; `group_id` is unused. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
-| `prayer_requests` | prayer | Members insert (3 columns), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
-| `prayer_feed` (view) | prayer | What members read: their groups' unanswered requests, with the author's name (`profiles`), without the author of an anonymous one and without the count. |
-| `prayer_reminders` | prayer | A weekly nudge per group, several allowed. Read and written only with `prayer.reminders`. |
+| `prayer_requests` | prayer | Members insert (2 columns; `group_id` is unused), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
+| `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name (`profiles`), without the author of an anonymous one and without the count. |
+| `prayer_reminders` | prayer | A weekly nudge to the whole church, several allowed (rows that still name a group are never sent). Read and written only with `prayer.reminders`. |
+
+Every table a member can reach also carries the restrictive policy "Approved accounts only"
+(`features/approval/schema.sql` section 3), except the four a waiting person needs: `profiles`,
+`name_requests`, `user_settings`, `push_subscriptions`.
 
 Every table is covered by `tests/rls.test.ts`.
 
@@ -260,7 +325,7 @@ Every table is covered by `tests/rls.test.ts`.
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | `lib/supabase/*` | Project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `lib/supabase/*` | Public key; safe because RLS protects the data |
-| `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/admin.ts` | **Secret.** Bypasses RLS. Server only. |
+| `SUPABASE_SERVICE_ROLE_KEY` | `lib/supabase/admin.ts` | **Secret.** Bypasses RLS. Server only. Sign-in needs it too (the hand-off). |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | push | Identifies our server to push services |
 | `VAPID_PRIVATE_KEY` | `push/server/sendPush.ts` | **Secret.** Changing it breaks every existing subscription. |
 | `VAPID_SUBJECT` | `push/server/sendPush.ts` | `mailto:` contact for push services |
@@ -294,7 +359,34 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 |---|---|---|
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
-| Email one-time code, not a magic link | iOS Home Screen apps don't share Safari's cookies | Users type a code |
+| Password sign-in the phone saves; email links only to create an account and reset a password (2026-10-14) | Elderly members type nothing after the first time: the saved password fills in, no trip to the mailbox | Members from the link era set a password once via "Forgot password?"; a password manager is needed for "never type it" |
+| Safari first: sign in or sign up in the browser, then install (2026-10-14) | On the iPhone only Safari saves and fills in passwords; the installed app does neither, and iOS copies Safari's sign-in into the app when it is added | Someone signed out inside the app types their password or reinstalls; the install guide moved from before sign-in to after it |
+| Sign-in errors in a banner with a link ("Forgot password?", "Create new account?") | The app's one way of saying what went wrong (the user's word) | The banner gained an optional link; such banners stay 15 s |
+| Sign-in and new password are real form posts to a route (2026-10-14) | The only way the iPhone offered "Save password?" after a correct sign-in; sign-in from the page's code got no offer however it moved on | A failed try is a fresh page (the email is kept for the visit, the password retyped); two more routes |
+| Sign-in screen in the messaging-app pattern: words inside the fields, one button, new account set apart | Elderly members felt they had to read every line of the first version | Field words disappear while typing (the field's purpose stays clear from its content) |
+| Sign-in is the first screen; setup steps only for new members (2026-10-14) | Someone signed out must not click through three screens to get back in | Language is a link, not a question; returning members are not asked for notifications |
+| Progress bar out of 6 whose last step, "done", is never shown | The waiting screen must read as not finished | A step that does not exist |
+| `account_exists()` callable signed out | "No account yet, create one" instead of a puzzling "wrong password" | Anyone can learn whether an address has an account |
+| Sign-up link needs no tap; reset link keeps one (2026-10-14) | A sign-up link only confirms an address (the account still waits for an admin), so Safari shows "go back to the app" and the app signs in with the password it holds | A mail scanner can confirm an address for an account someone else made; a reset without the tap would let a stranger in through the victim's mail scanner, so it keeps it |
+| Password forms submit on the person's own tap (2026-10-14) | Safari offers "Save password?" only for a submission a tap made; a submit from code after the server's answer got no offer at all | The phone also offers to save a wrong password; a "Continue" tap after success would avoid it, at one more tap (declined) |
+| "This email already has an account" on sign-up | A wait for an email Supabase never sends would leave a member stuck | Reveals that an address has an account |
+| Notification question remembered by a device cookie, read by the layout | The server decides which step to show, so no flash of Home before the question | Asked again on a new phone or after 400 days without granting; a device that already had them on sees the step for a moment |
+| Install guide on every phone visit in a browser; only computers may skip | On iPhone, notifications need the Home Screen app | An admin on a phone must install too |
+| "Off" is a constant in `src/lib/switches.ts`, read at the door of what it turns off | Chat, joining and most notifications had to stop without being lost; off code keeps compiling, phones download none of it, and on again is one word | The off code stays in the server build; the database still accepts a direct write to an off feature's table (a chat message nobody sees) |
+| Approval is a permission (`app.use`) enforced by one restrictive policy per table | Sign-up is open, so the screen cannot be the door; a restrictive policy adds "and approved" to every existing rule without rewriting any | A new table must be added to the list by hand; an approval or its removal reaches a token at its next renewal |
+| The Groups page is a new feature (`group-info`) beside the old list, not a change to it | The old page (join, open the chat) had to stay ready to switch back on; a group's own words are a separate thing from who is in it | Two lists of groups in the code; the page file chooses by a switch |
+| Row pictures (events, groups) are in public buckets; a new picture is a new file name | They are on every row of a list: a public address is kept by the phone, and a new name per version means a kept copy can never show the old picture (backlog B32) | Anyone holding an address can open the file; so these are artwork an admin chose, never a private photo |
+| Each feature has its own thumbnail bucket and its own small copy of "store, record, erase the old one" | Removing events or groups removes its pictures with it; nothing shared to untangle | About twenty lines written twice (`events/api.ts`, `groups/api.ts`); the shrinking and the address are shared in `src/lib` |
+| Group pictures are in a private bucket, shown through addresses signed for an hour | They are pictures of church members, children among them; a public bucket serves a file to anyone holding its address, for ever | A signed address is new on every visit, so pictures are downloaded again each time instead of being kept by the phone |
+| A picture is shrunk in the browser before upload, and the bucket refuses what is too big or not a JPEG | A camera photo is 3 to 8 MB and Supabase's resizing is paid; the server-side limit is what makes the browser's work untrusted | Two files per picture; the canvas drops a photo's hidden data (location, camera), which here is a gain |
+| Admins keep a group's details and remove its pictures; the group's own people only add pictures | When and where a group meets is the church's word; pictures come from those who were there; removal cannot be undone | Someone who uploads the wrong picture needs an admin to take it down; admins must keep every group's details current |
+| One SQL function says who may add a group picture (`may_add_group_photo`) | A picture's row and its file must follow one rule: the group's people, or a group manager | A function call per added picture |
+| A group's details are free text, written by an admin | "Fridays, 7:30 PM" and "read Matthew 3" are what a group would write on a board; nothing computes with them | Not translated, not validated |
+| A group's number of members is typed by an admin, not counted | Many who come to a group do not use the app, so a count of accounts would be wrong | It goes stale unless someone updates it; until typed, the admin row shows the accounts instead |
+| The admin's list of people comes from one function with its owner's rights (`group_people()`) | Emails live in `auth.users` and "approved" in the roles table, neither reachable from a browser; one trip gives the list to add from and who is in no group | A fourth function that skips row rules: its permission check is the security and has its own test |
+| Events and prayer are church-wide; old group-only rows show to everyone | The pastor's review: one church, one schedule, one prayer list. The data so far is from testing | `group_id` columns stay, unused; going back to per-group sharing is SQL and code, not a switch |
+| An email link that hands the sign-in to the device that asked (replaces the typed code, 2026-10-12) | One tap is simpler than copying a code, and an iPhone opens links in Safari, not in the installed app. The asking device keeps a secret and only its hash travels, so nobody else can collect | One more table and two routes that verify no user; tapping the link AND the button on an email you did not ask for signs a stranger in as you |
+| The link's page hands over only on a tap, never on load | Mail services open links to scan them; a page that acted on load would let a scanner confirm a stranger's request | One more tap on iPhone |
 | Permissions ride in the login token, and policies name a permission, not a role | A check reads the token: no lookup per query, at any size. New roles are rows, not policy rewrites. | A role change waits for the token to refresh (up to an hour); the hook is switched on in the dashboard, and a broken hook blocks every sign-in |
 | Authorization in RLS, not TypeScript `if`s | Browsers query Supabase directly, so the database is the only check that covers every path | Blocked reads look empty rather than failing; needs the RLS tests |
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
@@ -306,7 +398,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A visited page is kept in the phone's memory for ten minutes (`staleTimes`, an experimental Next.js setting) | Going back to a tab shows it at once, with no request; the lists refresh themselves behind it | Settings and Admin do not refresh themselves and can be up to ten minutes old when returned to; the setting may change in a future Next.js; sign-out must be a full page load so the next person on that phone starts empty |
 | A page's data comes from one database function, called by the page and again by the list itself (`useFresh`) | One trip instead of several; a kept copy of a page can show at once and still become current; `router.refresh()` cannot do this because it discards every kept page | SQL per page; the list holds a copy of the page's data; one extra small read just after a first visit |
 | Pages read who is signed in from the login token, checked locally; only routes that write ask Supabase | Most of the app is reading, and the round trip bought nothing the database's own check does not | A session ended elsewhere keeps reading for up to an hour |
-| Names are readable within a shared group and by group managers, not by every signed-in user | Sign-up is open: "signed in" is anyone with an email | A former member's old messages lose their name; one function call per row read |
+| Names are readable within a shared group and by group managers, not by every signed-in user | Decided while "signed in" was anyone with an email; approval (2026-10-12) removes that reason, and the rule is kept until the new Groups page needs otherwise | A former member's old messages lose their name; one function call per row read |
 | Once in a group, a name changes only with a group manager's approval | The manager saw name and email when letting the person in; a later change unseen would undo that check | A wait for an honest correction; one more thing for managers to answer |
 | A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
 | Words every feature says alike (Save, Saved, Could not save) live once, in `i18n/common.ts` | "Saved" cannot be worded five ways | Removing a feature no longer removes all of its words |
@@ -409,3 +501,31 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-09: Admin page: its independent reads (groups, managed events, prayer reminders, join requests, name requests) run together instead of one after another; the admin events list and the event editor read through one function, `managed_events()`, instead of four reads. Needs section 3c of `features/events/schema.sql`.
 - 2026-10-09: fixed: an answered join request flashed up on every return to the Admin page. A kept page is frozen with the data it was loaded with, and each return started from it. Lists now start from what they last showed (`useFresh`'s `lastShown`; the prayer feed likewise).
 - 2026-10-09: notifications moved from the Groups page to Settings as an on/off switch (`NotificationSection`); off unsubscribes the device and removes its row. The on-open repair of a device's subscription moved to the root layout (`KeepSubscribed`).
+- 2026-10-12: the pastor's review, slice 1, switches: `src/lib/switches.ts`. Off: chat (page and route), asking to join a group (routes, the admin list), the old Groups page (tab and Home tile with it), and every notification except prayer reminders: event changes, event reminders (and their switches in the editor), "prayed for you", name requests. Observed signed out: the three off routes answer 404.
+- 2026-10-12: slice 2, church-wide: events and prayer requests are no longer limited to a group (form field, composer choice, group badge and "join a group first" removed; `audience.ts` deleted); prayer reminders go to the whole church. Needs `events/schema.sql` 3d and `prayer/schema.sql` 3b, 4, 5.
+- 2026-10-12: slice 3, sign-up approval: new feature `approval`. `app.use` (permissions 4b), `waiting_accounts()`, `approve_account()`, "Approved accounts only" on ten tables, the waiting screen in the layout, "People waiting to be let in" on the Admin page, two notifications. The Admin tab now asks `managesSomething`, because every member holds a permission. Needs `approval/schema.sql`. 67 security cases written, NOT run (the SQL comes first).
+- 2026-10-12: slice 4, sign-in by email link: the typed code is gone. `auth/handoff.ts` (secret key and its hash), `storage.ts`, `useLoginLink`, `useConfirmLink`, `ConfirmLink`, `/login/confirm`, `POST /api/auth/handoff` and `/claim`, the server-only table `login_handoffs`. Needs `auth/schema.sql`, the redirect URLs and both email templates changed in Supabase. Observed: the three screens and the routes' refusals; NOT a real email or the hand-off end to end.
+- 2026-10-12: slice 5, admins put people into groups: `groups.member_count` (typed), manager policies on `group_members` (see all, add, remove), `group_people()`, `my_groups()` returns `member_count`. The Admin tab's Groups section is rows that open a sheet (`GroupSheet`, `GroupDetailsForm`, `GroupMemberRow`, `AddMemberForm`), with "Has no group" last (`UnassignedSheet`); `GroupNameEditor` deleted. Needs `groups/schema.sql` 2c, then 2b. 72 security cases written, the 4 new ones NOT run.
+- 2026-10-12: the admin Groups section reads its groups and people again on every arrival (`useFresh`), so a kept copy of the Admin page never shows old memberships.
+- 2026-10-12: slice 6, the new Groups page: new feature `group-info` (`group_info`, `group_directory()`, `GroupDirectory`, `GroupInfoSheet`, `GroupDetail`, `GroupDetailsForm`). `/groups` draws it while `oldGroupsPage` is off; the Groups tab and Home tile are back. Needs `group-info/schema.sql` and its door line in `approval/schema.sql`. 76 security cases written, the new ones NOT run.
+- 2026-10-12: group details: a pencil per line instead of one Edit (`GroupDetail`, `GroupDetailForm`; a save sends one detail); whoever holds `groups.manage` may change any group's details and, from the Groups tab too, its number of members (`may_write_group_info()`). The page reads the permission to draw the pencils.
+- 2026-10-12: slice 7, group pictures: `group_photos`, the private bucket `group-photos` with three storage rules, `shrink.ts`, `useGroupPhotos`, `GroupPhotos`, `PhotoStripEnd`, `AddPhotoForm`; shared `PhotoStrip`, `PhotoThumb`, `Lightbox` (on `/ui`); `useWhenVisible` moved from prayer to `src/lib`. Needs `group-info/schema.sql` and the two new door lines in `approval/schema.sql`. Seen on `/ui`: the strip and the large view. 85 security cases written, the new ones NOT run. Closes the picture part of B32 for groups.
+- 2026-10-12: row pictures: `events.thumbnail_path` and `groups.thumbnail_path`, public buckets `event-thumbnails` and `group-thumbnails` (managers only write), `EventThumbnail` in the event editor, `GroupThumbnail` in the admin's group sheet; the schedule, the Groups tab and the admin's group rows draw them (`ui/Thumbnail` takes `src`). `shrink.ts` moved to `src/lib/shrinkImage.ts`; new `src/lib/publicFileUrl.ts`. `upcoming_events`, `managed_events`, `my_groups`, `group_directory` return the path. Needs `events/schema.sql` 3e + 3b + 3c, `groups/schema.sql` 2d + 2b, `group-info/schema.sql` 4. 91 security cases written, the new ones NOT run.
+- 2026-10-12: group rules changed on the user's word: only `groups.manage` edits a group's when / where / notes and removes a picture; the group's own people (and managers) add pictures. `may_write_group_info()` replaced by `may_add_group_photo()`; the details' policies ask for the permission directly. Needs `group-info/schema.sql` run again (it drops the earlier policies by name). Security cases rewritten for the new rules (91), NOT run.
+- 2026-10-14: elderly-friendly setup. New feature `install` (guide + Chrome's install button, `device.ts` tested). `/login` = `InstallGate` → `auth/Welcome`: language (`i18n/LanguageStep`) → have an account? → password sign-in / sign-up / forgot → check your email. Passwords replace sign-in links (`signIn`, `signUp`, `sendPasswordReset`, `verifyEmailLink`, `setPassword`; `useLoginLink`/`LoginForm` removed, `useEmailLink` added; the hand-off now carries a purpose). `/settings/password` + "Change password" in Settings. `push/NotificationStep` in the layout between name and waiting (device cookie). `ui/ProgressBar`, `components/SetupProgress` on every setup screen. Signed out, the device's language is adopted on load. Needs the two email templates and Providers → Email settings (auth README, Setup 4-6).
+- 2026-10-14: after the first iPhone test, sign-up links need no tap: "Confirm signup" uses Supabase's `{{ .ConfirmationURL }}` and lands on `/login/confirmed` (`EmailConfirmed`, `useLinkWorked`); the app tries the password every 15 s and on return. Resets keep the hand-off and its tap (`signInWithResetLink`; `verifyEmailLink` and `PAGE_AFTER` removed). Redirect URLs become `/login/**`. The email had pointed at `localhost:3000` because the Funnel address was not in Supabase's Redirect URLs.
+- 2026-10-14: second iPhone test fixes. A wrong password then "Forgot password?" offered to save the wrong password: password forms now submit only after the server accepts (`auth/hooks/useSubmitWhenAccepted.ts`, button `type="button"`, Enter mapped). A reset link "did nothing": the proxy sent a signed-in Safari from `/login/confirm` to Home; the two email-link pages are now exempt (`LINK_PAGES` in `refreshSession.ts`).
+- 2026-10-14: the tab bar sat a status bar's height (48 points) too high on every cold start of the installed iPhone app, until a long page was scrolled. iOS lays out a page shorter than the screen as if the see-through status bar took its own space; `html` now has a minimum height of 100% plus the top inset (`globals.css`). Found from the user's screenshot (the bar 49 points above where 56 + 34 points put it); NOT yet seen fixed on an iPhone.
+- 2026-10-14: the accept-then-submit forms gave no "Save password?" on the iPhone after a reset (a submit from code, after the tap, is ignored by Safari). Undone on the user's word: one tap submits again (`useSubmitWhenAccepted` deleted); a wrong password is offered for saving too, recorded as a Key Decision.
+- 2026-10-14: Home's three tiles show the user's photos (`public/images/home`: a calendar, hands raised at sunrise, a group of young people) under a dark veil that keeps the white title readable; `ui/PhotoTile` takes `src`. The proxy skips `/images/`, so a picture does not wait on a login check. Seen on `/ui` at phone width.
+- 2026-10-14: `next.config.ts` allows the PC's Tailscale address (`*.tail714ada.ts.net`) as a dev origin. Opened on a phone through the tunnel, `next dev` had refused its CSS and JavaScript to that address, so `/login/confirm` arrived unstyled and its button did nothing. Development only.
+- 2026-10-14: signed-out redesign after the user's walk-through: sign-in first (no bar, English link at the top right, error with "Create an account" or beside "Forgot password?"); `SignUpForm` (name, email, password; Next off until filled; "Step 2 / 6"); the language step and the account question are gone (`LanguageStep`, `AccountQuestion`, `EmailPasswordForm` deleted; `SignInForm`, `useSignIn` added). Steps: sign in, name, email, notifications, waiting, done. Notifications asked only of members not yet let in. New SQL: `auth/schema.sql` section 3 (`account_exists`), `profiles/schema.sql` section 2 (`create_profile` reads the sign-up name). One security case added.
+- 2026-10-14: no "Save password?" after a correct sign-in on the iPhone: sign-in and the new-password form now move to Home inside the page (`enterTheApp` in `auth/hooks/useSignIn.ts`). Reset page says "Reset your password?" / "Yes, reset my password". `auth/components/SignedOutFrame.tsx` shared by sign-in, sign-up, check-email, `/login/confirm` and `/login/confirmed` (language top right everywhere). Sign-in screen calmed: words inside the fields, `ui/PasswordInput` with an eye, "Forgot password?" small, "Create new account" set apart.
+- 2026-10-14: still no "Save password?" after moving on inside the page. Sign-in and the new password are now real form posts: `POST /api/auth/sign-in`, `/api/auth/new-password` (`auth/server/signIn.ts`), 303 to Home or back with `?problem=`; `useTypedEmail` keeps the email across a failed try; `useSignIn` and `enterTheApp` deleted, `accountExists`/`setPassword` left `api.ts`. Sign-up redone in the sign-in screen's calm shape.
+- 2026-10-14: the logo is the user's "VC" over the Earth: `public/icons/icon-192.png` and `icon-512.png` are made from `public/icons/logo-source.webp` (1254 square), so the Home Screen icon, the install icon and `LogoMark` (sign-in, waiting and name screens) all change together. An iPhone keeps the old Home Screen icon until the app is removed and added again.
+- 2026-10-14: the app is called "Viet Corners" in every language (the user's word; it was "Góc Việt"): one constant, `src/lib/appName.ts`, read by the manifest, the page title, the iPhone Home Screen title, the approval notification and every sentence that names the app (auth, install). An installed iPhone keeps its old label until the app is added to the Home Screen again.
+- 2026-10-14: logo replaced by the user's second version (the letters straight over the Earth, without the glass square); both icons remade from the new `public/icons/logo-source.webp`.
+- 2026-10-14: Safari first. Proven on the iPhone: the installed app never offers to save or fills in a password (old and new sign-in alike); Safari does, and its sign-in is copied into the app when installed. `/login` is no longer behind the install guide; `InstallGate` wraps signed-in pages in the root layout (setup step "install", 4 of 7, before notifications). Sign-up links sign in where they open (`useConfirmedLink`, `signInWithConfirmLink`). Sign-in and new-password errors are banners with a link (`ui/Banner` `actionLabel`, `useBanner` `action`, `useProblemBanner`); inline errors removed. The old-version test copy and port 10000 are gone; the temporary error catcher (`global-error.tsx`, `api/debug-log`) was removed before the commit.
+- 2026-10-14: hard-coded text review before the translation pass: only two found (chat notification fallback "New message" → `APP_NAME`; `public/sw.js` fallback "VietCorner" → "Viet Corners"). What was left on purpose is listed in the i18n README.
+- 2026-10-14: the install guide (shown signed in, in a phone's browser) ends with "Sign out": it replaced every page, so a wrong account in Safari was a dead end. `InstallGate`/`InstallGuide` take a `footer`; `SignOutButton` takes `variant`.
+- 2026-10-14: every sheet closes with an X at its top right (`ui/Sheet`, `closeLabel` = `COMMON.close`); the Close and Cancel buttons that only closed a sheet are gone (event details, a group's sheet on both tabs, "Has no group", the new prayer request, a request's options, which are now Answered and Edit side by side over Delete). Sheets rise on the iPhone's own curve (400 ms, `cubic-bezier(0.32, 0.72, 0, 1)`) over a veil that fades in. Seen on `/ui` at phone width: the X at the top right, the animation, the X closing it. Closing still has no animation: a sheet disappears when its screen stops drawing it.

@@ -21,11 +21,11 @@ export async function getRequests(olderThan?: string): Promise<PrayerRequest[]> 
   return data as PrayerRequest[];
 }
 
-// POST a request to one of my groups. The author is taken from the login token by the database.
+// POST a request to the whole church. The author is taken from the login token by the database.
 export async function createRequest(request: NewPrayerRequest): Promise<void> {
   const { error } = await createClient()
     .from("prayer_requests")
-    .insert({ group_id: request.groupId, body: request.body, is_anonymous: request.isAnonymous });
+    .insert({ body: request.body, is_anonymous: request.isAnonymous });
   if (error) throw new Error(error.message);
 }
 
@@ -50,16 +50,16 @@ export async function deleteRequest(requestId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-// Postgres's code for "this would break a unique rule": here, the same group, day and time twice (schema.sql).
+// Postgres's code for "this would break a unique rule": here, the same day and time twice (schema.sql).
 const ALREADY_EXISTS = "23505";
 
-// POST a weekly reminder for a group ("Wednesdays at 19:00", church time). Needs "prayer.reminders".
-// Answers "exists" when that group already has a reminder at that day and time: nothing was added, and the
+// POST a weekly reminder for the whole church ("Wednesdays at 19:00", church time). Needs "prayer.reminders".
+// Answers "exists" when there already is a reminder at that day and time: nothing was added, and the
 // screen can say exactly that instead of "something went wrong". Any other refusal throws.
-export async function addReminder(groupId: string, weekday: number, sendAt: string): Promise<"added" | "exists"> {
+export async function addReminder(weekday: number, sendAt: string): Promise<"added" | "exists"> {
   const { error } = await createClient()
     .from("prayer_reminders")
-    .insert({ group_id: groupId, weekday, send_at: sendAt });
+    .insert({ weekday, send_at: sendAt });
   if (error?.code === ALREADY_EXISTS) return "exists";
   if (error) throw new Error(error.message);
   return "added";

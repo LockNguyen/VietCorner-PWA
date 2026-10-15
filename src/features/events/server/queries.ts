@@ -5,9 +5,9 @@ import type { ManagedEvent, ScheduledEvent } from "../types";
 
 // Server-side reads for this feature. The page creates the client and passes it in.
 //
-// RLS decides what comes back: church-wide events, plus events of the groups this member joined.
-// Someone with the "events.manage" permission gets every group's events, on the schedule too (decided
-// 2026-10-06), and could also read removed ones, so both reads below leave those out themselves.
+// RLS decides what comes back: every event, for every approved member (events are church-wide since
+// 2026-10-12). Someone with the "events.manage" permission could also read removed ones, so both reads
+// below leave those out themselves.
 
 // why: enough to cancel next week or the one after without scrolling a long list per event.
 const DATES_SHOWN_TO_MANAGERS = 4;

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import { saveLanguage } from "../api";
 import { DEFAULT_LANGUAGE, isLanguage, type Language } from "../types";
 
@@ -28,6 +28,13 @@ type Props = {
 // already in the right language: no flash of English before Vietnamese appears.
 export default function LanguageProvider({ language, signedIn, children }: Props) {
   const [current, setCurrent] = useState<Language>(language);
+
+  // Signed out, the server cannot know the device's choice: adopt it once loaded. Without this an iPhone,
+  // which often reloads the app on return from the email, would switch an English speaker to Vietnamese.
+  useEffect(() => {
+    const chosen = signedIn ? null : languageOnDevice();
+    if (chosen) setCurrent(chosen);
+  }, [signedIn]);
 
   function setLanguage(next: Language) {
     setCurrent(next);

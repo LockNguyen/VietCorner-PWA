@@ -4,7 +4,6 @@ import EventEditor from "@/features/events/components/EventEditor";
 import { getManagedEvents } from "@/features/events/server/queries";
 import { STRINGS } from "@/features/events/strings";
 import { MANAGE_EVENTS } from "@/features/events/types";
-import { getGroups } from "@/features/groups/server/queries";
 import { getMyPermissions } from "@/features/permissions/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
@@ -19,14 +18,13 @@ export default async function EventEditorPage({ params }: { params: Promise<{ ev
 
   // The whole list is read to show one event: it is a handful of rows in one trip (`managed_events()`),
   // and it is the read that already works out each event's next dates and reminders.
-  const [events, groups] = await Promise.all([getManagedEvents(supabase), getGroups(supabase)]);
-  const event = events.find((managed) => managed.id === eventId);
+  const event = (await getManagedEvents(supabase)).find((managed) => managed.id === eventId);
   if (!event && eventId !== "new") notFound();
 
   return (
     <>
       <PageHeader title={event ? STRINGS.editEvent : STRINGS.newEvent} backHref={ADMIN} />
-      <EventEditor event={event} groups={groups.map(({ id, name }) => ({ id, name }))} listHref={ADMIN} />
+      <EventEditor event={event} listHref={ADMIN} />
     </>
   );
 }

@@ -7,14 +7,14 @@
 --   event_cancellations one skipped week of a recurring event
 --   event_reminders     admin configuration; no policy lets a member read it
 --
--- Visibility: an event with no group is church-wide; an event with a group is for its members only.
--- That policy reads `group_members`, which belongs to the groups feature.
+-- Visibility: every event is for the whole church (decided 2026-10-12, section 3d). `events.group_id`
+-- is left from when an event could be for one group; nothing reads or writes it any more.
 
 -- 1. Tables ---------------------------------------------------------------
 
 create table public.events (
   id uuid primary key default gen_random_uuid(),
-  -- Null = church-wide. Set = only that group's members see it.
+  -- Unused since 2026-10-12 (every event is church-wide). Kept so no old row is rewritten.
   group_id uuid references public.groups (id) on delete cascade,
   starts_at timestamptz not null,
   ends_at timestamptz,                    -- optional: many events just have a start time
@@ -84,19 +84,7 @@ alter table public.event_texts enable row level security;
 alter table public.event_cancellations enable row level security;
 alter table public.event_reminders enable row level security;
 
--- Church-wide events, plus events of groups the member joined. Soft-deleted rows are hidden here, so a
--- member cannot read them even by querying Supabase directly.
-create policy "Members read events they belong to" on public.events
-  for select to authenticated using (
-    deleted_at is null
-    and (
-      group_id is null
-      or exists (
-        select 1 from public.group_members m
-        where m.group_id = events.group_id and m.user_id = auth.uid()
-      )
-    )
-  );
+-- Who reads an event is in section 3d: every approved member, since events became church-wide.
 
 -- Text and cancellations follow their event: if you cannot see the event, you cannot see its words.
 create policy "Members read text of events they can see" on public.event_texts
@@ -111,18 +99,7 @@ create policy "Members read cancellations of events they can see" on public.even
 
 -- Managing events needs the "events.manage" permission, read from the login token (permissions feature).
 --
--- A manager reads every event, in any group, including ones they removed: Postgres checks the row an
--- update leaves behind against the select policies, so hiding removed events here would make removing one
--- impossible. Events of a removed GROUP stay hidden even from managers, like the rest of that group.
-create policy "Event managers read every event" on public.events
-  for select to authenticated using (
-    (select public.has_permission('events.manage'))
-    and (
-      group_id is null
-      or exists (select 1 from public.groups g where g.id = events.group_id and g.deleted_at is null)
-    )
-  );
-
+-- (What a manager reads is in section 3d too.)
 create policy "Event managers create events" on public.events
   for insert to authenticated with check ((select public.has_permission('events.manage')));
 
@@ -156,7 +133,9 @@ create policy "Event managers choose reminders" on public.event_reminders
 -- single weeks that were called off. Before this the page made four or five reads, one after another.
 -- It runs with the CALLER's rights (the default), so the policies above still decide what comes back: this
 -- function opens nothing that a direct read would not. `until` and `cancelled_since` only narrow the answer.
-create or replace function public.upcoming_events(until timestamptz, cancelled_since timestamptz)
+-- Dropped first because its columns changed (2026-10-12: `thumbnail_path`), which `create or replace` refuses.
+drop function if exists public.upcoming_events (timestamptz, timestamptz);
+create function public.upcoming_events(until timestamptz, cancelled_since timestamptz)
 returns table (
   id uuid,
   group_id uuid,
@@ -165,12 +144,13 @@ returns table (
   repeats_weekly boolean,
   repeat_until date,
   canceled_at timestamptz,
+  thumbnail_path text,
   texts jsonb,
   canceled_dates date[]
 )
 language sql stable set search_path = '' as $$
   select
-    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at,
+    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at, e.thumbnail_path,
     coalesce(
       (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
        from public.event_texts t where t.event_id = e.id),
@@ -196,7 +176,8 @@ grant execute on function public.upcoming_events (timestamptz, timestamptz) to a
 -- the Admin page and the editor made four reads. Like `upcoming_events`, it runs with the CALLER's rights:
 -- a member calling it gets only the events they may see, and no reminders at all, because the policy on
 -- `event_reminders` shows them none.
-create or replace function public.managed_events()
+drop function if exists public.managed_events (); -- its columns changed too
+create function public.managed_events()
 returns table (
   id uuid,
   group_id uuid,
@@ -205,13 +186,14 @@ returns table (
   repeats_weekly boolean,
   repeat_until date,
   canceled_at timestamptz,
+  thumbnail_path text,
   texts jsonb,
   canceled_dates date[],
   reminder_minutes int[]
 )
 language sql stable set search_path = '' as $$
   select
-    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at,
+    e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at, e.thumbnail_path,
     coalesce(
       (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
        from public.event_texts t where t.event_id = e.id),
@@ -228,6 +210,51 @@ $$;
 
 revoke execute on function public.managed_events () from public, anon;
 grant execute on function public.managed_events () to authenticated;
+
+-- 3d. Every event is church-wide (2026-10-12) -------------------------------
+-- This section can be run again by itself: it is how these two policies are changed.
+--
+-- Admins no longer limit an event to a group, so the membership check is gone, and events once saved
+-- for one group show to everyone (decided with the user). Who counts as "a member" is the approval
+-- feature's rule: its schema.sql adds "approved accounts only" on top of every policy here.
+-- Soft-deleted rows are still hidden, so a member cannot read them even by querying Supabase directly.
+drop policy if exists "Members read events they belong to" on public.events;
+drop policy if exists "Members read every event" on public.events;
+create policy "Members read every event" on public.events
+  for select to authenticated using (deleted_at is null);
+
+-- A manager also reads the events they removed: Postgres checks the row an update leaves behind against
+-- the select policies, so hiding removed events from them would make removing one impossible.
+drop policy if exists "Event managers read every event" on public.events;
+create policy "Event managers read every event" on public.events
+  for select to authenticated using ((select public.has_permission('events.manage')));
+
+-- 3e. An event's picture (2026-10-12) ---------------------------------------
+-- This section can be run again by itself. Run it BEFORE 3b and 3c (again): they read the column made here.
+--
+-- The small picture that starts an event's row. Whoever holds "events.manage" sets, replaces and removes it.
+-- The file lives in Storage; the event keeps its path. A new picture is a new file with a new name, so a
+-- phone that kept the old one never shows it in place of the new.
+
+alter table public.events add column if not exists thumbnail_path text check (length(thumbnail_path) <= 200);
+grant update (thumbnail_path) on public.events to authenticated; -- only with the manager policy in section 3
+
+-- A PUBLIC bucket, on purpose: this picture is shown on every row of the schedule, and a public address
+-- lets the phone keep it. It is event artwork chosen by an admin, not a private photo; anyone holding a
+-- file's address can open it, and the address is not guessable (two random ids). JPEG only, 200 KB at most:
+-- Storage enforces both, whatever a browser sends.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('event-thumbnails', 'event-thumbnails', true, 204800, array['image/jpeg'])
+on conflict (id) do update
+set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+-- Only event managers put files in, list them or take them out. Reading a file through its public
+-- address needs no policy; that is what "public" means.
+drop policy if exists "Event managers manage event pictures" on storage.objects;
+create policy "Event managers manage event pictures" on storage.objects
+  for all to authenticated
+  using (bucket_id = 'event-thumbnails' and (select public.has_permission('events.manage')))
+  with check (bucket_id = 'event-thumbnails' and (select public.has_permission('events.manage')));
 
 -- 4. Seed data ------------------------------------------------------------
 -- Until the admin page exists, these rows are how the feature is exercised: one normal case and every
@@ -264,7 +291,7 @@ select id, 'en', 'Sunday service', 'Main hall' from new_event
 union all
 select id, 'vi', 'Lễ Chúa nhật', 'Hội trường chính' from new_event;
 
--- D: weekly for a group only, ending in two months, with next week's occurrence cancelled.
+-- D: weekly, once for a group only (the column is unused now), ending in two months, with next week's occurrence cancelled.
 with new_event as (
   insert into public.events (group_id, starts_at, repeats_weekly, repeat_until)
   select id, now() + interval '3 days', true, (now() + interval '2 months')::date
@@ -323,6 +350,9 @@ join public.event_texts t on t.event_id = e.id and t.language = 'en'
 where t.title in ('Church picnic', 'Sunday service');
 
 -- 5. Undo (removing the feature) ------------------------------------------
+-- Empty the bucket in the dashboard first (Storage → event-thumbnails), then:
+-- drop policy if exists "Event managers manage event pictures" on storage.objects;
+-- delete from storage.buckets where id = 'event-thumbnails';
 -- drop function if exists public.upcoming_events (timestamptz, timestamptz);
 -- drop function if exists public.managed_events ();
 -- drop table if exists public.event_reminders, public.event_cancellations,

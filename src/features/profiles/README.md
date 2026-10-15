@@ -86,3 +86,13 @@ name), which can each be run again by themselves: that is how they are changed.
 This is a foundation: chat, prayer and the groups admin stop showing who wrote what. Delete this folder and
 the lines marked `PROFILES`; show `sender_email` and `user_email` again; recreate `prayer_feed` with
 `author_email`; run the DROP statements at the bottom of `schema.sql`.
+
+## Name notifications are switched off (2026-10-12)
+`SWITCHES.namePush` is `false`: a name waiting for approval and an approved name still save, and tell nobody
+(`server/nameRequests.ts`). Admins find waiting names on the Admin tab.
+
+## Name from the sign-up screen (2026-10-14)
+The sign-up screen asks for the name with the email and password. It travels as the account's `name`
+metadata, and `create_profile()` (schema.sql, section 2) saves it as the name at once: a new account is in
+no group, where no approval is needed. Blank or longer than 60 characters, it falls back to the email's
+stand-in and `NameStep` asks as before. **Needs section 2 run again** (`create or replace`, safe to repeat).

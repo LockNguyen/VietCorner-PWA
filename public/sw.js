@@ -9,7 +9,8 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 self.addEventListener("push", (event) => {
   const data = event.data ? event.data.json() : {};
   event.waitUntil(
-    self.registration.showNotification(data.title || "VietCorner", {
+    // The fallback is the app's name, kept the same as APP_NAME in src/lib/appName.ts (this file cannot import it).
+    self.registration.showNotification(data.title || "Viet Corners", {
       body: data.body,
       icon: "/icons/icon-192.png",
       // Same topic = same tag: the new notification replaces the old one in the tray instead of stacking.

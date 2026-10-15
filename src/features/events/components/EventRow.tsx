@@ -4,9 +4,10 @@ import ListRow from "@/components/ui/ListRow";
 import RowLabel from "@/components/ui/RowLabel";
 import Thumbnail from "@/components/ui/Thumbnail";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { publicFileUrl } from "@/lib/publicFileUrl";
 import { formatTime } from "../formatting";
 import { STRINGS } from "../strings";
-import type { Occurrence } from "../types";
+import { THUMBNAIL_BUCKET, type Occurrence } from "../types";
 
 type Props = { occurrence: Occurrence; onOpen: () => void };
 
@@ -14,7 +15,7 @@ type Props = { occurrence: Occurrence; onOpen: () => void };
 export default function EventRow({ occurrence, onOpen }: Props) {
   const { t, language } = useLanguage(); // I18N
   const { event, startsAt, canceled } = occurrence;
-  const notes = [canceled && t(STRINGS.canceled), event.text.location, event.group_id && t(STRINGS.groupOnly)];
+  const notes = [canceled && t(STRINGS.canceled), event.text.location];
 
   return (
     <ListRow
@@ -22,7 +23,7 @@ export default function EventRow({ occurrence, onOpen }: Props) {
       leading={
         <>
           <RowLabel>{formatTime(startsAt, language)}</RowLabel>
-          <Thumbnail />
+          <Thumbnail src={event.thumbnail_path ? publicFileUrl(THUMBNAIL_BUCKET, event.thumbnail_path) : undefined} />
         </>
       }
       title={event.text.title}

@@ -6,7 +6,8 @@ import { usePending } from "@/lib/usePending";
 import { signOut } from "../api";
 import { STRINGS } from "../strings";
 
-export default function SignOutButton() {
+// Signs out and returns to sign-in. `variant`: a full button in Settings, a quiet link on the install guide.
+export default function SignOutButton({ variant = "quiet" }: { variant?: "quiet" | "text" }) {
   const { t } = useLanguage(); // I18N
   const { pending, run } = usePending<"signOut">();
 
@@ -18,7 +19,7 @@ export default function SignOutButton() {
   }
 
   return (
-    <Button variant="quiet" pending={pending === "signOut"} onClick={() => run("signOut", handleClick)}>
+    <Button variant={variant} pending={pending === "signOut"} onClick={() => run("signOut", handleClick)}>
       {t(STRINGS.signOutButton)}
     </Button>
   );

@@ -3,7 +3,6 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
-import Select from "@/components/ui/Select";
 import Switch from "@/components/ui/Switch";
 import TextArea from "@/components/ui/TextArea";
 import TextInput from "@/components/ui/TextInput";
@@ -13,11 +12,10 @@ import { LANGUAGE_NAMES, LANGUAGES, type Language } from "@/features/i18n/types"
 import { usePending } from "@/lib/usePending";
 import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
-import type { EventDraft, EventGroup } from "../types";
+import type { EventDraft } from "../types";
 
 type Props = {
   initial: EventDraft;
-  groups: EventGroup[];
   onSave: (draft: EventDraft) => Promise<void>;
 };
 
@@ -30,7 +28,7 @@ const TEXT_FIELDS = [
 
 // Adding or changing an event. Each text is asked in one language, then the other, so a translation is
 // written under its original. Times are church time whatever device the admin holds (draft.ts converts).
-export default function EventForm({ initial, groups, onSave }: Props) {
+export default function EventForm({ initial, onSave }: Props) {
   const { t } = useLanguage(); // I18N
   const [draft, setDraft] = useState(initial);
   // What is wrong is said once Save has been tried, and from then on as the fields change.
@@ -82,17 +80,6 @@ export default function EventForm({ initial, groups, onSave }: Props) {
           value={draft.endsAt}
           onChange={(event) => setDraft({ ...draft, endsAt: event.target.value })}
         />
-      </Field>
-
-      <Field label={t(STRINGS.forWhomField)}>
-        <Select value={draft.groupId ?? ""} onChange={(event) => setDraft({ ...draft, groupId: event.target.value || null })}>
-          <option value="">{t(STRINGS.churchWide)}</option>
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name}
-            </option>
-          ))}
-        </Select>
       </Field>
 
       <Switch

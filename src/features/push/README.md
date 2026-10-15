@@ -21,6 +21,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Routes | `src/app/api/push/subscribe/route.ts` | Verify (401) → validate (400) → `saveSubscription` → 204 |
 | State | `hooks/usePushNotifications.ts` | Status (`unsupported/blocked/off/on/error`), re-saves the subscription on every open, `enable()` |
 | UI | `components/NotificationSection.tsx` | The Settings block: one switch, on or off for this device, and a line when the phone stands in the way |
+| UI | `components/NotificationStep.tsx` + `hooks/useNotificationStep.ts` | The setup screen "Turn on notifications": shown by the layout after the name until they are on or the person taps "No, not for now". The answer is the cookie `NOTIFICATIONS_ASKED_COOKIE` (`types.ts`, 400 days). Already on, or impossible here (unsupported) → it records that and moves on by itself |
 | UI | `components/KeepSubscribed.tsx` | Draws nothing: saves the device's subscription again on every opening of the app (root layout) |
 | Text | `strings.ts` | The toggle's labels |
 | Server logic | `server/sendPush.ts` | `sendPush(userIds, notification)`: **admin** client → who is due (the pause) → their devices → `web-push`. Deletes rows on 404/410. |
@@ -122,3 +123,19 @@ the device over. `tests/rls.test.ts` keeps the direct takeover refused.
 - The repair that used to run when the Groups page opened now runs once per opening of the app
   (`KeepSubscribed`), for anyone signed in.
 - **Not seen on a phone or on screen (2026-10-09).**
+
+## What is sent now (2026-10-12)
+Notifications annoyed people, so only three kinds are left on:
+| Notification | State | Where it is decided |
+|---|---|---|
+| Prayer reminder (weekly, whole church) | **on** | prayer |
+| Someone signed up and waits (to admins) | **on** | approval |
+| You were approved (to the person) | **on** | approval |
+| Chat message | off with `SWITCHES.chat` | the chat route |
+| Join request / joined | off with `SWITCHES.joining` | the groups routes |
+| Event cancelled / back on | off, `eventChangePush` | `events/server/changeSchedule.ts` |
+| Event reminder | off, `eventReminders` | the reminders route |
+| "N people prayed for you" | off, `prayedForPush` | `prayer/server/prayFor.ts` |
+| Name waiting / name approved | off, `namePush` | `profiles/server/nameRequests.ts` |
+
+Each off line is one constant in `src/lib/switches.ts`; the action behind it still happens, it only tells nobody.

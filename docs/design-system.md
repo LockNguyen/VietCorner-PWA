@@ -116,8 +116,9 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 - **Buttons:** `touch` tall, `radius-control`, flat. One `primary` per screen or sheet at most. `danger` is
   for what cannot be undone from the app (remove a group, cancel an event for good, delete a request);
   everything else that changes something is `quiet`; `text` backs out.
-- **Fields:** a label above in `text-small` `subtle`. Sign-in is the one exception: its single field has
-  the hint inside, under a sentence that says what to enter.
+- **Fields:** a label above in `text-small` `subtle`. Sign-in is the one exception: its two fields carry
+  their word inside (as in the big messaging apps), so the screen is the logo, two fields and one button.
+  A password field shows an eye at its end (`PasswordInput`) instead of a "Show password" switch.
 - **Forms** say what is wrong on submit, then live while the field is being fixed. Hints sit beside the
   field, never in a banner.
 - **Banners:** at the bottom, above the tab bar. Success stays 2 seconds, errors 8; a tap dismisses one

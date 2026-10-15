@@ -8,12 +8,12 @@ export const MANAGE_EVENTS = "events.manage";
 // What the event IS: when it happens, how often, and whether it is off.
 export type EventRow = {
   id: string;
-  group_id: string | null; // null = church-wide
   starts_at: string;
   ends_at: string | null;
   repeats_weekly: boolean;
   repeat_until: string | null;
   canceled_at: string | null;
+  thumbnail_path: string | null; // its picture's file in THUMBNAIL_BUCKET; null = none
 };
 
 // What the event SAYS, in one language.
@@ -42,7 +42,10 @@ export type ScheduledEvent = EventRow & {
 };
 
 // The `events` columns the reminder scheduler asks for (server/sendDueReminders.ts), named once.
-export const EVENT_COLUMNS = "id, group_id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at";
+export const EVENT_COLUMNS = "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path";
+
+// The public storage bucket the events' pictures live in (schema.sql section 3e makes it).
+export const THUMBNAIL_BUCKET = "event-thumbnails";
 
 // How long before an event a reminder can be sent, in minutes.
 // why: a day to plan, two hours to get ready, thirty minutes to leave. Fixed choices instead of a number
@@ -68,13 +71,9 @@ export type ManagedEvent = EventRow & {
 // What the event form holds. Times are church wall time ("YYYY-MM-DDTHH:mm", what a datetime-local input
 // uses) and every field is a string the admin can still be typing; draft.ts turns it into rows.
 export type EventDraft = {
-  groupId: string | null; // null = church-wide
   startsAt: string;
   endsAt: string; // "" = no end time
   repeatsWeekly: boolean;
   repeatUntil: string; // YYYY-MM-DD, "" = no end
   texts: Record<Language, { title: string; description: string; location: string }>;
 };
-
-// The groups an event can be for. The page passes them in, so this feature never imports `groups`.
-export type EventGroup = { id: string; name: string };

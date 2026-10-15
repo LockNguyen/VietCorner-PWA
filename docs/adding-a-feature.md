@@ -45,6 +45,11 @@ data has no `server/queries.ts`. **Do not create an empty file to satisfy the li
 Every table in `public` must have RLS enabled. A table without it is readable by anyone holding the anon
 key, which ships in the browser. Four patterns cover everything we have built so far:
 
+**Every table a member can reach also needs the door:** one line in `features/approval/schema.sql`
+section 3 ("Approved accounts only"). Sign-up is open, so "signed in" means "anyone with an email address";
+that restrictive policy is what turns it into "approved by an admin". A view or function that skips row
+rules asks `has_permission('app.use')` itself.
+
 ```sql
 -- Pattern A: rows that belong to one user (push_subscriptions, prayer requests, account settings)
 alter table public.<table> enable row level security;
@@ -180,6 +185,7 @@ A sentence with a number in it is a function returning a `Text` (`prayedForYou(c
 
 - [ ] `npm run build` passes (it type-checks).
 - [ ] `npm test` and, if you added a table, `npm run test:rls` pass.
+- [ ] A new table has its line in `features/approval/schema.sql` section 3.
 - [ ] The feature README is filled in, including **Expected behavior** (what a tester should see) and **Remove**.
 - [ ] `.claude/architecture.md`: one paragraph in §6, any new env var in §8, a Key Decision row for anything
       non-obvious, and a line in the change log.

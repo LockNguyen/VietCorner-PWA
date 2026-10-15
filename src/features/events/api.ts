@@ -1,12 +1,13 @@
 import { LANGUAGES } from "@/features/i18n/types"; // I18N
+import { shrinkToThumbnail } from "@/lib/shrinkImage";
 import { createClient } from "@/lib/supabase/client";
 import { rowOf, textOf } from "./draft";
 import { scheduleWindow } from "./occurrences";
-import type { EventDraft, ScheduledEvent } from "./types";
+import { THUMBNAIL_BUCKET, type EventDraft, type ScheduledEvent } from "./types";
 
 // Events API: every call the browser makes for this feature. Members only read: `getSchedule`. Everything
 // else here is an action of someone with the "events.manage" permission.
-// - Saving, and choosing reminders, go straight to Supabase. RLS in schema.sql refuses anyone without the permission.
+// - Saving, choosing reminders and the picture go straight to Supabase. RLS in schema.sql refuses anyone without the permission.
 // - Cancelling and undoing go through our API route, because they also notify members (needs secrets).
 
 // GET the schedule again, as the page first read it (server/queries.ts): one call to `upcoming_events()`.
@@ -57,6 +58,35 @@ export async function setReminder(eventId: string, minutesBefore: number, on: bo
       )
     : await reminders.delete().eq("event_id", eventId).eq("minutes_before", minutesBefore);
   if (error) throw new Error(error.message);
+}
+
+// PUT an event's picture: shrunk on this device, stored under a new name, then recorded on the event.
+// `replaces` is the picture it had, whose file is erased last. A new name each time, because a phone keeps
+// a public file by its address: the same address would go on showing the old picture.
+export async function setThumbnail(eventId: string, file: Blob, replaces: string | null): Promise<void> {
+  const supabase = createClient();
+  const bucket = supabase.storage.from(THUMBNAIL_BUCKET);
+  const path = `${eventId}/${crypto.randomUUID()}.jpg`;
+
+  const { error: uploadError } = await bucket.upload(path, await shrinkToThumbnail(file), { contentType: "image/jpeg" });
+  if (uploadError) throw new Error(uploadError.message);
+
+  // RLS does not refuse an update it forbids, it matches no row: the row is asked back to tell.
+  const { data, error } = await supabase.from("events").update({ thumbnail_path: path }).eq("id", eventId).select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No such event, or not allowed");
+
+  if (replaces) await bucket.remove([replaces]); // best-effort: a file left behind is on no screen
+}
+
+// DELETE an event's picture: taken off the event, then its file erased.
+export async function removeThumbnail(eventId: string, path: string): Promise<void> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("events").update({ thumbnail_path: null }).eq("id", eventId).select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No such event, or not allowed");
+
+  await supabase.storage.from(THUMBNAIL_BUCKET).remove([path]); // best-effort, as above
 }
 
 // POST a cancellation: one week when `occurrenceDate` (YYYY-MM-DD, church date) is given, otherwise the

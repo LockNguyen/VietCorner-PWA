@@ -55,12 +55,12 @@ describe("a stored event → what the form shows", () => {
   it("shows church time and both languages, and survives the round trip", () => {
     const stored: ManagedEvent = {
       id: "event-1",
-      group_id: "group-1",
       starts_at: "2026-12-03T00:00:00.000Z",
       ends_at: "2026-12-03T01:30:00.000Z",
       repeats_weekly: true,
       repeat_until: "2026-12-31",
       canceled_at: null,
+      thumbnail_path: null,
       texts: { vi: { title: "Học Kinh Thánh", description: null, location: "Phòng 2" } },
       upcoming: [],
       reminderMinutes: [],
@@ -73,7 +73,6 @@ describe("a stored event → what the form shows", () => {
     expect(shown.texts.en.title).toBe("");
     expect(shown.texts.vi.location).toBe("Phòng 2");
     expect(rowOf(shown)).toEqual({
-      group_id: "group-1",
       starts_at: stored.starts_at,
       ends_at: stored.ends_at,
       repeats_weekly: true,

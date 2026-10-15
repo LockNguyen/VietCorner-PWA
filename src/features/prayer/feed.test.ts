@@ -8,8 +8,6 @@ const START = Date.parse("2026-10-01T00:00:00Z");
 function request(n: number): PrayerRequest {
   return {
     id: String(n),
-    group_id: "g",
-    group_name: "Bible Study",
     body: `request ${n}`,
     is_anonymous: false,
     created_at: new Date(START + n * 60_000).toISOString(),

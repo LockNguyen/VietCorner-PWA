@@ -4,6 +4,12 @@ import type { DraftProblem } from "./draft";
 // Every word this feature shows a user, in both languages. Event titles are not here: those are data an
 // admin writes, and they live in `event_texts`.
 export const STRINGS = {
+  // The event's picture (admin editor)
+  pictureHeading: { en: "Picture", vi: "Hình" } satisfies Text,
+  choosePicture: { en: "Choose a picture", vi: "Chọn hình" } satisfies Text,
+  changePicture: { en: "Choose another picture", vi: "Chọn hình khác" } satisfies Text,
+  removePicture: { en: "Remove the picture", vi: "Gỡ hình" } satisfies Text,
+
   emptyState: {
     en: "No events in the next weeks.",
     vi: "Không có sự kiện nào trong vài tuần tới.",
@@ -11,16 +17,13 @@ export const STRINGS = {
   canceled: { en: "Cancelled", vi: "Đã hủy" } satisfies Text,
   today: { en: "Today", vi: "Hôm nay" } satisfies Text,
   tomorrow: { en: "Tomorrow", vi: "Ngày mai" } satisfies Text,
-  groupOnly: { en: "Group event", vi: "Sự kiện của nhóm" } satisfies Text,
   everyWeek: { en: "Every week", vi: "Hằng tuần" } satisfies Text,
   location: { en: "Location", vi: "Địa điểm" } satisfies Text,
-  close: { en: "Close", vi: "Đóng" } satisfies Text,
 
   // Admin section
   adminHeading: { en: "Events", vi: "Sự kiện" } satisfies Text,
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
   untitled: { en: "(no title)", vi: "(chưa có tên)" } satisfies Text,
-  churchWide: { en: "Whole church", vi: "Cả hội thánh" } satisfies Text,
   editEvent: { en: "Edit event", vi: "Sửa sự kiện" } satisfies Text,
   nextDates: { en: "Next dates", vi: "Các buổi sắp tới" } satisfies Text,
   cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,
@@ -32,7 +35,6 @@ export const STRINGS = {
   descriptionField: { en: "Description", vi: "Mô tả" } satisfies Text,
   startsField: { en: "Starts (church time)", vi: "Bắt đầu (giờ hội thánh)" } satisfies Text,
   endsField: { en: "Ends (optional)", vi: "Kết thúc (không bắt buộc)" } satisfies Text,
-  forWhomField: { en: "For", vi: "Dành cho" } satisfies Text,
   repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (không bắt buộc)" } satisfies Text,
 
   remindersHeading: { en: "Remind members", vi: "Nhắc thành viên" } satisfies Text,

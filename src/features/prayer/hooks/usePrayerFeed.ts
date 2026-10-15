@@ -65,7 +65,7 @@ export function usePrayerFeed(initialRequests: PrayerRequest[]) {
       return loaded;
     },
 
-    // The new request is read back rather than built here: its author line and group name are the view's
+    // The new request is read back rather than built here: its author line is the view's
     // to decide. Starting again from the newest page also picks up what others posted meanwhile.
     post: (request: NewPrayerRequest) =>
       attempt(async () => {

@@ -1,12 +1,12 @@
 "use client";
 
-import Button from "@/components/ui/Button";
 import Sheet from "@/components/ui/Sheet";
 import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { formatLongDate, formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 import type { Occurrence } from "../types";
+import { COMMON } from "@/features/i18n/common"; // I18N
 
 type Props = { occurrence: Occurrence; onClose: () => void };
 
@@ -17,7 +17,7 @@ export default function EventDetails({ occurrence, onClose }: Props) {
   const { event, startsAt, endsAt, canceled } = occurrence;
 
   return (
-    <Sheet title={event.text.title} onClose={onClose}>
+    <Sheet title={event.text.title} closeLabel={t(COMMON.close)} onClose={onClose}>
       {canceled && <Text tone="danger">{t(STRINGS.canceled)}</Text>}
 
       <Text>
@@ -42,9 +42,6 @@ export default function EventDetails({ occurrence, onClose }: Props) {
         </div>
       )}
 
-      <Button variant="quiet" onClick={onClose}>
-        {t(STRINGS.close)}
-      </Button>
     </Sheet>
   );
 }

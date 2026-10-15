@@ -11,4 +11,7 @@ export const SHELL_STRINGS = {
   settingsTab: { en: "Settings", vi: "Cài đặt" } satisfies Text,
   adminTab: { en: "Admin", vi: "Quản trị" } satisfies Text,
   signInTitle: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
+  close: { en: "Close", vi: "Đóng" } satisfies Text,
+  setupStep: { en: "Step", vi: "Bước" } satisfies Text, // "Step 3 / 7" above the setup screens
+
 };

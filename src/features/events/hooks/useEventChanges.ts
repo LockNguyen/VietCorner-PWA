@@ -6,7 +6,7 @@ import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { useGoTo } from "@/lib/useGoTo";
 import { useRefresh } from "@/lib/useRefresh";
-import { cancelEvent, restoreDate, saveEvent, setReminder } from "../api";
+import { cancelEvent, removeThumbnail, restoreDate, saveEvent, setReminder, setThumbnail } from "../api";
 import { STRINGS } from "../strings";
 import type { EventDraft } from "../types";
 
@@ -39,6 +39,8 @@ export function useEventChanges(eventId: string | undefined, listHref: string) {
     cancelDate: (churchDate: string) => change(() => cancelEvent(id, churchDate), STRINGS.canceled),
     restoreDate: (churchDate: string) => change(() => restoreDate(id, churchDate), STRINGS.backOn),
     setReminder: (minutesBefore: number, on: boolean) => change(() => setReminder(id, minutesBefore, on), COMMON.saved),
+    setThumbnail: (file: Blob, replaces: string | null) => change(() => setThumbnail(id, file, replaces), COMMON.saved),
+    removeThumbnail: (path: string) => change(() => removeThumbnail(id, path), COMMON.removed),
     cancelForGood: () => change(() => cancelEvent(id), STRINGS.canceled, true),
   };
 }

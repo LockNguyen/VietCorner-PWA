@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { approveJoinRequest } from "@/features/groups/server/joinRequests";
 import { createClient } from "@/lib/supabase/server";
+import { SWITCHES } from "@/lib/switches";
 
 // POST { groupId, userId } → makes that person a member and tells them.
 export async function POST(request: Request) {
+  if (!SWITCHES.joining) return NextResponse.json({ error: "Switched off" }, { status: 404 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });

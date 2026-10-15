@@ -8,12 +8,12 @@ const MONDAY = new Date("2026-10-05T18:00:00Z");
 function makeEvent(overrides: Partial<ChurchEvent> = {}): ChurchEvent {
   return {
     id: "event-1",
-    group_id: null,
     starts_at: MONDAY.toISOString(),
     ends_at: null,
     repeats_weekly: false,
     repeat_until: null,
     canceled_at: null,
+    thumbnail_path: null,
     text: { title: "Prayer evening", description: null, location: null },
     ...overrides,
   };

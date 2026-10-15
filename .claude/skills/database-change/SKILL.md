@@ -26,6 +26,9 @@ Pick the pattern (full SQL in `docs/adding-a-feature.md` §3):
   Such a column is null in the SQL Editor, so seed rows cannot use it: seed only tables that do not have one.
 - `with check` on every insert/update policy. Without it a user can write rows they cannot read.
 - DROP statements at the bottom of the same `schema.sql`, so removal is copy-paste.
+- A line for the table in `features/approval/schema.sql` section 3 ("Approved accounts only"), unless a
+  person still waiting to be let in needs it. Without it the table is open to anyone who signs up.
+  A view or function that skips row rules checks `has_permission('app.use')` itself.
 - A case in `tests/rls.test.ts` per new table: the owner can read/write, another signed-in user cannot.
 - The test makes **the same call `api.ts` makes**. An `upsert` is an insert *and* an update: it needs the
   update grant and passes the update policy, even when no row exists yet. A test that used `insert` passed

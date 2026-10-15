@@ -64,3 +64,11 @@ about church-wide permissions.
 Switch the hook off in the dashboard **first**. Then run the DROP statements in `schema.sql` (they also drop
 every policy that uses `has_permission`), delete this folder and `src/app/admin/`, and remove the
 `// PERMISSIONS` lines in `layout.tsx` and `AppTabs.tsx`.
+
+## Being a member is a permission too (2026-10-12)
+- `app.use` is what lets an account reach anything beyond its own name, language and device. The roles
+  `member` and `admin` both grant it (`schema.sql` section 4b); `USE_THE_APP` in `types.ts` is its name.
+- Who gets the role `member` is the `approval` feature: an admin's tap.
+- **"Has any permission" no longer means admin.** `managesSomething(permissions)` (`types.ts`) is what the
+  layout, the Admin page and `/ui` ask.
+- `getUserIdsWithPermission(admin, USE_THE_APP)` is "every approved member": who a church-wide notification goes to.

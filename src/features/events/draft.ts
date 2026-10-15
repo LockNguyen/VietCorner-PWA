@@ -12,7 +12,6 @@ const NO_TEXT = { title: "", description: "", location: "" };
 
 export function emptyDraft(): EventDraft {
   return {
-    groupId: null,
     startsAt: "",
     endsAt: "",
     repeatsWeekly: false,
@@ -29,7 +28,6 @@ export function draftOf(event: ManagedEvent): EventDraft {
   });
 
   return {
-    groupId: event.group_id,
     startsAt: wallTime(new Date(event.starts_at)),
     endsAt: event.ends_at ? wallTime(new Date(event.ends_at)) : "",
     repeatsWeekly: event.repeats_weekly,
@@ -52,7 +50,6 @@ export function problemWith(draft: EventDraft): DraftProblem | null {
 // leftover "repeat until" cannot cut off an event that no longer repeats.
 export function rowOf(draft: EventDraft) {
   return {
-    group_id: draft.groupId,
     starts_at: toInstant(draft.startsAt).toISOString(),
     ends_at: draft.endsAt ? toInstant(draft.endsAt).toISOString() : null,
     repeats_weekly: draft.repeatsWeekly,

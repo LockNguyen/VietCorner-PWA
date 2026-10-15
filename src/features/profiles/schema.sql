@@ -21,17 +21,28 @@ create table public.profiles (
 -- Created by the database the moment an account is, so no screen ever meets a person without a name and
 -- no code needs a fallback. It runs as its owner because the signing-in user has no insert grant.
 -- Kept trivial on purpose: if this function fails, the sign-up fails with it.
-create function public.create_profile() returns trigger
+-- The name typed on the sign-up screen arrives as the account's `name` metadata (auth's `signUp`), and is
+-- the name at once: a brand-new account is in no group, where a name needs nobody's approval (section 5).
+-- Missing, blank or too long, it falls back to the email's stand-in, and the app asks (NameStep).
+-- `create or replace`: this block (down to the trigger) can be run again by itself (2026-10-14).
+create or replace function public.create_profile() returns trigger
 language plpgsql security definer set search_path = '' as $$
+declare
+  typed text := btrim(coalesce(new.raw_user_meta_data ->> 'name', ''));
 begin
-  insert into public.profiles (user_id, name)
-  values (new.id, coalesce(nullif(left(split_part(coalesce(new.email, ''), '@', 1), 60), ''), '?'));
+  if char_length(typed) between 1 and 60 then
+    insert into public.profiles (user_id, name, named_at) values (new.id, typed, now());
+  else
+    insert into public.profiles (user_id, name)
+    values (new.id, coalesce(nullif(left(split_part(coalesce(new.email, ''), '@', 1), 60), ''), '?'));
+  end if;
   return new;
 end;
 $$;
 
 revoke execute on function public.create_profile () from public, anon, authenticated;
 
+drop trigger if exists create_profile_for_new_user on auth.users;
 create trigger create_profile_for_new_user
   after insert on auth.users
   for each row execute function public.create_profile();

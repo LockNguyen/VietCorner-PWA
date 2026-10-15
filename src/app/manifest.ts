@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
+import { APP_NAME } from "@/lib/appName";
 
 // Next.js serves this at /manifest.webmanifest. It makes the site installable as an app.
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Góc Việt · VietCorners",
-    short_name: "Góc Việt", // what sits under the icon: about twelve characters fit
+    name: APP_NAME,
+    short_name: APP_NAME, // what sits under the icon: about twelve characters fit
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

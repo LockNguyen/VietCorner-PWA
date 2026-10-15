@@ -1,0 +1,124 @@
+# group-info
+
+The Groups tab: every group of the church, and a sheet about each one: how many people, when and where it
+meets, notes, and its pictures. Admins keep the details; a group's own people add its pictures.
+
+System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
+
+## Setup
+1. Run `features/groups/schema.sql` first (section 2c included: `groups.member_count`).
+2. Run this `schema.sql`, all of it (safe to run again). Section 5 also makes the private storage bucket
+   `group-photos` and its three rules.
+3. Run the `group_info` and `group_photos` lines of `features/approval/schema.sql` section 3
+   ("Approved accounts only").
+
+## Files
+| Layer | File | Job |
+|---|---|---|
+| Data | `schema.sql` | `group_info`, `group_photos`, `may_add_group_photo()`, `group_directory()`, the bucket and its rules, grants, RLS, the DROPs |
+| Types | `types.ts` | `DirectoryGroup`, `DetailField`, `Photo`, `NewPhoto`, `photoPaths`, and every limit and size, each with its why |
+| Browser API | `api.ts` | `getGroupDirectory`, `saveGroupDetail` (one detail), `saveMemberCount`, `getPhotos` (a page, signed), `addPhoto`, `removePhoto` |
+| Server reads | `server/queries.ts` | `getGroupDirectory` |
+| State | `hooks/useGroupPhotos.ts` | A group's pictures: the first page, more at the end, add, remove |
+| UI | `components/GroupDirectory.tsx` | The list; which group's sheet is open |
+| UI | `components/GroupInfoSheet.tsx` | The sheet: the number of members, the three details, the pictures; which line is being edited |
+| UI | `components/GroupDetail.tsx` | One labelled line, with a pencil for a group manager |
+| UI | `components/GroupDetailForm.tsx` | One line as a box, with Save and Cancel |
+| UI | `components/GroupPhotos.tsx` | The strip, the large view, "Add a photo" (the group's people, managers) and "Remove this photo" (managers) |
+| UI | `components/PhotoStripEnd.tsx` | The marker after the last picture: scrolled into view, it loads more |
+| UI | `components/AddPhotoForm.tsx` | The picture, an optional date, an optional line of words |
+| Text | `strings.ts` | Labels. What a group writes is data |
+| Shell | `src/app/groups/page.tsx` (`// GROUP-INFO` lines) | Draws this list, or the old one when `oldGroupsPage` is on |
+| Shared UI | `src/components/ui/PhotoStrip.tsx`, `PhotoThumb.tsx`, `Lightbox.tsx` | Built for this feature; shown on `/ui` |
+
+## Decisions worth knowing
+- **It replaces the old Groups page, which is switched off, not deleted** (`SWITCHES.oldGroupsPage`). The
+  old list (rows that ask to join or open a chat) belongs to `groups` and is still there.
+- **`groups` is depended on in SQL only**, the way events and prayer once did: `group_directory()` joins
+  `groups`, `group_members` and `group_info`. Nothing here imports that folder.
+- **One read for the page** (`group_directory()`): name, size, details and "am I in it" per group. It runs
+  with the caller's rights, so it opens nothing a direct read would not.
+- **Everyone approved reads every group's details**; that is the point of the page. Who is in a group is
+  not shown to members at all.
+- **Who may do what** (decided with the user, 2026-10-12, replacing "the group's people edit"):
+
+  | | Everyone approved | In the group | `groups.manage` |
+  |---|---|---|---|
+  | Read details and pictures | yes | yes | yes |
+  | Change when / where / notes, and the number of members | | | yes |
+  | Add a picture | | yes | yes |
+  | Remove a picture | | | yes |
+
+  Why: when and where a group meets is the church's word, so an admin keeps it; pictures come from the
+  people who were there; removing is the one thing that cannot be undone, so it is an admin's.
+  The database holds every line of this table (`schema.sql` sections 3 and 5); the pencils and buttons
+  only follow it. `may_add_group_photo()` is the "add" rule, shared by a picture's row and its file.
+- **Someone who added the wrong picture cannot take it back**; they ask an admin.
+- **A pencil per line** (decided with the user): each line turns into its own box with Save and Cancel, and
+  a save sends that one detail. A group manager sees every line, empty ones as "Not said yet".
+- **When, where and notes are free text in one language**, as the group wrote them: "Fridays, 7:30 PM" is
+  not a schedule the app computes with. Events are for that.
+- **One row per group, made on the first save** (`upsert`). That call rewrites every column it sends (the
+  group's id and one detail), so the update grant lists `group_id` too; the policy keeps a row with its group.
+- **No history and no "edited by"**: any member of the group may overwrite another's words.
+
+## Pictures
+- **Where:** a private Supabase Storage bucket, `group-photos`. A picture is two files,
+  `<group id>/<photo id>.jpg` (longest side 1600) and `…-small.jpg` (400), and one row of `group_photos`
+  (optional date, optional caption, who added it).
+- **Private, and why:** these are pictures of church members, children among them. A file is served only
+  through an address signed for an approved, signed-in member, good for an hour.
+  The cost: a signed address is new each time, so the phone downloads a picture again on every visit
+  instead of keeping it. The small files are about 30 KB each, six at a time.
+- **Shrunk on the phone before sending** (`src/lib/shrinkImage.ts`, shared with the row pictures): a camera photo is 3 to 8 MB; what is stored is
+  about 300 KB plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
+  over 1 MB or not a JPEG, so a caller that skips the shrinking is refused, not trusted.
+- **Six at a time**, newest first, loaded when the sheet opens, not with the page. Scrolling the strip to
+  its end loads the next six (`PhotoStripEnd`, `useWhenVisible`).
+- **Files first, then the row.** A row without files would draw as a grey square; files without a row are
+  only unseen. Removing is the other way round: the row, then the files.
+- **No editing.** A wrong date or caption is fixed by removing the picture and adding it again.
+- **Removing is for good** and asks nothing, like every removal in this app. Only a group manager removes.
+- **Not moderated before showing.** A group's own people and admins add; an admin removes what should not be there.
+
+## Expected behavior
+- Groups tab: every active group by name, each row its picture (set by an admin on the Admin tab; the
+  people icon until then), the name, and beneath it "Your group" (if I am
+  in it), "12 members" (if an admin typed a number) and when it meets (if said). A chevron at the right.
+- Tapping a row opens a sheet titled with the group's name: Members, When, Where, Notes, each a small label
+  over the words. A reader sees only the lines that were said ("No details yet." when none were).
+- An admin (`groups.manage`) sees Members, When, Where and Notes, each with a pencil. A pencil turns that line into a box with Save and Cancel. Save raises "Saved" and shows the new
+  words; Cancel changes nothing.
+- Under the lines, "Photos": a strip of square pictures, three and the edge of a fourth, fading out at the
+  right; it scrolls sideways, and at its end a turning circle appears while six more arrive.
+- Tapping a picture darkens the screen and shows it whole, with its date and words beneath, an X, and
+  arrows to the pictures either side (no arrow at the first and the last). Escape or the X closes it.
+- Someone in the group, and an admin, also see "Add a photo" (a form: the picture, a date, a few words;
+  "Sending…" while it uploads, then "Photo added" and the picture first in the strip). Only an admin
+  sees "Remove this photo" in the large view.
+- Someone who cannot add, looking at a group with no pictures, sees no Photos section at all.
+- The list refreshes itself on arrival and on return to the app.
+- **Observed 2026-10-12 on `/ui` at phone width:** the strip (three pictures of 93, the fourth's edge, the
+  fade, sideways scroll), the large view (picture whole, caption, Remove, X; no left arrow on the first
+  picture, both arrows on the second; Escape closes).
+- `tests/rls.test.ts`, "group_info" and "group_photos": who may write and who may not, for details, rows
+  and files; the bucket refusing a non-JPEG and an oversized file; a waiting or signed-out visitor getting
+  neither rows nor a signed address.
+- **Not exercised (2026-10-12):** the SQL is not run, so neither the security tests nor anything signed in:
+  the sheet, the pencils, a real upload from a phone (including an iPhone's HEIC photo), a real removal.
+
+## Edge cases
+- Before `schema.sql` is run the tab shows "There are no groups yet."
+- A removed group leaves the list, and its details can no longer be read or written; they stay stored.
+- Someone taken out of a group loses "Add a photo" the next time the list refreshes; an upload in between is refused.
+- A sheet left open for more than an hour shows broken pictures: their addresses ran out. Reopening it fixes it.
+- An upload cut off between the two files or before the row leaves files nobody sees; they only take up room.
+- A removed group's pictures leave with it (the rows are unreadable); the files stay in the bucket.
+- Free storage is 1 GB: about 3,000 pictures at these sizes. Nothing counts them or stops at a limit (B40).
+- Two members saving at once: the later save wins, whole.
+
+## Remove
+Delete this folder and the `// GROUP-INFO` lines in `src/app/groups/page.tsx` (the Groups tab then needs
+`oldGroupsPage` on, or its entries removed from `AppTabs.tsx` and `HomeTiles.tsx`). Run the DROP at the
+bottom of `schema.sql` (empty the bucket in the dashboard first). The three picture components in
+`src/components/ui/` and their demo on `/ui` can stay or go with it.

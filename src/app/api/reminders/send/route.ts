@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sendDueEventReminders } from "@/features/events/server/sendDueReminders";
 import { sendDuePrayerReminders } from "@/features/prayer/server/sendDueReminders";
+import { SWITCHES } from "@/lib/switches";
 
 // POST → sends every reminder that is due right now. Called every 15 minutes by a cron job in Supabase
 // (features/push/schema.sql, section 5), never by a browser.
@@ -20,7 +21,10 @@ export async function POST(request: Request) {
 
   const startedAt = Date.now();
   try {
-    const [events, prayer] = await Promise.all([sendDueEventReminders(), sendDuePrayerReminders()]);
+    const [events, prayer] = await Promise.all([
+      SWITCHES.eventReminders ? sendDueEventReminders() : 0,
+      sendDuePrayerReminders(),
+    ]);
     return NextResponse.json({ sent: { events, prayer }, tookMs: Date.now() - startedAt });
   } catch (error) {
     console.error("sending reminders failed", error);

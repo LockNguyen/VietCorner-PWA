@@ -77,6 +77,15 @@ $$;
 revoke execute on function public.has_permission (text) from public, anon;
 grant execute on function public.has_permission (text) to authenticated;
 
+-- 4b. Being a member at all ------------------------------------------------
+-- This section can be run again by itself.
+--
+-- "app.use" is what lets an account read or write anything beyond its own name, language and device: the
+-- approval feature's schema.sql asks for it on every table. An approved person holds the role "member";
+-- an admin has it too, so that the role "admin" alone is enough.
+insert into public.role_permissions (role, permission) values ('member', 'app.use'), ('admin', 'app.use')
+on conflict do nothing;
+
 -- 5. Making someone an admin (by hand, with their email) --------------------
 -- insert into public.user_roles (user_id, role)
 -- select id, 'admin' from auth.users where email = 'someone@example.com';

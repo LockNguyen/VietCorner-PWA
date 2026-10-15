@@ -3,8 +3,10 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 export type BannerKind = "success" | "error";
-export type Banner = { id: number; kind: BannerKind; message: string };
-type NewBanner = { kind: BannerKind; message: string; seconds?: number };
+// A way out offered with the message, drawn as a link ("Forgot password?"). Tapping it also puts the banner away.
+export type BannerAction = { label: string; onAct: () => void };
+export type Banner = { id: number; kind: BannerKind; message: string; action?: BannerAction };
+type NewBanner = { kind: BannerKind; message: string; seconds?: number; action?: BannerAction };
 
 // why: "Saved" needs a glance; an error has to be read, and one that vanishes mid-sentence is worse than one that lingers.
 const SECONDS: Record<BannerKind, number> = { success: 2, error: 8 };
@@ -26,9 +28,9 @@ export function BannerProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const show = useCallback(
-    ({ kind, message, seconds = SECONDS[kind] }: NewBanner) => {
+    ({ kind, message, action, seconds = SECONDS[kind] }: NewBanner) => {
       const id = nextId.current++;
-      setBanners((current) => [...current, { id, kind, message }]);
+      setBanners((current) => [...current, { id, kind, message, action }]);
       timers.current.set(id, setTimeout(() => dismiss(id), seconds * 1000));
     },
     [dismiss],
@@ -47,7 +49,8 @@ export function BannerProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Raises a banner: `showBanner({ kind: "error", message })`. `seconds` overrides how long it stays.
+// Raises a banner: `showBanner({ kind: "error", message })`. `seconds` overrides how long it stays;
+// `action` adds a link to the message.
 export function useBanner() {
   return useContext(ShowBanner);
 }

@@ -12,17 +12,17 @@ import { byWeekThenPerson } from "../grouping";
 import { usePrayerCooldown } from "../hooks/usePrayerCooldown";
 import { usePrayerFeed } from "../hooks/usePrayerFeed";
 import { STRINGS } from "../strings";
-import type { PostableGroup, PrayerRequest } from "../types";
+import type { PrayerRequest } from "../types";
 import OlderRequestsMarker from "./OlderRequestsMarker";
 import PrayerComposer from "./PrayerComposer";
 import PrayerWeek from "./PrayerWeek";
 import RequestOptions from "./RequestOptions";
 
-type Props = { initialRequests: PrayerRequest[]; groups: PostableGroup[]; userId: string };
+type Props = { initialRequests: PrayerRequest[]; userId: string };
 
-// The Prayer tab: the button that adds a request, then every request from my groups, by week and by person.
+// The Prayer tab: the button that adds a request, then every request in the church, by week and by person.
 // It connects the two hooks to the components below it; each of those only renders.
-export default function PrayerBoard({ initialRequests, groups, userId }: Props) {
+export default function PrayerBoard({ initialRequests, userId }: Props) {
   const { t } = useLanguage(); // I18N
   const feed = usePrayerFeed(initialRequests);
   const cooldown = usePrayerCooldown(userId);
@@ -44,8 +44,6 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
-  if (groups.length === 0) return <EmptyState message={t(STRINGS.noGroups)} />;
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex justify-end px-3 pt-2">
@@ -65,11 +63,7 @@ export default function PrayerBoard({ initialRequests, groups, userId }: Props) 
       {feed.hasMore && <OlderRequestsMarker onReached={() => report(feed.loadOlder())} loadedSoFar={feed.requests.length} />}
 
       {writing && (
-        <PrayerComposer
-          groups={groups}
-          onPost={(request) => report(feed.post(request), STRINGS.shared)}
-          onClose={() => setWriting(false)}
-        />
+        <PrayerComposer onPost={(request) => report(feed.post(request), STRINGS.shared)} onClose={() => setWriting(false)} />
       )}
 
       {managing && (

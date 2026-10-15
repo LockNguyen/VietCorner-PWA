@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SWITCHES } from "@/lib/switches";
 import type { NameOutcome } from "../types";
 import { notifyManagersOfNameRequest, notifyOfApprovedName } from "./notifyName";
 
@@ -27,6 +28,7 @@ export async function approveNameRequest(supabase: SupabaseClient, userId: strin
 
 // The step is already saved, so a push failure must not report "it failed", or the person does it twice.
 async function bestEffort(notify: () => Promise<void>) {
+  if (!SWITCHES.namePush) return;
   try {
     await notify();
   } catch (error) {

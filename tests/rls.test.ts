@@ -25,10 +25,16 @@ const admin = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_RO
 type TestUser = { id: string; email: string; client: SupabaseClient };
 
 // A signed-in user holding nothing but the public anon key: exactly what a browser has.
-async function createTestUser(name: string): Promise<TestUser> {
+// Approved the way an admin's tap does it (the role "member"), before signing in, so the token carries it.
+// `waiting` leaves that out: an account nobody has let in yet.
+async function createTestUser(name: string, { waiting = false } = {}): Promise<TestUser> {
   const email = `rls-${name}-${Date.now()}@example.com`;
   const { data: created, error } = await admin.auth.admin.createUser({ email, email_confirm: true });
   if (error || !created.user) throw error ?? new Error(`could not create ${email}`);
+  if (!waiting) {
+    const { error: roleError } = await admin.from("user_roles").insert({ user_id: created.user.id, role: "member" });
+    if (roleError) throw roleError;
+  }
 
   const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email });
   if (linkError || !link) throw linkError ?? new Error(`could not get a login code for ${email}`);
@@ -55,10 +61,15 @@ async function makeMember(user: TestUser, memberOfGroupId: string) {
 
 let alice: TestUser;
 let bob: TestUser;
+let carol: TestUser; // signed up, not approved: what anyone with an email address can become
 let groupId: string;
 
 beforeAll(async () => {
-  [alice, bob] = await Promise.all([createTestUser("alice"), createTestUser("bob")]);
+  [alice, bob, carol] = await Promise.all([
+    createTestUser("alice"),
+    createTestUser("bob"),
+    createTestUser("carol", { waiting: true }),
+  ]);
 
   // An active group: a removed one would hide every membership in it, and with it half of these tests.
   const { data: group } = await admin.from("groups").select("id").is("deleted_at", null).limit(1).single();
@@ -74,7 +85,7 @@ beforeAll(async () => {
 }, 60_000);
 
 afterAll(async () => {
-  for (const user of [alice, bob]) {
+  for (const user of [alice, bob, carol]) {
     if (user) await admin.auth.admin.deleteUser(user.id); // cascades to their rows
   }
 });
@@ -110,11 +121,20 @@ describe("messages", () => {
 });
 
 describe("group_members", () => {
-  it("cannot be created by a member, for themselves or anyone else: the way in is an approval", async () => {
+  it("cannot be created by a member, for themselves or anyone else: an admin puts people into groups", async () => {
     const { error: forSelf } = await bob.client.from("group_members").insert({ group_id: groupId });
     const { error: forOther } = await bob.client.from("group_members").insert({ group_id: groupId, user_id: alice.id });
 
     expect([forSelf, forOther].every((error) => error !== null)).toBe(true);
+  });
+
+  it("show a member their own rows only, and cannot be removed by a member", async () => {
+    const { data: seenByBob } = await bob.client.from("group_members").select("user_id").eq("group_id", groupId);
+    await bob.client.from("group_members").delete().eq("group_id", groupId).eq("user_id", alice.id);
+    const { data: stillIn } = await admin.from("group_members").select("user_id").eq("group_id", groupId).eq("user_id", alice.id);
+
+    expect(seenByBob).toEqual([]); // Alice is in that group; Bob is not, and sees nobody's membership
+    expect(stillIn).toHaveLength(1);
   });
 });
 
@@ -129,8 +149,21 @@ describe("my_groups, the group list's one read", () => {
     const signedOut = await anonymous.rpc("my_groups");
 
     expect(await standingIn(alice.client)).toMatchObject({ joined: true, pending: false });
+    expect(await standingIn(alice.client)).toHaveProperty("member_count"); // the typed size, read by everyone
     expect(await standingIn(bob.client)).toMatchObject({ joined: false, pending: false });
     expect(signedOut.error).not.toBeNull();
+  });
+});
+
+describe("account_exists, asked by the sign-in screen", () => {
+  it("answers yes or no to someone signed out, whatever the case or spaces, and nothing more", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const ask = async (address: string) => (await anonymous.rpc("account_exists", { address })).data;
+
+    expect(await ask(` ${alice.email.toUpperCase()} `)).toBe(true);
+    expect(await ask(`nobody-${Date.now()}@example.com`)).toBe(false);
   });
 });
 
@@ -201,7 +234,7 @@ describe("permissions", () => {
     const { data: forMember } = await bob.client.auth.getClaims();
 
     expect(forAdmin?.claims.permissions).toContain("groups.manage");
-    expect(forMember?.claims.permissions ?? []).toEqual([]);
+    expect(forMember?.claims.permissions).toEqual(["app.use"]); // what every approved member holds, and no more
   });
 
   it("cannot be read or granted by a member, who could otherwise make themselves admin", async () => {
@@ -224,6 +257,49 @@ describe("permissions", () => {
 
     expect([createError, renameError]).toEqual([null, null]);
     expect(renamed?.name).toBe(`${name} renamed`);
+  });
+
+  it("let someone with groups.manage say how many people a group has, and nobody else", async () => {
+    // The same call the app makes: name and size together.
+    const { error } = await alice.client.from("groups").update({ name: "rls sized", member_count: 12 }).eq("id", createdGroupId);
+    await bob.client.from("groups").update({ member_count: 999 }).eq("id", createdGroupId);
+    const { error: negative } = await alice.client.from("groups").update({ member_count: -1 }).eq("id", createdGroupId);
+    const { data: stored } = await admin.from("groups").select("member_count").eq("id", createdGroupId).single();
+
+    expect(error).toBeNull();
+    expect(negative).not.toBeNull();
+    expect(stored?.member_count).toBe(12);
+  });
+
+  it("let someone with groups.manage put a person into a group and take them out again", async () => {
+    const membership = { group_id: createdGroupId, user_id: bob.id };
+    const isIn = async () =>
+      ((await admin.from("group_members").select("user_id").match(membership)).data ?? []).length === 1;
+
+    const { error: addError } = await alice.client.from("group_members").insert(membership);
+    const added = await isIn();
+    const { data: seenByManager } = await alice.client.from("group_members").select("user_id").match(membership);
+    const { error: removeError } = await alice.client.from("group_members").delete().match(membership);
+
+    expect([addError, removeError]).toEqual([null, null]);
+    expect(added).toBe(true);
+    expect(seenByManager).toHaveLength(1); // a manager sees other people's memberships; a member does not
+    expect(await isIn()).toBe(false);
+  });
+
+  it("group_people lists every approved account with its email and groups, for a manager only", async () => {
+    type Row = { user_id: string; name: string; email: string; group_ids: string[] };
+    const { data: forManager } = await alice.client.rpc("group_people");
+    const { data: forMember } = await bob.client.rpc("group_people");
+    const { data: forWaiting } = await carol.client.rpc("group_people");
+    const find = (id: string) => (forManager as Row[] | null)?.find((row) => row.user_id === id);
+
+    expect(find(alice.id)).toMatchObject({ email: alice.email });
+    expect(find(alice.id)?.group_ids).toContain(groupId);
+    expect(find(bob.id)).toMatchObject({ email: bob.email });
+    expect(find(carol.id)).toBeUndefined(); // still waiting to be let in: not offered
+    expect(forMember).toEqual([]); // emails are for managers
+    expect(forWaiting).toEqual([]);
   });
 
   it("joining a group: a member asks, only a manager lets them in", async () => {
@@ -339,6 +415,24 @@ describe("document_chunks (server-only table)", () => {
     // No grants and no policies: the request fails outright or returns nothing.
     expect(error ?? data).not.toBeNull();
     expect(data ?? []).toEqual([]);
+  });
+});
+
+describe("login_handoffs (server-only table)", () => {
+  it("cannot be read or written with the public key, signed in or not: it holds live sign-in tokens", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const row = { attempt: "a".repeat(64), token_hash: "stolen" };
+
+    for (const client of [anonymous, alice.client]) {
+      const { data, error: readError } = await client.from("login_handoffs").select("token_hash").limit(1);
+      const { error: writeError } = await client.from("login_handoffs").insert(row);
+
+      expect(readError).not.toBeNull();
+      expect(data).toBeNull();
+      expect(writeError).not.toBeNull();
+    }
   });
 });
 
@@ -530,10 +624,10 @@ describe("changing a name", () => {
 });
 
 describe("events", () => {
-  // Alice is a member of the seeded group; Bob never joined it. The admin client stands in for the admin
-  // page, which does not exist yet.
+  // Every event is church-wide. One row still carries a group, as rows saved before 2026-10-12 do: Alice
+  // is in that group and Bob is not, and it must make no difference. The admin client seeds the rows.
   let churchWideId: string;
-  let groupOnlyId: string;
+  let groupOnlyId: string; // once for Alice's group only
   let deletedId: string;
 
   beforeAll(async () => {
@@ -574,7 +668,7 @@ describe("events", () => {
     const churchWide = rows?.find((row: { id: string }) => row.id === churchWideId);
 
     expect(outsider).toContain(churchWideId);
-    expect(outsider).not.toContain(groupOnlyId); // Bob is not in that group
+    expect(outsider).toContain(groupOnlyId); // Bob is not in that group, and groups no longer limit events
     expect(member).toContain(groupOnlyId);
     expect([...outsider, ...member]).not.toContain(deletedId); // removed: hidden even from Alice, a manager
     expect(signedOut.error).not.toBeNull();
@@ -597,24 +691,24 @@ describe("events", () => {
     expect(Object.keys(find(asManager, churchWideId)?.texts ?? {})).toEqual(["en"]);
     expect(find(asManager, groupOnlyId)).toBeDefined();
     expect(find(asManager, deletedId)).toBeUndefined();
-    // Bob is a member outside that group: the church-wide event only, and never a reminder.
+    // Bob is a member: the same events, and never a reminder.
     expect(find(asMember, churchWideId)?.reminder_minutes).toEqual([]);
-    expect(find(asMember, groupOnlyId)).toBeUndefined();
+    expect(find(asMember, groupOnlyId)?.reminder_minutes).toEqual([]);
     expect(signedOut.error).not.toBeNull();
   });
 
-  it("church-wide events are visible to every signed-in member", async () => {
+  it("are visible to every approved member", async () => {
     const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
 
     expect(data).toHaveLength(1);
   });
 
-  it("a group's events are hidden from everyone outside that group", async () => {
+  it("once saved for one group are visible to everyone too: admins no longer limit an event", async () => {
     const { data: forMember } = await alice.client.from("events").select("id").eq("id", groupOnlyId);
     const { data: forOutsider } = await bob.client.from("events").select("id").eq("id", groupOnlyId);
 
     expect(forMember).toHaveLength(1);
-    expect(forOutsider).toEqual([]);
+    expect(forOutsider).toHaveLength(1);
   });
 
   it("a soft-deleted event is invisible to a member, even queried directly", async () => {
@@ -711,12 +805,12 @@ describe("events", () => {
 });
 
 describe("prayer requests", () => {
-  // Alice and Bob share a second group here; Carol-style outsiders are played by Bob in Alice's first group,
-  // which he never joined. The admin client reads the truth the members are not allowed to see.
-  let sharedGroupId: string;
+  // Every request is shared with the whole church: Alice writes, Bob reads, and they share no group.
+  // Carol, still waiting to be let in, is the outsider. The admin client reads the truth the members are
+  // not allowed to see.
   let namedId: string;
   let anonymousId: string;
-  let outsideBobsGroupsId: string;
+  let thirdId: string;
 
   async function feedOf(user: TestUser) {
     const { data, error } = await user.client.from("prayer_feed").select("*");
@@ -730,19 +824,11 @@ describe("prayer requests", () => {
   }
 
   beforeAll(async () => {
-    const { data: other } = await admin.from("groups").select("id").is("deleted_at", null).neq("id", groupId).limit(1).single();
-    if (!other) throw new Error("needs two groups: run features/groups/schema.sql first");
-    sharedGroupId = other.id;
-    await makeMember(alice, sharedGroupId);
-    await makeMember(bob, sharedGroupId);
-
     // Posted through the same door the app uses, so the grants and defaults are part of what is tested.
     const posted = await Promise.all([
-      alice.client.from("prayer_requests").insert({ group_id: sharedGroupId, body: "named request" }),
-      alice.client
-        .from("prayer_requests")
-        .insert({ group_id: sharedGroupId, body: "anonymous request", is_anonymous: true }),
-      alice.client.from("prayer_requests").insert({ group_id: groupId, body: "not for bob" }),
+      alice.client.from("prayer_requests").insert({ body: "named request" }),
+      alice.client.from("prayer_requests").insert({ body: "anonymous request", is_anonymous: true }),
+      alice.client.from("prayer_requests").insert({ body: "third request" }),
     ]);
     const failed = posted.find((result) => result.error);
     if (failed?.error) throw failed.error;
@@ -753,14 +839,14 @@ describe("prayer requests", () => {
       if (!row) throw new Error(`request "${body}" was not saved`);
       return row.id as string;
     };
-    [namedId, anonymousId, outsideBobsGroupsId] = [idOf("named request"), idOf("anonymous request"), idOf("not for bob")];
+    [namedId, anonymousId, thirdId] = [idOf("named request"), idOf("anonymous request"), idOf("third request")];
   }, 60_000);
 
-  it("are read by members of the group, and nobody outside it", async () => {
+  it("are read by every approved member, whatever their groups, and by nobody still waiting", async () => {
     const ids = (await feedOf(bob)).map((request) => request.id);
 
-    expect(ids).toContain(namedId);
-    expect(ids).not.toContain(outsideBobsGroupsId);
+    expect(ids).toEqual(expect.arrayContaining([namedId, anonymousId, thirdId]));
+    expect(await feedOf(carol)).toEqual([]);
   });
 
   it("hide the author of an anonymous request from other members", async () => {
@@ -784,15 +870,17 @@ describe("prayer requests", () => {
   it("cannot be posted under someone else's name", async () => {
     const { error } = await bob.client
       .from("prayer_requests")
-      .insert({ group_id: sharedGroupId, body: "forged", author_id: alice.id });
+      .insert({ body: "forged", author_id: alice.id });
 
     expect(error).not.toBeNull();
   });
 
-  it("cannot be posted to a group the author never joined", async () => {
-    const { error } = await bob.client.from("prayer_requests").insert({ group_id: groupId, body: "intruder" });
+  it("cannot be limited to a group any more, or posted by someone still waiting", async () => {
+    const { error: toAGroup } = await alice.client.from("prayer_requests").insert({ group_id: groupId, body: "for my group" });
+    const { error: whileWaiting } = await carol.client.from("prayer_requests").insert({ body: "intruder" });
 
-    expect(error).not.toBeNull();
+    expect(toAGroup).not.toBeNull();
+    expect(whileWaiting).not.toBeNull();
   });
 
   it("count a prayer from a fellow member, and show the number to nobody", async () => {
@@ -804,12 +892,12 @@ describe("prayer requests", () => {
     expect((await feedOf(alice)).find((request) => request.id === namedId)).not.toHaveProperty("prayer_count");
   });
 
-  it("do not count a prayer from outside the group, or from the author", async () => {
-    const { data: fromOutside } = await bob.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
-    const { data: fromAuthor } = await alice.client.rpc("pray_for_request", { request_id: outsideBobsGroupsId });
+  it("do not count a prayer from someone still waiting, or from the author", async () => {
+    const { data: fromOutside } = await carol.client.rpc("pray_for_request", { request_id: thirdId });
+    const { data: fromAuthor } = await alice.client.rpc("pray_for_request", { request_id: thirdId });
 
     expect([fromOutside, fromAuthor]).toEqual([false, false]); // false is what stops the server notifying
-    expect(await prayerCount(outsideBobsGroupsId)).toBe(0);
+    expect(await prayerCount(thirdId)).toBe(0);
   });
 
   it("cannot have their count set directly", async () => {
@@ -843,12 +931,12 @@ describe("prayer requests", () => {
   });
 
   it("can be deleted for good by their author only", async () => {
-    await bob.client.from("prayer_requests").delete().eq("id", outsideBobsGroupsId);
-    const { data: stillThere } = await admin.from("prayer_requests").select("id").eq("id", outsideBobsGroupsId);
+    await bob.client.from("prayer_requests").delete().eq("id", thirdId);
+    const { data: stillThere } = await admin.from("prayer_requests").select("id").eq("id", thirdId);
     expect(stillThere).toHaveLength(1);
 
-    await alice.client.from("prayer_requests").delete().eq("id", outsideBobsGroupsId);
-    const { data: gone } = await admin.from("prayer_requests").select("id").eq("id", outsideBobsGroupsId);
+    await alice.client.from("prayer_requests").delete().eq("id", thirdId);
+    const { data: gone } = await admin.from("prayer_requests").select("id").eq("id", thirdId);
     expect(gone).toEqual([]);
   });
 
@@ -861,21 +949,19 @@ describe("prayer requests", () => {
   it("reminders are set by someone with prayer.reminders, and never reach a member's device", async () => {
     // Alice holds the admin role by now; the seeds put reminders in the table, so "no rows" means hidden.
     const { data: asMember } = await bob.client.from("prayer_reminders").select("weekday");
-    const { error: memberAdds } = await bob.client
-      .from("prayer_reminders")
-      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
-    const { error: managerAdds } = await alice.client
-      .from("prayer_reminders")
-      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
-    // The same group, day and time again is refused with the code the app turns into "already has a reminder".
-    const { error: addedAgain } = await alice.client
-      .from("prayer_reminders")
-      .insert({ group_id: sharedGroupId, weekday: 6, send_at: "06:15" });
-    const { data: stored } = await admin.from("prayer_reminders").select("id").eq("group_id", sharedGroupId).eq("weekday", 6);
+    // The same call the app makes: a day and a time, for the whole church.
+    const reminder = { weekday: 6, send_at: "06:15" };
+    const { error: memberAdds } = await bob.client.from("prayer_reminders").insert(reminder);
+    const { error: managerAdds } = await alice.client.from("prayer_reminders").insert(reminder);
+    // The same day and time again is refused with the code the app turns into "there already is a reminder".
+    const { error: addedAgain } = await alice.client.from("prayer_reminders").insert(reminder);
+    // A reminder can no longer be given a group.
+    const { error: forAGroup } = await alice.client.from("prayer_reminders").insert({ ...reminder, group_id: groupId });
+    const { data: stored } = await admin.from("prayer_reminders").select("id").eq("weekday", 6).eq("send_at", "06:15");
     const { data: removed } = await alice.client
       .from("prayer_reminders")
       .delete()
-      .eq("group_id", sharedGroupId)
+      .is("group_id", null)
       .eq("weekday", 6)
       .eq("send_at", "06:15")
       .select("id");
@@ -884,7 +970,375 @@ describe("prayer requests", () => {
     expect(memberAdds).not.toBeNull();
     expect(managerAdds).toBeNull();
     expect(addedAgain?.code).toBe("23505");
+    expect(forAGroup).not.toBeNull();
     expect(stored).toHaveLength(1); // still one reminder, not two
     expect(removed).toHaveLength(1);
+  });
+});
+
+describe("group_info: what a group says about itself", () => {
+  // A group made for these tests, so no real group's words are overwritten. Bob is put into it part way;
+  // Alice holds the admin role by now (groups.manage) and is NOT in it; Carol is still waiting to be let in.
+  let ownGroupId: string;
+  // The same call the app makes: one detail at a time, inserted, or updated if the row is there.
+  const save = (user: TestUser, detail: { meets_at?: string; notes?: string }) =>
+    user.client.from("group_info").upsert({ group_id: ownGroupId, ...detail }, { onConflict: "group_id" });
+  const stored = async () =>
+    (await admin.from("group_info").select("meets_at, notes").eq("group_id", ownGroupId).maybeSingle()).data;
+
+  beforeAll(async () => {
+    const { data, error } = await admin.from("groups").insert({ name: `rls group-info ${Date.now()}` }).select("id").single();
+    if (error || !data) throw error ?? new Error("could not make a group");
+    ownGroupId = data.id;
+  }, 60_000);
+
+  afterAll(async () => {
+    await admin.from("groups").delete().eq("id", ownGroupId); // its details and memberships go with it
+  });
+
+  it("is not written by a member, not even one in the group: an admin says when and where a group meets", async () => {
+    const { error: fromOutside } = await save(bob, { notes: "rls: not mine to write" });
+    await makeMember(bob, ownGroupId);
+    const { error: fromInside } = await save(bob, { notes: "rls: still not mine to write" });
+
+    expect(fromOutside).not.toBeNull();
+    expect(fromInside).not.toBeNull();
+    expect(await stored()).toBeNull();
+  });
+
+  it("is written by a group manager, the first time and again, one detail at a time", async () => {
+    const { error: first } = await save(alice, { notes: "rls: by an admin" });
+    const { error: again } = await save(alice, { meets_at: "Fridays, 7:30 PM" });
+
+    expect([first, again]).toEqual([null, null]);
+    expect(await stored()).toEqual({ meets_at: "Fridays, 7:30 PM", notes: "rls: by an admin" }); // the second save kept the first
+  });
+
+  it("cannot be changed or erased by a member in the group, who cannot set its number of members either", async () => {
+    await bob.client.from("group_info").update({ notes: "rls: defaced" }).eq("group_id", ownGroupId);
+    await bob.client.from("group_info").delete().eq("group_id", ownGroupId);
+    await bob.client.from("groups").update({ member_count: 999 }).eq("id", ownGroupId);
+    const { data: group } = await admin.from("groups").select("member_count").eq("id", ownGroupId).single();
+
+    expect(await stored()).toEqual({ meets_at: "Fridays, 7:30 PM", notes: "rls: by an admin" });
+    expect(group?.member_count).toBeNull();
+  });
+
+  it("is read by every approved member through the page's one read, each with their own standing", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    const rowFor = async (user: TestUser) =>
+      ((await user.client.rpc("group_directory")).data ?? []).find((group: { id: string }) => group.id === ownGroupId);
+
+    expect(await rowFor(bob)).toMatchObject({ is_member: true, notes: "rls: by an admin", meets_at: "Fridays, 7:30 PM" });
+    expect(await rowFor(alice)).toMatchObject({ is_member: false, notes: "rls: by an admin" });
+    expect((await anonymous.rpc("group_directory")).error).not.toBeNull();
+  });
+
+  it("is closed to someone still waiting to be let in", async () => {
+    const { data: direct } = await carol.client.from("group_info").select("notes");
+    const { data: listed } = await carol.client.rpc("group_directory");
+    const { error: writeError } = await save(carol, { notes: "rls: intruder" });
+
+    expect(direct ?? []).toEqual([]);
+    expect(listed ?? []).toEqual([]);
+    expect(writeError).not.toBeNull();
+  });
+});
+
+describe("group_photos: a group's pictures, and their files", () => {
+  // A group made for these tests. Bob is in it; Alice is an admin outside it; Dora-like outsiders are played
+  // by Bob in a second group he is NOT in; Carol is still waiting to be let in.
+  const BUCKET = "group-photos";
+  const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: "image/jpeg" }); // the smallest JPEG-shaped file
+  let ownGroupId: string;
+  let otherGroupId: string;
+  const photoId = crypto.randomUUID();
+  const pathIn = (group: string, id = photoId) => `${group}/${id}.jpg`;
+
+  beforeAll(async () => {
+    const { data, error } = await admin
+      .from("groups")
+      .insert([{ name: `rls photos ${Date.now()}` }, { name: `rls photos other ${Date.now()}` }])
+      .select("id");
+    if (error || !data) throw error ?? new Error("could not make the groups");
+    [ownGroupId, otherGroupId] = data.map((row) => row.id);
+    await makeMember(bob, ownGroupId);
+  }, 60_000);
+
+  afterAll(async () => {
+    const { data: left } = await admin.storage.from(BUCKET).list(ownGroupId);
+    if (left?.length) await admin.storage.from(BUCKET).remove(left.map((file) => `${ownGroupId}/${file.name}`));
+    await admin.from("groups").delete().in("id", [ownGroupId, otherGroupId]); // their pictures' rows go with them
+  });
+
+  it("are added by someone in the group: the file, then the row, as the app does", async () => {
+    const { error: uploadError } = await bob.client.storage.from(BUCKET).upload(pathIn(ownGroupId), jpeg(), { contentType: "image/jpeg" });
+    const { error: rowError } = await bob.client
+      .from("group_photos")
+      .insert({ id: photoId, group_id: ownGroupId, taken_on: "2026-10-12", caption: "rls picnic" });
+    const { data: stored } = await admin.from("group_photos").select("uploaded_by").eq("id", photoId).single();
+
+    expect([uploadError, rowError]).toEqual([null, null]);
+    expect(stored?.uploaded_by).toBe(bob.id); // from his login token: the browser cannot send it
+  });
+
+  it("cannot be added to a group the person is not in, as a file or as a row, or under another's name", async () => {
+    const { error: uploadError } = await bob.client.storage.from(BUCKET).upload(pathIn(otherGroupId), jpeg(), { contentType: "image/jpeg" });
+    const { error: rowError } = await bob.client.from("group_photos").insert({ group_id: otherGroupId });
+    const { error: forged } = await bob.client.from("group_photos").insert({ group_id: ownGroupId, uploaded_by: alice.id });
+
+    expect(uploadError).not.toBeNull();
+    expect(rowError).not.toBeNull();
+    expect(forged).not.toBeNull();
+  });
+
+  it("refuse a file that is not a JPEG, or is over 1 MB, whatever the browser claims", async () => {
+    const bucket = bob.client.storage.from(BUCKET);
+    const { error: notAPicture } = await bucket.upload(pathIn(ownGroupId, "script"), new Blob(["<script>"], { type: "text/html" }), { contentType: "text/html" });
+    const { error: tooBig } = await bucket.upload(pathIn(ownGroupId, "big"), new Blob([new Uint8Array(1_100_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
+
+    expect(notAPicture).not.toBeNull();
+    expect(tooBig).not.toBeNull();
+  });
+
+  it("are seen by every approved member, through an address that is signed for them", async () => {
+    const { data: rows } = await alice.client.from("group_photos").select("id, caption").eq("group_id", ownGroupId);
+    const { data: signed, error } = await alice.client.storage.from(BUCKET).createSignedUrls([pathIn(ownGroupId)], 60);
+    const picture = await fetch(signed?.[0]?.signedUrl ?? "");
+    // Without a signature the same file is not served: the bucket is private.
+    const unsigned = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${pathIn(ownGroupId)}`);
+
+    expect(rows).toEqual([{ id: photoId, caption: "rls picnic" }]);
+    expect(error).toBeNull();
+    expect(picture.status).toBe(200);
+    expect(unsigned.ok).toBe(false);
+  });
+
+  it("are closed to someone still waiting to be let in, and to someone signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+
+    for (const client of [carol.client, anonymous]) {
+      const { data: rows } = await client.from("group_photos").select("id");
+      const { data: signed } = await client.storage.from(BUCKET).createSignedUrls([pathIn(ownGroupId)], 60);
+      const { error: uploadError } = await client.storage.from(BUCKET).upload(pathIn(ownGroupId, "intruder"), jpeg(), { contentType: "image/jpeg" });
+
+      expect(rows ?? []).toEqual([]);
+      expect(signed?.[0]?.signedUrl ?? null).toBeNull();
+      expect(uploadError).not.toBeNull();
+    }
+  });
+
+  it("cannot be changed once added: there is no edit", async () => {
+    const { error } = await bob.client.from("group_photos").update({ caption: "rewritten" }).eq("id", photoId);
+
+    expect(error).not.toBeNull();
+  });
+
+  it("cannot be removed by a member, not even the one who added it: row and file stay", async () => {
+    const { data: removed } = await bob.client.from("group_photos").delete().eq("id", photoId).select("id");
+    await bob.client.storage.from(BUCKET).remove([pathIn(ownGroupId)]);
+    const { data: left } = await admin.storage.from(BUCKET).list(ownGroupId);
+
+    expect(removed).toEqual([]);
+    expect(left?.map((file) => file.name)).toEqual([`${photoId}.jpg`]);
+  });
+
+  it("are removed by a group manager, row and file", async () => {
+    const { data: removed } = await alice.client.from("group_photos").delete().eq("id", photoId).select("id");
+    const { data: erased } = await alice.client.storage.from(BUCKET).remove([pathIn(ownGroupId)]);
+    const { data: left } = await admin.storage.from(BUCKET).list(ownGroupId);
+
+    expect(removed).toHaveLength(1);
+    expect(erased).toHaveLength(1);
+    expect(left ?? []).toEqual([]);
+  });
+});
+
+describe("thumbnails: the picture that starts an event's row and a group's row", () => {
+  // Alice holds the admin role by now (events.manage, groups.manage); Bob is a member; Carol is waiting.
+  // One event and one group made for these tests. Each case runs for both: the two features follow one rule.
+  const jpeg = () => new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], { type: "image/jpeg" });
+  const kinds = [
+    { table: "events", bucket: "event-thumbnails" },
+    { table: "groups", bucket: "group-thumbnails" },
+  ];
+  const ids: Record<string, string> = {};
+  const pathFor = (table: string, name = "picture") => `${ids[table]}/${name}.jpg`;
+  const storedPath = async (table: string) =>
+    (await admin.from(table).select("thumbnail_path").eq("id", ids[table]).single()).data?.thumbnail_path;
+
+  beforeAll(async () => {
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+    const { data: event } = await admin.from("events").insert({ starts_at: tomorrow }).select("id").single();
+    const { data: group } = await admin.from("groups").insert({ name: `rls thumbnail ${Date.now()}` }).select("id").single();
+    if (!event || !group) throw new Error("could not make the event and the group");
+    ids.events = event.id;
+    ids.groups = group.id;
+  }, 60_000);
+
+  afterAll(async () => {
+    for (const { table, bucket } of kinds) {
+      const { data: left } = await admin.storage.from(bucket).list(ids[table]);
+      if (left?.length) await admin.storage.from(bucket).remove(left.map((file) => `${ids[table]}/${file.name}`));
+      await admin.from(table).delete().eq("id", ids[table]);
+    }
+  });
+
+  it("are set by a manager: the file, then its path on the row, as the app does", async () => {
+    for (const { table, bucket } of kinds) {
+      const { error: uploadError } = await alice.client.storage.from(bucket).upload(pathFor(table), jpeg(), { contentType: "image/jpeg" });
+      const { data: updated } = await alice.client.from(table).update({ thumbnail_path: pathFor(table) }).eq("id", ids[table]).select("id");
+
+      expect(uploadError).toBeNull();
+      expect(updated).toHaveLength(1);
+    }
+  });
+
+  it("cannot be set, replaced or erased by a member, or by someone still waiting", async () => {
+    for (const { table, bucket } of kinds) {
+      for (const user of [bob, carol]) {
+        const files = user.client.storage.from(bucket);
+        const { error: uploadError } = await files.upload(pathFor(table, `by-${user.id}`), jpeg(), { contentType: "image/jpeg" });
+        await user.client.from(table).update({ thumbnail_path: "defaced.jpg" }).eq("id", ids[table]);
+        await user.client.from(table).update({ thumbnail_path: null }).eq("id", ids[table]);
+        await files.remove([pathFor(table)]);
+
+        expect(uploadError).not.toBeNull();
+      }
+      const { data: files } = await admin.storage.from(bucket).list(ids[table]);
+
+      expect(await storedPath(table)).toBe(pathFor(table));
+      expect(files?.map((file) => file.name)).toEqual(["picture.jpg"]); // still there, and nothing was added
+    }
+  });
+
+  it("refuse a file that is not a JPEG, or is over 200 KB, even from a manager", async () => {
+    for (const { table, bucket } of kinds) {
+      const files = alice.client.storage.from(bucket);
+      const { error: notAPicture } = await files.upload(pathFor(table, "script"), new Blob(["<script>"], { type: "text/html" }), { contentType: "text/html" });
+      const { error: tooBig } = await files.upload(pathFor(table, "big"), new Blob([new Uint8Array(250_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
+
+      expect(notAPicture).not.toBeNull();
+      expect(tooBig).not.toBeNull();
+    }
+  });
+
+  it("are public on purpose: the file opens by its address alone, but nobody can list the bucket", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+    for (const { table, bucket } of kinds) {
+      const picture = await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/${pathFor(table)}`);
+      const { data: listedSignedOut } = await anonymous.storage.from(bucket).list(ids[table]);
+      const { data: listedByMember } = await bob.client.storage.from(bucket).list(ids[table]);
+
+      expect(picture.status).toBe(200);
+      expect(listedSignedOut ?? []).toEqual([]);
+      expect(listedByMember ?? []).toEqual([]);
+    }
+  });
+
+  it("reach members through the page's one read", async () => {
+    const everything = { until: "2999-01-01T00:00:00Z", cancelled_since: "1970-01-01T00:00:00Z" };
+    const { data: schedule } = await bob.client.rpc("upcoming_events", everything);
+    const { data: directory } = await bob.client.rpc("group_directory");
+    const { data: groupList } = await bob.client.rpc("my_groups");
+    const find = (rows: { id: string; thumbnail_path: string | null }[] | null, id: string) => rows?.find((row) => row.id === id);
+
+    expect(find(schedule, ids.events)?.thumbnail_path).toBe(pathFor("events"));
+    expect(find(directory, ids.groups)?.thumbnail_path).toBe(pathFor("groups"));
+    expect(find(groupList, ids.groups)?.thumbnail_path).toBe(pathFor("groups"));
+  });
+
+  it("are removed by a manager: off the row, then the file", async () => {
+    for (const { table, bucket } of kinds) {
+      const { data: cleared } = await alice.client.from(table).update({ thumbnail_path: null }).eq("id", ids[table]).select("id");
+      const { data: erased } = await alice.client.storage.from(bucket).remove([pathFor(table)]);
+
+      expect(cleared).toHaveLength(1);
+      expect(erased).toHaveLength(1);
+      expect(await storedPath(table)).toBeNull();
+    }
+  });
+});
+
+describe("approval: an account nobody has let in yet", () => {
+  // Carol signed up and was never approved. Alice holds the admin role by now; Bob is a plain member.
+  // Runs last: it ends with Carol being let in.
+  const everything = { until: "2999-01-01T00:00:00Z", cancelled_since: "1970-01-01T00:00:00Z" };
+
+  it("reads nothing of the church, even by asking Supabase directly", async () => {
+    const [groups, memberships, messages, events, texts, schedule, feed, groupList] = await Promise.all([
+      carol.client.from("groups").select("id"),
+      carol.client.from("group_members").select("group_id"),
+      carol.client.from("messages").select("id"),
+      carol.client.from("events").select("id"),
+      carol.client.from("event_texts").select("event_id"),
+      carol.client.rpc("upcoming_events", everything),
+      carol.client.from("prayer_feed").select("id"),
+      carol.client.rpc("my_groups"),
+    ]);
+
+    for (const read of [groups, memberships, messages, events, texts, schedule, feed, groupList]) {
+      expect(read.data ?? []).toEqual([]);
+    }
+    // The same reads are not empty for a member, so "nothing" above is the door and not an empty database.
+    expect((await bob.client.from("groups").select("id")).data?.length).toBeGreaterThan(0);
+  });
+
+  it("writes nothing either", async () => {
+    const { error: asksToJoin } = await carol.client.from("group_join_requests").insert({ group_id: groupId });
+    const { error: postsMessage } = await carol.client.from("messages").insert({ group_id: groupId, body: "hello" });
+
+    expect(asksToJoin).not.toBeNull();
+    expect(postsMessage).not.toBeNull();
+  });
+
+  it("still has what waiting needs: its own name and language", async () => {
+    const { data: outcome } = await carol.client.rpc("set_my_name", { new_name: "Carol" });
+    const { data: profile } = await carol.client.from("profiles").select("name").eq("user_id", carol.id).single();
+    const { error: languageError } = await carol.client.from("user_settings").upsert({ language: "en" }, { onConflict: "user_id" });
+
+    expect(outcome).toBe("saved");
+    expect(profile?.name).toBe("Carol");
+    expect(languageError).toBeNull();
+  });
+
+  it("is listed, with its email, for someone with accounts.manage and for nobody else", async () => {
+    const { data: forAdmin } = await alice.client.rpc("waiting_accounts");
+    const { data: forMember } = await bob.client.rpc("waiting_accounts");
+    const { data: forHerself } = await carol.client.rpc("waiting_accounts");
+    const listed = forAdmin?.find((account: { user_id: string }) => account.user_id === carol.id);
+
+    expect(listed).toMatchObject({ name: "Carol", email: carol.email });
+    expect(forAdmin?.map((account: { user_id: string }) => account.user_id)).not.toContain(bob.id); // already in
+    expect(forMember).toEqual([]);
+    expect(forHerself).toEqual([]);
+  });
+
+  it("cannot let itself in, and a member cannot let it in", async () => {
+    const { data: byHerself } = await carol.client.rpc("approve_account", { user_id: carol.id });
+    const { data: byMember } = await bob.client.rpc("approve_account", { user_id: carol.id });
+    const { error: byHand } = await carol.client.from("user_roles").insert({ user_id: carol.id, role: "member" });
+
+    expect([byHerself, byMember]).toEqual([false, false]);
+    expect(byHand).not.toBeNull();
+  });
+
+  it("is let in by an admin, once, and then reads the church without signing in again", async () => {
+    const { data: first } = await alice.client.rpc("approve_account", { user_id: carol.id });
+    const { data: second } = await alice.client.rpc("approve_account", { user_id: carol.id });
+    await carol.client.auth.refreshSession(); // what the waiting screen does on every return to the app
+
+    const { data: groups } = await carol.client.from("groups").select("id");
+    const { data: stillWaiting } = await alice.client.rpc("waiting_accounts");
+
+    expect([first, second]).toEqual([true, false]); // false is what stops the server telling her twice
+    expect(groups?.length).toBeGreaterThan(0);
+    expect(stillWaiting?.map((account: { user_id: string }) => account.user_id)).not.toContain(carol.id);
   });
 });

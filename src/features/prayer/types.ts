@@ -1,8 +1,6 @@
-// One row of the `prayer_feed` view (schema.sql): a request as a member of its group is allowed to see it.
+// One row of the `prayer_feed` view (schema.sql): a request as every approved member sees it.
 export type PrayerRequest = {
   id: string;
-  group_id: string;
-  group_name: string;
   body: string;
   is_anonymous: boolean;
   created_at: string;
@@ -12,17 +10,12 @@ export type PrayerRequest = {
 
 // What the composer sends. Who wrote it comes from the login token, never from here.
 export type NewPrayerRequest = {
-  groupId: string;
   body: string;
   isAnonymous: boolean;
 };
 
-// The groups a member may post to. The page passes them in, so this feature never imports `groups`.
-export type PostableGroup = { id: string; name: string };
-
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.
-export const FEED_COLUMNS =
-  "id, group_id, group_name, body, is_anonymous, created_at, is_mine, author_name";
+export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name";
 
 // why: enough to fill several screens of a phone, small enough to arrive fast on a slow connection.
 // Older requests load when the reader reaches the bottom.
@@ -33,13 +26,12 @@ export const MAX_BODY_LENGTH = 1000;
 
 // --- Reminders (admin configuration) ---------------------------------------------------------------------
 
-// The permission that lets someone set when groups are reminded to pray (schema.sql grants it to "admin").
+// The permission that lets someone set when the church is reminded to pray (schema.sql grants it to "admin").
 export const MANAGE_PRAYER_REMINDERS = "prayer.reminders";
 
-// One weekly nudge for one group (a row of `prayer_reminders`).
+// One weekly nudge for the whole church (a row of `prayer_reminders`).
 export type PrayerReminder = {
   id: string;
-  group_id: string;
   weekday: number; // 0 = Sunday … 6 = Saturday
   send_at: string; // "HH:MM:SS", church time
 };

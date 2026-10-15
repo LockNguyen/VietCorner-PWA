@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { SWITCHES } from "@/lib/switches";
 import { notifyScheduleChange, type ScheduleChange } from "./notifyScheduleChange";
 
 // The three changes a manager makes to an event's schedule. Each records the change as the caller, then
@@ -50,6 +51,7 @@ export async function cancelForGood(supabase: SupabaseClient, eventId: string) {
 
 // The change is already saved, so a push failure must not report "it failed", or the admin does it twice.
 async function notifyBestEffort(eventId: string, change: ScheduleChange, occurrenceDate?: string) {
+  if (!SWITCHES.eventChangePush) return;
   try {
     await notifyScheduleChange(eventId, change, occurrenceDate);
   } catch (error) {

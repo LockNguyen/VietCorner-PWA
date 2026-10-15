@@ -14,6 +14,7 @@ import ListRow from "@/components/ui/ListRow";
 import LogoMark from "@/components/ui/LogoMark";
 import RowLabel from "@/components/ui/RowLabel";
 import PhotoTile from "@/components/ui/PhotoTile";
+import ProgressBar from "@/components/ui/ProgressBar";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Select from "@/components/ui/Select";
 import SkeletonRow from "@/components/ui/SkeletonRow";
@@ -27,9 +28,11 @@ import Thumbnail from "@/components/ui/Thumbnail";
 import TimeLine from "@/components/ui/TimeLine";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
+import { managesSomething } from "@/features/permissions/types"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
 import ComposerDemo from "./ComposerDemo";
+import PhotoDemo from "./PhotoDemo";
 import SheetDemo from "./SheetDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
@@ -38,7 +41,7 @@ const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
 // For admins; open to anyone on a developer's machine. English only: it is a tool, not a screen.
 export default async function ShowcasePage() {
   const permissions = await getMyPermissions(await createClient());
-  if (permissions.length === 0 && process.env.NODE_ENV === "production") notFound();
+  if (!managesSomething(permissions) && process.env.NODE_ENV === "production") notFound();
 
   return (
     <div className="flex flex-col gap-6 p-4">
@@ -152,6 +155,11 @@ export default async function ShowcasePage() {
         <Avatar />
       </section>
 
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">PhotoStrip, PhotoThumb, Lightbox (tap a picture)</Text>
+        <PhotoDemo />
+      </section>
+
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">A conversation: TimeLine, BubbleRun (theirs, mine), Bubble (a long one, a failed one, one still coming); then prayer requests: others' with the round Pray chip on the edge (to give, given), my own with the pencil; Composer is held above the tabs</Text>
         <TimeLine>Th 4, 14 thg 10, 19:00</TimeLine>
@@ -207,6 +215,7 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-6">
         <Text as="h2" variant="small" tone="subtle">PhotoTile</Text>
         <PhotoTile href="/ui#13" title="Cầu nguyện"><HandHeart className="size-8" /></PhotoTile>
+        <PhotoTile href="/ui#13" title="Cầu nguyện" src="/images/home/prayer.png"><HandHeart className="size-8" /></PhotoTile>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -224,6 +233,12 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-2">
         <Text as="h2" variant="small" tone="subtle">Spinner</Text>
         <Text tone="subtle"><Spinner /> takes the colour of its text</Text>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">ProgressBar</Text>
+        <ProgressBar value={1} max={7} />
+        <ProgressBar value={5} max={7} />
       </section>
     </div>
   );

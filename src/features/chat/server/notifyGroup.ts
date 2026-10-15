@@ -1,6 +1,7 @@
 import "server-only";
 import { getNames } from "@/features/profiles/server/queries"; // PROFILES
 import { sendPush } from "@/features/push/server/sendPush"; // PUSH
+import { APP_NAME } from "@/lib/appName";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { Message } from "../types";
 
@@ -21,7 +22,7 @@ export async function notifyGroup(message: Message) {
   await sendPush(
     (members ?? []).map((member) => member.user_id),
     {
-      title: group?.name ?? "New message",
+      title: group?.name ?? APP_NAME, // a group always has a name; the app's, the same in every language, if not
       body: sender ? `${sender}: ${message.body}` : message.body,
       url: `/groups/${message.group_id}`,
       topic: `chat:${message.group_id}`, // per group: a quiet minute here does not silence another group

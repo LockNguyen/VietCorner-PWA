@@ -3,7 +3,7 @@ import { churchWeekday, isDue } from "./reminders";
 import type { PrayerReminder } from "./types";
 
 // Wednesdays at 7 PM church time. 14 October 2026 is a Wednesday; 7 PM there is 23:00 UTC (summer time).
-const reminder: PrayerReminder = { id: "r", group_id: "g", weekday: 3, send_at: "19:00:00" };
+const reminder: PrayerReminder = { id: "r", weekday: 3, send_at: "19:00:00" };
 const at = (iso: string) => new Date(iso);
 
 describe("a weekly prayer reminder", () => {

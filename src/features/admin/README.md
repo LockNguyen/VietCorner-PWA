@@ -41,3 +41,15 @@ Nothing open. (An admin's own Events tab shows every group's events: decided 202
 ## When it is built
 Follow `docs/adding-a-feature.md`. Every table another feature adds must already carry `deleted_at` for soft
 delete.
+
+## After the pastor's review (2026-10-12)
+| Question | Decision |
+|---|---|
+| Who may use the app | Only accounts an admin approved. Sign-up stays open; a new account waits (the `approval` README). |
+| Events and prayer | Church-wide only: no event, request or reminder is limited to a group any more. Replaces "A group event: that group's members" and "a weekly nudge per group" above. |
+| Notifications | Three kinds left on: prayer reminders, "someone signed up" (admins), "you were approved". The rest are switched off in `src/lib/switches.ts`, not deleted. |
+| Joining a group | Switched off. Admins will assign people (next slice). Replaces "Needs an admin's approval" above. |
+
+The page now shows, top to bottom: people waiting to be let in, Events, Prayer reminders, names waiting, Groups.
+| Putting people into groups | Admins do it, from each group's sheet on the Admin tab: add from a list of everyone approved (name and email), remove with one tap; a person may be in several groups. "Has no group" lists the rest. Nobody is notified. |
+| A group's size | A number an admin types, because many who come do not use the app. Until typed, the row shows the accounts in the group. |

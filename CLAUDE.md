@@ -7,7 +7,8 @@ This is an MVP to prove 3 features are possible. It is not a finished product.
 - Pick the simplest, most conventional solution. No clever abstractions, no premature generalization, no extra libraries unless required.
 - Build the feature, not the polish. Ugly UI is fine.
 - **Feature isolation:** each feature lives in its own `src/features/<name>/` folder (see Feature Shape). Removing a feature = delete its folder + a few marked lines elsewhere. Code in one feature never imports from another feature's internals.
-- Removable features: `auth`, `chat` (messages), `events`, `prayer`, `assistant` (voice + RAG).
+- Removable features: `auth`, `approval` (admins let new accounts in), `chat` (messages), `events`, `prayer`, `group-info` (the Groups page), `assistant` (voice + RAG).
+  Switched off rather than removed: one `false` in `src/lib/switches.ts`.
   Foundations the others build on: `groups` (membership), `i18n` (language), `push` (notification delivery),
   `permissions` (who may manage what), `profiles` (names).
 - Obvious names, small files, one job per file. Comment *why*, not *what*.

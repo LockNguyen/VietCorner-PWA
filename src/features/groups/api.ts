@@ -1,14 +1,23 @@
+import { shrinkToThumbnail } from "@/lib/shrinkImage";
 import { createClient } from "@/lib/supabase/client";
-import type { GroupWithMembership, JoinRequest } from "./types";
+import { THUMBNAIL_BUCKET, type GroupWithMembership, type JoinRequest, type Person } from "./types";
 
 // Groups API: every call the browser makes for this feature. RLS in schema.sql decides what is allowed.
-// - Managing groups and declining a request go straight to Supabase.
+// - Managing groups, putting people into them and declining a request go straight to Supabase.
 // - Asking to join and approving go through our API routes, because each notifies someone (needs secrets).
 
 // GET the group list again, as the page first read it (server/queries.ts): one call to `my_groups()`.
 // For the list to refresh itself on arrival, without reloading the page.
 export async function getMyGroups(): Promise<GroupWithMembership[]> {
   const { data, error } = await createClient().rpc("my_groups");
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// GET everyone who may use the app, with their email and groups, as the Admin page first read it
+// (server/queries.ts): `group_people()`. For the admin's lists to refresh themselves on arrival.
+export async function getGroupPeople(): Promise<Person[]> {
+  const { data, error } = await createClient().rpc("group_people");
   if (error) throw new Error(error.message);
   return data;
 }
@@ -30,9 +39,50 @@ export async function createGroup(name: string) {
   if (error) throw new Error(error.message);
 }
 
-// PATCH a group's name. RLS allows it only with the "groups.manage" permission.
-export async function renameGroup(groupId: string, name: string) {
-  const { error } = await createClient().from("groups").update({ name }).eq("id", groupId);
+// PATCH a group's name and how many people it has (null = not said). Needs "groups.manage".
+export async function saveGroup(groupId: string, name: string, memberCount: number | null) {
+  const { error } = await createClient().from("groups").update({ name, member_count: memberCount }).eq("id", groupId);
+  if (error) throw new Error(error.message);
+}
+
+// PUT a group's picture: shrunk on this device, stored under a new name, then recorded on the group.
+// `replaces` is the picture it had, whose file is erased last. A new name each time, because a phone keeps
+// a public file by its address: the same address would go on showing the old picture. Needs "groups.manage".
+export async function setThumbnail(groupId: string, file: Blob, replaces: string | null) {
+  const supabase = createClient();
+  const bucket = supabase.storage.from(THUMBNAIL_BUCKET);
+  const path = `${groupId}/${crypto.randomUUID()}.jpg`;
+
+  const { error: uploadError } = await bucket.upload(path, await shrinkToThumbnail(file), { contentType: "image/jpeg" });
+  if (uploadError) throw new Error(uploadError.message);
+
+  // RLS does not refuse an update it forbids, it matches no row: the row is asked back to tell.
+  const { data, error } = await supabase.from("groups").update({ thumbnail_path: path }).eq("id", groupId).select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No such group, or not allowed");
+
+  if (replaces) await bucket.remove([replaces]); // best-effort: a file left behind is on no screen
+}
+
+// DELETE a group's picture: taken off the group, then its file erased. Needs "groups.manage".
+export async function removeThumbnail(groupId: string, path: string) {
+  const supabase = createClient();
+  const { data, error } = await supabase.from("groups").update({ thumbnail_path: null }).eq("id", groupId).select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No such group, or not allowed");
+
+  await supabase.storage.from(THUMBNAIL_BUCKET).remove([path]); // best-effort, as above
+}
+
+// POST a person into a group. Needs "groups.manage". Nobody is told.
+export async function addMember(groupId: string, userId: string) {
+  const { error } = await createClient().from("group_members").insert({ group_id: groupId, user_id: userId });
+  if (error) throw new Error(error.message);
+}
+
+// DELETE a person from a group. Needs "groups.manage". What they wrote there stays.
+export async function removeMember(groupId: string, userId: string) {
+  const { error } = await createClient().from("group_members").delete().eq("group_id", groupId).eq("user_id", userId);
   if (error) throw new Error(error.message);
 }
 

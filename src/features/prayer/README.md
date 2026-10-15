@@ -1,6 +1,6 @@
 # prayer
 
-Prayer requests shared inside a group: post one (with or without your name), pray for someone else's, and
+Prayer requests shared with the whole church: post one (with or without your name), pray for someone else's, and
 be told when someone prays for yours.
 
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
@@ -16,7 +16,7 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 |---|---|---|
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
 | Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH` |
-| Pure logic | `reminders.ts` | `isDue`: whether a group's weekly reminder should go out now (church time) |
+| Pure logic | `reminders.ts` | `isDue`: whether a weekly reminder should go out now (church time) |
 | Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`, `COOLDOWN_MS`: the one-hour pause, worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
@@ -24,21 +24,21 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | Browser API | `api.ts` | `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
 | Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
-| Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to each due group's members, once, per language |
+| Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to every approved member, once, per language |
 | Server logic | `server/notifyAuthor.ts` | **Admin** client: the author and the count → `sendPush`, in the author's language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, posting, editing, answering, deleting, praying, one error flag |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
-| State | `hooks/useWhenVisible.ts` | "Call this when the element scrolls into view" |
+| State | `src/lib/useWhenVisible.ts` | "Call this when the element scrolls into view" (shared with the group photos) |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
-| UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words, the group, "Hide my name" |
+| UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words and "Hide my name" |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
 | UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
 | UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip beside it; my own has a small grey pencil that opens its options |
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel, two by two |
 | UI | `components/RequestEditor.tsx` | The sheet's edit form |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
-| UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: each group's weekly reminders and the row to add one; one reminder, with Remove |
+| UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: the church's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |
 
 ## How anonymity is guaranteed
@@ -78,11 +78,12 @@ And a small group can guess from timing or wording — no software fixes that.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
 - **A request is shown whole.** No "more…", no date and no group between requests: only the Pray chip, which sits on the same line as the bubble it belongs to (decided 2026-10-08, after three layouts that were unclear).
-- **A prayer reminder is a weekly nudge to a group**, set by whoever holds `prayer.reminders`: a weekday and a
-  church-time hour, several per group. It says the group's name and "Time to pray together", in each
+- **A prayer reminder is a weekly nudge to the whole church**, set by whoever holds `prayer.reminders`: a
+  weekday and a church-time hour, as many as wanted. It says "Prayer" and "Time to pray together", in each
   member's language, and opens the Prayer tab. The wording is fixed in code, so there is nothing to translate
-  per reminder. It reads no request, so it does not depend on who may see them (backlog B24).
-  Due from its time for one hour; a removed group gets none.
+  per reminder. It reads no request. Due from its time for one hour. It goes to approved members only: an
+  account still waiting to be let in may have notifications on and is not told.
+  Reminders saved for one group before 2026-10-12 stay in the table, unlisted and unsent.
 - **The list does not update live, but it refreshes itself** on arrival and when the app returns to the
   foreground (decided 2026-10-09). It reads the newest twenty again: new requests appear on top, and older
   ones the reader had scrolled to stay, so nobody loses their place (`feed.ts`, `withNewest`). A request
@@ -92,7 +93,6 @@ And a small group can guess from timing or wording — no software fixes that.
   the pages and show a row twice.
 
 ## Expected behavior
-- With no group joined: "Join a group first…" and no composer.
 - Posting puts the request at the top, under the author's name. With "Hide my name", others see
   "Anonymous"; the author sees "Anonymous (you)".
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
@@ -107,9 +107,9 @@ And a small group can guess from timing or wording — no software fixes that.
   gets a notification on their devices with notifications turned on.
 - Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has a small round grey pencil button in the same place (32 across, two thirds of the Pray chip), which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
   Answered and Delete both take it off the list at once; Edit opens the words for changing.
-- Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (group · weekday · time)
-  with Remove, and a row to add one, which starts on today's weekday (church time). A group can have several reminders on one day at different times, but
-  not the same day and time twice; trying to raises the banner "That group already has a reminder at that
+- Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (weekday · time)
+  with Remove, and a row to add one, which starts on today's weekday (church time). There can be several reminders on one day at different times, but
+  not the same day and time twice; trying to raises the banner "There already is a reminder at that
   day and time."
   The buttons are disabled while a change is being saved.
   **Not yet exercised on screen; no reminder has been seen arriving.**
@@ -121,7 +121,6 @@ Verified so far: permissions, by attacking the schema and the migration inside r
 real notification arriving on a phone.**
 
 ## Edge cases
-- When a group is removed, its requests leave the feed and can no longer be prayed for; they stay stored.
 - A second device, or a second browser, has its own pause: the same person can pray from each.
 - If the device's clock is moved back, a pause recorded "in the future" is treated as finished.
 - A prayer that fails to reach the server cancels its pause, so the member can try again.
@@ -141,3 +140,16 @@ real notification arriving on a phone.**
 Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
 in `src/components/strings.ts`, and the "prayer requests" block in `tests/rls.test.ts`. Run the DROP
 statements at the bottom of `schema.sql`.
+
+## Shared with the whole church (2026-10-12)
+- **Every request is read by every approved member.** The composer has no group to choose; the Prayer tab
+  works for someone in no group.
+- **Requests once shared with one group now show to everyone** (decided with the user: the data so far is
+  from testing). `prayer_requests.group_id` is still in the table; new requests leave it empty and the
+  browser has no grant to send one.
+- **"Approved" is checked inside the view and inside `pray_for_request`** (`has_permission('app.use')`),
+  because both skip row rules. Without that line anyone who signed up could read every request.
+- **"N people prayed for you" is switched off** (`SWITCHES.prayedForPush`, checked in `server/prayFor.ts`):
+  a prayer is still counted, and nobody is told. The reminders above are the one prayer notification left on.
+- An existing database needs sections 3b, 4 and 5 of `schema.sql`, in that order.
+- **Not exercised (2026-10-12):** the SQL is not run yet, so neither the security tests nor any signed-in screen.

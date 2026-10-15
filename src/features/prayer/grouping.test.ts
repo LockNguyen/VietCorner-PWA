@@ -9,8 +9,6 @@ let nextId = 1;
 function request(createdAt: string, author: string | null, isMine = false): PrayerRequest {
   return {
     id: String(nextId++),
-    group_id: "g",
-    group_name: "Bible Study",
     body: "please pray",
     is_anonymous: author === null,
     created_at: createdAt,

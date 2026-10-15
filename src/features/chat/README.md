@@ -84,3 +84,9 @@ keep working: none of them depends on chat.
 5. **Own send:** the API's response, so your message shows even if Realtime is slow.
 
 All five go through `mergeMessages`, so a message never shows twice.
+
+## Switched off for now (2026-10-12)
+`SWITCHES.chat` in `src/lib/switches.ts` is `false`: `/groups/<id>` and `POST /api/chat/messages` answer 404
+before doing anything (observed for the route, signed out), so no message is sent and no chat notification
+goes out. Nothing links to a chat. The `messages` table, its rules and Realtime are untouched; a member
+calling Supabase directly can still write a message that no screen shows. Back on: set it to `true`.

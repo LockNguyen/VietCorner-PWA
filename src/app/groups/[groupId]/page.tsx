@@ -5,9 +5,11 @@ import { getChatRoom } from "@/features/chat/server/queries"; // CHAT
 import { getGroup } from "@/features/groups/server/queries";
 import { getNames } from "@/features/profiles/server/queries"; // PROFILES
 import { createClient } from "@/lib/supabase/server";
+import { SWITCHES } from "@/lib/switches";
 
 // A group's page is its chat. The group itself comes from `groups`, the conversation from `chat`.
 export default async function GroupPage({ params }: { params: Promise<{ groupId: string }> }) {
+  if (!SWITCHES.chat) notFound();
   const { groupId } = await params;
   const supabase = await createClient();
   const [group, room] = await Promise.all([getGroup(supabase, groupId), getChatRoom(supabase, groupId)]);

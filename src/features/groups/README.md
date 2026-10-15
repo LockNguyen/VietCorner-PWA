@@ -12,16 +12,20 @@ events or prayer: their tables point at `groups`.
 ## Files
 | Layer | File | Job |
 |---|---|---|
-| Data | `schema.sql` | `groups`, `group_members`, `group_join_requests`, `approve_join_request`, grants, RLS, the two seed groups, the DROPs |
-| Types | `types.ts` | `Group`, `GroupWithMembership` (`joined`, `pending`), `JoinRequest`, `MANAGE_GROUPS` (the permission's name), `MAX_GROUP_NAME_LENGTH` |
-| Browser API | `api.ts` | `requestToJoin` (POST `/api/groups/join`), `approveJoinRequest` (POST `/api/groups/approve`), `declineJoinRequest`, `createGroup`, `renameGroup`, `removeGroup` |
-| Server reads | `server/queries.ts` | `getGroups` (each with `joined` and `pending`), `getGroup` (one, or `null`), `getJoinRequests` |
+| Data | `schema.sql` | `groups` (with `member_count`), `group_members`, `group_join_requests`, `approve_join_request`, `my_groups()`, `group_people()`, grants, RLS, the two seed groups, the DROPs |
+| Types | `types.ts` | `Group` (`member_count`), `GroupWithMembership` (`joined`, `pending`), `Person` (name, email, `group_ids`), `JoinRequest`, `MANAGE_GROUPS` (the permission's name), `MAX_GROUP_NAME_LENGTH` |
+| Browser API | `api.ts` | `requestToJoin` (POST `/api/groups/join`), `approveJoinRequest` (POST `/api/groups/approve`), `declineJoinRequest`, `createGroup`, `saveGroup` (name and size), `removeGroup`, `addMember`, `removeMember`, `getGroupPeople` |
+| Server reads | `server/queries.ts` | `getGroups` (each with `joined` and `pending`), `getGroup` (one, or `null`), `getJoinRequests`, `getGroupPeople` |
 | Server logic | `server/joinRequests.ts` | `requestToJoin`, `approveJoinRequest`: record the step as the **user**, then notify |
 | Server logic | `server/notifyJoin.ts` | **Admin** client: tells managers someone is waiting; tells a person they are in (`// PUSH`, `// I18N`, `// PERMISSIONS`) |
 | Routes | `src/app/api/groups/join/route.ts`, `approve/route.ts` | Verify (401) → validate (400) → the step (403 when refused) → 204 |
 | UI | `components/GroupList.tsx`, `JoinButton.tsx` | The list of groups; asking to join one; "Waiting for approval" |
 | UI | `components/JoinRequests.tsx`, `JoinRequestRow.tsx` | The admin section's list of who is waiting; one person, with Approve and Decline |
-| UI | `components/GroupAdmin.tsx`, `GroupNameEditor.tsx` | The admin page's section: rename a group, remove one, add one |
+| UI | `components/GroupAdmin.tsx` | The admin page's section: one row per group (name, size), "Has no group" last, the box that adds a group; which sheet is open |
+| UI | `components/GroupSheet.tsx` | One group's sheet: composes the three below, and removes the group |
+| UI | `components/GroupThumbnail.tsx` | The group's picture: choose or replace, remove |
+| UI | `components/GroupDetailsForm.tsx`, `GroupMemberRow.tsx`, `AddMemberForm.tsx` | Name and size with one Save; one person with Remove; the list of people to add |
+| UI | `components/UnassignedSheet.tsx` | Everyone in no group yet |
 | Text | `strings.ts` | The Join button. Group names are data. |
 | Shell | `src/app/groups/page.tsx`, the Groups tab in `AppTabs.tsx` | The list page |
 
@@ -52,7 +56,7 @@ events or prayer: their tables point at `groups`.
 - A removed group keeps its name, so a new group may reuse it; restoring the old one then shows two.
 - Someone who was declined can ask again straight away; nothing stops repeated requests (backlog B3).
 - A manager who wants to join a group asks and approves themselves.
-- **Nobody can leave a group yet**, and there is no member list: members can read only their own memberships.
+- **Nobody can leave a group by themselves**; an admin takes them out. Members read only their own memberships; only a manager sees who is in a group.
 - **A joined group links to `/groups/<id>`, which is chat's screen.** Without chat that link has no page.
 
 ## Expected behavior
@@ -65,8 +69,6 @@ events or prayer: their tables point at `groups`.
 - Proven in a rolled-back transaction (17 checks, 2026-10-06): a pending request opens nothing, a user
   cannot approve themselves, others cannot see or decline it, approval opens the group. **Not yet
   exercised on screen, and no notification seen on a phone.**
-- On the Admin tab, someone with `groups.manage` sees every group's name in a box with Save, and a box to
-  add a group. Save stays disabled until the name changes. **Not yet exercised on screen.**
 - Remove takes the group off every list at once. For its members: the group, its chat, its events and its
   prayer requests disappear, and nobody can post to it or join it. Proven in a rolled-back transaction
   (15 checks, 2026-10-06), including that nothing is erased and that clearing the mark restores it.
@@ -85,3 +87,57 @@ at the bottom of `schema.sql`.
 - Before section 2b of `schema.sql` is run, the pages that list groups fail to load.
 - **"Waiting to join" on the Admin page reads itself again on every arrival** (`api.getJoinRequests`), with the
   name of anyone new. The rest of the Admin page can be up to ten minutes old when returned to.
+
+## Switched off for now (2026-10-12)
+- **Asking to join** (`SWITCHES.joining`): both routes answer 404, and the Admin tab shows no "Waiting to
+  join" list and does not read it. Admins will put people into groups themselves (next slice).
+- **The Groups page as it was** (`SWITCHES.oldGroupsPage`): `/groups` draws the `group-info` feature's list
+  instead of `GroupList`. Switched back on, the old list returns in its place.
+- The tables, their rules and the code are untouched. A direct Supabase call can still insert a join
+  request; no screen shows it and it opens nothing.
+- Observed 2026-10-12, signed out: `POST /api/groups/join` and `/approve` → 404.
+## Admins put people into groups (2026-10-12)
+- **Admin tab → Groups:** one row per group, its name over "12 members", with a chevron. The number is
+  the one an admin typed; until one is typed it is the accounts in the group. Last comes "Has no group /
+  Chưa vào nhóm" with how many approved people are in none: where a newly approved person starts.
+- **A row opens a sheet:** name and number of members with one Save (disabled until something changes; the
+  number takes digits only, and emptying it means "not said"); the people in the group who use the app,
+  name over email, each with Remove; a list of everyone not in the group ("name (email)") with Add; the red
+  "Remove this group"; Close. The inline name box is gone (`GroupNameEditor` deleted).
+- **"Has no group" opens a list only.** A person is put into a group from that group's sheet.
+- **A person can be in several groups** (decided with the user), so adding to one never removes from another.
+- **The number is typed, not counted** (decided with the user: only admins change it): many who come to a
+  group do not use the app. Every member can read it (`my_groups()`), for the Groups page to come.
+- **Adding and removing are direct writes**, guarded by policies that ask for `groups.manage`. Nobody is
+  notified. A manager may now read every membership in active groups: a delete needs to see the row it removes.
+- **`group_people()` is the one read behind both lists:** every approved account with name, email and group
+  ids. It runs with its owner's rights (emails live in `auth.users`), so it checks `groups.manage` itself and
+  answers nothing to anyone else. Someone still waiting to be let in is not in it.
+- **The section is never a kept copy.** Groups and people read themselves again on every arrival and on
+  return to the app (`useFresh` with `getMyGroups` and `getGroupPeople`), so someone approved a minute ago
+  is there to add. After each change the page reloads and the open sheet redraws; a removed group's sheet
+  closes by itself.
+- An existing database needs section 2c of `schema.sql`, then 2b again (it now returns `member_count`).
+- `tests/rls.test.ts`: a member cannot add, remove or see other people's memberships, nor set the number;
+  a manager can; `group_people()` is empty for a member and for a waiting account.
+- **Not exercised (2026-10-12):** the SQL is not run, so neither the security tests nor the screen.
+## The group's picture (2026-10-12)
+- **What:** the small picture that starts a group's row on the Groups tab and on the Admin tab. Whoever holds `groups.manage` sets it,
+  replaces it and removes it, from the top of the group's sheet on the Admin tab: a box that chooses a picture (saved at once, with a turning
+  circle while it uploads), and "Remove the picture". Without one, the row shows the people icon.
+- **Where it is kept:** the file in the public Storage bucket `group-thumbnails`, its path in
+  `groups.thumbnail_path`.
+- **Public, on purpose** (unlike a group's activity photos, which are private): this picture is on every
+  row of a list, and a public address lets the phone keep it instead of downloading it at every visit. It
+  is one picture an admin chose to stand for the group. Anyone holding a file's address can open it; the
+  address is two random ids, and nobody but a manager can list the bucket.
+- **A new picture is a new file with a new name**, then the old file is erased: a phone that kept the old
+  address can never show the old picture in place of the new one.
+- **Shrunk on the phone** to 400 pixels, about 30 KB (`src/lib/shrinkImage.ts`). The bucket refuses
+  anything over 200 KB or not a JPEG.
+- **Order of a change:** the file, then the path on the row, then the old file. A failure in between leaves
+  a file nobody sees, never a row pointing at nothing.
+- An existing database needs section 2d of `schema.sql`, then 2b again, then section 4 of `features/group-info/schema.sql` again (both now return `thumbnail_path`).
+- `tests/rls.test.ts`, "thumbnails": a manager sets and removes; a member or a waiting account cannot
+  upload, change the path or erase the file; the bucket refuses a non-JPEG and an oversized file.
+- **Not exercised (2026-10-12):** the SQL is not run, so neither the security tests nor the screen.
