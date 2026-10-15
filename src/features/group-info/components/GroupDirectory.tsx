@@ -2,7 +2,7 @@
 
 import { Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import IconButton from "@/components/ui/IconButton";
@@ -21,7 +21,7 @@ type Props = {
   groups: DirectoryGroup[]; // as the page loaded them
   // Holds "groups.manage": a + for a new group, and a card opens the group's editor instead of its sheet.
   canManage: boolean;
-  last?: React.ReactNode; // after the groups, for an admin: everyone who is in no group yet (the groups feature)
+  last?: ReactNode; // after the groups, for an admin: everyone who is in no group yet (the groups feature)
 };
 
 // The Groups tab: a card per group, to scroll through. Each shows its picture, a lively green dot, its name,

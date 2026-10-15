@@ -28,7 +28,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Server logic | `server/sendPushOnce.ts` | `sendPushOnce(key, userIds, notification)`: sends the first time a key is seen, never again |
 | Routes | `src/app/api/reminders/send/route.ts` | The scheduler's door: checks `CRON_SECRET`, then asks events and prayer to send what is due |
 | Server reads | `server/queries.ts` | `getSubscribedUserIds(admin)`: everyone with notifications on, for a church-wide announcement |
-| Shell | `public/sw.js` (`PUSH` lines) | `push` → show the notification; `notificationclick` → open its `url` |
+| Shell | `public/sw.js` (`PUSH` lines) | `push` → show the notification; `notificationclick` → open its `url`. The `CACHE` part of the same file (saving the code files for a fast launch) belongs to the app shell, not to push: keep it when removing push. |
 | Shell | `src/app/groups/page.tsx` (`// PUSH` lines) | Where the toggle is shown |
 
 ## Decisions worth knowing

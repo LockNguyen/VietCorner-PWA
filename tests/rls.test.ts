@@ -911,13 +911,14 @@ describe("prayer requests", () => {
     expect(whileWaiting).not.toBeNull();
   });
 
-  it("count a prayer from a fellow member, and show the number to nobody", async () => {
+  it("count a prayer from a fellow member, and show the number to the author only", async () => {
     const { data: counted } = await bob.client.rpc("pray_for_request", { request_id: namedId });
 
     expect(counted).toBe(true);
     expect(await prayerCount(namedId)).toBe(1);
-    // The author hears the number in a notification; no member can read it, not even the author.
-    expect((await feedOf(alice)).find((request) => request.id === namedId)).not.toHaveProperty("prayer_count");
+    // Section 5b: the author reads the count; everyone else gets null, so nobody compares requests.
+    expect((await feedOf(alice)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
+    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBeNull();
   });
 
   it("do not count a prayer from someone still waiting, or from the author", async () => {

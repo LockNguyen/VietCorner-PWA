@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import RefreshOnArrival from "@/components/RefreshOnArrival";
 import GroupInfoForm from "@/features/group-info/components/GroupInfoForm"; // GROUP-INFO
 import GroupPhotos from "@/features/group-info/components/GroupPhotos"; // GROUP-INFO
 import { getGroupDirectory } from "@/features/group-info/server/queries"; // GROUP-INFO
@@ -46,6 +47,7 @@ export default async function GroupEditorPage({ params }: { params: Promise<{ gr
   return (
     <>
       <PageHeader title={group.name} backHref={GROUPS} />
+      <RefreshOnArrival />
       <div className="flex flex-col gap-6 px-3 pt-4 pb-6">
         <GroupThumbnail group={group} />
         <GroupDetailsForm group={group} />

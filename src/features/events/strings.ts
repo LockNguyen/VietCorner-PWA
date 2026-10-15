@@ -20,10 +20,8 @@ export const STRINGS = {
   everyWeek: { en: "Every week", vi: "Hằng tuần" } satisfies Text,
   location: { en: "Location", vi: "Địa điểm" } satisfies Text,
 
-  // Admin section
-  adminHeading: { en: "Events", vi: "Sự kiện" } satisfies Text,
+  // The editor (for whoever manages events)
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
-  untitled: { en: "(no title)", vi: "(không tên)" } satisfies Text,
   editEvent: { en: "Edit event", vi: "Sửa sự kiện" } satisfies Text,
   nextDates: { en: "Next dates", vi: "Các buổi sắp tới" } satisfies Text,
   cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import RefreshOnArrival from "@/components/RefreshOnArrival";
 import Text from "@/components/ui/Text";
 import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import PersonGroups from "@/features/groups/components/PersonGroups"; // GROUPS
@@ -30,6 +31,7 @@ export default async function PersonPage({ params }: { params: Promise<{ userId:
   return (
     <>
       <PageHeader title={person.name} backHref="/admin" />
+      <RefreshOnArrival />
       <div className="flex flex-col gap-6 pb-6">
         <div className="px-3 pt-4">
           <Text tone="subtle">{person.email}</Text>

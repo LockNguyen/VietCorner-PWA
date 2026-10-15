@@ -29,8 +29,6 @@ export const MAX_LOCATION_LENGTH = 150;
 export const MAX_NOTES_LENGTH = 500;
 // why: a card has room for one line of circles; past that the rest is said as "+N".
 export const MAX_CIRCLES = 8;
-// why: no group of this church has ten thousand people; four digits also keep the number on one line.
-export const MAX_MEMBER_COUNT_DIGITS = 4;
 // --- Pictures ------------------------------------------------------------------------------------------
 
 // One of a group's pictures, ready to draw: a row of `group_photos` plus two addresses that work for an hour.

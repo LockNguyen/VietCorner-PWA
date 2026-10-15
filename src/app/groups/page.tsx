@@ -36,7 +36,7 @@ export default async function GroupsPage() {
       <GroupDirectory
         groups={groups}
         canManage={canManage}
-        last={canManage && <UnassignedCard people={people.filter((person) => person.group_ids.length === 0)} />}
+        last={canManage && <UnassignedCard people={people} />}
       />
     </>
   );

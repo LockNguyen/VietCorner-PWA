@@ -38,8 +38,8 @@ export default function EventEditor({ event, listHref }: Props) {
         <>
           {SWITCHES.eventReminders && <EventReminders event={event} onSet={changes.setReminder} />}
           <EventDates event={event} onCancelDate={changes.cancelDate} onRestoreDate={changes.restoreDate} />
-          {/* No "are you sure?" (decided: fewer taps), and no undo: members are told, the event stays on
-              their schedule struck through for a week, then it is gone. The row is kept in the database. */}
+          {/* Asks once, and has no undo: members are told, the event stays on their schedule struck
+              through for a week, then it is gone. The row is kept in the database. */}
           <div className="flex flex-col px-3">
             <Button variant="dangerText" pending={pending === "cancelForGood"} onClick={tap}>
               {armed ? t(COMMON.tapAgain) : t(STRINGS.cancelForGood)}

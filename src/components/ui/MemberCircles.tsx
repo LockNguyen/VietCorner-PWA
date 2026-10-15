@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 import type { HTMLAttributes } from "react";
 
-type Props = HTMLAttributes<HTMLDivElement> & {
+type Props = HTMLAttributes<HTMLSpanElement> & {
   initials: string[]; // the people who have the app, drawn first
   total: number; // how many circles in all; past `initials`, empty ones for people without the app
   max: number; // the most circles drawn; what is left is said as "+N"
@@ -19,7 +19,7 @@ export default function MemberCircles({ initials, total, max, label, ...row }: P
   const count = Math.max(total, initials.length);
   const drawn = count > max ? max - 1 : count; // one place is kept for "+N"
   return (
-    <div role="img" aria-label={label} {...row} className="flex flex-wrap gap-1">
+    <span role="img" aria-label={label} {...row} className="flex flex-wrap gap-1">
       {Array.from({ length: drawn }, (_, index) =>
         index < initials.length ? (
           <span key={index} className={`${CIRCLE} ${KNOWN}`}>
@@ -32,6 +32,6 @@ export default function MemberCircles({ initials, total, max, label, ...row }: P
         ),
       )}
       {count > drawn && <span className={MORE}>+{count - drawn}</span>}
-    </div>
+    </span>
   );
 }

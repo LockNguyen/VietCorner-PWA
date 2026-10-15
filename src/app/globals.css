@@ -40,22 +40,6 @@
   --radius-control: 12px;
   --radius-bubble: 18px;
 
-  /* A sheet coming up from the bottom edge, and the veil behind it fading in.
-     why this curve: it is the one iPhone sheets use, fast at first and settling gently, so a sheet feels like
-     the phone's own rather than a web page's. 400 ms is about an iPhone sheet's length. */
-  --animate-rise: rise 400ms cubic-bezier(0.32, 0.72, 0, 1);
-  @keyframes rise {
-    from {
-      transform: translateY(100%);
-    }
-  }
-  --animate-fade: fade 300ms ease-out;
-  @keyframes fade {
-    from {
-      opacity: 0;
-    }
-  }
-
   /* The reward for praying (asked for by the user, 2026-10-14, "no confetti"): the tick pops in, a ring
      spreads out from it and fades, and "+1" floats up and fades. About two thirds of a second, once.
      The one place something springs past its size: a moment of thanks, not a screen moving. */

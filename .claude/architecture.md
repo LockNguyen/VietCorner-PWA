@@ -61,6 +61,7 @@ src/
   lib/useGoTo.ts     Moves to another screen and resolves when it is on screen.
   lib/useOnArrival.ts  Runs something on arrival at a screen and on return to the app.
   lib/useFresh.ts    A list shows what the page loaded, then re-reads itself on arrival and on return to the app.
+  components/RefreshOnArrival.tsx  An admin editor (a person, a group) reloads its page on arrival: its switches must not show a kept copy.
   lib/shrinkImage.ts   A photo → a smaller JPEG in the browser, before upload.
   lib/publicFileUrl.ts The address of a file in a public storage bucket.
   lib/useWhenVisible.ts  Calls back when an element scrolls into view: "load more" (prayer, group pictures).
@@ -68,7 +69,7 @@ src/
   lib/useBanner.tsx  The banners on screen: raise one from anywhere; each leaves when its time is up.
   lib/useSave.ts     A change from tap to result: usePending + the change + useRefresh + a banner.
   proxy.ts      Runs before each request. Belongs to auth.
-public/         sw.js (push handlers), icons, manifest output.
+public/         sw.js (push handlers, saved code files), icons, manifest output.
 services/ai/    Python AI service: ingestion, retrieval, answering, speech. Deployed as a Docker image.
 docs/           adding-a-feature.md: the recipe every feature follows.
 .claude/skills/ One protocol per kind of work (add/change a feature, database, review, AI service, finish, debug).
@@ -139,12 +140,20 @@ The empty installable app every feature plugs into.
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
 | `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
-| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. |
+| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first; pages are never saved. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. Activating deletes any other cache. |
 
 **Expected behavior:** `/` is Home (or redirects to `/login`); signing in lands on Home; the tab bar is
 absent until signed in; the assistant and Settings open from the top-right icons and have a back arrow to
 Home; tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
+The second load after a new `sw.js` answers all code files from the `static-v1` cache (checked in Chrome,
+2026-10-14: 10/10 on `/login`, cache `static-v1` only). Launch measured on an iPhone (XR/11 screen) before the cache
+(2026-10-14, after a restart): page from the server 1.1 s, code files 21 s, tappable 22.5 s with 1 of 10 files
+still cached; a second launch 1.3 s with 7 of 10. After (same phone, restarted, app not re-added): 10 of 10
+from the saved copy, page 1.1 s, files read 6.6 s, tappable 6.85 s. The new `sw.js` arrived without a reinstall.
+Not explained yet: 5.5 s between the page arriving and its files being read, with every file saved.
+The black, then white, screen while iOS starts the app stays: launch pictures (`apple-touch-startup-image`)
+were tried and never showed on this iPhone, even after re-adding the app, so they were removed.
 
 **Shared UI:** `src/components/ui/` is the component library of the UI revamp, built slice by slice from
 `docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
@@ -350,6 +359,18 @@ variable in §8; mark **only** `SUPABASE_SERVICE_ROLE_KEY`, `VAPID_PRIVATE_KEY`,
 and the scanner would fail the build. Keep the same VAPID keys as local, or existing subscriptions break.
 Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 
+**How an update reaches installed phones (nothing for members to do):**
+- A deploy is a push to `main`. That is the whole workflow; nobody reinstalls.
+- Pages are never saved on the phone, so the next launch (or the next screen opened) gets the new page,
+  and it names the new code files. Their names are new, so the phone downloads and saves them.
+- `sw.js` is checked on every launch (Netlify sends it with `must-revalidate`). A changed one takes over at
+  once (`skipWaiting` + `clients.claim`), so a fix to it reaches every phone on its next launch.
+- An app left open across a deploy keeps its old code until it loads a page again; its old files stay saved,
+  so it does not break when Netlify stops serving them.
+- Rename `STATIC_CACHE` in `sw.js` only when the caching itself changes: phones then empty the old saved copy.
+- Emergency (a broken `sw.js`): deploy a `sw.js` whose `fetch` listener is removed and with `STATIC_CACHE`
+  renamed. Phones go back to plain downloads on their next launch.
+
 **AI service (Docker + Tailscale Funnel, until the Oracle VM exists):**
 1. `docker build -t vietcorner-ai services/ai`, then
    `docker run -d --restart unless-stopped -p 8000:8000 --env-file services/ai/.env --name vc-ai vietcorner-ai`
@@ -406,7 +427,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | One notification per user, per topic, per minute, decided in the database; no topic = an announcement that always arrives | Every message buzzing every member gets notifications switched off; one SQL statement makes the check race-free. A cancelled event must never be the one swallowed. | Messages inside the minute are silent and nothing follows up (no scheduler) |
 | Results are announced in one reusable banner, never as text beside the button | One place decides how success and failure look and how long they stay; a feature passes a kind and a message | A banner can be missed in a way inline text cannot; errors therefore stay 8 s and wait for a tap if stacked |
 | A device's push subscription is saved through a route with the service role | The endpoint outlives a sign-out; only the server may move it to the next user of that phone | Anyone who knew an endpoint (a long random address) could claim it; one more route |
-| A visited page is kept in the phone's memory for ten minutes (`staleTimes`, an experimental Next.js setting) | Going back to a tab shows it at once, with no request; the lists refresh themselves behind it | Settings and Admin do not refresh themselves and can be up to ten minutes old when returned to; the setting may change in a future Next.js; sign-out must be a full page load so the next person on that phone starts empty |
+| A visited page is kept in the phone's memory for ten minutes (`staleTimes`, an experimental Next.js setting) | Going back to a tab shows it at once, with no request; the lists refresh themselves behind it | Settings does not refresh itself and can be up to ten minutes old when returned to (the Admin lists use `useFresh`; the person and group editors reload on arrival, `RefreshOnArrival`, which also empties the other kept tabs); the setting may change in a future Next.js; sign-out must be a full page load so the next person on that phone starts empty |
 | A page's data comes from one database function, called by the page and again by the list itself (`useFresh`) | One trip instead of several; a kept copy of a page can show at once and still become current; `router.refresh()` cannot do this because it discards every kept page | SQL per page; the list holds a copy of the page's data; one extra small read just after a first visit |
 | Pages read who is signed in from the login token, checked locally; only routes that write ask Supabase | Most of the app is reading, and the round trip bought nothing the database's own check does not | A session ended elsewhere keeps reading for up to an hour |
 | Names are readable within a shared group and by group managers, not by every signed-in user | Decided while "signed in" was anyone with an email; approval (2026-10-12) removes that reason, and the rule is kept until the new Groups page needs otherwise | A former member's old messages lose their name; one function call per row read |
@@ -448,6 +469,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Refusal comes from the prompt, not `SIMILARITY_FLOOR` | No model separates answerable from unanswerable (AUC 0.64–0.71) | The floor stays 0.35 as a gibberish guard; answer-quality tests matter more (B13) |
 | Load bge-m3's official `.bin` weights, not a converted `.safetensors` | The conversion is an unmerged bot PR; measured identical vectors and no faster load | Relies on torch ≥ 2.6, which the image has |
 | No RAG framework | Every stage is visible, testable code | We hand-write what frameworks provide |
+| **The service worker saves only `/_next/static/*`, cache-first, by hand (no Workbox)** | Measured: after a restart iOS had dropped 9 of 10 code files and refetching them was 21 of 22.5 s. Their names change with their content, so a saved copy is never stale | Pages still wait on the server (about 1 s, 3–5 s when Netlify is cold); old files are only trimmed past 150, not per deploy |
 
 ## 10. Change Log
 - 2026-09-14: Harness files; app shell; auth (email code, proxy redirects); chat (schema + RLS, Realtime, push, service worker); first Netlify deploy.
@@ -542,3 +564,5 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-14: every sheet closes with an X at its top right (`ui/Sheet`, `closeLabel` = `COMMON.close`); the Close and Cancel buttons that only closed a sheet are gone (event details, a group's sheet on both tabs, "Has no group", the new prayer request, a request's options, which are now Answered and Edit side by side over Delete). Sheets rise on the iPhone's own curve (400 ms, `cubic-bezier(0.32, 0.72, 0, 1)`) over a veil that fades in. Seen on `/ui` at phone width: the X at the top right, the animation, the X closing it. Closing still has no animation: a sheet disappears when its screen stops drawing it.
 - 2026-10-14: admin on the tabs. Sheets on `vaul` (slide away, swipe down, max 60%; `useClosingSheet` times the slide-out because vaul does not report it for the X: found when a sheet would not open twice). `ui/BilingualInput`, `Card`, `LiveDot`, `MemberCircles`, `Button` `dangerText`, `lib/useConfirmTap`. Events: + and tap-to-edit on the tab, editor at `/events/[eventId]`. Groups: cards, admin editor at `/groups/manage/[groupId]`, weekday + time (`group_info.meets_weekday/meets_time`, `meeting.ts`), initials. Prayer: bell → `/prayer/reminders`. Admin: waiting lists + new feature `people`. SQL: group-info section 7, people `schema.sql`, events 3f. Removed: `EventAdmin(Row)`, `GroupAdmin`, `GroupSheet`, `GroupDetail(Form)`.
 - 2026-10-14: Admin tile on Home for managers; "3 🙏" beside my own requests (`ui/CountPill`, prayer SQL 5b); a reward when praying (`ui/Celebrate`, pop/ring/float keyframes); picture viewer: tap the dark to close, white X and download above the picture, arrows under it at its edges (`Lightbox`, `IconButton` `onDark`, `group-info/savePhoto.ts`). Launch measured: server 3.3 s cold / 0.4 s warm, ~900 KB of scripts on every launch (nothing cached by the service worker).
+- 2026-10-14: fast launch (B28). Measured on an iPhone with a temporary on-screen timer: after a restart the code files took 21 of 22.5 s (iOS had dropped 9 of 10 from its cache; they were 260 KB compressed, not 900 KB as noted earlier). `sw.js` now keeps them (`CACHE`, `static-v1`); only files marked `immutable` are saved and a storage error falls back to the network. After: 10/10 saved, tappable 6.85 s (was 22.54 s), the new `sw.js` arrived without a reinstall. iPhone launch pictures tried and removed: none showed, even after re-adding the app. The Funnel test address serves port 3000.
+- 2026-10-15: review before the production push. Fixed: the person and group editors reload on arrival (`components/RefreshOnArrival.tsx`; a kept copy showed old switches, and a second tap undid a change); the "Chưa vào nhóm" card refreshes itself (`useFresh`); saving a picture says when it failed (banner); the security test now expects the prayer count for the author only (5b). Removed: unused strings, `MAX_MEMBER_COUNT_DIGITS` in group-info, the old sheet's `rise`/`fade` keyframes. `npm test` 116/116, `npm run test:rls` 94/94, build clean.

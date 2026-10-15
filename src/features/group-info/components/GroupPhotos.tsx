@@ -9,6 +9,7 @@ import Text from "@/components/ui/Text";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
+import { useBanner } from "@/lib/useBanner";
 import { useSave } from "@/lib/useSave";
 import { useGroupPhotos } from "../hooks/useGroupPhotos";
 import { savePhoto } from "../savePhoto";
@@ -33,6 +34,7 @@ export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: P
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const { pending, save } = useSave<"remove">();
+  const showBanner = useBanner();
 
   // Found again on every render, so the large view closes by itself when its picture is removed.
   const index = photos.findIndex((photo) => photo.id === openId);
@@ -83,7 +85,11 @@ export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: P
             close: t(COMMON.close),
             download: t(STRINGS.savePhoto),
           }}
-          onDownload={() => void savePhoto(open.fullUrl, `${groupName} ${open.taken_on ?? open.id}.jpg`)}
+          onDownload={() =>
+            savePhoto(open.fullUrl, `${groupName} ${open.taken_on ?? open.id}.jpg`).catch(() =>
+              showBanner({ kind: "error", message: t(STRINGS.couldNotSavePhoto) }),
+            )
+          }
           onPrevious={index > 0 ? () => setOpenId(photos[index - 1].id) : undefined}
           onNext={index < photos.length - 1 ? () => setOpenId(photos[index + 1].id) : undefined}
           onClose={() => setOpenId(null)}

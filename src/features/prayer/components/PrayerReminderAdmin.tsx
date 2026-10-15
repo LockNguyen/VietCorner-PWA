@@ -22,8 +22,8 @@ type Props = { reminders: PrayerReminder[] };
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
-// The admin page's section for prayer reminders: when the whole church gets "time to pray", every week, in
-// church time. For someone with the "prayer.reminders" permission; the database refuses everyone else.
+// The prayer reminders screen (the bell on the Prayer tab): when the whole church gets "time to pray", every
+// week, in church time. For someone with "prayer.reminders"; the database refuses everyone else.
 export default function PrayerReminderAdmin({ reminders }: Props) {
   const refresh = useRefresh();
   const { t, language } = useLanguage(); // I18N

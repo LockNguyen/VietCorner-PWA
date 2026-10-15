@@ -24,7 +24,7 @@ events or prayer: their tables point at `groups`.
 | UI | `components/NewGroupForm.tsx` | A new group's name, then Create, which opens its editor |
 | UI | `components/GroupPeople.tsx` | On a group's editor: who is in it (each with Remove), and adding someone |
 | UI | `components/RemoveGroupButton.tsx` | The small red line at the bottom of a group's editor (asks once) |
-| UI | `components/UnassignedCard.tsx` | The last card on the Groups tab, for an admin: everyone in no group yet |
+| UI | `components/UnassignedCard.tsx` | The last card on the Groups tab, for an admin: everyone in no group yet; refreshes itself (`useFresh`) |
 | UI | `components/PersonGroups.tsx` | On a person's screen (Admin): a switch per group |
 | UI | `components/GroupThumbnail.tsx` | The group's picture: choose or replace, remove |
 | UI | `components/GroupDetailsForm.tsx`, `GroupMemberRow.tsx`, `AddMemberForm.tsx` | Name and size with one Save; one person with Remove; the list of people to add |

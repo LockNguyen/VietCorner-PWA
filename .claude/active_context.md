@@ -393,13 +393,13 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       deploys from it. Before the push, a read-only check found every table, function, bucket and column the
       code uses in the database. NOT run: `npm run test:rls` against today's SQL.
 
-- [x] **Sheets and admin on the tabs** (branch `sheets-and-admin`, off `main` at `7ad2229`; built 2026-10-14, NOT committed).
+- [x] **Sheets and admin on the tabs** (branch `sheets-and-admin`, off `main` at `7ad2229`; built 2026-10-14, committed `de75e01`).
       Built all four steps. Checked in `/ui` at phone width (the user's dev server on port 3000): the card with
       the dot, initials, empty circles and "+5"; the bilingual box; the red line; the sheet capped at 487 of 812 px
       (60%), opening again after each close (a bug found and fixed: vaul never reported the X's slide-out), a
       simulated swipe down closing it, gone ~0.55 s after closing. `npm test` 116/116, build clean.
-      **WAITS ON THE USER: SQL: `docs/sql-to-run-2026-10-14.sql` (events 3f, group-info 7, people, prayer 5b);
-      then `npm run test:rls` (2 new cases).** Until it is run the Groups and Prayer tabs are empty.
+      SQL `docs/sql-to-run-2026-10-14.sql` is run: `npm run test:rls` 94/94 (2026-10-15). Section 3f (events
+      outlive their maker) is not covered by a test.
       Then (same day): Admin tile on Home; "3 🙏" on my own requests; pray reward; picture viewer redone. Seen in
       `/ui` at phone width (measured to the pixel: X flush with the picture's right edge, arrows with its edges).
       Slow launch: measured server 3.3 s cold / 0.4 s warm; 30 s on the phone not explained by the server. Until section 7 is run the Groups tab is empty.
@@ -416,23 +416,31 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Prayer tab (bell for reminders); (4) Admin = user list. Netlify badge: injected by Netlify
       (`/.netlify/scripts/hud?variant=public`), a dashboard setting, not our code.
 
-- [ ] **B28 slow iPhone launch: measuring** (2026-10-14). Found: Funnel 8443 proxies port **3000**, which was
-      the `npm run dev` server (Turbopack, no-store), not the 3005 production build. Live site: HTML 3–4.7 s cold,
-      0.4 s warm; JS/CSS 260 KB as sent (br), already `immutable` for a year. **TEMPORARY, remove after:**
-      `src/components/LaunchTiming.tsx` + its 2 marked lines in `src/app/layout.tsx` (an on-screen timing box).
-      Production build now runs on port 3000 (`prod` in `.claude/launch.json` moved from 3005 to 3000).
+- [x] **B28 slow iPhone launch** (2026-10-14, committed with the review fixes 2026-10-15). Before, on the iPhone after a restart: tappable
+      22.54 s, 1/10 code files cached (21 s downloading them). Built: `public/sw.js` `CACHE` part (cache-first
+      `/_next/static/*` marked `immutable`, `static-v1`, newest 150, other caches deleted on activate, falls back to
+      the network on a storage error). After: 10/10 from the saved copy, tappable 6.85 s, no reinstall needed.
+      iOS launch pictures tried and removed (never showed, even re-added). Timing box removed. Funnel 8443
+      proxies port **3000**; the production build runs there (`prod` in `.claude/launch.json` moved from 3005).
+
+- [x] **Review before the production push (2026-10-15).** Every branch was already in local `main`; nothing
+      to merge (the `agent-a0-a1` worktree holds uncommitted `services/ai` work, not deployed by Netlify, left
+      alone). Strict review of `de75e01` + B28: 3 must-fix (stale security test, admin editors showing a kept
+      copy, a silent failure saving a picture) and 7 cleanups, all fixed on the user's word. `npm test` 116/116,
+      `npm run test:rls` 94/94, build clean. Committed on `sheets-and-admin`, `main` fast-forwarded, NOT pushed.
+      NOT seen signed in: any admin screen (the preview browser is signed out). Backlog B41 added.
 
 ## ➡️ Next 3 Micro-Steps
-1. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include
-   `https://vietcorners.netlify.app/login/**` (sign-up and reset links on the live site depend on it).
-2. User: one sign-up and one password reset on the live site from an iPhone, Safari first; then `npm run test:rls`.
-3. Turn off the test address when done: `tailscale funnel --https=8443 off` (the AI service keeps the root address).
+1. User: say "push" → `git push origin main` (Netlify deploys). Check the Netlify build passed.
+2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
+   picture), Prayer bell, Admin → a person (a role switch, a group switch, back and in again).
+3. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include
+   `https://vietcorners.netlify.app/login/**`; then one sign-up and one password reset from an iPhone.
 
 Older, still open: 1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
    the Netlify address), the new "Confirm signup" template (auth README, Setup 3 and 5).
 2. User + Claude: one fresh account end to end on an iPhone (install → language → create → email → name →
    notifications → waiting) and one password reset; check "Save password?" appears on both phones.
-3. Then: code review and security pass over the whole branch before any commit (nothing is committed yet).
 
 Earlier, still open: SQL, in order (each safe to run again): `groups/schema.sql` 2c, 2d, then 2b · `events/schema.sql` 3e,
    then 3b and 3c · `group-info/schema.sql` (all) · the `group_info` and `group_photos` lines of
