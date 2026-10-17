@@ -11,12 +11,14 @@ import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LANGUAGE_NAMES } from "@/features/i18n/types"; // I18N
+import { SWITCHES } from "@/lib/switches";
 import { useSave } from "@/lib/useSave";
 import { saveGroupInfo } from "../api";
 import { weekdayName } from "../meeting";
 import { STRINGS } from "../strings";
 import {
   MAX_MEMBER_COUNT_DIGITS,
+  MAX_PHONE_LENGTH,
   MAX_NOTES_LENGTH,
   type DirectoryGroup,
   type GroupInfoDraft,
@@ -38,6 +40,7 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
     location: group.location ?? "",
     locationEn: group.location_en ?? "",
     notes: group.notes ?? "",
+    contactPhone: group.contact_phone ?? "",
   });
   const { pending, save } = useSave<"save">();
   const change = (field: keyof GroupInfoDraft, value: string) => setDraft({ ...draft, [field]: value });
@@ -86,10 +89,24 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
           />
         </div>
       </Field>
-      <div className="flex flex-col gap-1">
-        <Text variant="small" tone="subtle">{t(STRINGS.where)}</Text>
-        <BilingualInput top={half("location", t(STRINGS.where), "vi")} bottom={half("locationEn", t(STRINGS.where), "en")} />
-      </div>
+      {/* Kept, not shown for now (`groupLocation`); a saved place stays as it is. */}
+      {SWITCHES.groupLocation && (
+        <div className="flex flex-col gap-1">
+          <Text variant="small" tone="subtle">{t(STRINGS.where)}</Text>
+          <BilingualInput top={half("location", t(STRINGS.where), "vi")} bottom={half("locationEn", t(STRINGS.where), "en")} />
+        </div>
+      )}
+      <Field label={t(STRINGS.contact)}>
+        <TextInput
+          type="tel"
+          inputMode="tel"
+          autoComplete="off"
+          placeholder="(336) 555-0101"
+          maxLength={MAX_PHONE_LENGTH}
+          value={draft.contactPhone}
+          onChange={(event) => change("contactPhone", event.target.value)}
+        />
+      </Field>
       <TextArea
         rows={3}
         placeholder={t(STRINGS.notes)}

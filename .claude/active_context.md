@@ -465,6 +465,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **The picture swipe drags, iPhone-Photos style (2026-10-17, the user).** Follows the thumb, slides off and
       in, springs back, rubber band at the ends. NOT tried with a finger on a phone.
 
+- [x] **Group cards: when + members; sheet: when, contact (Call / Text / Copy), notes, pictures (2026-10-17, the
+      user).** Location kept, hidden (`SWITCHES.groupLocation`). **WAITS ON THE USER: `docs/sql-to-run-2026-10-17b.sql`,
+      then `npm run test:rls`; before pushing** (the editor's Save writes `contact_phone`).
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

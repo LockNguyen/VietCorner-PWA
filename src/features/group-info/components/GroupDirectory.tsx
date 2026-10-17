@@ -10,6 +10,7 @@ import LiveDot from "@/components/ui/LiveDot";
 import MemberCircles from "@/components/ui/MemberCircles";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
+import { SWITCHES } from "@/lib/switches";
 import { useFresh } from "@/lib/useFresh";
 import { getGroupDirectory } from "../api";
 import { locationText, nameText } from "../bilingual";
@@ -56,7 +57,7 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
             placeholder={<Users className="size-8" />}
             badge={<LiveDot />}
             title={t(nameText(group))}
-            subtitle={[when, t(locationText(group))].filter(Boolean).join(" · ") || undefined}
+            subtitle={[when, SWITCHES.groupLocation && t(locationText(group))].filter(Boolean).join(" · ") || undefined}
             onClick={() => (canManage ? router.push(`/groups/manage/${group.id}`) : setOpenId(group.id))}
           >
             {total > 0 && (

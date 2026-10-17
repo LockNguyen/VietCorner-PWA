@@ -12,6 +12,7 @@ export type DirectoryGroup = {
   location: string | null; // in Vietnamese
   location_en: string | null; // in English; null = not yet
   notes: string | null; // "Read Matthew 3 before next week"
+  contact_phone: string | null; // whom to call about the group, as typed: "(336) 555-0101"
   member_initials: string[]; // of the people in it who have the app, for the circles on its card
 };
 
@@ -26,6 +27,7 @@ export type GroupInfoDraft = {
   location: string;
   locationEn: string;
   notes: string;
+  contactPhone: string;
 };
 
 // The public storage bucket the groups' row pictures live in. It belongs to the groups feature (its
@@ -40,6 +42,7 @@ export const MANAGE_GROUPS = "groups.manage";
 // bilingual name and place boxes do not stop, as on an event: a name over 60 or a place over 150 is refused
 // by the database and the Save banner says so.
 export const MAX_NOTES_LENGTH = 500;
+export const MAX_PHONE_LENGTH = 30; // the same limit as the database's (schema.sql, section 9)
 // why: no group of this church has ten thousand people; four digits also keep the number on one line.
 export const MAX_MEMBER_COUNT_DIGITS = 4;
 // why: a card has room for one line of circles; past that the rest is said as "+N".

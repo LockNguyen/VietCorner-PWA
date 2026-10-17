@@ -174,3 +174,15 @@ NOT tried on a phone.
 ## Swipe in the large view (2026-10-17)
 A swipe left shows the next picture, a swipe right the one before (`ui/Lightbox`, `ui/hooks/useSwipe`). The
 arrows stay. At the last picture of the strip's loaded page a swipe left does nothing (more load from the strip).
+
+## Cards, the sheet and a contact number (2026-10-17, the user)
+- **Card:** the picture, the name, when the group meets, and the member circles. Nothing else.
+- **Sheet** (a member taps a card): When, Contact, Notes, then the pictures. The number of members left the
+  sheet (the circles on the card say it).
+- **Contact** (`group_info.contact_phone`, section 9): a phone number as typed. Tapping it shows Call, Text and
+  Copy (`ContactLine`): the first two open the phone's own apps (`tel:` / `sms:`, digits from `phone.ts`, tested),
+  Copy puts the number on the clipboard. The database takes digits, spaces and + ( ) - . only, so nothing else
+  can sit behind those links.
+- **Where** stays in the database and in `GroupInfoDraft` (a saved place is kept on every Save), but is shown
+  nowhere while `SWITCHES.groupLocation` is false: not on the card, the sheet or the editor.
+- **SQL:** `docs/sql-to-run-2026-10-17b.sql`. Until it is run the editor's Save fails (it writes `contact_phone`).

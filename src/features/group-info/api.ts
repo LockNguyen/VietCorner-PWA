@@ -47,6 +47,7 @@ export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Pro
         location: draft.location.trim() || null,
         location_en: draft.locationEn.trim() || null,
         notes: draft.notes.trim() || null,
+        contact_phone: draft.contactPhone.trim() || null,
       },
       { onConflict: "group_id" },
     );

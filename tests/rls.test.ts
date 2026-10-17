@@ -1083,6 +1083,20 @@ describe("group_info: what a group says about itself", () => {
     expect(row).toMatchObject({ name: "rls nhóm", name_en: "rls group", location: "rls hội trường", location_en: "rls hall" });
   });
 
+  it("has a contact phone number: a number only, written only by a manager (group-info 9)", async () => {
+    const savePhone = (user: TestUser, contact_phone: string) =>
+      user.client.from("group_info").upsert({ group_id: ownGroupId, contact_phone }, { onConflict: "group_id" });
+    const { error: fromMember } = await savePhone(bob, "(336) 555-0199");
+    const { error: byManager } = await savePhone(alice, "(336) 555-0101");
+    const { error: notANumber } = await savePhone(alice, "javascript:alert(1)");
+    const row = ((await bob.client.rpc("group_directory")).data ?? []).find((group: { id: string }) => group.id === ownGroupId);
+
+    expect(fromMember).not.toBeNull();
+    expect(byManager).toBeNull();
+    expect(notANumber).not.toBeNull();
+    expect(row).toMatchObject({ contact_phone: "(336) 555-0101" });
+  });
+
   it("is closed to someone still waiting to be let in", async () => {
     const { data: direct } = await carol.client.from("group_info").select("notes");
     const { data: listed } = await carol.client.rpc("group_directory");
