@@ -9,18 +9,18 @@ import { formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 import { THUMBNAIL_BUCKET, type Occurrence } from "../types";
 
-type Props = { occurrence: Occurrence; onOpen: () => void };
+type Props = { occurrence: Occurrence };
 
 // One line of the schedule, shaped like a row of the Admin tab's people: the picture, the title, and under it
-// the time and the place ("7:00 Tối · Hội trường"), "Cancelled" first when it is called off.
-export default function EventRow({ occurrence, onOpen }: Props) {
+// the time and the place ("7:00 Tối · Hội trường"), "Cancelled" first when it is called off. Opens the event's page.
+export default function EventRow({ occurrence }: Props) {
   const { t, language } = useLanguage(); // I18N
   const { event, startsAt, canceled } = occurrence;
   const notes = [canceled && t(STRINGS.canceled), formatTime(startsAt, language), event.text.location];
 
   return (
     <ListRow
-      onClick={onOpen}
+      href={`/events/${event.id}`}
       leading={
         <Thumbnail src={event.thumbnail_path ? publicFileUrl(THUMBNAIL_BUCKET, event.thumbnail_path) : undefined}>
           <CalendarDays />

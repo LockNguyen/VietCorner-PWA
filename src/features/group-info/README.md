@@ -180,7 +180,7 @@ arrows stay. At the last picture of the strip's loaded page a swipe left does no
 - **Sheet** (a member taps a card): When, Contact, Notes, then the pictures. The number of members left the
   sheet (the circles on the card say it).
 - **Contact** (`group_info.contact_phone`, section 9): a phone number as typed. Tapping it shows Call, Text and
-  Copy (`ContactLine`): the first two open the phone's own apps (`tel:` / `sms:`, digits from `phone.ts`, tested),
+  Copy (`src/components/PhoneNumber.tsx`, shared with events since 2026-10-17): the first two open the phone's own apps (`tel:` / `sms:`, digits from `src/lib/phone.ts`, tested),
   Copy puts the number on the clipboard. The database takes digits, spaces and + ( ) - . only, so nothing else
   can sit behind those links.
 - **Where** stays in the database and in `GroupInfoDraft` (a saved place is kept on every Save), but is shown

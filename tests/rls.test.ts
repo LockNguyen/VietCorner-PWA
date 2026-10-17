@@ -725,6 +725,18 @@ describe("events", () => {
     expect(signedOut.error).not.toBeNull();
   });
 
+  it("have a contact phone number: a number only, set only by a manager, read by every member (3g)", async () => {
+    const everything = { until: "2999-01-01T00:00:00Z", cancelled_since: "1970-01-01T00:00:00Z" };
+    await bob.client.from("events").update({ contact_phone: "(336) 555-0199" }).eq("id", churchWideId);
+    const { error: byManager } = await alice.client.from("events").update({ contact_phone: "(336) 555-0101" }).eq("id", churchWideId);
+    const { error: notANumber } = await alice.client.from("events").update({ contact_phone: "sms:1234;body=hi" }).eq("id", churchWideId);
+    const rows = (await bob.client.rpc("upcoming_events", everything)).data ?? [];
+
+    expect(byManager).toBeNull();
+    expect(notANumber).not.toBeNull();
+    expect(rows.find((row: { id: string }) => row.id === churchWideId)?.contact_phone).toBe("(336) 555-0101");
+  });
+
   it("are visible to every approved member", async () => {
     const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
 

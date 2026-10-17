@@ -11,10 +11,6 @@ export const STRINGS = {
   where: { en: "Where", vi: "Địa điểm" } satisfies Text,
   notes: { en: "Notes", vi: "Ghi chú" } satisfies Text,
   contact: { en: "Contact", vi: "Liên lạc" } satisfies Text,
-  call: { en: "Call", vi: "Gọi" } satisfies Text,
-  sendText: { en: "Text", vi: "Nhắn tin" } satisfies Text,
-  copyNumber: { en: "Copy", vi: "Sao chép" } satisfies Text,
-  copied: { en: "Number copied", vi: "Đã chép số điện thoại" } satisfies Text,
   savePhoto: { en: "Save to phone", vi: "Lưu về máy" } satisfies Text, // the viewer's download button
   couldNotSavePhoto: { en: "Could not save the picture. Please try again.", vi: "Không lưu được hình. Xin thử lại." } satisfies Text,
   pickDay: { en: "Day", vi: "Ngày" } satisfies Text, // the weekday picker before a day is chosen

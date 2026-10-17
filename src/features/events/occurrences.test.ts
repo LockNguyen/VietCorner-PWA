@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isoDate, wallTime } from "@/lib/churchTime";
-import { occurrencesOf, scheduleOf, scheduleWindow, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
+import { nextOfEach, occurrencesOf, scheduleOf, scheduleWindow, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
 import type { ChurchEvent, ScheduledEvent } from "./types";
 
 const MONDAY = new Date("2026-10-05T18:00:00Z");
@@ -14,6 +14,7 @@ function makeEvent(overrides: Partial<ChurchEvent> = {}): ChurchEvent {
     repeat_until: null,
     canceled_at: null,
     thumbnail_path: null,
+    contact_phone: null,
     text: { title: "Prayer evening", description: null, location: null },
     ...overrides,
   };
@@ -150,5 +151,21 @@ describe("the schedule as the database hands it over", () => {
       until: "2026-12-03T00:00:00.000Z",
       cancelled_since: "2026-10-01T00:00:00.000Z",
     });
+  });
+});
+
+describe("one date per event on the Events tab", () => {
+  it("keeps only a weekly event's next date, and every one-off", () => {
+    const weekly = makeEvent({ id: "weekly", repeats_weekly: true });
+    const oneOff = makeEvent({ id: "one-off", starts_at: new Date("2026-10-07T18:00:00Z").toISOString() });
+    const all = upcomingOccurrences([weekly, oneOff], new Map(), new Date("2026-10-01T00:00:00Z"));
+
+    const shown = nextOfEach(all);
+
+    expect(all.filter((date) => date.event.id === "weekly").length).toBeGreaterThan(1);
+    expect(shown.map((date) => [date.event.id, date.startsAt.toISOString()])).toEqual([
+      ["weekly", MONDAY.toISOString()],
+      ["one-off", "2026-10-07T18:00:00.000Z"],
+    ]);
   });
 });

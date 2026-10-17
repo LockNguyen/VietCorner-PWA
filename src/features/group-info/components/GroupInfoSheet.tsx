@@ -1,5 +1,6 @@
 "use client";
 
+import PhoneNumber from "@/components/PhoneNumber";
 import Sheet from "@/components/ui/Sheet";
 import Text from "@/components/ui/Text";
 import { COMMON } from "@/features/i18n/common"; // I18N
@@ -9,7 +10,6 @@ import { locationText, nameText } from "../bilingual";
 import { formatMeeting } from "../meeting";
 import { STRINGS } from "../strings";
 import type { DirectoryGroup } from "../types";
-import ContactLine from "./ContactLine";
 import GroupPhotos from "./GroupPhotos";
 
 type Props = { group: DirectoryGroup; onClose: () => void };
@@ -36,7 +36,12 @@ export default function GroupInfoSheet({ group, onClose }: Props) {
       {saidNothing && <Text tone="subtle">{t(STRINGS.nothingYet)}</Text>}
       {line(STRINGS.when, when)}
       {SWITCHES.groupLocation && line(STRINGS.where, t(locationText(group)))}
-      {group.contact_phone && <ContactLine phone={group.contact_phone} />}
+      {group.contact_phone && (
+        <div className="flex flex-col">
+          <Text variant="small" tone="subtle">{t(STRINGS.contact)}</Text>
+          <PhoneNumber phone={group.contact_phone} />
+        </div>
+      )}
       {line(STRINGS.notes, group.notes)}
       <GroupPhotos groupId={group.id} groupName={name} canAdd={group.is_member} canRemove={false} />
     </Sheet>

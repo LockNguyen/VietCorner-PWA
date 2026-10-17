@@ -14,6 +14,7 @@ export type EventRow = {
   repeat_until: string | null;
   canceled_at: string | null;
   thumbnail_path: string | null; // its picture's file in THUMBNAIL_BUCKET; null = none
+  contact_phone: string | null; // whom to call about it, as typed: "(336) 555-0101" (schema.sql 3g)
 };
 
 // What the event SAYS, in one language.
@@ -42,7 +43,7 @@ export type ScheduledEvent = EventRow & {
 };
 
 // The `events` columns the reminder scheduler asks for (server/sendDueReminders.ts), named once.
-export const EVENT_COLUMNS = "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path";
+export const EVENT_COLUMNS = "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path, contact_phone";
 
 // The public storage bucket the events' pictures live in (schema.sql section 3e makes it).
 export const THUMBNAIL_BUCKET = "event-thumbnails";
@@ -51,6 +52,9 @@ export const THUMBNAIL_BUCKET = "event-thumbnails";
 // why: a day to plan, two hours to get ready, thirty minutes to leave. Fixed choices instead of a number
 // box: nothing to mistype, and the scheduler's 15-minute run is fine enough for the shortest of them.
 export const REMINDER_CHOICES = [1440, 120, 30];
+
+// why: the database refuses a longer number (schema.sql 3g); the box stops the typing at the same length.
+export const MAX_PHONE_LENGTH = 30;
 
 // --- What the admin section works with ---------------------------------------------------------------
 
@@ -75,5 +79,6 @@ export type EventDraft = {
   endsAt: string; // "" = no end time
   repeatsWeekly: boolean;
   repeatUntil: string; // YYYY-MM-DD, "" = no end
+  contactPhone: string; // "" = none
   texts: Record<Language, { title: string; description: string; location: string }>;
 };

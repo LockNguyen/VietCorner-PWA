@@ -29,6 +29,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `CountPill` | A small grey pill with a number and an icon ("3 🙏"), the height and grey of the small `Chip`, so they sit level. Not a button | | `label` (read by screen readers) |
 | `Celebrate` | A moment of thanks around what it wraps: it pops in, a ring spreads out and fades, `burst` floats up and fades. Plays once when rendered; nothing moves with reduced motion | | `burst` |
 | `Card` | A large tappable card: a picture across the top, always 16:9 (a taller or wider picture is centred and cut, so every card is the same height), then a title with an optional badge before it, a grey line, and children | | `src`, `placeholder`, `title`, `badge`, `subtitle` |
+| `IconLine` | One fact with an icon at its left instead of a word (time, place, contact); the icon is labelled for screen readers | | `icon`, `label` |
 | `LiveDot` | A small green dot with a light green ring pulsing out of it: something lively. Decorative | | |
 | `MemberCircles` | A row of small circles, one per person: initials first, empty figures for the rest, "+N" past `max` | | `initials`, `total`, `max`, `label` |
 | `BilingualInput` | One text in two languages as one grey box: the first language on top, a hairline, the other below; an empty half shows its language | | `top`, `bottom` (`value`, `onChange`, `placeholder`, `label`), `rows` |

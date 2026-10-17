@@ -471,6 +471,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       shows Gọi / Nhắn tin / Sao chép. NOT tried: the call and text apps opening on a phone. The number now
       lines up with its label (`Button` variant `inline`, no side padding).
 
+- [x] **Events: "Lịch sinh hoạt", one date per event, an event page (2026-10-17, the user).** Tap → `/events/<id>`
+      slides in: big picture, time / place / contact with icons, description, Edit for admins. Editor at
+      `/events/<id>/edit`. **WAITS ON THE USER: `docs/sql-to-run-2026-10-17c.sql`, then `npm run test:rls`; before
+      pushing** (the editor's Save writes `contact_phone`; the schedule's read returns it).
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

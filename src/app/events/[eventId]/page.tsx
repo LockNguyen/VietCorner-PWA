@@ -1,30 +1,25 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
-import EventEditor from "@/features/events/components/EventEditor";
-import { getManagedEvents } from "@/features/events/server/queries";
-import { STRINGS } from "@/features/events/strings";
+import EventPage from "@/features/events/components/EventPage";
+import { getScheduledEvents } from "@/features/events/server/queries";
 import { MANAGE_EVENTS } from "@/features/events/types";
-import { getMyPermissions } from "@/features/permissions/server/queries";
+import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 
-const SCHEDULE = "/events"; // where the editor came from, and where saving leads back to
-
-// The editor for one event, or for a new one at `/events/new`. Opened from the Events tab by an admin.
-export default async function EventEditorPage({ params }: { params: Promise<{ eventId: string }> }) {
+// One event's page, opened from the Events tab by anyone: the schedule's own read (`upcoming_events()`),
+// so it shows exactly what the list showed. An event no longer on the schedule answers 404.
+export default async function EventDetailsPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
   const supabase = await createClient();
-  // Courtesy, not security: the database refuses every save without the permission.
-  if (!(await getMyPermissions(supabase)).includes(MANAGE_EVENTS)) notFound();
-
-  // The whole list is read to show one event: it is a handful of rows in one trip (`managed_events()`),
-  // and it is the read that already works out each event's next dates and reminders.
-  const event = (await getManagedEvents(supabase)).find((managed) => managed.id === eventId);
-  if (!event && eventId !== "new") notFound();
+  const [events, permissions] = await Promise.all([getScheduledEvents(supabase), getMyPermissions(supabase)]);
+  const event = events.find((each) => each.id === eventId);
+  if (!event) notFound();
 
   return (
     <>
-      <PageHeader title={event ? STRINGS.editEvent : STRINGS.newEvent} backHref={SCHEDULE} />
-      <EventEditor event={event} listHref={SCHEDULE} />
+      {/* The title in the reader's language, or the other one when the event has only one. */}
+      <PageHeader title={{ en: event.texts.en?.title ?? "", vi: event.texts.vi?.title ?? "" }} backHref="/events" />
+      <EventPage event={event} canManage={permissions.includes(MANAGE_EVENTS)} />
     </>
   );
 }

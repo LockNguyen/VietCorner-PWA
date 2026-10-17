@@ -37,7 +37,8 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
-| Shell | `src/app/events/[eventId]/page.tsx` | The editor's screen for one event, or for `new`, opened from the Events tab; 404 without `events.manage` |
+| Shell | `src/app/events/[eventId]/page.tsx` | One event's page, for everyone (`EventPage`); 404 once it is off the schedule |
+| Shell | `src/app/events/[eventId]/edit/page.tsx`, `src/app/events/new/page.tsx` | The editor for one event, or a new one; 404 without `events.manage` |
 
 ## Four tables, on purpose
 | Table | Why separate |
@@ -201,3 +202,13 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
 - A weekly event is one row, so any change from its editor, picture included, applies to every week.
 - An event with no date left in the coming weeks no longer appears anywhere to edit (the Admin list is gone).
 - `EventAdmin` and `EventAdminRow` were removed. NOT seen signed in (needs an admin in the preview).
+
+## One date per event, and an event's own page (2026-10-17, the user)
+- The tab is "Lịch sinh hoạt" in Vietnamese. Each event shows **once**, at its next date: a weekly event never
+  shows a second week ahead (`nextOfEach`, tested). A cancelled week is hidden, so the week after shows instead.
+- **A tap opens the event's page** (`/events/<id>`, `EventPage`) for everyone, sliding in from the right with
+  a back arrow: a big picture (a calendar icon without one), then three lines with icons (`ui/IconLine`): the
+  clock (date, time, "every week"), the map pin (place) and the phone (`events.contact_phone`, tap: Call / Text /
+  Copy, shared `src/components/PhoneNumber.tsx`); then the description. Admins see Edit at the bottom, which opens
+  `/events/<id>/edit`; the + opens `/events/new`. The `EventDetails` sheet is gone.
+- **SQL:** section 3g (`docs/sql-to-run-2026-10-17c.sql`). Until it is run, Save in the editor fails.
