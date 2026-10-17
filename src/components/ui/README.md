@@ -78,4 +78,5 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 download (`onDownload`) and a white X above the picture's top-right corner, the arrows under it at its left and
 right edges with the caption between them, and closes on a tap on the dark around it.
 2026-10-17: `Lightbox` also turns on a swipe: left = next picture, right = the one before (`hooks/useSwipe`, at
-least 50 px and more sideways than up or down).
+least 50 px and more sideways than up or down). Since the same day it drags: the picture follows the thumb, slides
+away and in, springs back, and moves a third as far where there is no picture that way.

@@ -462,6 +462,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **Group pictures swipe left and right in the large view (2026-10-17, the user).** `ui/hooks/useSwipe` in
       `Lightbox`; arrows kept. NOT tried with a finger on a phone.
 
+- [x] **The picture swipe drags, iPhone-Photos style (2026-10-17, the user).** Follows the thumb, slides off and
+      in, springs back, rubber band at the ends. NOT tried with a finger on a phone.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
