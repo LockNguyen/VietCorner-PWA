@@ -105,7 +105,9 @@ every case the list has to handle (see **Seed data** below).
   row is shaped like a person's row on the Admin tab: the picture (a calendar icon until one is set), then the
   title with "7:00 PM · Hall" beneath ("7:00 Tối" in Vietnamese; since 2026-10-17, when the bold time box went).
   Sunday is written "Chúa Nhật".
-- A cancelled date is grey, struck through and says "Cancelled" beneath, not hidden.
+- A cancelled date is not shown on the Events tab (since 2026-10-17, the user: cluttered; `SWITCHES.canceledEvents`).
+  Switched back on, it is grey, struck through and says "Cancelled" beneath. The editor's "Next dates" always
+  lists it, with Undo.
 - Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
   outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."

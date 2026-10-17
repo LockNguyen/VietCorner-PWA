@@ -9,6 +9,7 @@ import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Language, Text } from "@/features/i18n/types"; // I18N
 import { isoDate, toInstant } from "@/lib/churchTime";
+import { SWITCHES } from "@/lib/switches";
 import { useFresh } from "@/lib/useFresh";
 import { getSchedule } from "../api";
 import { formatLongDate } from "../formatting";
@@ -30,7 +31,7 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState<Occurrence | null>(null);
   const events = useFresh(loaded, getSchedule);
-  const occurrences = scheduleOf(events, language, new Date());
+  const occurrences = scheduleOf(events, language, new Date()).filter((date) => SWITCHES.canceledEvents || !date.canceled);
 
   const add = canManage && (
     <div className="flex justify-end px-3 pt-2">

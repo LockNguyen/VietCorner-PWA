@@ -447,6 +447,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **"7:00 Tối" everywhere (2026-10-17, the user's word).** Group cards and sheets, prayer reminders list, chat
       time lines now use `clockTime` too. Phone time pickers are the phone's own. 122 tests.
 
+- [x] **Cancelled dates hidden on the Events tab (2026-10-17, the user: cluttered).** `SWITCHES.canceledEvents`
+      = false; the editor still shows them with Undo. 122 tests.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
