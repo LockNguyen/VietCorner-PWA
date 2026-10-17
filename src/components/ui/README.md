@@ -16,7 +16,6 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `PhotoTile` | A large tile that opens an area: a photo under a dark veil (`src`), or flat grey without one | | `title`, `src`; children are the artwork above the title |
 | `ListRow` | One line of any list: picture, title over subtitle, something at the right end. Renders its own `<li>`; put it in a `<ul>`. | `tone`: `normal`, `off` (called off: grey, struck through) | `title`, `subtitle`, `leading`, `trailing`, `current`, and `href` (a link) or `onClick` (a button); either adds a chevron unless `trailing` is passed (`null` for nothing); the `current` one of a set of choices ends in a tick |
 | `Thumbnail` | The picture at the start of a row: `src` cropped to fill the tile, or a tinted tile holding an icon or a few characters | | `src` |
-| `RowLabel` | A short bold label that starts a row (a time), in a box of one width so the picture and title after it line up on every row | | |
 | `SectionHeading` | The small grey heading above a group of rows | | |
 | `EmptyState` | What a screen shows with nothing to list | | `message`; children are the next step |
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |

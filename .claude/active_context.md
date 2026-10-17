@@ -440,6 +440,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       quality under 1,000,000 bytes; bucket limit unchanged (no SQL). NOT tried with a real phone photo.
       Committed, NOT pushed.
 
+- [x] **Events rows like the people rows; "7:00 Tối"; "Chúa Nhật" (2026-10-17, the user's words).** `i18n/clock.ts`
+      (tested), `EventRow` = picture · title · "time · place"; `RowLabel` deleted. 121 tests. NOT seen on screen
+      (another session's production server holds `.next`). Group cards still say 19:30 in Vietnamese.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

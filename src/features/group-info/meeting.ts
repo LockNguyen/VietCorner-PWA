@@ -1,3 +1,4 @@
+import { withChurchSunday } from "@/features/i18n/clock"; // I18N
 import { LOCALES, type Language } from "@/features/i18n/types"; // I18N
 
 // When a group meets, written the same way in both languages: "Tuesdays @ 7:30 PM", "Thứ Ba @ 19:30".
@@ -12,7 +13,7 @@ export function weekdayName(weekday: number, language: Language): string {
     timeZone: "UTC",
   });
   // why: in English a weekly meeting is "Tuesdays"; Vietnamese has no plural ("Thứ Ba" either way).
-  return language === "en" ? `${name}s` : name;
+  return language === "en" ? `${name}s` : withChurchSunday(name);
 }
 
 export function meetingTime(time: string, language: Language): string {

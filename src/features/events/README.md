@@ -102,9 +102,9 @@ every case the list has to handle (see **Seed data** below).
 
 ## Expected behavior
 - The Events tab lists every upcoming date, oldest first, grouped under Today / Tomorrow / a weekday. Each
-  row starts with the time in bold, in a box of fixed width ("7:00" over "PM"), then the picture, then the
-  title with the location beneath. Times, pictures and titles line up down
-  the list.
+  row is shaped like a person's row on the Admin tab: the picture (a calendar icon until one is set), then the
+  title with "7:00 PM · Hall" beneath ("7:00 Tối" in Vietnamese; since 2026-10-17, when the bold time box went).
+  Sunday is written "Chúa Nhật".
 - A cancelled date is grey, struck through and says "Cancelled" beneath, not hidden.
 - Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
   outside puts it away.

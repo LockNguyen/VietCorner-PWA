@@ -12,7 +12,6 @@ import IconButton from "@/components/ui/IconButton";
 import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
 import LogoMark from "@/components/ui/LogoMark";
-import RowLabel from "@/components/ui/RowLabel";
 import PhotoTile from "@/components/ui/PhotoTile";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -91,14 +90,14 @@ export default async function ShowcasePage() {
       </section>
 
       <section>
-        <Text as="h2" variant="small" tone="subtle">ListRow: link, with a button, with a RowLabel (called off, two-word time, long title), a choice; then SkeletonRow</Text>
+        <Text as="h2" variant="small" tone="subtle">ListRow: link, with a button, an event (called off, long title), a choice; then SkeletonRow</Text>
         <SectionHeading>Hôm nay</SectionHeading>
         <ul>
           <ListRow href="/ui#6" leading={<Thumbnail><Users /></Thumbnail>} title="Học Kinh Thánh" subtitle="Đã tham gia" />
           <ListRow leading={<Thumbnail><Users /></Thumbnail>} title="Nhóm Thanh Niên" trailing={<Button variant="quiet">Tham gia</Button>} />
-          <ListRow href="/ui#7" leading={<><RowLabel>7:00 PM</RowLabel><Thumbnail /></>} title="Youth outing" subtitle="Đã hủy · Riverside Park" tone="off" />
-          <ListRow href="/ui#8" leading={<><RowLabel>10:30 AM</RowLabel><Thumbnail /></>} title="Sunday service" subtitle="Main hall" />
-          <ListRow href="/ui#9" leading={<><RowLabel>19:00</RowLabel><Thumbnail /></>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="Hội trường chính · Sự kiện của nhóm" />
+          <ListRow href="/ui#7" leading={<Thumbnail><CalendarDays /></Thumbnail>} title="Youth outing" subtitle="Đã hủy · 7:00 PM · Riverside Park" tone="off" />
+          <ListRow href="/ui#8" leading={<Thumbnail><CalendarDays /></Thumbnail>} title="Sunday service" subtitle="10:30 AM · Main hall" />
+          <ListRow href="/ui#9" leading={<Thumbnail><CalendarDays /></Thumbnail>} title="Một tên sự kiện rất dài để xem dòng chữ xuống hàng như thế nào trên điện thoại" subtitle="7:00 Tối · Hội trường chính" />
           <ListRow href="/ui#10" title="Tiếng Việt" current />
           <ListRow href="/ui#11" title="English" trailing={null} />
           <SkeletonRow />
