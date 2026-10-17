@@ -9,7 +9,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | Component | Job | Variants | Props beyond the native element's |
 |---|---|---|---|
 | `Text` | Any text outside a control | `variant`: `tile`, `body`, `small` · `tone`: `ink`, `subtle`, `danger` | `as`: `p`, `span`, `h1`, `h2`, `h3` |
-| `Button` | Any button | `primary`, `quiet`, `danger`, `text`, `dangerText` (the small red line under a sheet's or screen's main button: remove, delete, call off) | `pending`, `pendingLabel` |
+| `Button` | Any button | `primary`, `quiet`, `danger`, `text`, `dangerText` (the small red line under a sheet's or screen's main button: remove, delete, call off), `inline` (blue words with no side padding, lined up with the text above: a phone number) | `pending`, `pendingLabel` |
 | `TopBar` | The bar at the top: centred title, a slot for icons at each end | | `title`, `left`, `right` |
 | `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
 | `IconLink` | A link shown as an icon alone, on the top bar | | `label` (read by screen readers) |

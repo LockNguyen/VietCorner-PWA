@@ -466,8 +466,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       in, springs back, rubber band at the ends. NOT tried with a finger on a phone.
 
 - [x] **Group cards: when + members; sheet: when, contact (Call / Text / Copy), notes, pictures (2026-10-17, the
-      user).** Location kept, hidden (`SWITCHES.groupLocation`). **WAITS ON THE USER: `docs/sql-to-run-2026-10-17b.sql`,
-      then `npm run test:rls`; before pushing** (the editor's Save writes `contact_phone`).
+      user).** Location kept, hidden (`SWITCHES.groupLocation`). SQL run by the user; `npm run test:rls` 96/96. Seen as a
+      throwaway member: card "Thứ Ba @ 7:30 Tối" + circles; sheet Thời gian, Liên lạc, Ghi chú; tapping the number
+      shows Gọi / Nhắn tin / Sao chép. NOT tried: the call and text apps opening on a phone. The number now
+      lines up with its label (`Button` variant `inline`, no side padding).
 
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).

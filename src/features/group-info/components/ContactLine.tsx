@@ -30,7 +30,7 @@ export default function ContactLine({ phone }: { phone: string }) {
     <div className="flex flex-col gap-2">
       <div className="flex flex-col items-start">
         <Text variant="small" tone="subtle">{t(STRINGS.contact)}</Text>
-        <Button variant="text" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>
+        <Button variant="inline" aria-expanded={choosing} onClick={() => setChoosing(!choosing)}>
           {phone}
         </Button>
       </div>
