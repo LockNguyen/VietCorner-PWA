@@ -170,3 +170,7 @@ NOT tried on a phone.
 - **Elsewhere** (the Admin people screens, the editor's own title, notifications) the Vietnamese name shows.
 - **SQL:** `docs/sql-to-run-2026-10-17.sql` (2e, then 8; safe to run again). Run it before this code goes
   live: until then Save fails, because it writes the new columns.
+
+## Swipe in the large view (2026-10-17)
+A swipe left shows the next picture, a swipe right the one before (`ui/Lightbox`, `ui/hooks/useSwipe`). The
+arrows stay. At the last picture of the strip's loaded page a swipe left does nothing (more load from the strip).

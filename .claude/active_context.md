@@ -459,6 +459,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **The Groups page is "Nhóm nhỏ" in Vietnamese (2026-10-17, the user: "Nhóm" reads as a worship service).**
       The tab, the Home tile, the page title and the person screen's heading.
 
+- [x] **Group pictures swipe left and right in the large view (2026-10-17, the user).** `ui/hooks/useSwipe` in
+      `Lightbox`; arrows kept. NOT tried with a finger on a phone.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

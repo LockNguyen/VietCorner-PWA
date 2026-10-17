@@ -77,3 +77,5 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 2026-10-14: `IconButton` has the tone `onDark` (a plain white icon, no circle, over a dark veil). `Lightbox` puts
 download (`onDownload`) and a white X above the picture's top-right corner, the arrows under it at its left and
 right edges with the caption between them, and closes on a tap on the dark around it.
+2026-10-17: `Lightbox` also turns on a swipe: left = next picture, right = the one before (`hooks/useSwipe`, at
+least 50 px and more sideways than up or down).

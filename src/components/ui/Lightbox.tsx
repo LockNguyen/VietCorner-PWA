@@ -1,6 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 import type { ReactNode } from "react";
+import { useSwipe } from "./hooks/useSwipe";
 import IconButton from "./IconButton";
 
 type Props = {
@@ -21,8 +22,11 @@ const ROW = "flex w-0 min-w-full items-center";
 
 // One picture, large, over a darkened screen. Above its top-right corner: download and a white X. Under it, on
 // one line with its caption: the arrows to the pictures either side, at its left and right edges. A tap on the
-// dark around it, Escape or the X closes it. Open for as long as it is rendered.
+// dark around it, Escape or the X closes it. A swipe left shows the next picture, a swipe right the one before.
+// Open for as long as it is rendered.
 export default function Lightbox({ src, alt, caption, labels, onPrevious, onNext, onDownload, onClose, children }: Props) {
+  const swipe = useSwipe(onNext, onPrevious);
+
   return (
     <Dialog.Root open onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
@@ -30,6 +34,7 @@ export default function Lightbox({ src, alt, caption, labels, onPrevious, onNext
         <Dialog.Content
           aria-describedby={undefined}
           onClick={(event) => event.target === event.currentTarget && onClose()} // the dark, not the picture
+          {...swipe}
           className="fixed inset-0 z-30 flex items-center justify-center p-4"
         >
           <Dialog.Title className="sr-only">{alt}</Dialog.Title>
