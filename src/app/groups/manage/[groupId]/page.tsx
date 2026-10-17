@@ -4,7 +4,6 @@ import RefreshOnArrival from "@/components/RefreshOnArrival";
 import GroupInfoForm from "@/features/group-info/components/GroupInfoForm"; // GROUP-INFO
 import GroupPhotos from "@/features/group-info/components/GroupPhotos"; // GROUP-INFO
 import { getGroupDirectory } from "@/features/group-info/server/queries"; // GROUP-INFO
-import GroupDetailsForm from "@/features/groups/components/GroupDetailsForm";
 import GroupPeople from "@/features/groups/components/GroupPeople";
 import GroupThumbnail from "@/features/groups/components/GroupThumbnail";
 import NewGroupForm from "@/features/groups/components/NewGroupForm";
@@ -50,7 +49,6 @@ export default async function GroupEditorPage({ params }: { params: Promise<{ gr
       <RefreshOnArrival />
       <div className="flex flex-col gap-6 px-3 pt-4 pb-6">
         <GroupThumbnail group={group} />
-        <GroupDetailsForm group={group} />
         {info && <GroupInfoForm group={info} />} {/* GROUP-INFO */}
         <GroupPeople
           groupId={group.id}

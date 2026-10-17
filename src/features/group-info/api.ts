@@ -14,7 +14,7 @@ import {
 } from "./types";
 
 // Group-info API: every call the browser makes for this feature. All go straight to Supabase; the
-// policies in schema.sql (and, for the number of members, in the groups feature's) decide what is allowed.
+// policies in schema.sql (and, for a group's name and number of members, the groups feature's) decide what is allowed.
 
 // GET the Groups page's list again, as the page first read it (server/queries.ts): `group_directory()`.
 // For the list to refresh itself on arrival, without reloading the page.
@@ -24,10 +24,19 @@ export async function getGroupDirectory(): Promise<DirectoryGroup[]> {
   return data;
 }
 
-// PUT when, where and notes for a group, from its editor (an empty field = "not said"). The group's row is
-// made the first time and changed after that. Needs the "groups.manage" permission (schema.sql, section 3).
+// PUT everything the group editor shows, for its one Save (an empty field = "not said"). Two writes: the name
+// and size live on the group itself (the groups feature's table and policy), when, where and notes on its
+// `group_info` row, made the first time and changed after that. Both need the "groups.manage" permission.
+// Not one transaction: if the second fails the banner says so, and Save again writes both (each is idempotent).
 export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Promise<void> {
-  const { error } = await createClient()
+  const supabase = createClient();
+  const { error: groupError } = await supabase
+    .from("groups")
+    .update({ name: draft.name.trim(), member_count: draft.memberCount === "" ? null : Number(draft.memberCount) })
+    .eq("id", groupId);
+  if (groupError) throw new Error(groupError.message);
+
+  const { error } = await supabase
     .from("group_info")
     .upsert(
       {

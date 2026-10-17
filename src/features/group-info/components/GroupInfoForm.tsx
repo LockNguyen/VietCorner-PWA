@@ -12,15 +12,24 @@ import { useSave } from "@/lib/useSave";
 import { saveGroupInfo } from "../api";
 import { weekdayName } from "../meeting";
 import { STRINGS } from "../strings";
-import { MAX_LOCATION_LENGTH, MAX_NOTES_LENGTH, type DirectoryGroup, type GroupInfoDraft } from "../types";
+import {
+  MAX_GROUP_NAME_LENGTH,
+  MAX_LOCATION_LENGTH,
+  MAX_MEMBER_COUNT_DIGITS,
+  MAX_NOTES_LENGTH,
+  type DirectoryGroup,
+  type GroupInfoDraft,
+} from "../types";
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
-// When a group meets (a weekday and a time, shown as "Tuesdays @ 7:30 PM"), where, and notes, with one Save.
-// On the group's editor screen, for an admin.
+// Everything an admin types about a group, with one Save: its name and size, when it meets (a weekday and a
+// time, shown as "Tuesdays @ 7:30 PM"), where, and notes. One Save, because two let a change go unsaved.
 export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
   const { t, language } = useLanguage(); // I18N
   const [draft, setDraft] = useState<GroupInfoDraft>({
+    name: group.name,
+    memberCount: group.member_count?.toString() ?? "",
     meetsWeekday: group.meets_weekday?.toString() ?? "",
     meetsTime: group.meets_time?.slice(0, 5) ?? "",
     location: group.location ?? "",
@@ -36,6 +45,17 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <Field label={t(STRINGS.groupName)}>
+        <TextInput value={draft.name} maxLength={MAX_GROUP_NAME_LENGTH} onChange={(event) => change("name", event.target.value)} />
+      </Field>
+      <Field label={t(STRINGS.memberCountField)}>
+        {/* Digits only, so what is typed is always a whole number of people, or nothing. */}
+        <TextInput
+          inputMode="numeric"
+          value={draft.memberCount}
+          onChange={(event) => change("memberCount", event.target.value.replace(/\D/g, "").slice(0, MAX_MEMBER_COUNT_DIGITS))}
+        />
+      </Field>
       <Field label={t(STRINGS.when)}>
         <div className="grid grid-cols-2 gap-3">
           <Select value={draft.meetsWeekday} onChange={(event) => change("meetsWeekday", event.target.value)}>
@@ -69,7 +89,7 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
         value={draft.notes}
         onChange={(event) => change("notes", event.target.value)}
       />
-      <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)}>
+      <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)} disabled={draft.name.trim() === ""}>
         {t(COMMON.save)}
       </Button>
     </form>

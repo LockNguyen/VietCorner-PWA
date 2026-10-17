@@ -121,7 +121,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 Delete this folder and the `// GROUP-INFO` lines in `src/app/groups/page.tsx` (the Groups tab then needs
 `oldGroupsPage` on, or its entries removed from `AppTabs.tsx` and `HomeTiles.tsx`). Run the DROP at the
 bottom of `schema.sql` (empty the bucket in the dashboard first). The three picture components in
-`src/components/ui/` and their demo on `/ui` can stay or go with it.
+`src/components/ui/` and their demo on `/ui` can stay or go with it. The group editor
+(`src/app/groups/manage/[groupId]/page.tsx`) then has no field for a group's name and size: give the groups
+feature a small form for them (`saveGroup` in its git history, before 2026-10-17).
 
 ## Cards, and when a group meets (2026-10-14)
 - **Cards** (`GroupDirectory`): a card per group (`ui/Card`): its picture, a pulsing green dot (always on),
@@ -130,7 +132,7 @@ bottom of `schema.sql` (empty the bucket in the dashboard first). The three pict
 - **Members** tap a card for a read-only sheet (`GroupInfoSheet`): when, where, notes, members, pictures;
   a group's own people may add pictures. The pencils are gone (`GroupDetail`, `GroupDetailForm` removed).
 - **Admins** tap a card for the group's editor (see the groups README); this feature brings `GroupInfoForm`
-  (a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
+  (name, number of members, a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
 - **When:** `group_info.meets_weekday` (0 = Sunday) and `meets_time`, written by `meeting.ts` as "Tuesdays @
   7:30 PM" / "Thứ Ba @ 19:30" (tested). The old free-text `meets_at` is shown until a day and time are saved.
 - **Why initials only:** a member may not read who is in another group (group_members shows each person their
@@ -143,3 +145,14 @@ bottom of `schema.sql` (empty the bucket in the dashboard first). The three pict
 The large view has a download button (`savePhoto.ts`): on an iPhone it opens the share sheet, whose "Save
 Image" puts the picture in Photos (a web page cannot write there itself); on a computer it downloads the file.
 NOT tried on a phone.
+
+## One Save on the group editor (2026-10-17)
+- **Found by the user:** a changed name did not stay. The editor had two forms: name and size with a grey Save
+  (groups' `GroupDetailsForm`), and when / where / notes with the blue Save (this feature). Reproduced: the
+  blue Save stored where and notes, and the typed name was lost on reload.
+- **Now:** `GroupInfoForm` holds all six fields and `saveGroupInfo` writes both tables, the group's name and
+  size first (the groups feature's table and policy; this feature wrote `member_count` before 2026-10-14 too),
+  then `group_info`. Not one transaction: if the second write fails, the banner says so and Save writes both
+  again. Save is off while the name is empty (the database refuses an empty name).
+- **Seen** on a local production build as a throwaway admin: name, 12 members and a place changed, one tap on
+  Save, all three still there after a reload and in the database. Not seen on an iPhone.

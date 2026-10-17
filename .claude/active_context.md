@@ -427,11 +427,17 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       to merge (the `agent-a0-a1` worktree holds uncommitted `services/ai` work, not deployed by Netlify, left
       alone). Strict review of `de75e01` + B28: 3 must-fix (stale security test, admin editors showing a kept
       copy, a silent failure saving a picture) and 7 cleanups, all fixed on the user's word. `npm test` 116/116,
-      `npm run test:rls` 94/94, build clean. Committed on `sheets-and-admin`, `main` fast-forwarded, NOT pushed.
+      `npm run test:rls` 94/94, build clean. Committed `744998f` on `sheets-and-admin`, `main` fast-forwarded and **pushed on the user's word
+      (2026-10-15)**; Netlify deploys from it.
       NOT seen signed in: any admin screen (the preview browser is signed out). Backlog B41 added.
 
+- [x] **Group name did not save (2026-10-17, found by the user).** Cause: two forms and two Saves on the group
+      editor; the blue one saved only when / where / notes. Fixed on the user's word (option A): one form, one
+      Save (`GroupInfoForm`), `GroupDetailsForm` deleted. Seen on a local production build with a throwaway admin
+      (deleted after). No other screen has two forms. Committed, NOT pushed.
+
 ## ➡️ Next 3 Micro-Steps
-1. User: say "push" → `git push origin main` (Netlify deploys). Check the Netlify build passed.
+1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
    picture), Prayer bell, Admin → a person (a role switch, a group switch, back and in again).
 3. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include

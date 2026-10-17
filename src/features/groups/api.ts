@@ -40,12 +40,6 @@ export async function createGroup(name: string): Promise<string> {
   return data.id; // the new group's editor opens next
 }
 
-// PATCH a group's name and how many people it has (null = not said). Needs "groups.manage".
-export async function saveGroup(groupId: string, name: string, memberCount: number | null) {
-  const { error } = await createClient().from("groups").update({ name, member_count: memberCount }).eq("id", groupId);
-  if (error) throw new Error(error.message);
-}
-
 // PUT a group's picture: shrunk on this device, stored under a new name, then recorded on the group.
 // `replaces` is the picture it had, whose file is erased last. A new name each time, because a phone keeps
 // a public file by its address: the same address would go on showing the old picture. Needs "groups.manage".

@@ -13,8 +13,16 @@ export type DirectoryGroup = {
   member_initials: string[]; // of the people in it who have the app, for the circles on its card
 };
 
-// What the group editor saves about a group (`group_info`): when it meets, where, and notes.
-export type GroupInfoDraft = { meetsWeekday: string; meetsTime: string; location: string; notes: string }; // "" = not said
+// Everything the group editor saves with its one Save: the name and size (on `groups`, the groups feature's
+// table) and when it meets, where, and notes (`group_info`). "" = not said.
+export type GroupInfoDraft = {
+  name: string;
+  memberCount: string; // digits only
+  meetsWeekday: string;
+  meetsTime: string;
+  location: string;
+  notes: string;
+};
 
 // The public storage bucket the groups' row pictures live in. It belongs to the groups feature (its
 // schema.sql makes it); named here so this feature imports nothing of it.
@@ -24,9 +32,13 @@ export const GROUP_THUMBNAIL_BUCKET = "group-thumbnails";
 // the groups feature (its schema.sql grants it to "admin"); named here so this feature imports nothing of it.
 export const MANAGE_GROUPS = "groups.manage";
 
-// why: the database rejects anything longer (schema.sql); the inputs stop the typing at the same numbers.
+// why: the database rejects anything longer (schema.sql, and the groups feature's for the name); the inputs
+// stop the typing at the same numbers.
+export const MAX_GROUP_NAME_LENGTH = 60;
 export const MAX_LOCATION_LENGTH = 150;
 export const MAX_NOTES_LENGTH = 500;
+// why: no group of this church has ten thousand people; four digits also keep the number on one line.
+export const MAX_MEMBER_COUNT_DIGITS = 4;
 // why: a card has room for one line of circles; past that the rest is said as "+N".
 export const MAX_CIRCLES = 8;
 // --- Pictures ------------------------------------------------------------------------------------------

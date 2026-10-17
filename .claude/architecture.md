@@ -277,9 +277,10 @@ puts people into groups from the Admin tab (a sheet per group: name, a typed num
 remove people), reading everyone approved through `group_people()`.
 
 ### 6.12 group-info → [README](../src/features/group-info/README.md)
-The Groups tab: every group, each opening a sheet with its number of members, when and where it meets,
-notes and pictures. One read for the list, `group_directory()`. Everyone approved reads; whoever holds
-`groups.manage` changes the details (a pencil per line) and removes pictures; a group's own people add
+The Groups tab: a card per group. A member opens a sheet with its number of members, when and where it meets,
+notes and pictures; an admin opens its editor, where `GroupInfoForm` saves name, size, when, where and notes
+with one Save (it writes the groups feature's `groups` row too). One read for the list, `group_directory()`.
+Everyone approved reads; whoever holds `groups.manage` changes the details and removes pictures; a group's own people add
 pictures (`may_add_group_photo()`, one rule for a picture's row and its file). Pictures live in a private Storage bucket,
 shrunk on the phone before upload, shown through addresses signed for an hour, six at a time.
 Depends on `groups` in SQL only. Tables: `group_info`, `group_photos`. Bucket: `group-photos`.
@@ -566,3 +567,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-14: Admin tile on Home for managers; "3 🙏" beside my own requests (`ui/CountPill`, prayer SQL 5b); a reward when praying (`ui/Celebrate`, pop/ring/float keyframes); picture viewer: tap the dark to close, white X and download above the picture, arrows under it at its edges (`Lightbox`, `IconButton` `onDark`, `group-info/savePhoto.ts`). Launch measured: server 3.3 s cold / 0.4 s warm, ~900 KB of scripts on every launch (nothing cached by the service worker).
 - 2026-10-14: fast launch (B28). Measured on an iPhone with a temporary on-screen timer: after a restart the code files took 21 of 22.5 s (iOS had dropped 9 of 10 from its cache; they were 260 KB compressed, not 900 KB as noted earlier). `sw.js` now keeps them (`CACHE`, `static-v1`); only files marked `immutable` are saved and a storage error falls back to the network. After: 10/10 saved, tappable 6.85 s (was 22.54 s), the new `sw.js` arrived without a reinstall. iPhone launch pictures tried and removed: none showed, even after re-adding the app. The Funnel test address serves port 3000.
 - 2026-10-15: review before the production push. Fixed: the person and group editors reload on arrival (`components/RefreshOnArrival.tsx`; a kept copy showed old switches, and a second tap undid a change); the "Chưa vào nhóm" card refreshes itself (`useFresh`); saving a picture says when it failed (banner); the security test now expects the prayer count for the author only (5b). Removed: unused strings, `MAX_MEMBER_COUNT_DIGITS` in group-info, the old sheet's `rise`/`fade` keyframes. `npm test` 116/116, `npm run test:rls` 94/94, build clean.
+- 2026-10-17: fixed, found by the user: a group's new name did not stay. The group editor had two forms and two Saves; the blue one saved only when / where / notes. Now one form (`group-info/GroupInfoForm`: name, size, when, where, notes) and one Save; `saveGroupInfo` writes `groups` (name, member_count) then `group_info`. Removed `groups/GroupDetailsForm`, `saveGroup`, `memberCountField`. No other screen has two forms. Seen on a local production build as a throwaway admin.

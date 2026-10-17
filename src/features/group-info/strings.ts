@@ -4,7 +4,9 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
-  // The sheet about one group
+  // The sheet about one group, and its editor
+  groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
+  memberCountField: { en: "Number of members", vi: "Số thành viên" } satisfies Text,
   when: { en: "When", vi: "Thời gian" } satisfies Text,
   where: { en: "Where", vi: "Địa điểm" } satisfies Text,
   notes: { en: "Notes", vi: "Ghi chú" } satisfies Text,
