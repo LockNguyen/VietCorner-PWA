@@ -12,6 +12,7 @@ import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
 import { useFresh } from "@/lib/useFresh";
 import { getGroupDirectory } from "../api";
+import { locationText, nameText } from "../bilingual";
 import { formatMeeting } from "../meeting";
 import { members, STRINGS } from "../strings";
 import { GROUP_THUMBNAIL_BUCKET, MAX_CIRCLES, type DirectoryGroup } from "../types";
@@ -54,8 +55,8 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
             src={group.thumbnail_path ? publicFileUrl(GROUP_THUMBNAIL_BUCKET, group.thumbnail_path) : undefined}
             placeholder={<Users className="size-8" />}
             badge={<LiveDot />}
-            title={group.name}
-            subtitle={[when, group.location].filter(Boolean).join(" · ") || undefined}
+            title={t(nameText(group))}
+            subtitle={[when, t(locationText(group))].filter(Boolean).join(" · ") || undefined}
             onClick={() => (canManage ? router.push(`/groups/manage/${group.id}`) : setOpenId(group.id))}
           >
             {total > 0 && (

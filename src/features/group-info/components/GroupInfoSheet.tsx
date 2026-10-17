@@ -4,6 +4,7 @@ import Sheet from "@/components/ui/Sheet";
 import Text from "@/components/ui/Text";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { locationText, nameText } from "../bilingual";
 import { formatMeeting } from "../meeting";
 import { members, STRINGS } from "../strings";
 import type { DirectoryGroup } from "../types";
@@ -19,13 +20,15 @@ export default function GroupInfoSheet({ group, onClose }: Props) {
   const when = formatMeeting(group.meets_weekday, group.meets_time, language) ?? group.meets_at;
   const lines = [
     { label: STRINGS.when, value: when },
-    { label: STRINGS.where, value: group.location },
+    { label: STRINGS.where, value: t(locationText(group)) },
     { label: STRINGS.notes, value: group.notes },
     { label: STRINGS.membersLabel, value: group.member_count !== null ? t(members(group.member_count)) : null },
   ].filter((line) => line.value);
 
+  const name = t(nameText(group));
+
   return (
-    <Sheet title={group.name} closeLabel={t(COMMON.close)} onClose={onClose}>
+    <Sheet title={name} closeLabel={t(COMMON.close)} onClose={onClose}>
       {lines.length === 0 && <Text tone="subtle">{t(STRINGS.nothingYet)}</Text>}
       {lines.map(({ label, value }) => (
         <div key={label.en} className="flex flex-col">
@@ -33,7 +36,7 @@ export default function GroupInfoSheet({ group, onClose }: Props) {
           <Text>{value}</Text>
         </div>
       ))}
-      <GroupPhotos groupId={group.id} groupName={group.name} canAdd={group.is_member} canRemove={false} />
+      <GroupPhotos groupId={group.id} groupName={name} canAdd={group.is_member} canRemove={false} />
     </Sheet>
   );
 }

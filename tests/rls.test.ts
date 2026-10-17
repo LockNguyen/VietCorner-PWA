@@ -1065,6 +1065,24 @@ describe("group_info: what a group says about itself", () => {
     expect((await anonymous.rpc("group_directory")).error).not.toBeNull();
   });
 
+  it("has its name and place in English too, written only by a manager (group-info 8, groups 2e)", async () => {
+    // The same two calls as the editor's one Save (group-info/api.ts `saveGroupInfo`).
+    const saveBoth = (user: TestUser) =>
+      Promise.all([
+        user.client.from("groups").update({ name: "rls nhóm", name_en: "rls group", member_count: 5 }).eq("id", ownGroupId),
+        user.client
+          .from("group_info")
+          .upsert({ group_id: ownGroupId, location: "rls hội trường", location_en: "rls hall" }, { onConflict: "group_id" }),
+      ]);
+    const [, fromMember] = await saveBoth(bob);
+    const [renamed, placed] = await saveBoth(alice);
+    const row = ((await bob.client.rpc("group_directory")).data ?? []).find((group: { id: string }) => group.id === ownGroupId);
+
+    expect(fromMember.error).not.toBeNull();
+    expect([renamed.error, placed.error]).toEqual([null, null]);
+    expect(row).toMatchObject({ name: "rls nhóm", name_en: "rls group", location: "rls hội trường", location_en: "rls hall" });
+  });
+
   it("is closed to someone still waiting to be let in", async () => {
     const { data: direct } = await carol.client.from("group_info").select("notes");
     const { data: listed } = await carol.client.rpc("group_directory");

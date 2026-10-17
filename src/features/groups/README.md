@@ -152,3 +152,7 @@ opens its editor (`src/app/groups/manage/[groupId]/page.tsx`), which composes th
 and size, people and remove with group-info's when/where/notes and pictures. "Chưa vào nhóm" (in no group)
 is the last card. A person's groups can also be switched on their screen in the Admin tab (`PersonGroups`).
 `createGroup` now returns the new id. NOT seen signed in.
+
+## English name (2026-10-17)
+`groups.name_en` (section 2e): a group's English name, optional; `name` stays the Vietnamese one. Written by
+group-info's editor, shown by group-info's cards and sheet. Everything in this feature still shows `name`.

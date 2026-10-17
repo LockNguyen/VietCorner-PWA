@@ -450,6 +450,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **Cancelled dates hidden on the Events tab (2026-10-17, the user: cluttered).** `SWITCHES.canceledEvents`
       = false; the editor still shows them with Undo. 122 tests.
 
+- [x] **English group names and places (2026-10-17, the user: like events).** `groups.name_en`, `group_info.location_en`,
+      bilingual boxes in the editor, the reader's language on cards and the sheet. 1 security case added.
+      **WAITS ON THE USER: `docs/sql-to-run-2026-10-17.sql`, then `npm run test:rls`; run it BEFORE pushing**
+      (until then the group editor's Save fails). NOT seen signed in with the SQL run.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

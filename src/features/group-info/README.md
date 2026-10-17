@@ -157,3 +157,16 @@ NOT tried on a phone.
   again. Save is off while the name is empty (the database refuses an empty name).
 - **Seen** on a local production build as a throwaway admin: name, 12 members and a place changed, one tap on
   Save, all three still there after a reload and in the database. Not seen on an iPhone.
+
+## English name and place (2026-10-17)
+- The user asked for a group's name and place in English too, like an event. `groups.name` and
+  `group_info.location` stay the Vietnamese; `groups.name_en` (groups `schema.sql` 2e) and
+  `group_info.location_en` (section 8) hold the English, both optional and written only with `groups.manage`.
+- **Editor:** the name and the place are one grey box each, Vietnamese on top, English under it
+  (`ui/BilingualInput`, as in the event editor). They do not stop the typing at 60 / 150 characters as the
+  single boxes did; the database refuses a longer one and the banner says it could not save.
+- **Cards and the sheet** show the reader's language, and the other one while it is missing
+  (`bilingual.ts` + `t()`), so an English reader of a group with no English name sees the Vietnamese.
+- **Elsewhere** (the Admin people screens, the editor's own title, notifications) the Vietnamese name shows.
+- **SQL:** `docs/sql-to-run-2026-10-17.sql` (2e, then 8; safe to run again). Run it before this code goes
+  live: until then Save fails, because it writes the new columns.
