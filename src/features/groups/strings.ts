@@ -8,7 +8,7 @@ export const STRINGS = {
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
   // Admin section
-  adminHeading: { en: "Groups", vi: "Nhóm" } satisfies Text,
+  adminHeading: { en: "Groups", vi: "Nhóm nhỏ" } satisfies Text,
   groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
   newGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text,
   createGroup: { en: "Create group", vi: "Tạo nhóm" } satisfies Text,

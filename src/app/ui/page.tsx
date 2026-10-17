@@ -225,7 +225,7 @@ export default async function ShowcasePage() {
             { href: "/ui#home", label: "Trang chủ", icon: <House />, active: false },
             { href: "/ui#events", label: "Sự kiện", icon: <CalendarDays />, active: true },
             { href: "/ui#prayer", label: "Cầu nguyện", icon: <HandHeart />, active: false },
-            { href: "/ui#groups", label: "Nhóm", icon: <Users />, active: false },
+            { href: "/ui#groups", label: "Nhóm nhỏ", icon: <Users />, active: false },
           ]}
         />
       </section>

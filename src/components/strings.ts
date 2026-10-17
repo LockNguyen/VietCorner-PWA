@@ -4,7 +4,7 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const SHELL_STRINGS = {
   homeTab: { en: "Home", vi: "Trang chủ" } satisfies Text,
   back: { en: "Back", vi: "Quay lại" } satisfies Text,
-  groupsTab: { en: "Groups", vi: "Nhóm" } satisfies Text,
+  groupsTab: { en: "Groups", vi: "Nhóm nhỏ" } satisfies Text,
   eventsTab: { en: "Events", vi: "Lịch" } satisfies Text,
   prayerTab: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
   assistantTab: { en: "Assistant", vi: "Trợ lý" } satisfies Text,

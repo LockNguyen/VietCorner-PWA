@@ -452,8 +452,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 
 - [x] **English group names and places (2026-10-17, the user: like events).** `groups.name_en`, `group_info.location_en`,
       bilingual boxes in the editor, the reader's language on cards and the sheet. 1 security case added.
-      **WAITS ON THE USER: `docs/sql-to-run-2026-10-17.sql`, then `npm run test:rls`; run it BEFORE pushing**
-      (until then the group editor's Save fails). NOT seen signed in with the SQL run.
+      SQL run by the user (2026-10-17); `npm run test:rls` 95/95. Seen on a local production build as a throwaway
+      admin (deleted after): the editor's Save stored an English name and place; an English reader's card reads
+      "Debug English name · Main hall". Not seen on an iPhone.
+
+- [x] **The Groups page is "Nhóm nhỏ" in Vietnamese (2026-10-17, the user: "Nhóm" reads as a worship service).**
+      The tab, the Home tile, the page title and the person screen's heading.
 
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
