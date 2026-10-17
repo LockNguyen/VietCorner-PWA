@@ -135,7 +135,7 @@ feature a small form for them (`saveGroup` in its git history, before 2026-10-17
 - **Admins** tap a card for the group's editor (see the groups README); this feature brings `GroupInfoForm`
   (name, number of members, a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
 - **When:** `group_info.meets_weekday` (0 = Sunday) and `meets_time`, written by `meeting.ts` as "Tuesdays @
-  7:30 PM" / "Thứ Ba @ 19:30" (tested). The old free-text `meets_at` is shown until a day and time are saved.
+  7:30 PM" / "Thứ Ba @ 7:30 Tối" (tested; "19:30" until 2026-10-17). The old free-text `meets_at` is shown until a day and time are saved.
 - **Why initials only:** a member may not read who is in another group (group_members shows each person their
   own rows), so the database hands out the least that draws the circles, and only to approved members.
 - **SQL:** section 7 of `schema.sql` (safe to run again). Until it is run the Groups tab is empty.

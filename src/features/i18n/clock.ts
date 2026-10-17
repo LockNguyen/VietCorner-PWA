@@ -3,9 +3,11 @@ import type { Language } from "./types";
 // How this congregation says a time and names Sunday, in either language. Pure, so it is tested without a
 // screen. Here, in the language foundation, because any feature that shows a time or a weekday needs it.
 
-// A time of day: "7:00 PM" in English, "7:00 Tối" in Vietnamese (the user's word, 2026-10-17). A 12-hour
+// A time of day, from "19:00" or "19:00:00" (a wall clock, already in church time): "7:00 PM" in English,
+// "7:00 Tối" in Vietnamese (the user's word, 2026-10-17). Every time the app shows goes through here. A 12-hour
 // clock, because that is how the members say it; the word for the part of the day replaces AM/PM.
-export function clockTime(hours: number, minutes: number, language: Language): string {
+export function clockTime(wallClock: string, language: Language): string {
+  const [hours, minutes] = wallClock.split(":").map(Number);
   const hour12 = hours % 12 === 0 ? 12 : hours % 12;
   const time = `${hour12}:${String(minutes).padStart(2, "0")}`;
   return `${time} ${language === "en" ? (hours < 12 ? "AM" : "PM") : partOfDay(hours)}`;

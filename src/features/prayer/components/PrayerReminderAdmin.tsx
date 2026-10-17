@@ -8,7 +8,7 @@ import Select from "@/components/ui/Select";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { withChurchSunday } from "@/features/i18n/clock"; // I18N
+import { clockTime, withChurchSunday } from "@/features/i18n/clock"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
@@ -60,7 +60,7 @@ export default function PrayerReminderAdmin({ reminders }: Props) {
       <SectionHeading>{t(STRINGS.remindersHeading)}</SectionHeading>
       <ul>
         {reminders.map((reminder) => (
-          <PrayerReminderRow key={reminder.id} reminder={reminder} when={`${weekdayName(reminder.weekday)} · ${reminder.send_at.slice(0, 5)}`} />
+          <PrayerReminderRow key={reminder.id} reminder={reminder} when={`${weekdayName(reminder.weekday)} · ${clockTime(reminder.send_at, language)}`} />
         ))}
       </ul>
 

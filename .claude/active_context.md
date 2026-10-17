@@ -444,6 +444,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       (tested), `EventRow` = picture · title · "time · place"; `RowLabel` deleted. 121 tests. NOT seen on screen
       (another session's production server holds `.next`). Group cards still say 19:30 in Vietnamese.
 
+- [x] **"7:00 Tối" everywhere (2026-10-17, the user's word).** Group cards and sheets, prayer reminders list, chat
+      time lines now use `clockTime` too. Phone time pickers are the phone's own. 122 tests.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

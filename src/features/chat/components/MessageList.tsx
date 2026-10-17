@@ -4,10 +4,11 @@ import Avatar from "@/components/ui/Avatar";
 import Bubble from "@/components/ui/Bubble";
 import BubbleRun from "@/components/ui/BubbleRun";
 import TimeLine from "@/components/ui/TimeLine";
+import { clockTime, withChurchSunday } from "@/features/i18n/clock"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import type { Names } from "@/features/profiles/types"; // PROFILES
-import { CHURCH_TIME_ZONE } from "@/lib/churchTime";
+import { CHURCH_TIME_ZONE, wallTime } from "@/lib/churchTime";
 import { useScrollToEnd } from "@/lib/useScrollToEnd";
 import { intoRuns } from "../runs";
 import type { Message } from "../types";
@@ -19,16 +20,13 @@ export default function MessageList({ messages, names, myUserId }: Props) {
   const { language } = useLanguage(); // I18N
   const end = useScrollToEnd(messages);
 
-  // Church time, like every date in the app: the server and the phone then print the same words.
-  const when = (at: string) =>
-    new Date(at).toLocaleString(LOCALES[language], {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      timeZone: CHURCH_TIME_ZONE,
-    });
+  // Church time, like every date in the app: the server and the phone then print the same words. The time
+  // is said the members' way ("7:00 Tối", i18n `clockTime`), the day as the phone writes it.
+  const when = (at: string) => {
+    const instant = new Date(at);
+    const day = instant.toLocaleDateString(LOCALES[language], { weekday: "short", day: "numeric", month: "short", timeZone: CHURCH_TIME_ZONE });
+    return `${withChurchSunday(day)}, ${clockTime(wallTime(instant).slice(11), language)}`;
+  };
 
   return (
     <div role="log" className="flex flex-col gap-4 px-3 pt-2">
