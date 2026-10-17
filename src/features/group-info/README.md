@@ -71,7 +71,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   The cost: a signed address is new each time, so the phone downloads a picture again on every visit
   instead of keeping it. The small files are about 30 KB each, six at a time.
 - **Shrunk on the phone before sending** (`src/lib/shrinkImage.ts`, shared with the row pictures): a camera photo is 3 to 8 MB; what is stored is
-  about 300 KB plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
+  just under 1 MB (2560 pixels, the best quality that fits: `shrinkUnder`; it was 300 KB until 2026-10-17,
+  which the user found ugly) plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
   over 1 MB or not a JPEG, so a caller that skips the shrinking is refused, not trusted.
 - **Six at a time**, newest first, loaded when the sheet opens, not with the page. Scrolling the strip to
   its end loads the next six (`PhotoStripEnd`, `useWhenVisible`).
@@ -114,7 +115,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - A sheet left open for more than an hour shows broken pictures: their addresses ran out. Reopening it fixes it.
 - An upload cut off between the two files or before the row leaves files nobody sees; they only take up room.
 - A removed group's pictures leave with it (the rows are unreadable); the files stay in the bucket.
-- Free storage is 1 GB: about 3,000 pictures at these sizes. Nothing counts them or stops at a limit (B40).
+- Free storage is 1 GB: about 1,000 pictures at these sizes (3,000 before 2026-10-17). Nothing counts them or stops at a limit (B40).
 - Two members saving at once: the later save wins, whole.
 
 ## Remove

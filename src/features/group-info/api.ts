@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
-import { shrinkImage } from "@/lib/shrinkImage";
+import { shrinkImage, shrinkUnder } from "@/lib/shrinkImage";
 import {
+  FULL_MAX_BYTES,
   FULL_SIDE,
   PHOTO_BUCKET,
   PHOTO_PAGE_SIZE,
@@ -88,7 +89,7 @@ export async function addPhoto(groupId: string, photo: NewPhoto): Promise<void> 
   const supabase = createClient();
   const id = crypto.randomUUID(); // made here, because the files are named after it before the row exists
   const paths = photoPaths(groupId, id);
-  const [small, full] = await Promise.all([shrinkImage(photo.file, SMALL_SIDE, 0.7), shrinkImage(photo.file, FULL_SIDE, 0.8)]);
+  const [small, full] = await Promise.all([shrinkImage(photo.file, SMALL_SIDE, 0.7), shrinkUnder(photo.file, FULL_SIDE, FULL_MAX_BYTES)]);
 
   const bucket = supabase.storage.from(PHOTO_BUCKET);
   const uploads = await Promise.all([

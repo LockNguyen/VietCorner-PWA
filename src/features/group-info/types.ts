@@ -72,9 +72,11 @@ export const PHOTO_PAGE_SIZE = 6;
 
 // why: the strip draws a picture about 130 points wide; 400 pixels keeps it sharp on a 3x phone screen.
 export const SMALL_SIDE = 400;
-// why: sharp on a whole phone screen, around 300 KB as a JPEG, so a hundred pictures are 30 MB of the
-// free gigabyte. The bucket refuses anything over 1 MB.
-export const FULL_SIDE = 1600;
+// why (the user, 2026-10-17: 300 KB looked ugly): as many pixels as a large phone screen has, at the best
+// quality that stays under 1 MB, just inside the bucket's own limit (schema.sql). About 1,000 pictures fill
+// the free gigabyte.
+export const FULL_SIDE = 2560;
+export const FULL_MAX_BYTES = 1_000_000;
 
 // why: a picture's address is signed for an hour: long enough to look through a group's pictures, short
 // enough that an address copied out of the app soon stops working.

@@ -146,7 +146,7 @@ create policy "Group managers remove pictures" on public.group_photos
 -- The files. A PRIVATE bucket: these are pictures of church members, children among them, so a file is
 -- reached only through an address signed for a signed-in, approved member, and that address stops working
 -- after an hour. The two limits are enforced by Storage itself, whatever a browser sends: JPEG only, and
--- 1 MB (the app shrinks a picture to about 300 KB before sending it).
+-- 1 MB (the app shrinks a picture to just under 1 MB before sending it).
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('group-photos', 'group-photos', false, 1048576, array['image/jpeg'])
 on conflict (id) do update

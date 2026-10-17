@@ -436,6 +436,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Save (`GroupInfoForm`), `GroupDetailsForm` deleted. Seen on a local production build with a throwaway admin
       (deleted after). No other screen has two forms. Committed, NOT pushed.
 
+- [x] **Group pictures up to 1 MB (2026-10-17, the user: 300 KB looked ugly).** `shrinkUnder` at 2560 px, best
+      quality under 1,000,000 bytes; bucket limit unchanged (no SQL). NOT tried with a real phone photo.
+      Committed, NOT pushed.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
