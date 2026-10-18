@@ -41,7 +41,7 @@ export default function Welcome({ signUpExtra }: { signUpExtra?: ReactNode }) {
   }
 
   return (
-    <SignedOutFrame step={screen === "signUp" ? "name" : undefined}>
+    <SignedOutFrame step={screen === "signUp" ? "name" : undefined} onBack={screen === "signUp" ? () => setScreen("signIn") : undefined}>
       {screen === "signIn" ? (
         <SignInForm
           email={email}
@@ -54,7 +54,6 @@ export default function Welcome({ signUpExtra }: { signUpExtra?: ReactNode }) {
           email={email}
           onEmailChange={setEmail}
           onCreate={(name, email) => createAccount(name, email).catch(sayWhy)}
-          onHaveAccount={() => setScreen("signIn")}
           extra={signUpExtra}
         />
       )}

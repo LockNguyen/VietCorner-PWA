@@ -3,6 +3,7 @@
 import { CalendarDays, HandHeart, House, ShieldCheck, Users } from "lucide-react";
 import { usePathname } from "next/navigation";
 import TabBar from "@/components/ui/TabBar";
+import { GO_BACK, GO_FORWARD } from "@/lib/slide";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { SHELL_STRINGS } from "./strings";
@@ -29,16 +30,20 @@ export default function AppTabs({ showAdmin, bigText }: Props) {
   const pathname = usePathname();
   const { t } = useLanguage(); // I18N
   const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
+  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  // A tab to the right of where I am slides in from the right; one to the left slides this screen away.
+  const here = tabs.findIndex((tab) => isActive(tab.href));
   const short = (label: Text) => (label === SHELL_STRINGS.eventsTab && (bigText || showAdmin) ? SHELL_STRINGS.eventsTabShort : label);
 
   return (
     <TabBar
-      tabs={tabs.map(({ href, label, Icon }) => ({
+      tabs={tabs.map(({ href, label, Icon }, index) => ({
         href,
         label: t(short(label)),
         icon: <Icon />,
         // Home is "/" exactly: every address starts with "/", so it cannot be matched by its beginning.
-        active: href === "/" ? pathname === "/" : pathname.startsWith(href),
+        active: isActive(href),
+        transitionTypes: index > here ? GO_FORWARD : index < here ? GO_BACK : undefined,
       }))}
     />
   );

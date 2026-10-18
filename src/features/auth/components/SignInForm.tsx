@@ -14,7 +14,8 @@ type Props = {
   onCreateAccount: () => void;
 };
 
-// The first screen when signed out: one field, one blue button, and "Create new account?" small under it.
+// The first screen when signed out: one field, one blue button, and "Create new account?" under it, set
+// apart by space so it reads as another path, not part of signing in.
 // No password: the email's link signs in (the README, "Flow"), so there is nothing to forget or reset.
 export default function SignInForm({ email, onEmailChange, onSignIn, onCreateAccount }: Props) {
   const { t } = useLanguage(); // I18N
@@ -26,7 +27,7 @@ export default function SignInForm({ email, onEmailChange, onSignIn, onCreateAcc
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3 pt-4">
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
       <TextInput
         type="email"
         name="email"
@@ -40,9 +41,11 @@ export default function SignInForm({ email, onEmailChange, onSignIn, onCreateAcc
       <Button pending={pending === "send"} pendingLabel={t(STRINGS.working)}>
         {t(STRINGS.signInButton)}
       </Button>
-      <Button type="button" variant="text" onClick={onCreateAccount}>
-        {t(STRINGS.createNewAccountQuestion)}
-      </Button>
+      <div className="flex flex-col pt-8">
+        <Button type="button" variant="text" onClick={onCreateAccount}>
+          {t(STRINGS.createNewAccountQuestion)}
+        </Button>
+      </div>
     </form>
   );
 }

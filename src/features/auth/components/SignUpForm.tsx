@@ -13,14 +13,13 @@ type Props = {
   email: string; // carried over from the sign-in screen
   onEmailChange: (email: string) => void;
   onCreate: (name: string, email: string) => Promise<void>; // sends the link; the parent says if it failed
-  onHaveAccount: () => void;
   extra?: ReactNode; // under the email, before Next: the text size choice (from the page)
 };
 
 // A new account, in the same calm shape as sign-in: a short title, the name and the email with their words
-// inside, one blue Next (off until both are filled), and "I already have an account" small under it.
+// inside, and one blue Next (off until both are filled). The way back to sign-in is the frame's back arrow.
 // No password: the email's link signs the new member in.
-export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccount, extra }: Props) {
+export default function SignUpForm({ email, onEmailChange, onCreate, extra }: Props) {
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
   const { pending, run } = usePending<"create">();
@@ -32,7 +31,7 @@ export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccou
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3 pt-4">
+    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3">
       <div className="pb-1 text-center">
         <Text as="h1" variant="tile">{t(STRINGS.signUpHeading)}</Text>
       </div>
@@ -59,9 +58,6 @@ export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccou
       {extra}
       <Button disabled={!complete} pending={pending === "create"} pendingLabel={t(STRINGS.working)}>
         {t(STRINGS.nextButton)}
-      </Button>
-      <Button type="button" variant="text" onClick={onHaveAccount}>
-        {t(STRINGS.haveAccount)}
       </Button>
     </form>
   );

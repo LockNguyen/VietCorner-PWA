@@ -63,7 +63,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="bg-surface text-ink">
         <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
           <BannerProvider>
-            <main className="mx-auto max-w-column pb-24">
+            <main className="mx-auto max-w-column">
               {/* The screen slides on forward and back (src/lib/slide.ts); the tab bar outside it stays. */}
               <PageSlide>
               {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}

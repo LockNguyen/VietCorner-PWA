@@ -51,9 +51,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | UI | `components/Welcome.tsx` | Signed out: sign in, or create an account; then "check your email". Says what went wrong in the app's banner |
 | UI | `components/SignedOutFrame.tsx` | Every signed-out screen, in the app or in the browser a link opens: bar (setup steps only), language link top right, logo |
 | UI | `components/SignInForm.tsx` | The email, one blue "Sign in", and "Create new account?" small under it |
-| UI | `components/SignUpForm.tsx` | Title, name and email with their words inside, Next (off until both are filled), "I already have an account" under it |
-| UI | `components/CheckEmail.tsx` | "We sent an email to …" while the link is awaited |
-| UI | `components/ConfirmLink.tsx` | What the link opens: a spinner, one question ("Sign in to Viet Corners?"), "done, go back to the app", or "did not work" |
+| UI | `components/SignUpForm.tsx` | Title, name and email with their words inside, the text size (from the page), Next (off until both are filled). Back to sign-in is the frame's arrow |
+| UI | `components/CheckEmail.tsx` | "Check your email", the address, "Tap the link in it, then come back here.", "Not there? Look in Spam." |
+| UI | `components/ConfirmLink.tsx` | What the link opens: a spinner, "Sign in?" with "Only if you just asked to." and one button, "Done, go back to the app", or "This link has expired" |
 | UI | `components/AccountSection.tsx` | Settings: the address and `SignOutButton` |
 | Shell | `src/app/login/page.tsx`, `login/confirm/page.tsx`, `settings/page.tsx` | Render the components (lines marked `AUTH`) |
 | Shell | `src/proxy.ts` | Exists only for this feature |
@@ -68,12 +68,12 @@ Redesigned on 2026-10-17 on the user's word: no passwords, so nothing to forget 
    - An address with no account (`account_exists`) → no email; the banner "Account not created yet.
      **Create new account?**", whose link opens sign-up with the email kept.
    - Otherwise → Supabase emails the sign-in link (`signInWithOtp`, never creating an account here) →
-     "We sent an email to …" while the app waits (step 3).
-2. **Create an account**: name and email ("Step 2 / 7"), Next → the same link (`signInWithOtp` with the name
+     "Check your email" while the app waits (step 3).
+2. **Create an account**: a back arrow to sign-in at the top left, name and email ("Step 1 / 6"), Next → the same link (`signInWithOtp` with the name
    as metadata; the profiles trigger saves it, so the name question never appears). An address that already
    has an account just gets a sign-in link.
-3. **The link** opens `/login/confirm` (on an iPhone, in Safari): "Sign in to Viet Corners?" and one button;
-   after the tap, "Now go back to the Viet Corners app. You will be signed in." The app, checking every 3
+3. **The link** opens `/login/confirm` (on an iPhone, in Safari): "Sign in?" and one button; after the tap,
+   "Go back to the Viet Corners app." Every line short (the user, 2026-10-17: a long sentence is not read). The app, checking every 3
    seconds and the moment it is opened again, collects the sign-in and goes Home (the hand-off below).
    A new member then sees the layout's steps: install, notifications, waiting for an admin.
 
@@ -164,7 +164,7 @@ working without a replacement.
 ## Safari first, then install (2026-10-14, proven on the iPhone)
 **Signing in in Safari, then adding to the Home Screen, opens the app already signed in**: iOS copies Safari's
 cookies into the app at that moment. So `/login` is not wrapped in the install guide; the root layout wraps
-signed-in pages in `InstallGate` instead (the `install` feature), and the guide is setup step 4 of 7 for a new
+signed-in pages in `InstallGate` instead (the `install` feature), and the guide is setup step 3 of 6 for a new
 member. (This order began for saved passwords, gone since 2026-10-17; it still saves an install for someone
 who signs in from a browser.) Signing in inside the installed app works too, through the hand-off.
 

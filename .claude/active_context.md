@@ -488,6 +488,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Cỡ chữ Gọn / Chữ to (per phone); with big text or the Admin tab the tab reads "Lịch". Seen on a local build.
       NOT seen: an iPhone (needs iOS 18 for the slides), five tabs in big text.
 
+- [x] **Slides and signed-out screens polished (2026-10-17, the user).** Solid sliding screen, tab bar on top and
+      still, only the top screen moves, tabs slide by position. Sign-in/sign-up centred; sign-up: Step 1 / 6, back
+      arrow, no "I already have an account"; fewer words on "check your email" and the link page. Seen on a local
+      build (mid-slide pictures). Known: a screen not kept in memory slides in as its grey placeholder.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

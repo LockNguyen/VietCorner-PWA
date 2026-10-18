@@ -12,42 +12,27 @@ export const STRINGS = {
   signInButton: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
   nextButton: { en: "Next", vi: "Tiếp tục" } satisfies Text,
   createNewAccountQuestion: { en: "Create new account?", vi: "Tạo tài khoản mới?" } satisfies Text, // under Sign in, and the banner's link
-  haveAccount: { en: "I already have an account", vi: "Tôi đã có tài khoản" } satisfies Text,
   working: { en: "Please wait…", vi: "Xin chờ…" } satisfies Text,
 
   // Waiting for the email's link (components/CheckEmail.tsx)
-  linkSentTo: { en: "We sent an email to", vi: "Đã gửi email tới" } satisfies Text,
-  openTheLink: {
-    en: "Open the email and tap the link, then come back here. This screen will go on by itself.",
-    vi: "Hãy mở email và bấm vào đường dẫn, rồi quay lại đây. Màn hình này sẽ tự tiếp tục.",
-  } satisfies Text,
-  checkSpam: {
-    en: "Not there after a few minutes? Look in Spam or Junk.",
-    vi: "Vài phút vẫn chưa thấy? Hãy xem trong mục Thư rác (Spam).",
-  } satisfies Text,
-  useAnotherEmail: { en: "Start again", vi: "Làm lại từ đầu" } satisfies Text,
+  emailSent: { en: "Check your email", vi: "Hãy mở email" } satisfies Text,
+  openTheLink: { en: "Tap the link in it, then come back here.", vi: "Bấm vào đường dẫn, rồi quay lại đây." } satisfies Text,
+  checkSpam: { en: "Not there? Look in Spam.", vi: "Không thấy? Xem mục Thư rác (Spam)." } satisfies Text,
+  useAnotherEmail: { en: "Start again", vi: "Làm lại" } satisfies Text,
 
   accountHeading: { en: "Account", vi: "Tài khoản" } satisfies Text,
   signedInAs: { en: "Signed in", vi: "Đã đăng nhập" } satisfies Text,
   signOutButton: { en: "Sign out", vi: "Đăng xuất" } satisfies Text,
 
   // The screen an email's link opens (components/ConfirmLink.tsx)
-  confirmPrompt: { en: `Sign in to ${APP_NAME}?`, vi: `Đăng nhập vào ${APP_NAME}?` } satisfies Text,
-  onlyIfYouAsked: {
-    en: `Tap the button only if you just asked to sign in, in the ${APP_NAME} app.`,
-    vi: `Chỉ bấm nút nếu bạn vừa yêu cầu đăng nhập trong ứng dụng ${APP_NAME}.`,
-  } satisfies Text,
-  confirmButton: { en: "Yes, sign me in", vi: "Đồng ý, đăng nhập" } satisfies Text,
+  // Short on purpose (the user, 2026-10-17): a long sentence is not read.
+  confirmPrompt: { en: "Sign in?", vi: "Đăng nhập?" } satisfies Text,
+  onlyIfYouAsked: { en: "Only if you just asked to.", vi: "Chỉ bấm nếu bạn vừa yêu cầu." } satisfies Text,
+  confirmButton: { en: "Sign in", vi: "Đăng nhập" } satisfies Text,
   confirmed: { en: "Done", vi: "Xong" } satisfies Text,
-  goBackToTheApp: {
-    en: `Now go back to the ${APP_NAME} app. You will be signed in.`,
-    vi: `Bây giờ hãy quay lại ứng dụng ${APP_NAME}. Bạn sẽ được đăng nhập.`,
-  } satisfies Text,
-  linkDidNotWork: { en: "This link did not work", vi: "Đường dẫn này không dùng được" } satisfies Text,
-  askForANewLink: {
-    en: `It is too old or was already used. Go back to the ${APP_NAME} app and ask for a new one.`,
-    vi: `Đường dẫn đã cũ hoặc đã được dùng. Hãy quay lại ứng dụng ${APP_NAME} và xin đường dẫn mới.`,
-  } satisfies Text,
+  goBackToTheApp: { en: `Go back to the ${APP_NAME} app.`, vi: `Hãy quay lại ứng dụng ${APP_NAME}.` } satisfies Text,
+  linkDidNotWork: { en: "This link has expired", vi: "Đường dẫn đã hết hạn" } satisfies Text,
+  askForANewLink: { en: "Ask for a new one in the app.", vi: "Hãy xin đường dẫn mới trong ứng dụng." } satisfies Text,
 };
 
 // What to tell someone whose sign-in step failed, keyed by cause (errors.ts decides which applies).
