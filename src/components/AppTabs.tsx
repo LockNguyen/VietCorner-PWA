@@ -31,9 +31,15 @@ export default function AppTabs({ showAdmin, bigText }: Props) {
   const { t } = useLanguage(); // I18N
   const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  // Home is the anchor (the user, 2026-10-17): going to it slides this screen away, uncovering it; every
-  // other tab slides in from the right, wherever it sits in the bar.
-  const direction = (href: string) => (isActive(href) ? undefined : href === "/" ? GO_BACK : GO_FORWARD);
+  // Home is the anchor (the user, 2026-10-17): from Home a tab slides in; to Home, or from an inner screen
+  // (an event's page) to its own tab, the screen slides away; between two tabs nothing moves.
+  function direction(href: string) {
+    if (pathname === href) return undefined;
+    if (href === "/") return GO_BACK;
+    if (pathname === "/") return GO_FORWARD;
+    if (pathname.startsWith(`${href}/`)) return GO_BACK;
+    return undefined;
+  }
   const short = (label: Text) => (label === SHELL_STRINGS.eventsTab && (bigText || showAdmin) ? SHELL_STRINGS.eventsTabShort : label);
 
   return (
