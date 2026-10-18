@@ -1,12 +1,11 @@
 "use client";
 
-import { CalendarDays, Clock, MapPin, Phone } from "lucide-react";
+import { CalendarDays, Clock, MapPin, NotebookText, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GO_FORWARD } from "@/lib/slide";
 import PhoneNumber from "@/components/PhoneNumber";
 import Button from "@/components/ui/Button";
 import IconLine from "@/components/ui/IconLine";
-import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
 import { formatLongDate, formatTime } from "../formatting";
@@ -55,13 +54,12 @@ export default function EventPage({ event, canManage }: Props) {
             <PhoneNumber phone={event.contact_phone} />
           </IconLine>
         )}
+        {text?.description && (
+          <IconLine icon={<NotebookText />} label={t(STRINGS.descriptionField)}>
+            <span className="whitespace-pre-wrap">{text.description}</span>
+          </IconLine>
+        )}
       </div>
-
-      {text?.description && (
-        <div className="whitespace-pre-wrap">
-          <Text>{text.description}</Text>
-        </div>
-      )}
 
       {canManage && (
         <Button variant="quiet" onClick={() => router.push(`/events/${event.id}/edit`, { transitionTypes: GO_FORWARD })}>

@@ -1,11 +1,10 @@
 "use client";
 
-import { Clock, MapPin, Phone, Users } from "lucide-react";
+import { Clock, MapPin, NotebookText, Phone, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PhoneNumber from "@/components/PhoneNumber";
 import Button from "@/components/ui/Button";
 import IconLine from "@/components/ui/IconLine";
-import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
 import { GO_FORWARD } from "@/lib/slide";
@@ -23,7 +22,7 @@ type Props = {
 
 // One group, as its own screen sliding in from the right, shaped exactly like an event's page (the user,
 // 2026-10-17): a big picture, then a few facts with icons (when, where while `groupLocation` is on, whom to
-// call), the notes, and the group's pictures. Kept short: elderly members read it at a glance.
+// call, the notes), and the group's pictures. Kept short: elderly members read it at a glance.
 export default function GroupPage({ group, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
   const router = useRouter();
@@ -53,13 +52,12 @@ export default function GroupPage({ group, canManage }: Props) {
             <PhoneNumber phone={group.contact_phone} />
           </IconLine>
         )}
+        {group.notes && (
+          <IconLine icon={<NotebookText />} label={t(STRINGS.notes)}>
+            <span className="whitespace-pre-wrap">{group.notes}</span>
+          </IconLine>
+        )}
       </div>
-
-      {group.notes && (
-        <div className="whitespace-pre-wrap">
-          <Text>{group.notes}</Text>
-        </div>
-      )}
 
       <GroupPhotos groupId={group.id} groupName={t(nameText(group))} canAdd={group.is_member} canRemove={false} />
 

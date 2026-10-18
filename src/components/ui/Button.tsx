@@ -18,7 +18,9 @@ const VARIANTS = {
   danger: "bg-danger text-on-action px-4",
   text: "text-action px-4",
   dangerText: "text-danger px-4", // the small red line under a sheet's button: remove, delete, call off
-  inline: "text-action", // a tappable value lined up with the words above it (a phone number): no side padding
+  // A tappable value lined up with the words around it (a phone number): no side padding, and the 48 px tap
+  // area reaches above and below the line (`-my-3`) instead of pushing it down, so it sits level with an icon.
+  inline: "-my-3 text-action",
 } as const;
 
 // A button. While `pending` it takes no taps and shows the circle, with `pendingLabel` beside it if given.
