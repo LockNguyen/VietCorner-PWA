@@ -2,6 +2,7 @@
 
 import { CalendarDays, Clock, MapPin, Phone } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GO_FORWARD } from "@/lib/slide";
 import PhoneNumber from "@/components/PhoneNumber";
 import Button from "@/components/ui/Button";
 import IconLine from "@/components/ui/IconLine";
@@ -18,7 +19,7 @@ type Props = {
   canManage: boolean; // an admin: an Edit button at the bottom
 };
 
-// One event, as its own screen sliding in from the right: a big picture, then three facts with icons
+// One event, as its own screen (it slides in from the right, src/components/PageSlide.tsx): a big picture, then three facts with icons
 // (when, where, whom to call) and what it is about. Kept short on purpose: elderly members read it at a glance.
 export default function EventPage({ event, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
@@ -28,7 +29,7 @@ export default function EventPage({ event, canManage }: Props) {
   const picture = event.thumbnail_path ? publicFileUrl(THUMBNAIL_BUCKET, event.thumbnail_path) : undefined;
 
   return (
-    <div className="flex flex-col gap-5 px-3 pt-3 pb-6 motion-safe:animate-slide-in">
+    <div className="flex flex-col gap-5 px-3 pt-3 pb-6">
       <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-control bg-fill text-subtle">
         {picture ? <img src={picture} alt="" className="size-full object-cover" /> : <CalendarDays className="size-12" />}
       </div>
@@ -63,7 +64,7 @@ export default function EventPage({ event, canManage }: Props) {
       )}
 
       {canManage && (
-        <Button variant="quiet" onClick={() => router.push(`/events/${event.id}/edit`)}>
+        <Button variant="quiet" onClick={() => router.push(`/events/${event.id}/edit`, { transitionTypes: GO_FORWARD })}>
           {t(STRINGS.editEvent)}
         </Button>
       )}

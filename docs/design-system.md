@@ -50,8 +50,8 @@ The phone's system font. Sentence case; never capitals-only.
 | `text-small` | 14 | regular | Subtitles, labels, sender names, time lines |
 | `text-tab` | 13 | regular | Tab labels |
 
-Sizes are in `rem` and the root size is `106.25% × --text-scale` (default 1), so a future "larger text"
-setting changes one number and the phone's own text-size setting is still respected.
+Sizes are in `rem` and the root size is `106.25% × --text-scale` (default 1). "Chữ to" (the `text-size`
+feature) sets it to 1.2; the phone's own text-size setting is still respected.
 
 ### Space, size and shape
 | Token | Value | Used for |
@@ -68,7 +68,8 @@ setting changes one number and the phone's own text-size setting is still respec
 | `radius-full` | circle | Avatars |
 
 ### Motion
-Screens slide, sheets rise, banners fade; about 200 ms; nothing bounces. All of it is switched off when the
+Screens slide (forward in from the right, back out to the right; 350 ms, `PageSlide`), sheets rise, banners
+fade; nothing bounces. All of it is switched off when the
 phone asks for reduced motion.
 
 ## 3. The frame

@@ -6,6 +6,7 @@ export const SHELL_STRINGS = {
   back: { en: "Back", vi: "Quay lại" } satisfies Text,
   groupsTab: { en: "Groups", vi: "Nhóm nhỏ" } satisfies Text,
   eventsTab: { en: "Events", vi: "Lịch sinh hoạt" } satisfies Text,
+  eventsTabShort: { en: "Events", vi: "Lịch" } satisfies Text, // the tab bar, when "Lịch sinh hoạt" would not fit (AppTabs)
   prayerTab: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
   assistantTab: { en: "Assistant", vi: "Trợ lý" } satisfies Text,
   settingsTab: { en: "Settings", vi: "Cài đặt" } satisfies Text,

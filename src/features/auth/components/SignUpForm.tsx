@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import Button from "@/components/ui/Button";
 import Text from "@/components/ui/Text";
 import TextInput from "@/components/ui/TextInput";
@@ -14,12 +14,13 @@ type Props = {
   onEmailChange: (email: string) => void;
   onCreate: (name: string, email: string) => Promise<void>; // sends the link; the parent says if it failed
   onHaveAccount: () => void;
+  extra?: ReactNode; // under the email, before Next: the text size choice (from the page)
 };
 
 // A new account, in the same calm shape as sign-in: a short title, the name and the email with their words
 // inside, one blue Next (off until both are filled), and "I already have an account" small under it.
 // No password: the email's link signs the new member in.
-export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccount }: Props) {
+export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccount, extra }: Props) {
   const { t } = useLanguage(); // I18N
   const [name, setName] = useState("");
   const { pending, run } = usePending<"create">();
@@ -55,6 +56,7 @@ export default function SignUpForm({ email, onEmailChange, onCreate, onHaveAccou
         value={email}
         onChange={(event) => onEmailChange(event.target.value)}
       />
+      {extra}
       <Button disabled={!complete} pending={pending === "create"} pendingLabel={t(STRINGS.working)}>
         {t(STRINGS.nextButton)}
       </Button>

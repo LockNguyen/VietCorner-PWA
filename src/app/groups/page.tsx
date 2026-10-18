@@ -18,7 +18,7 @@ export default async function GroupsPage() {
   if (SWITCHES.oldGroupsPage) {
     return (
       <>
-        <PageHeader title={SHELL_STRINGS.groupsTab} />
+        <PageHeader title={SHELL_STRINGS.groupsTab} backHref="/" />
         <GroupList groups={await getGroups(supabase)} />
       </>
     );
@@ -32,7 +32,7 @@ export default async function GroupsPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.groupsTab} />
+      <PageHeader title={SHELL_STRINGS.groupsTab} backHref="/" />
       <GroupDirectory
         groups={groups}
         canManage={canManage}

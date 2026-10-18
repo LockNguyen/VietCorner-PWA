@@ -19,6 +19,8 @@ import KeepSubscribed from "@/features/push/components/KeepSubscribed"; // PUSH
 import InstallGate from "@/features/install/components/InstallGate"; // INSTALL
 import NotificationStep from "@/features/push/components/NotificationStep"; // PUSH
 import { NOTIFICATIONS_ASKED_COOKIE } from "@/features/push/types"; // PUSH
+import { TEXT_SIZE_COOKIE, textSizeOf } from "@/features/text-size/types"; // TEXT-SIZE
+import PageSlide from "@/components/PageSlide";
 import { BannerProvider } from "@/lib/useBanner";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { APP_NAME } from "@/lib/appName";
@@ -52,15 +54,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // PUSH: a new member is first asked for notifications, once per device (a cookie). Members who simply
   // sign in again are not asked; the switch in Settings is theirs.
   const askNotifications = notLetIn && !(await cookies()).has(NOTIFICATIONS_ASKED_COOKIE);
+  const textSize = textSizeOf((await cookies()).get(TEXT_SIZE_COOKIE)?.value); // TEXT-SIZE: this phone's choice
   const waiting = notLetIn && !askNotifications;
   const step = askName ? <NameStep /> : askNotifications ? <NotificationStep /> : waiting ? <WaitingStep /> : null;
 
   return (
-    <html lang={storedLanguage ?? DEFAULT_LANGUAGE}>
+    <html lang={storedLanguage ?? DEFAULT_LANGUAGE} data-text-size={textSize}>
       <body className="bg-surface text-ink">
         <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
           <BannerProvider>
             <main className="mx-auto max-w-column pb-24">
+              {/* The screen slides on forward and back (src/lib/slide.ts); the tab bar outside it stays. */}
+              <PageSlide>
               {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}
               {user ? (
                 <InstallGate step={notLetIn ? "install" : undefined} footer={<SignOutButton variant="text" />}>
@@ -69,10 +74,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               ) : (
                 (step ?? children)
               )}
+              </PageSlide>
             </main>
             <BannerHost />
           </BannerProvider>
-          {user && !step && <AppTabs showAdmin={managesSomething(permissions)} />}
+          {user && !step && <AppTabs showAdmin={managesSomething(permissions)} bigText={textSize === "big"} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
           {user && <KeepSubscribed />} {/* PUSH */}
         </LanguageProvider>

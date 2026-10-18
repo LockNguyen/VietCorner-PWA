@@ -40,15 +40,6 @@
   --radius-control: 12px;
   --radius-bubble: 18px;
 
-  /* A screen arriving from the right, as an iPhone pushes a page (an event's page, 2026-10-17). The iPhone's
-     own curve: fast at first, settling gently. Switched off with reduced motion where it is used. */
-  --animate-slide-in: slide-in 350ms cubic-bezier(0.32, 0.72, 0, 1);
-  @keyframes slide-in {
-    from {
-      transform: translateX(100%);
-    }
-  }
-
   /* The reward for praying (asked for by the user, 2026-10-14, "no confetti"): the tick pops in, a ring
      spreads out from it and fades, and "+1" floats up and fades. About two thirds of a second, once.
      The one place something springs past its size: a moment of thanks, not a screen moving. */
@@ -131,7 +122,68 @@ body {
   overscroll-behavior: none;
 }
 
-/* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */
+/* A percentage, so the phone's own text-size setting still applies. --text-scale is the "Chữ to" setting
+   (features/text-size): every text size is in rem, so this one number makes all text bigger; spacing is in
+   px and stays. why 1.2: 17 px body text becomes about 20 px, the size iOS's own "Larger Text" reaches first. */
 html {
   font-size: calc(106.25% * var(--text-scale, 1));
+}
+html[data-text-size="big"] {
+  --text-scale: 1.2;
+}
+
+/* Screens sliding (src/components/PageSlide.tsx, src/lib/slide.ts), as an iPhone pushes and pops pages.
+   Forward: the new screen comes in from the right over the old one, which drifts a little left.
+   Back: the screen leaves to the right on top, uncovering the one under it, which drifts back in.
+   The iPhone's own curve and length. The tab bar is outside the sliding screen, so it stays put. */
+:root {
+  --slide: 350ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+::view-transition {
+  pointer-events: none; /* taps during a slide reach the page, not the picture of it */
+}
+::view-transition-group(.slide-forward),
+::view-transition-group(.slide-back) {
+  animation: none; /* the two screens differ in height: no resizing between them, only the slide */
+}
+::view-transition-old(.slide-forward),
+::view-transition-new(.slide-forward),
+::view-transition-old(.slide-back),
+::view-transition-new(.slide-back) {
+  mix-blend-mode: normal; /* the browser's default blends the two pictures, which would brighten the overlap */
+}
+::view-transition-new(.slide-forward) {
+  animation: var(--slide) slide-from-right;
+}
+::view-transition-old(.slide-forward) {
+  animation: var(--slide) drift-left;
+}
+::view-transition-old(.slide-back) {
+  z-index: 1; /* the leaving screen stays on top while it slides off */
+  animation: var(--slide) slide-to-right;
+}
+::view-transition-new(.slide-back) {
+  animation: var(--slide) drift-left reverse;
+}
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-to-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes drift-left {
+  to {
+    transform: translateX(-25%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
 }

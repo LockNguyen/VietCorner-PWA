@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GO_FORWARD } from "@/lib/slide";
 import EmptyState from "@/components/ui/EmptyState";
 import IconButton from "@/components/ui/IconButton";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -35,7 +36,7 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
 
   const add = canManage && (
     <div className="flex justify-end px-3 pt-2">
-      <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.push("/events/new")}>
+      <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.push("/events/new", { transitionTypes: GO_FORWARD })}>
         <Plus />
       </IconButton>
     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { problemWith } from "../errors";
@@ -14,7 +14,8 @@ import SignUpForm from "./SignUpForm";
 // Signed out. Sign-in comes first and is the whole of it for someone who has an account: their email, then
 // the link in their mailbox (one screen, no bar). A new member goes on to the setup steps, with the bar:
 // name and email, then the link; the root layout then shows notifications and the wait for an admin.
-export default function Welcome() {
+// `signUpExtra`: what the page adds to the sign-up screen from another feature (the text size).
+export default function Welcome({ signUpExtra }: { signUpExtra?: ReactNode }) {
   const { t } = useLanguage(); // I18N
   const showBanner = useBanner();
   const [screen, setScreen] = useState<"signIn" | "signUp">("signIn");
@@ -54,6 +55,7 @@ export default function Welcome() {
           onEmailChange={setEmail}
           onCreate={(name, email) => createAccount(name, email).catch(sayWhy)}
           onHaveAccount={() => setScreen("signIn")}
+          extra={signUpExtra}
         />
       )}
     </SignedOutFrame>

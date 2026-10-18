@@ -482,6 +482,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Home). **WAITS ON THE USER: Supabase → Email Templates "Magic Link" and "Confirm signup" (auth README,
       Setup 5), then one real sign-in from an iPhone.**
 
+- [x] **Screens slide; back to Home everywhere; text size (2026-10-17, the user).** Forward slides in from the
+      right, back (arrow, or swipe from the left edge in the installed app) slides out and uncovers the screen
+      under it (`ViewTransition`). Events, Prayer, Groups, Admin have a back arrow to Home. Settings and sign-up:
+      Cỡ chữ Gọn / Chữ to (per phone); with big text or the Admin tab the tab reads "Lịch". Seen on a local build.
+      NOT seen: an iPhone (needs iOS 18 for the slides), five tabs in big text.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
