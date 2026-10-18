@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { accountExists, collectSignIn, sendSignInLink, signInWithLink } from "../api";
 import { attemptOf, newClaimKey } from "../handoff";
+import { GO_BACK, GO_FORWARD, slide } from "@/lib/slide";
 import { clearPendingSignIn, readPendingSignIn, savePendingSignIn, type PendingSignIn } from "../storage";
 
 // why: each check is one small read of our own table, so it may be quick: the app moves on within seconds
@@ -30,12 +31,13 @@ export function useEmailLink(onFailed: (error: unknown) => void) {
     await sendSignInLink(email, await attemptOf(claimKey), name);
     const pending = { claimKey, email, sentAt: Date.now() };
     savePendingSignIn(pending);
-    setWaiting(pending);
+    slide(GO_FORWARD, () => setWaiting(pending)); // "check your email" slides in like the steps before it
   }
 
+  // The back arrow while waiting: forget the wait and slide back to the screen that asked.
   function startOver() {
     clearPendingSignIn();
-    setWaiting(null);
+    slide(GO_BACK, () => setWaiting(null));
   }
 
   useEffect(() => {

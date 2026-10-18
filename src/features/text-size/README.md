@@ -1,8 +1,8 @@
 # text-size
 
 Two text sizes, chosen per phone (the user, 2026-10-17): **Gọn / Compact**, the app as it was, and
-**Chữ to / Big text**, every text about a fifth bigger, for elderly eyes. In Settings, and on the sign-up
-screen so a new member can choose before anything else.
+**Chữ to / Big text**, every text about a fifth bigger, for elderly eyes. In Settings, and as the first step of signing
+up ("Step 1 / 7"), so a new member can make the app readable before anything else.
 
 System docs: `.claude/architecture.md`.
 
@@ -29,7 +29,7 @@ System docs: `.claude/architecture.md`.
 ## Expected behavior
 - Settings → Cỡ chữ: Gọn (ticked by default) and Chữ to. A tap changes every text at once and survives a reload
   and a sign-out.
-- Sign-up shows the same two rows under the email.
+- Sign-up's first step shows the same two rows and "Tiếp tục".
 
 ## Remove
 Delete this folder and the `TEXT-SIZE` lines in `src/app/layout.tsx`, `src/app/settings/page.tsx` and

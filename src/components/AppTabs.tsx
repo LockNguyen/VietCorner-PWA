@@ -31,19 +31,20 @@ export default function AppTabs({ showAdmin, bigText }: Props) {
   const { t } = useLanguage(); // I18N
   const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
-  // A tab to the right of where I am slides in from the right; one to the left slides this screen away.
-  const here = tabs.findIndex((tab) => isActive(tab.href));
+  // Home is the anchor (the user, 2026-10-17): going to it slides this screen away, uncovering it; every
+  // other tab slides in from the right, wherever it sits in the bar.
+  const direction = (href: string) => (isActive(href) ? undefined : href === "/" ? GO_BACK : GO_FORWARD);
   const short = (label: Text) => (label === SHELL_STRINGS.eventsTab && (bigText || showAdmin) ? SHELL_STRINGS.eventsTabShort : label);
 
   return (
     <TabBar
-      tabs={tabs.map(({ href, label, Icon }, index) => ({
+      tabs={tabs.map(({ href, label, Icon }) => ({
         href,
         label: t(short(label)),
         icon: <Icon />,
         // Home is "/" exactly: every address starts with "/", so it cannot be matched by its beginning.
         active: isActive(href),
-        transitionTypes: index > here ? GO_FORWARD : index < here ? GO_BACK : undefined,
+        transitionTypes: direction(href),
       }))}
     />
   );

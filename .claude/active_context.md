@@ -493,6 +493,11 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       arrow, no "I already have an account"; fewer words on "check your email" and the link page. Seen on a local
       build (mid-slide pictures). Known: a screen not kept in memory slides in as its grey placeholder.
 
+- [x] **Sign-up steps slide; text size first (2026-10-17, the user).** Step 1 / 7 Cỡ chữ → name + email → check your
+      email, each sliding in, each with a back arrow. Seen on a local build. Explained to the user: the bar jumped
+      from 2 to 5 on their phone because install (already installed) and notifications (answered before on that
+      phone, cookie) are skipped.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

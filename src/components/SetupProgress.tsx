@@ -7,11 +7,11 @@ import { SHELL_STRINGS } from "./strings";
 
 // Every step a new member goes through, in order. Each feature's step screen names its own, so the bar
 // stays right when a step is removed: delete its name here. Signing in is not a step (it is the whole of it
-// for someone with an account): creating an account is step 1 (the user, 2026-10-17). "done" is never shown: it is there so that the last screen,
+// for someone with an account): choosing the text size is step 1, then name and email (the user, 2026-10-17). "done" is never shown: it is there so that the last screen,
 // waiting for an admin, reads as not finished yet (asked for by the user, 2026-10-14).
 // "install" comes after signing in (in Safari, whose sign-in iOS copies into the app as it is added) and before
 // notifications (which only work in the installed app).
-const SETUP_STEPS = ["name", "email", "install", "notifications", "waiting", "done"] as const;
+const SETUP_STEPS = ["textSize", "name", "email", "install", "notifications", "waiting", "done"] as const;
 
 export type SetupStep = (typeof SETUP_STEPS)[number];
 

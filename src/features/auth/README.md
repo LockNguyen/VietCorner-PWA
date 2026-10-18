@@ -48,11 +48,11 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Server logic | `server/handoff.ts` | **Admin** client: `leaveSignIn`, `collectSignIn` |
 | Server logic | `server/refreshSession.ts` | Called by `src/proxy.ts` on every non-static request: refreshes the session cookie and redirects (logged out → `/login`; logged in on `/login` → `HOME_PATH`) |
 | Routes | `src/app/api/auth/handoff/route.ts`, `claim/route.ts` | Validate (400) → the step → 204 / `{ tokenHash }` |
-| UI | `components/Welcome.tsx` | Signed out: sign in, or create an account; then "check your email". Says what went wrong in the app's banner |
+| UI | `components/Welcome.tsx` | Signed out: sign in, or the sign-up steps (the page's first step, the text size; then name and email), then "check your email". Each step slides in (`lib/slide.ts` `slide`), each has a back arrow to the one before. Says what went wrong in the app's banner |
 | UI | `components/SignedOutFrame.tsx` | Every signed-out screen, in the app or in the browser a link opens: bar (setup steps only), language link top right, logo |
 | UI | `components/SignInForm.tsx` | The email, one blue "Sign in", and "Create new account?" small under it |
-| UI | `components/SignUpForm.tsx` | Title, name and email with their words inside, the text size (from the page), Next (off until both are filled). Back to sign-in is the frame's arrow |
-| UI | `components/CheckEmail.tsx` | "Check your email", the address, "Tap the link in it, then come back here.", "Not there? Look in Spam." |
+| UI | `components/SignUpForm.tsx` | Title, name and email with their words inside, Next (off until both are filled). Back is the frame's arrow |
+| UI | `components/CheckEmail.tsx` | "Check your email" and the address, in bold; "Tap the link in it, then come back here." Back is the frame's arrow |
 | UI | `components/ConfirmLink.tsx` | What the link opens: a spinner, "Sign in?" with "Only if you just asked to." and one button, "Done, go back to the app", or "This link has expired" |
 | UI | `components/AccountSection.tsx` | Settings: the address and `SignOutButton` |
 | Shell | `src/app/login/page.tsx`, `login/confirm/page.tsx`, `settings/page.tsx` | Render the components (lines marked `AUTH`) |
@@ -69,7 +69,8 @@ Redesigned on 2026-10-17 on the user's word: no passwords, so nothing to forget 
      **Create new account?**", whose link opens sign-up with the email kept.
    - Otherwise → Supabase emails the sign-in link (`signInWithOtp`, never creating an account here) →
      "Check your email" while the app waits (step 3).
-2. **Create an account**: a back arrow to sign-in at the top left, name and email ("Step 1 / 6"), Next → the same link (`signInWithOtp` with the name
+2. **Create an account**, each step sliding in from the right with a back arrow to the one before: the text
+   size ("Step 1 / 7", the `text-size` feature, brought by the page), then name and email ("Step 2 / 7"), Next → the same link (`signInWithOtp` with the name
    as metadata; the profiles trigger saves it, so the name question never appears). An address that already
    has an account just gets a sign-in link.
 3. **The link** opens `/login/confirm` (on an iPhone, in Safari): "Sign in?" and one button; after the tap,

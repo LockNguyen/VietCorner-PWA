@@ -17,8 +17,6 @@ export const STRINGS = {
   // Waiting for the email's link (components/CheckEmail.tsx)
   emailSent: { en: "Check your email", vi: "Hãy mở email" } satisfies Text,
   openTheLink: { en: "Tap the link in it, then come back here.", vi: "Bấm vào đường dẫn, rồi quay lại đây." } satisfies Text,
-  checkSpam: { en: "Not there? Look in Spam.", vi: "Không thấy? Xem mục Thư rác (Spam)." } satisfies Text,
-  useAnotherEmail: { en: "Start again", vi: "Làm lại" } satisfies Text,
 
   accountHeading: { en: "Account", vi: "Tài khoản" } satisfies Text,
   signedInAs: { en: "Signed in", vi: "Đã đăng nhập" } satisfies Text,
