@@ -504,6 +504,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **Group page instead of the group sheet; "Chọn cỡ chữ" title (2026-10-17, the user).** A card opens
       `/groups/<id>/about`, like an event's page; Edit for admins. Seen on a local build.
 
+- [x] **Install guide in the clean look (2026-10-17, the user).** Full screen, no tab bar, no sign-out, grey round
+      icons instead of numbers, ••• first on iOS 26 Safari. Seen as Android at 375 px. NOT seen: the iPhone steps.
+      Debt: a wrong account signed in in Safari has no way out on the guide (the user's choice).
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

@@ -4,7 +4,6 @@ import "./globals.css";
 import AppTabs from "@/components/AppTabs";
 import BannerHost from "@/components/BannerHost";
 import WaitingStep from "@/features/approval/components/WaitingStep"; // APPROVAL
-import SignOutButton from "@/features/auth/components/SignOutButton"; // AUTH
 import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
 import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I18N
@@ -68,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <PageSlide>
               {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}
               {user ? (
-                <InstallGate step={notLetIn ? "install" : undefined} footer={<SignOutButton variant="text" />}>
+                <InstallGate step={notLetIn ? "install" : undefined}>
                   {step ?? children}
                 </InstallGate>
               ) : (

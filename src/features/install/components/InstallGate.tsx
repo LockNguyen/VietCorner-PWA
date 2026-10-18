@@ -10,16 +10,14 @@ type Props = {
   // before the device is known (the notifications question would answer itself "impossible" in a browser,
   // and iOS copies that answer into the installed app).
   step?: SetupStep;
-  // Under the guide: a way out (sign out), since the guide takes the place of every page, Settings included.
-  footer?: React.ReactNode;
   children: React.ReactNode;
 };
 
 // Signed in, but in a browser tab on a phone: the install guide in place of the page. Signing in happens in
 // the browser first (it began there for saved passwords, which are gone since 2026-10-17); iOS copies the
 // sign-in into the app at the moment it is added to the Home Screen (seen on the iPhone, 2026-10-14).
-export default function InstallGate({ step, footer, children }: Props) {
-  const { device, showGuide, canInstall, installed, install, continueInBrowser } = useInstall();
+export default function InstallGate({ step, children }: Props) {
+  const { device, glass, showGuide, canInstall, installed, install, continueInBrowser } = useInstall();
 
   // The server cannot know how the page was opened; the phone tells us a moment after loading.
   if (device === null) {
@@ -35,8 +33,8 @@ export default function InstallGate({ step, footer, children }: Props) {
   return (
     <InstallGuide
       step={step}
-      footer={footer}
       device={device}
+      glass={glass}
       canInstall={canInstall}
       installed={installed}
       onInstall={install}

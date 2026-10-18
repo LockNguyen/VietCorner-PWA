@@ -13,71 +13,70 @@ import InstallStep from "./InstallStep";
 
 type Props = {
   step?: SetupStep; // a new member's setup: show the bar
-  footer?: React.ReactNode; // set apart at the bottom: a way out of the guide (sign out)
   device: Exclude<Device, "installed">;
+  glass: boolean; // iOS 26 Safari: Share is behind •••, one more step
   canInstall: boolean; // Chrome offered its own dialog
   installed: boolean; // just installed from this tab
   onInstall: () => void;
   onContinueInBrowser: () => void;
 };
 
-// How to put the app on this phone, in the steps that fit it. Shown after signing in, in a browser tab.
-export default function InstallGuide({ step, footer, device, canInstall, installed, onInstall, onContinueInBrowser }: Props) {
+// How to put the app on this phone, in the steps that fit it, in the calm shape of the sign-in screens: the
+// bar, the language at the top right, then in the middle the logo, a bold title and a few short lines, each
+// with the button to look for in a grey circle. It covers the whole screen (no tab bar, no sign-out): on a
+// phone the app is the way in, so there is nothing else to do here (the user, 2026-10-17).
+export default function InstallGuide({ step, device, glass, canInstall, installed, onInstall, onContinueInBrowser }: Props) {
   const { t } = useLanguage(); // I18N
 
   return (
-    <div className="flex flex-col gap-6 pb-6">
+    <div className="fixed inset-0 z-20 flex flex-col overflow-y-auto bg-surface pb-safe">
       {step ? <SetupProgress step={step} /> : <div className="pt-safe" />}
-      <div className="flex flex-col gap-6 px-5">
-        <div className="flex justify-end">
-          <LanguageLink />
-        </div>
-        <div className="flex flex-col items-center gap-4 text-center">
-          <LogoMark />
-          <Text as="h1" variant="tile">
-            {installed ? t(STRINGS.installedHeading) : t(STRINGS.heading)}
-          </Text>
-          {!installed && <Text tone="subtle">{t(STRINGS.why)}</Text>}
-        </div>
+      <div className="flex min-h-touch w-full items-center justify-end px-3 pt-2">
+        <LanguageLink />
+      </div>
+      <div className="mx-auto flex w-full max-w-column flex-1 flex-col items-center justify-center gap-6 px-5 pb-16">
+        <LogoMark />
+        <Text as="h1" variant="tile">
+          {installed ? t(STRINGS.installedHeading) : t(STRINGS.heading)}
+        </Text>
 
         {installed ? (
           <Text>{t(STRINGS.openFromHome)}</Text>
         ) : canInstall ? (
           // Android (and computers) that offer it: one tap, then the phone's own dialog.
-          <Button onClick={onInstall}>{t(STRINGS.installButton)}</Button>
+          <div className="flex w-full flex-col">
+            <Button onClick={onInstall}>{t(STRINGS.installButton)}</Button>
+          </div>
         ) : (
-          <ol className="flex flex-col gap-5">
-            {device === "iphone" && (
-              <>
-                <InstallStep number={1} icon={<Share aria-hidden />}>
-                  {t(STRINGS.iphoneShare)}
-                </InstallStep>
-                <InstallStep number={2} icon={<SquarePlus aria-hidden />}>
-                  {t(STRINGS.iphoneAdd)}
-                </InstallStep>
-                <InstallStep number={3}>{t(STRINGS.iphoneConfirm)}</InstallStep>
-                <InstallStep number={4}>{t(STRINGS.openFromHome)}</InstallStep>
-              </>
+          <>
+            <ol className="flex w-full flex-col gap-4">
+              {device === "iphone" && (
+                <>
+                  {glass && <InstallStep icon={<Ellipsis />}>{t(STRINGS.iphoneMore)}</InstallStep>}
+                  <InstallStep icon={<Share />}>{t(STRINGS.iphoneShare)}</InstallStep>
+                  <InstallStep icon={<SquarePlus />}>{t(STRINGS.iphoneAdd)}</InstallStep>
+                  <InstallStep icon={t(STRINGS.addWord)}>{t(STRINGS.iphoneConfirm)}</InstallStep>
+                </>
+              )}
+              {device === "android" && (
+                <>
+                  <InstallStep icon={<EllipsisVertical />}>{t(STRINGS.androidMenu)}</InstallStep>
+                  <InstallStep icon={<SquarePlus />}>{t(STRINGS.androidAdd)}</InstallStep>
+                </>
+              )}
+              {device === "inApp" && (
+                <>
+                  <InstallStep icon={<Ellipsis />}>{t(STRINGS.inAppMenu)}</InstallStep>
+                  <InstallStep icon={<Share />}>{t(STRINGS.inAppOpen)}</InstallStep>
+                </>
+              )}
+            </ol>
+            {device === "other" ? (
+              <Text tone="subtle">{t(STRINGS.onYourPhone)}</Text>
+            ) : (
+              device !== "inApp" && <Text tone="subtle">{t(STRINGS.openFromHome)}</Text>
             )}
-            {device === "android" && (
-              <>
-                <InstallStep number={1} icon={<EllipsisVertical aria-hidden />}>
-                  {t(STRINGS.androidMenu)}
-                </InstallStep>
-                <InstallStep number={2}>{t(STRINGS.androidAdd)}</InstallStep>
-                <InstallStep number={3}>{t(STRINGS.openFromHome)}</InstallStep>
-              </>
-            )}
-            {device === "inApp" && (
-              <>
-                <InstallStep number={1} icon={<Ellipsis aria-hidden />}>
-                  {t(STRINGS.inAppMenu)}
-                </InstallStep>
-                <InstallStep number={2}>{t(STRINGS.inAppOpen)}</InstallStep>
-              </>
-            )}
-            {device === "other" && <InstallStep number={1}>{t(STRINGS.onYourPhone)}</InstallStep>}
-          </ol>
+          </>
         )}
 
         {/* Only a computer may skip: on a phone the app is what makes notifications and staying signed in work. */}
@@ -86,7 +85,6 @@ export default function InstallGuide({ step, footer, device, canInstall, install
             {t(STRINGS.continueInBrowser)}
           </Button>
         )}
-        {footer && <div className="flex flex-col pt-6">{footer}</div>}
       </div>
     </div>
   );

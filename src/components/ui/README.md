@@ -33,6 +33,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `MemberCircles` | A row of small circles, one per person: initials first, empty figures for the rest, "+N" past `max` | | `initials`, `total`, `max`, `label` |
 | `BilingualInput` | One text in two languages as one grey box: the first language on top, a hairline, the other below; an empty half shows its language | | `top`, `bottom` (`value`, `onChange`, `placeholder`, `label`), `rows` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
+| `RoundIcon` | An icon or a short word in a light grey circle, as the iPhone draws its toolbar buttons (the install steps). Decorative | | |
 | `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
 | `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
 | `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { deviceOf, type Device } from "../device";
+import { deviceOf, hasGlassToolbar, type Device } from "../device";
 
 // Chrome's own install dialog, held until the person taps our button. Not in TypeScript's DOM types yet.
 type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: "accepted" | "dismissed" }> };
@@ -12,6 +12,7 @@ const BROWSER_KEY = "vietcorner.use-in-browser";
 // Where this visit stands on installing the app, and Chrome's one-tap install where it offers one.
 export function useInstall() {
   const [device, setDevice] = useState<Device | null>(null); // null until read on the phone itself
+  const [glass, setGlass] = useState(false); // iOS 26 Safari: Share is behind •••
   const [inBrowser, setInBrowser] = useState(false);
   const [prompt, setPrompt] = useState<InstallPrompt | null>(null);
   const [installed, setInstalled] = useState(false); // installed from this tab, which stays a tab
@@ -21,6 +22,7 @@ export function useInstall() {
       window.matchMedia("(display-mode: standalone)").matches ||
       (navigator as Navigator & { standalone?: boolean }).standalone === true; // the iPhone's own flag
     setDevice(deviceOf(navigator.userAgent, standalone, navigator.maxTouchPoints));
+    setGlass(hasGlassToolbar(navigator.userAgent));
     setInBrowser(readFlag());
 
     // Chrome offers to install by raising this event; holding it lets our button open the dialog later.
@@ -56,6 +58,7 @@ export function useInstall() {
 
   return {
     device,
+    glass,
     showGuide: device !== null && device !== "installed" && !inBrowser,
     canInstall: prompt !== null,
     installed,
