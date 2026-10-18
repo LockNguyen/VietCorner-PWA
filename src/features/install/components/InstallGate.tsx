@@ -16,8 +16,8 @@ type Props = {
 };
 
 // Signed in, but in a browser tab on a phone: the install guide in place of the page. Signing in happens in
-// the browser first because only Safari saves and fills in passwords; iOS then copies the sign-in into the
-// app at the moment it is added to the Home Screen (both seen on the iPhone, 2026-10-14).
+// the browser first (it began there for saved passwords, which are gone since 2026-10-17); iOS copies the
+// sign-in into the app at the moment it is added to the Home Screen (seen on the iPhone, 2026-10-14).
 export default function InstallGate({ step, footer, children }: Props) {
   const { device, showGuide, canInstall, installed, install, continueInBrowser } = useInstall();
 

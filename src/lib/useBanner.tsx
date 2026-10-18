@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 export type BannerKind = "success" | "error";
-// A way out offered with the message, drawn as a link ("Forgot password?"). Tapping it also puts the banner away.
+// A way out offered with the message, drawn as a link ("Create new account?"). Tapping it also puts the banner away.
 export type BannerAction = { label: string; onAct: () => void };
 export type Banner = { id: number; kind: BannerKind; message: string; action?: BannerAction };
 type NewBanner = { kind: BannerKind; message: string; seconds?: number; action?: BannerAction };

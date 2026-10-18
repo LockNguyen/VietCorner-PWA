@@ -476,6 +476,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       `/events/<id>/edit`. **WAITS ON THE USER: `docs/sql-to-run-2026-10-17c.sql`, then `npm run test:rls`; before
       pushing** (the editor's Save writes `contact_phone`; the schedule's read returns it).
 
+- [x] **Sign-in by email link, no passwords (2026-10-17, the user).** Email → link → one tap in Safari → the app
+      signs itself in (hand-off). Sign-up = name + email, same link. "Create new account?" replaces "Forgot
+      password?"; the separate button is gone. Seen on a local production build (screens, banner, hand-off to
+      Home). **WAITS ON THE USER: Supabase → Email Templates "Magic Link" and "Confirm signup" (auth README,
+      Setup 5), then one real sign-in from an iPhone.**
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

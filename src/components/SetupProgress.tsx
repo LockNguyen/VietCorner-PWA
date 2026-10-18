@@ -9,7 +9,7 @@ import { SHELL_STRINGS } from "./strings";
 // stays right when a step is removed: delete its name here. Signing in is step 1 but shows no bar (it is
 // the whole of it for someone with an account). "done" is never shown: it is there so that the last screen,
 // waiting for an admin, reads as not finished yet (asked for by the user, 2026-10-14).
-// "install" comes after signing in (done in Safari, the only place that saves a password) and before
+// "install" comes after signing in (in Safari, whose sign-in iOS copies into the app as it is added) and before
 // notifications (which only work in the installed app).
 const SETUP_STEPS = ["signIn", "name", "email", "install", "notifications", "waiting", "done"] as const;
 

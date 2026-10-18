@@ -21,7 +21,6 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
 | `Field` | A label above one control; under it, what is wrong, once the form has been tried | | `label`, `problem` |
 | `TextInput` | One line of typed input. Also a date, a time, or both: set `type` | | |
-| `PasswordInput` | A password field with an eye at its end that shows or hides the letters; the field look of `TextInput` | | `shown`, `onToggle`, `toggleLabel` |
 | `TextArea` | Several lines of typed input | | |
 | `Select` | One choice from a list, in the phone's own picker; children are `<option>`s | | |
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |

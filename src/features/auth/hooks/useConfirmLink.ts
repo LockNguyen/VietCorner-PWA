@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { leaveSignIn, signInWithResetLink } from "../api";
+import { leaveSignIn, signInWithLink } from "../api";
 import { attemptOf } from "../handoff";
-import { clearPendingSignIn, NEW_PASSWORD_PATH, readPendingSignIn } from "../storage";
+import { clearPendingSignIn, readPendingSignIn } from "../storage";
 
 // Where the opened link stands:
 //   checking  working out which browser this is
@@ -12,9 +12,9 @@ import { clearPendingSignIn, NEW_PASSWORD_PATH, readPendingSignIn } from "../sto
 //   failed    the link is incomplete, too old or already used
 export type ConfirmState = "checking" | "ask" | "left" | "failed";
 
-// What an opened password-reset link does. In the browser that asked (it holds the key the link names) it
-// signs in right here. In any other browser, which is every iPhone, where links open in Safari and not in the
-// installed app, it offers to hand the sign-in to the one that asked.
+// What an opened sign-in link does. In the browser that asked (it holds the key the link names) it signs in
+// right here. In any other browser, which is every iPhone, where links open in Safari and not in the
+// installed app, it asks for one tap, then hands the sign-in to the one that asked.
 export function useConfirmLink(attempt: string | undefined, tokenHash: string | undefined) {
   const [state, setState] = useState<ConfirmState>("checking");
 
@@ -23,13 +23,13 @@ export function useConfirmLink(attempt: string | undefined, tokenHash: string | 
       if (!attempt || !tokenHash) return setState("failed");
 
       const pending = readPendingSignIn();
-      const askedHere = pending?.purpose === "recovery" && (await attemptOf(pending.claimKey)) === attempt;
+      const askedHere = pending !== null && (await attemptOf(pending.claimKey)) === attempt;
       if (!askedHere) return setState("ask");
 
       try {
-        await signInWithResetLink(tokenHash);
+        await signInWithLink(tokenHash);
         clearPendingSignIn();
-        window.location.assign(NEW_PASSWORD_PATH); // a full page load, so the proxy sees the new login cookie
+        window.location.assign("/"); // a full page load, so the proxy sees the new login cookie
       } catch {
         setState("failed");
       }

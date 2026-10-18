@@ -8,7 +8,7 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 
 | Feature | Folder | README | Status |
 |---|---|---|---|
-| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Email link with hand-off built 2026-10-12 (replaces the typed code); not tried with a real email or on an iPhone |
+| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Email link, no passwords (2026-10-17); hand-off seen end to end on a local build, not yet with a real email or on an iPhone |
 | Sign-up approval | `src/features/approval/` | [approval](../src/features/approval/README.md) | Built 2026-10-12; SQL not run, nothing seen signed in |
 | Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. Joining and the old Groups page are **switched off**; admins put people into groups |
 | Groups page | `src/features/group-info/` | [group-info](../src/features/group-info/README.md) | Built 2026-10-12 with pictures; SQL not run, nothing seen signed in |
@@ -192,18 +192,16 @@ told once per account, the person is told when approved. No tables: "waiting" is
 `/approve`.
 
 ### 6.1 auth → [README](../src/features/auth/README.md)
-Email + a password the phone saves (real `<form>`s with `autoComplete`, plus Chrome's
-`navigator.credentials.store`). `/login` opens on sign-in (no bar); "create an account" asks name, email
-and password on one screen (the name goes in as metadata, saved by the profiles trigger); "Forgot password?".
-A failed sign-in asks `account_exists()` to say "no account yet" instead of "wrong password". Creating and resetting each send one email with a link. A sign-up link
-confirms the address at Supabase and opens `/login/confirmed` ("go back to the app"); the app, still holding
-the password, signs in once that works. A reset link uses the hand-off below. An iPhone
-opens links in Safari, which shares no login with the Home Screen app, so the link hands the sign-in to the
-device that asked (resets only): the app keeps a secret key and puts only its hash in the
-link; the browser that opens the link leaves Supabase's one-time token under that hash, after a tap; the app
-collects it with the key and signs in (a reset then opens `/settings/password`). Sessions live in `sb-*`
-cookies for up to 400 days, renewed on every visit; `src/proxy.ts`
-refreshes them and redirects logged-out visitors. Table: `login_handoffs` (server-only).
+Email only, no passwords (2026-10-17). `/login` opens on sign-in (no bar): the address, "Sign in", and
+"Create new account?" under it. An address with no account (`account_exists()`) gets the banner "Account not
+created yet. Create new account?" and no email; otherwise Supabase emails a sign-in link (`signInWithOtp`,
+never creating an account). "Create an account" asks name and email and sends the same link (the name goes in
+as metadata, saved by the profiles trigger). An iPhone opens links in Safari, which shares no login with the
+Home Screen app, so the link hands the sign-in to the device that asked: the app keeps a secret key and puts
+only its hash in the link; the browser that opens the link leaves Supabase's one-time token under that hash,
+after one tap ("Yes, sign me in"); the app collects it with the key and signs in. Sessions live in `sb-*`
+cookies for up to 400 days, renewed on every visit; `src/proxy.ts` refreshes them and redirects logged-out
+visitors. Table: `login_handoffs` (server-only).
 Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the README says what guards them).
 
 ### 6.13 install → [README](../src/features/install/README.md)
@@ -386,22 +384,20 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 |---|---|---|
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
-| Password sign-in the phone saves; email links only to create an account and reset a password (2026-10-14) | Elderly members type nothing after the first time: the saved password fills in, no trip to the mailbox | Members from the link era set a password once via "Forgot password?"; a password manager is needed for "never type it" |
-| Safari first: sign in or sign up in the browser, then install (2026-10-14) | On the iPhone only Safari saves and fills in passwords; the installed app does neither, and iOS copies Safari's sign-in into the app when it is added | Someone signed out inside the app types their password or reinstalls; the install guide moved from before sign-in to after it |
+| Sign-in by email link only, no passwords; sign-up sends the same link (2026-10-17, the user; replaces password sign-in of 2026-10-14) | Someone signed out types only their address: nothing to remember or reset; one flow for signing in and signing up | A trip to the mailbox each time someone is signed out (rare: sessions last until sign-out); the email sender must be reliable |
+| Safari first: sign in or sign up in the browser, then install (2026-10-14) | iOS copies Safari's sign-in into the app when it is added (the order began for saved passwords, gone since 2026-10-17) | The install guide moved from before sign-in to after it; signing in inside the installed app works too, through the hand-off |
 | Admin tools on their own tabs; the Admin tab = waiting lists + everyone (2026-10-14) | Each thing is managed where it lives; a person's rights and groups in one place | Events with no coming date can no longer be reached to edit |
 | Sheets on `vaul`, at most 60% tall, closing by sliding away (swipe down too) | Feels like the phone's own sheets; the X never leaves a thumb's reach | One more library; the slide-out is timed by us (500 ms), since vaul reports it only for closes it starts |
 | Big editors are screens, sheets only for short things | A long editor in 60% of the screen scrolls forever | More screens and routes |
 | The author sees how many prayed ("3 🙏", `prayer_feed.prayer_count` for the author only) (2026-10-14) | The user wants people to see the prayers their request received | Reverses the 2026-10-06 choice; still nobody else sees a count |
 | Group cards show members' initials, not names (`group_member_initials`) | The circles need someone's presence, not who they are; a member may not read another group's members | Two people with the same initials look alike |
 | One role per permission, toggled per person | An admin hands out one task at a time; rights stay roles | Four more roles to understand |
-| Sign-in errors in a banner with a link ("Forgot password?", "Create new account?") | The app's one way of saying what went wrong (the user's word) | The banner gained an optional link; such banners stay 15 s |
-| Sign-in and new password are real form posts to a route (2026-10-14) | The only way the iPhone offered "Save password?" after a correct sign-in; sign-in from the page's code got no offer however it moved on | A failed try is a fresh page (the email is kept for the visit, the password retyped); two more routes |
+| Sign-in errors in a banner with a link ("Create new account?") | The app's one way of saying what went wrong (the user's word) | The banner gained an optional link; such banners stay 15 s |
 | Sign-in screen in the messaging-app pattern: words inside the fields, one button, new account set apart | Elderly members felt they had to read every line of the first version | Field words disappear while typing (the field's purpose stays clear from its content) |
 | Sign-in is the first screen; setup steps only for new members (2026-10-14) | Someone signed out must not click through three screens to get back in | Language is a link, not a question; returning members are not asked for notifications |
 | Progress bar out of 6 whose last step, "done", is never shown | The waiting screen must read as not finished | A step that does not exist |
 | `account_exists()` callable signed out | "No account yet, create one" instead of a puzzling "wrong password" | Anyone can learn whether an address has an account |
-| Sign-up link needs no tap; reset link keeps one (2026-10-14) | A sign-up link only confirms an address (the account still waits for an admin), so Safari shows "go back to the app" and the app signs in with the password it holds | A mail scanner can confirm an address for an account someone else made; a reset without the tap would let a stranger in through the victim's mail scanner, so it keeps it |
-| Password forms submit on the person's own tap (2026-10-14) | Safari offers "Save password?" only for a submission a tap made; a submit from code after the server's answer got no offer at all | The phone also offers to save a wrong password; a "Continue" tap after success would avoid it, at one more tap (declined) |
+| The email link's page asks for one tap before handing the sign-in over (2026-10-17, the user) | A mail scanner that opens links by itself must not sign in a stranger who typed someone else's address | One more tap; a person tricked into tapping still lets the stranger in (the page warns) |
 | "This email already has an account" on sign-up | A wait for an email Supabase never sends would leave a member stuck | Reveals that an address has an account |
 | Notification question remembered by a device cookie, read by the layout | The server decides which step to show, so no flash of Home before the question | Asked again on a new phone or after 400 days without granting; a device that already had them on sees the step for a moment |
 | Install guide on every phone visit in a browser; only computers may skip | On iPhone, notifications need the Home Screen app | An admin on a phone must install too |
@@ -580,3 +576,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-17: group cards show only when the group meets and its members; the member's sheet shows when, a contact number (tap: Call / Text / Copy, `ContactLine`, `phone.ts`), notes and pictures. `group_info.contact_phone` (group-info 9, digits and + ( ) - . only, so nothing but a number reaches the `tel:`/`sms:` links). Where a group meets is kept but hidden everywhere by `SWITCHES.groupLocation` (false). SQL: `docs/sql-to-run-2026-10-17b.sql`, needed before this code goes live.
 - 2026-10-17: `ui/Button` variant `inline` (no side padding) for the group sheet's phone number, which sat 16 px right of its label; the side padding moved from `BASE` into each variant so two padding classes never meet on one button.
 - 2026-10-17: Events tab is "Lịch sinh hoạt"; each event shows once, at its next date (`occurrences.ts` `nextOfEach`, tested). A tap opens the event's own page for everyone (`/events/[eventId]`, `EventPage`, slides in: `--animate-slide-in`): a big picture, then time, place and contact with icons (`ui/IconLine`), the description, and Edit for admins (editor now `/events/[eventId]/edit`, new at `/events/new`; `EventDetails` sheet deleted). `events.contact_phone` (events 3g; `upcoming_events`/`managed_events` return it). The tap-to-call number is shared: `src/components/PhoneNumber.tsx` + `src/lib/phone.ts` (was group-info's `ContactLine`/`phone.ts`), strings in `COMMON`. SQL: `docs/sql-to-run-2026-10-17c.sql`, needed before this code goes live.
+- 2026-10-17: sign-in by email link, no passwords (the user). `/login`: email, "Sign in", "Create new account?" under it (the separate button is gone); an unknown address gets the "Account not created yet. Create new account?" banner. Sign-up: name + email, the same link. The link's page asks one tap, then the app collects the sign-in through the existing hand-off (`useEmailLink`: `accountExists`, `sendSignInLink` = `signInWithOtp`, `signInWithLink` = `verifyOtp` type `email`). Deleted: the password routes (`/api/auth/sign-in`, `/new-password`), `/login/confirmed`, `/settings/password`, `server/signIn.ts`, `PasswordField`, `ForgotPasswordForm`, `NewPasswordForm`, `EmailConfirmed`, `useConfirmedLink`, `useProblemBanner`, `useTypedEmail`, `passwordManager.ts`, `ui/PasswordInput`. Seen on a local production build: the screens, the banner, and the hand-off signing the waiting app in. Needs the "Magic Link" and "Confirm signup" templates changed in Supabase (auth README, Setup 5).
