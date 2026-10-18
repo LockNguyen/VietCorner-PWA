@@ -587,3 +587,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-17: the tab bar's direction (the user): Home slides the screen away (back); every other tab slides in (forward), wherever it sits.
 - 2026-10-17: the small text choice reads "Chữ nhỏ" / "Small text" (was "Gọn" / "Compact"; the user).
 - 2026-10-17: the setup bar counts only the steps this phone will show (the user: it jumped from 2 to 5): `components/setupSteps.ts` `stepsFor` (tested) leaves out install in the installed app and notifications answered before on this phone or impossible in this browser; `SetupProgress` works it out after the first draw.
+- 2026-10-17: a group's card opens its own page (`/groups/<id>/about`, `group-info/GroupPage`), shaped like an event's: big picture, when / where / contact with icons, notes, pictures, Edit for admins; `GroupInfoSheet` deleted. Sign-up's first step is titled "Chọn cỡ chữ" in bold (`TextSizeChoice asStep`).

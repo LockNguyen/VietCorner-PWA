@@ -4,5 +4,5 @@ import TextSizeChoice from "@/features/text-size/components/TextSizeChoice"; // 
 // Every signed-out visit lands here, in the browser as well as in the installed app: the email, then the
 // link in the mailbox (the auth README). A new member's first step is choosing the text size.
 export default function LoginPage() {
-  return <Welcome firstStep={<TextSizeChoice />} />; // TEXT-SIZE
+  return <Welcome firstStep={<TextSizeChoice asStep />} />; // TEXT-SIZE
 }

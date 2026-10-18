@@ -20,8 +20,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Browser API | `api.ts` | `getGroupDirectory`, `saveGroupDetail` (one detail), `saveMemberCount`, `getPhotos` (a page, signed), `addPhoto`, `removePhoto` |
 | Server reads | `server/queries.ts` | `getGroupDirectory` |
 | State | `hooks/useGroupPhotos.ts` | A group's pictures: the first page, more at the end, add, remove |
-| UI | `components/GroupDirectory.tsx` | The list; which group's sheet is open |
-| UI | `components/GroupInfoSheet.tsx` | The sheet: the number of members, the three details, the pictures; which line is being edited |
+| UI | `components/GroupDirectory.tsx` | The cards; a tap opens the group's page |
+| UI | `components/GroupPage.tsx` | A group's page (`/groups/<id>/about`), shaped like an event's: big picture, when / contact with icons, notes, pictures, Edit for admins |
 | UI | `components/GroupDetail.tsx` | One labelled line, with a pencil for a group manager |
 | UI | `components/GroupDetailForm.tsx` | One line as a box, with Save and Cancel |
 | UI | `components/GroupPhotos.tsx` | The strip, the large view, "Add a photo" (the group's people, managers) and "Remove this photo" (managers) |
@@ -186,3 +186,13 @@ arrows stay. At the last picture of the strip's loaded page a swipe left does no
 - **Where** stays in the database and in `GroupInfoDraft` (a saved place is kept on every Save), but is shown
   nowhere while `SWITCHES.groupLocation` is false: not on the card, the sheet or the editor.
 - **SQL:** `docs/sql-to-run-2026-10-17b.sql`. Until it is run the editor's Save fails (it writes `contact_phone`).
+
+## A group's page instead of its sheet (2026-10-17, the user)
+- A tap on a card opens the group's own page for everyone, sliding in from the right, shaped exactly like an
+  event's page: the big picture (a people icon without one), then lines with icons (`ui/IconLine`): the clock
+  (when it meets), the map pin (where, only while `SWITCHES.groupLocation` is on) and the phone (`PhoneNumber`),
+  then the notes and the group's pictures. An admin finds "Edit group" at the bottom, which opens the editor.
+- The address is `/groups/<id>/about` (`src/app/groups/[groupId]/about/page.tsx`), because `/groups/<id>` is
+  the group's chat (switched off). It reads `group_directory()` like the Groups tab.
+- `GroupInfoSheet` is gone (the user: no more group pop-ups).
+- Seen on a local production build: "Thứ Ba @ 7:30 Tối", the number, the notes. Not seen: a real picture.

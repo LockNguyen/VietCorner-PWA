@@ -4,7 +4,8 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
-  // The sheet about one group, and its editor
+  // A group's page, and its editor
+  editGroup: { en: "Edit group", vi: "Sửa nhóm" } satisfies Text, // the admin's button on a group's page
   groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
   memberCountField: { en: "Number of members", vi: "Số thành viên" } satisfies Text,
   when: { en: "When", vi: "Thời gian" } satisfies Text,
@@ -16,7 +17,6 @@ export const STRINGS = {
   pickDay: { en: "Day", vi: "Ngày" } satisfies Text, // the weekday picker before a day is chosen
   time: { en: "Time", vi: "Giờ" } satisfies Text,
   addGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text, // the + on the Groups tab
-  nothingYet: { en: "No details yet.", vi: "Chưa có thông tin." } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 
   // Pictures

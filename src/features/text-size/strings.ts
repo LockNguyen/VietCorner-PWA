@@ -3,7 +3,8 @@ import type { TextSize } from "./types";
 
 // Every word this feature shows a user, in both languages.
 export const STRINGS = {
-  heading: { en: "Text size", vi: "Cỡ chữ" } satisfies Text,
+  heading: { en: "Text size", vi: "Cỡ chữ" } satisfies Text, // in Settings
+  stepTitle: { en: "Choose a text size", vi: "Chọn cỡ chữ" } satisfies Text, // as the first step of signing up
 };
 
 // The two choices, in the order shown: as the app was, then bigger.

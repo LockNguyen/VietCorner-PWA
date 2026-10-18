@@ -501,6 +501,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **Setup bar counts only this phone's steps (2026-10-17, the user).** `setupSteps.ts` (4 tests). Seen: a fresh
       desktop browser counts 7. NOT seen on screen: a phone that skips steps (the rule is tested only).
 
+- [x] **Group page instead of the group sheet; "Chọn cỡ chữ" title (2026-10-17, the user).** A card opens
+      `/groups/<id>/about`, like an event's page; Edit for admins. Seen on a local build.
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
