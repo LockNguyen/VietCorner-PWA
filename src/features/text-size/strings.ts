@@ -8,6 +8,6 @@ export const STRINGS = {
 
 // The two choices, in the order shown: as the app was, then bigger.
 export const SIZES: { size: TextSize; label: Text }[] = [
-  { size: "compact", label: { en: "Compact", vi: "Gọn" } },
+  { size: "compact", label: { en: "Small text", vi: "Chữ nhỏ" } }, // "Gọn" until the user's word, 2026-10-17
   { size: "big", label: { en: "Big text", vi: "Chữ to" } },
 ];

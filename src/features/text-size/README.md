@@ -1,6 +1,6 @@
 # text-size
 
-Two text sizes, chosen per phone (the user, 2026-10-17): **Gọn / Compact**, the app as it was, and
+Two text sizes, chosen per phone (the user, 2026-10-17): **Chữ nhỏ / Small text**, the app as it was, and
 **Chữ to / Big text**, every text about a fifth bigger, for elderly eyes. In Settings, and as the first step of signing
 up ("Step 1 / 7"), so a new member can make the app readable before anything else.
 
@@ -27,7 +27,7 @@ System docs: `.claude/architecture.md`.
   (`SHELL_STRINGS.eventsTabShort`), or it would not fit.
 
 ## Expected behavior
-- Settings → Cỡ chữ: Gọn (ticked by default) and Chữ to. A tap changes every text at once and survives a reload
+- Settings → Cỡ chữ: Chữ nhỏ (ticked by default) and Chữ to. A tap changes every text at once and survives a reload
   and a sign-out.
 - Sign-up's first step shows the same two rows and "Tiếp tục".
 
