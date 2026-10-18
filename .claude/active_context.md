@@ -498,6 +498,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       from 2 to 5 on their phone because install (already installed) and notifications (answered before on that
       phone, cookie) are skipped.
 
+- [x] **Setup bar counts only this phone's steps (2026-10-17, the user).** `setupSteps.ts` (4 tests). Seen: a fresh
+      desktop browser counts 7. NOT seen on screen: a phone that skips steps (the rule is tested only).
+
 ## ➡️ Next 3 Micro-Steps
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,

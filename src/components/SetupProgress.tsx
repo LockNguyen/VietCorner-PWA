@@ -1,33 +1,48 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ProgressBar from "@/components/ui/ProgressBar";
 import Text from "@/components/ui/Text";
+import { NOTIFICATIONS_ASKED_COOKIE } from "@/features/push/types"; // PUSH
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { stepsFor, type SetupStep } from "./setupSteps";
 import { SHELL_STRINGS } from "./strings";
 
-// Every step a new member goes through, in order. Each feature's step screen names its own, so the bar
-// stays right when a step is removed: delete its name here. Signing in is not a step (it is the whole of it
-// for someone with an account): choosing the text size is step 1, then name and email (the user, 2026-10-17). "done" is never shown: it is there so that the last screen,
-// waiting for an admin, reads as not finished yet (asked for by the user, 2026-10-14).
-// "install" comes after signing in (in Safari, whose sign-in iOS copies into the app as it is added) and before
-// notifications (which only work in the installed app).
-const SETUP_STEPS = ["textSize", "name", "email", "install", "notifications", "waiting", "done"] as const;
+export type { SetupStep } from "./setupSteps";
 
-export type SetupStep = (typeof SETUP_STEPS)[number];
-
-// "Step 3 of 7" over a bar, at the top of every setup screen, so a person can see how close they are.
+// "Step 2 of 5" over a bar, at the top of every setup screen, so a person can see how close they are. It
+// counts only the steps this phone will show (setupSteps.ts). Those depend on the phone, which the server
+// cannot see, so the count appears just after the first draw.
 export default function SetupProgress({ step }: { step: SetupStep }) {
   const { t } = useLanguage(); // I18N
-  const number = SETUP_STEPS.indexOf(step) + 1;
+  const [steps, setSteps] = useState<SetupStep[] | null>(null);
+
+  useEffect(() => {
+    const installed =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true; // the iPhone's own flag
+    setSteps(
+      stepsFor(
+        {
+          installed,
+          notificationsAnswered: document.cookie.includes(`${NOTIFICATIONS_ASKED_COOKIE}=`),
+          canNotify: "serviceWorker" in navigator && "PushManager" in window,
+        },
+        step,
+      ),
+    );
+  }, [step]);
+
+  const number = steps ? steps.indexOf(step) + 1 : 0;
 
   return (
     // Two boxes: the outer clears the phone's clock and notch (no top bar on these screens), the inner adds space.
     <div className="w-full pt-safe">
-      <div className="flex flex-col gap-2 px-5 pt-6">
+      <div className={`flex flex-col gap-2 px-5 pt-6 ${steps ? "" : "invisible"}`}>
         <Text variant="small" tone="subtle">
-          {t(SHELL_STRINGS.setupStep)} {number} / {SETUP_STEPS.length}
+          {t(SHELL_STRINGS.setupStep)} {number} / {steps?.length}
         </Text>
-        <ProgressBar value={number} max={SETUP_STEPS.length} />
+        <ProgressBar value={number} max={steps?.length ?? 1} />
       </div>
     </div>
   );
