@@ -3,6 +3,7 @@
 import { CalendarDays, HandHeart, ShieldCheck, Users } from "lucide-react";
 import PhotoTile from "@/components/ui/PhotoTile";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { GO_FORWARD } from "@/lib/slide";
 import { SHELL_STRINGS } from "./strings";
 
 // The photos are files in public/images/home, chosen by the user (2026-10-14).
@@ -23,7 +24,7 @@ export default function HomeTiles({ showAdmin }: { showAdmin: boolean }) {
   return (
     <div className="flex flex-col gap-6 p-5">
       {tiles.map(({ href, title, Icon, photo }) => (
-        <PhotoTile key={href} href={href} title={t(title)} src={photo}>
+        <PhotoTile key={href} href={href} transitionTypes={GO_FORWARD} title={t(title)} src={photo}>
           <Icon className="size-8" />
         </PhotoTile>
       ))}

@@ -61,6 +61,7 @@ describe("a stored event → what the form shows", () => {
       repeat_until: "2026-12-31",
       canceled_at: null,
       thumbnail_path: null,
+      contact_phone: null,
       texts: { vi: { title: "Học Kinh Thánh", description: null, location: "Phòng 2" } },
       upcoming: [],
       reminderMinutes: [],
@@ -77,6 +78,7 @@ describe("a stored event → what the form shows", () => {
       ends_at: stored.ends_at,
       repeats_weekly: true,
       repeat_until: "2026-12-31",
+      contact_phone: null,
     });
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useEffect, useState } from "react";
+import { forgetSavedHome } from "@/lib/savedHome";
 import { saveLanguage } from "../api";
 import { DEFAULT_LANGUAGE, isLanguage, type Language } from "../types";
 
@@ -42,6 +43,7 @@ export default function LanguageProvider({ language, signedIn, children }: Props
     // Signed out (the login screen), there is no row to write to: the device choice is saved above and
     // becomes the account's language on the first sign-in.
     if (signedIn) void saveLanguage(next).catch(() => {}); // a failed save costs a preference, never the screen
+    forgetSavedHome(); // the Home saved for the next launch is in the old language
   }
 
   return <LanguageContext value={{ language: current, setLanguage }}>{children}</LanguageContext>;

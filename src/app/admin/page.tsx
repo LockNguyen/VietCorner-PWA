@@ -44,7 +44,7 @@ export default async function AdminPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.adminTab} />
+      <PageHeader title={SHELL_STRINGS.adminTab} backHref="/" />
       {permissions.includes(MANAGE_ACCOUNTS) && <WaitingAccounts accounts={waiting} />} {/* APPROVAL */}
       {managesGroups && <NameRequestAdmin requests={nameRequests} names={names} />} {/* PROFILES */}
       {joining && <JoinRequests requests={requests} groups={groups} names={names} />}

@@ -16,6 +16,7 @@ export function emptyDraft(): EventDraft {
     endsAt: "",
     repeatsWeekly: false,
     repeatUntil: "",
+    contactPhone: "",
     texts: { en: { ...NO_TEXT }, vi: { ...NO_TEXT } },
   };
 }
@@ -32,6 +33,7 @@ export function draftOf(event: ManagedEvent): EventDraft {
     endsAt: event.ends_at ? wallTime(new Date(event.ends_at)) : "",
     repeatsWeekly: event.repeats_weekly,
     repeatUntil: event.repeat_until ?? "",
+    contactPhone: event.contact_phone ?? "",
     texts: { en: textIn("en"), vi: textIn("vi") },
   };
 }
@@ -54,6 +56,7 @@ export function rowOf(draft: EventDraft) {
     ends_at: draft.endsAt ? toInstant(draft.endsAt).toISOString() : null,
     repeats_weekly: draft.repeatsWeekly,
     repeat_until: draft.repeatsWeekly && draft.repeatUntil ? draft.repeatUntil : null,
+    contact_phone: draft.contactPhone.trim() || null,
   };
 }
 

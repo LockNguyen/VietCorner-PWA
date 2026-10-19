@@ -2,6 +2,7 @@
 
 import { Bell, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { GO_FORWARD } from "@/lib/slide";
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
 import IconButton from "@/components/ui/IconButton";
@@ -55,7 +56,7 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
     <div className="flex flex-col gap-4">
       <div className="flex justify-end gap-3 px-3 pt-2">
         {canManageReminders && (
-          <IconButton label={t(STRINGS.remindersHeading)} onClick={() => router.push("/prayer/reminders")}>
+          <IconButton label={t(STRINGS.remindersHeading)} onClick={() => router.push("/prayer/reminders", { transitionTypes: GO_FORWARD })}>
             <Bell />
           </IconButton>
         )}

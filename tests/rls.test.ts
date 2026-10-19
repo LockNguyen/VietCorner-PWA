@@ -725,6 +725,18 @@ describe("events", () => {
     expect(signedOut.error).not.toBeNull();
   });
 
+  it("have a contact phone number: a number only, set only by a manager, read by every member (3g)", async () => {
+    const everything = { until: "2999-01-01T00:00:00Z", cancelled_since: "1970-01-01T00:00:00Z" };
+    await bob.client.from("events").update({ contact_phone: "(336) 555-0199" }).eq("id", churchWideId);
+    const { error: byManager } = await alice.client.from("events").update({ contact_phone: "(336) 555-0101" }).eq("id", churchWideId);
+    const { error: notANumber } = await alice.client.from("events").update({ contact_phone: "sms:1234;body=hi" }).eq("id", churchWideId);
+    const rows = (await bob.client.rpc("upcoming_events", everything)).data ?? [];
+
+    expect(byManager).toBeNull();
+    expect(notANumber).not.toBeNull();
+    expect(rows.find((row: { id: string }) => row.id === churchWideId)?.contact_phone).toBe("(336) 555-0101");
+  });
+
   it("are visible to every approved member", async () => {
     const { data } = await bob.client.from("events").select("id").eq("id", churchWideId);
 
@@ -1063,6 +1075,38 @@ describe("group_info: what a group says about itself", () => {
     expect(await rowFor(bob)).toMatchObject({ is_member: true, notes: "rls: by an admin", meets_at: "Fridays, 7:30 PM" });
     expect(await rowFor(alice)).toMatchObject({ is_member: false, notes: "rls: by an admin" });
     expect((await anonymous.rpc("group_directory")).error).not.toBeNull();
+  });
+
+  it("has its name and place in English too, written only by a manager (group-info 8, groups 2e)", async () => {
+    // The same two calls as the editor's one Save (group-info/api.ts `saveGroupInfo`).
+    const saveBoth = (user: TestUser) =>
+      Promise.all([
+        user.client.from("groups").update({ name: "rls nhóm", name_en: "rls group", member_count: 5 }).eq("id", ownGroupId),
+        user.client
+          .from("group_info")
+          .upsert({ group_id: ownGroupId, location: "rls hội trường", location_en: "rls hall" }, { onConflict: "group_id" }),
+      ]);
+    const [, fromMember] = await saveBoth(bob);
+    const [renamed, placed] = await saveBoth(alice);
+    const row = ((await bob.client.rpc("group_directory")).data ?? []).find((group: { id: string }) => group.id === ownGroupId);
+
+    expect(fromMember.error).not.toBeNull();
+    expect([renamed.error, placed.error]).toEqual([null, null]);
+    expect(row).toMatchObject({ name: "rls nhóm", name_en: "rls group", location: "rls hội trường", location_en: "rls hall" });
+  });
+
+  it("has a contact phone number: a number only, written only by a manager (group-info 9)", async () => {
+    const savePhone = (user: TestUser, contact_phone: string) =>
+      user.client.from("group_info").upsert({ group_id: ownGroupId, contact_phone }, { onConflict: "group_id" });
+    const { error: fromMember } = await savePhone(bob, "(336) 555-0199");
+    const { error: byManager } = await savePhone(alice, "(336) 555-0101");
+    const { error: notANumber } = await savePhone(alice, "javascript:alert(1)");
+    const row = ((await bob.client.rpc("group_directory")).data ?? []).find((group: { id: string }) => group.id === ownGroupId);
+
+    expect(fromMember).not.toBeNull();
+    expect(byManager).toBeNull();
+    expect(notANumber).not.toBeNull();
+    expect(row).toMatchObject({ contact_phone: "(336) 555-0101" });
   });
 
   it("is closed to someone still waiting to be let in", async () => {

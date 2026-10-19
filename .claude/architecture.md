@@ -8,13 +8,14 @@ An installable web app (PWA) for a Vietnamese church community, mostly elderly u
 
 | Feature | Folder | README | Status |
 |---|---|---|---|
-| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Email link with hand-off built 2026-10-12 (replaces the typed code); not tried with a real email or on an iPhone |
+| Login | `src/features/auth/` | [auth](../src/features/auth/README.md) | Email link, no passwords (2026-10-17); hand-off seen end to end on a local build, not yet with a real email or on an iPhone |
 | Sign-up approval | `src/features/approval/` | [approval](../src/features/approval/README.md) | Built 2026-10-12; SQL not run, nothing seen signed in |
 | Groups + membership | `src/features/groups/` | [groups](../src/features/groups/README.md) | Done. Joining and the old Groups page are **switched off**; admins put people into groups |
 | Groups page | `src/features/group-info/` | [group-info](../src/features/group-info/README.md) | Built 2026-10-12 with pictures; SQL not run, nothing seen signed in |
 | Group chat | `src/features/chat/` | [chat](../src/features/chat/README.md) | **Switched off** 2026-10-12 (`SWITCHES.chat`). Was live, phone QA passed |
 | Push delivery | `src/features/push/` | [push](../src/features/push/README.md) | Done (moved out of chat 2026-10-05; not re-tested on a phone since the move) |
 | Voice + chat assistant (RAG) | `src/features/assistant/` + `services/ai/` | [assistant](../src/features/assistant/README.md), [AI service](../services/ai/README.md) | Done through M7, phone QA passed |
+| Text size | `src/features/text-size/` | [text-size](../src/features/text-size/README.md) | Built 2026-10-17: Gọn / Chữ to per phone (cookie), in Settings and sign-up; seen on a local build |
 | English/Vietnamese | `src/features/i18n/` | [i18n](../src/features/i18n/README.md) | Built: per-user language, every fixed label translated |
 | Event schedule | `src/features/events/` | [events](../src/features/events/README.md) | Schedule and admin section built (create, edit, translate, cancel with a push, remove); the admin screen is not exercised yet |
 | Prayer requests | `src/features/prayer/` | [prayer](../src/features/prayer/README.md) | Built; permissions proven. The screen and a real notification are not exercised yet |
@@ -140,7 +141,11 @@ The empty installable app every feature plugs into.
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
 | `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
-| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first; pages are never saved. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. Activating deletes any other cache. |
+| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. The `HOME` part saves `/` (cache `home-v1`) at every launch and shows the saved copy at the next one while the fresh page is fetched and saved; a redirect from the server (signed out) or any page load of `/login` (Sign out, an ended session) deletes it; a reload while the fresh Home is still on its way (Next.js does one after a deploy) waits for it. No other page is saved. Activating deletes any cache but these two. |
+| `src/components/RefreshSavedPage.tsx` | In the root layout with `renderedAt` (when the server made the page). On the saved Home (`isSavedCopy`) it asks for the current one at once (`router.refresh`). |
+| `public/launch/*.png`, `src/lib/launchScreens.json` | iPhone launch pictures (the icon centred on white), one per screen size in the JSON list; `layout.tsx` links each as `apple-touch-startup-image` and adds Apple's `apple-mobile-web-app-capable` tag. Remade by `node scripts/make-launch-images.mjs`. `proxy.ts` skips `launch/` so they load signed out. |
+| `src/lib/savedHome.ts` | `isSavedCopy(renderedAt)`: a page made over a minute ago is the saved Home (used by `RefreshSavedPage` and launch-info). `forgetSavedHome()`: deletes the saved Home. Called by the language toggle (`LanguageProvider`), so the next launch is not in the old language. |
+| `src/components/ui/TabBar.tsx` (`prefetch={true}`) | Each tab's whole page (data included) is loaded as soon as the bar shows, kept 10 min (`staleTimes.static`). |
 
 **Expected behavior:** `/` is Home (or redirects to `/login`); signing in lands on Home; the tab bar is
 absent until signed in; the assistant and Settings open from the top-right icons and have a back arrow to
@@ -152,8 +157,8 @@ The second load after a new `sw.js` answers all code files from the `static-v1` 
 still cached; a second launch 1.3 s with 7 of 10. After (same phone, restarted, app not re-added): 10 of 10
 from the saved copy, page 1.1 s, files read 6.6 s, tappable 6.85 s. The new `sw.js` arrived without a reinstall.
 Not explained yet: 5.5 s between the page arriving and its files being read, with every file saved.
-The black, then white, screen while iOS starts the app stays: launch pictures (`apple-touch-startup-image`)
-were tried and never showed on this iPhone, even after re-adding the app, so they were removed.
+Launch pictures (`apple-touch-startup-image`) did not show on 2026-10-14, even after re-adding the app. Second try
+2026-10-17 with Apple's own `apple-mobile-web-app-capable` tag added (Next.js writes only the newer one): not yet seen on the phone.
 
 **Shared UI:** `src/components/ui/` is the component library of the UI revamp, built slice by slice from
 `docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
@@ -192,18 +197,16 @@ told once per account, the person is told when approved. No tables: "waiting" is
 `/approve`.
 
 ### 6.1 auth → [README](../src/features/auth/README.md)
-Email + a password the phone saves (real `<form>`s with `autoComplete`, plus Chrome's
-`navigator.credentials.store`). `/login` opens on sign-in (no bar); "create an account" asks name, email
-and password on one screen (the name goes in as metadata, saved by the profiles trigger); "Forgot password?".
-A failed sign-in asks `account_exists()` to say "no account yet" instead of "wrong password". Creating and resetting each send one email with a link. A sign-up link
-confirms the address at Supabase and opens `/login/confirmed` ("go back to the app"); the app, still holding
-the password, signs in once that works. A reset link uses the hand-off below. An iPhone
-opens links in Safari, which shares no login with the Home Screen app, so the link hands the sign-in to the
-device that asked (resets only): the app keeps a secret key and puts only its hash in the
-link; the browser that opens the link leaves Supabase's one-time token under that hash, after a tap; the app
-collects it with the key and signs in (a reset then opens `/settings/password`). Sessions live in `sb-*`
-cookies for up to 400 days, renewed on every visit; `src/proxy.ts`
-refreshes them and redirects logged-out visitors. Table: `login_handoffs` (server-only).
+Email only, no passwords (2026-10-17). `/login` opens on sign-in (no bar): the address, "Sign in", and
+"Create new account?" under it. An address with no account (`account_exists()`) gets the banner "Account not
+created yet. Create new account?" and no email; otherwise Supabase emails a sign-in link (`signInWithOtp`,
+never creating an account). "Create an account" asks name and email and sends the same link (the name goes in
+as metadata, saved by the profiles trigger). An iPhone opens links in Safari, which shares no login with the
+Home Screen app, so the link hands the sign-in to the device that asked: the app keeps a secret key and puts
+only its hash in the link; the browser that opens the link leaves Supabase's one-time token under that hash,
+after one tap ("Sign in"); the app collects it with the key and signs in. Sessions live in `sb-*`
+cookies for up to 400 days, renewed on every visit; `src/proxy.ts` refreshes them and redirects logged-out
+visitors. Table: `login_handoffs` (server-only).
 Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the README says what guards them).
 
 ### 6.13 install → [README](../src/features/install/README.md)
@@ -211,6 +214,14 @@ Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the RE
 Install dialog behind one button where it offers one, otherwise numbered steps for iPhone (Share → Add to
 Home Screen), Android (⋮ menu) or a chat app's browser (open in a real browser first). Only a computer may
 "Continue in this browser". No data, no server code; `device.ts` reads the user agent (tested).
+
+### 6.15 launch-info → [README](../src/features/launch-info/README.md)
+An "i" on Home for whoever manages something (the same check as the Admin tile), where "+" sits on the other
+tabs. It opens "For developers: this launch": whether Home came from the saved copy or the server, when the
+page arrived, when the code files were read, when Home was ready to tap, when everything loaded, and how many
+code files came from the saved copy versus the network. Read from the browser's own timing records
+(`launchTimes.ts`, tested). No data, no server code. The black screen before the page starts is iOS and is
+not counted. Seen in the preview at phone width, signed in (2026-10-17); not yet on the iPhone.
 
 ### 6.14 people → [README](../src/features/people/README.md)
 The Admin tab's list of everyone, and a screen per person: a switch per role (one small role per permission,
@@ -277,9 +288,10 @@ puts people into groups from the Admin tab (a sheet per group: name, a typed num
 remove people), reading everyone approved through `group_people()`.
 
 ### 6.12 group-info → [README](../src/features/group-info/README.md)
-The Groups tab: every group, each opening a sheet with its number of members, when and where it meets,
-notes and pictures. One read for the list, `group_directory()`. Everyone approved reads; whoever holds
-`groups.manage` changes the details (a pencil per line) and removes pictures; a group's own people add
+The Groups tab: a card per group. A member opens a sheet with its number of members, when and where it meets,
+notes and pictures; an admin opens its editor, where `GroupInfoForm` saves name, size, when, where and notes
+with one Save (it writes the groups feature's `groups` row too). One read for the list, `group_directory()`.
+Everyone approved reads; whoever holds `groups.manage` changes the details and removes pictures; a group's own people add
 pictures (`may_add_group_photo()`, one rule for a picture's row and its file). Pictures live in a private Storage bucket,
 shrunk on the phone before upload, shown through addresses signed for an hour, six at a time.
 Depends on `groups` in SQL only. Tables: `group_info`, `group_photos`. Bucket: `group-photos`.
@@ -304,10 +316,10 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 |---|---|---|
 | `auth.users` | Supabase | Built in; one row per account, created on first sign-in |
 | `role_permissions`, `user_roles` | permissions | **Server-only.** Read by Supabase Auth while it builds a token. An admin's role is added by hand; `member` (the permission `app.use`) by `approve_account`. |
-| `groups` | groups | Active groups readable by any approved member, with `member_count` (typed by an admin) and `thumbnail_path` (its picture); created, renamed, sized, pictured and removed (`deleted_at`, never erased) with `groups.manage` |
+| `groups` | groups | Active groups readable by any approved member, with `member_count` (typed by an admin), `thumbnail_path` (its picture) and `name_en` (its English name; `name` is Vietnamese); created, renamed, sized, pictured and removed (`deleted_at`, never erased) with `groups.manage` |
 | `group_members` | groups | Users see only their own rows, and only in active groups: this is what silences a removed group everywhere. No member can insert or delete; `groups.manage` adds, removes and sees everyone's. |
 | `group_join_requests` | groups | Someone asked to join. Users insert and see their own; `groups.manage` sees all, declines (delete) and approves (function). |
-| `group_info` | group-info | One row per group: when and where it meets, notes, as free text. Every approved member reads; only `groups.manage` inserts and updates. |
+| `group_info` | group-info | One row per group: when and where it meets (`location` Vietnamese, `location_en` English; not shown while `groupLocation` is off), notes, `contact_phone` (a number only), as free text. Every approved member reads; only `groups.manage` inserts and updates. |
 | `group_photos` | group-info | One row per picture of a group: optional date and caption, who added it. Every approved member reads; that group's members and `groups.manage` insert; only `groups.manage` deletes; nobody updates. |
 | `storage.objects`, buckets `event-thumbnails`, `group-thumbnails` | events, groups | The picture that starts a row. **Public** to read by address; JPEG only, 200 KB at most; written, listed and erased only with `events.manage` / `groups.manage`. |
 | `storage.objects`, bucket `group-photos` | group-info | The pictures' files, private: JPEG only, 1 MB at most. Read (to sign an address) by approved members; uploaded and erased under the same rules as the rows (the group is read from the file's folder name). |
@@ -361,8 +373,10 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 
 **How an update reaches installed phones (nothing for members to do):**
 - A deploy is a push to `main`. That is the whole workflow; nobody reinstalls.
-- Pages are never saved on the phone, so the next launch (or the next screen opened) gets the new page,
-  and it names the new code files. Their names are new, so the phone downloads and saves them.
+- Only Home is saved on the phone, and it is refreshed from the server the moment the app opens; every
+  other screen comes from the server. The fresh page names the new code files, which are downloaded and saved.
+- The first launch after a deploy shows the old saved Home, then Next.js notices the new deploy and reloads
+  once: the reload waits for the new Home (`sw.js`). So a member sees the new version within seconds.
 - `sw.js` is checked on every launch (Netlify sends it with `must-revalidate`). A changed one takes over at
   once (`skipWaiting` + `clients.claim`), so a fix to it reaches every phone on its next launch.
 - An app left open across a deploy keeps its old code until it loads a page again; its old files stay saved,
@@ -385,22 +399,22 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 |---|---|---|
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
-| Password sign-in the phone saves; email links only to create an account and reset a password (2026-10-14) | Elderly members type nothing after the first time: the saved password fills in, no trip to the mailbox | Members from the link era set a password once via "Forgot password?"; a password manager is needed for "never type it" |
-| Safari first: sign in or sign up in the browser, then install (2026-10-14) | On the iPhone only Safari saves and fills in passwords; the installed app does neither, and iOS copies Safari's sign-in into the app when it is added | Someone signed out inside the app types their password or reinstalls; the install guide moved from before sign-in to after it |
+| Sign-in by email link only, no passwords; sign-up sends the same link (2026-10-17, the user; replaces password sign-in of 2026-10-14) | Someone signed out types only their address: nothing to remember or reset; one flow for signing in and signing up | A trip to the mailbox each time someone is signed out (rare: sessions last until sign-out); the email sender must be reliable |
+| Safari first: sign in or sign up in the browser, then install (2026-10-14) | iOS copies Safari's sign-in into the app when it is added (the order began for saved passwords, gone since 2026-10-17) | The install guide moved from before sign-in to after it; signing in inside the installed app works too, through the hand-off |
 | Admin tools on their own tabs; the Admin tab = waiting lists + everyone (2026-10-14) | Each thing is managed where it lives; a person's rights and groups in one place | Events with no coming date can no longer be reached to edit |
 | Sheets on `vaul`, at most 60% tall, closing by sliding away (swipe down too) | Feels like the phone's own sheets; the X never leaves a thumb's reach | One more library; the slide-out is timed by us (500 ms), since vaul reports it only for closes it starts |
 | Big editors are screens, sheets only for short things | A long editor in 60% of the screen scrolls forever | More screens and routes |
 | The author sees how many prayed ("3 🙏", `prayer_feed.prayer_count` for the author only) (2026-10-14) | The user wants people to see the prayers their request received | Reverses the 2026-10-06 choice; still nobody else sees a count |
 | Group cards show members' initials, not names (`group_member_initials`) | The circles need someone's presence, not who they are; a member may not read another group's members | Two people with the same initials look alike |
 | One role per permission, toggled per person | An admin hands out one task at a time; rights stay roles | Four more roles to understand |
-| Sign-in errors in a banner with a link ("Forgot password?", "Create new account?") | The app's one way of saying what went wrong (the user's word) | The banner gained an optional link; such banners stay 15 s |
-| Sign-in and new password are real form posts to a route (2026-10-14) | The only way the iPhone offered "Save password?" after a correct sign-in; sign-in from the page's code got no offer however it moved on | A failed try is a fresh page (the email is kept for the visit, the password retyped); two more routes |
+| Screens slide with React's `<ViewTransition>` and the browser's View Transitions, tagged forward or back (2026-10-17, the user) | The documented way in this Next.js, no library; one wrapper in the root layout, a tag on each link that moves | A browser without the feature (iOS before 18) just changes screens; the screen does not follow the finger during a swipe back (no API for that), it slides once the finger lets go; a screen not kept in memory slides in as its grey placeholder |
+| Text size per phone, in a cookie (2026-10-17) | The server draws the first screen in the right size; it belongs to the eyes holding that phone | Two people on one phone share it; a member on two phones chooses twice |
+| Sign-in errors in a banner with a link ("Create new account?") | The app's one way of saying what went wrong (the user's word) | The banner gained an optional link; such banners stay 15 s |
 | Sign-in screen in the messaging-app pattern: words inside the fields, one button, new account set apart | Elderly members felt they had to read every line of the first version | Field words disappear while typing (the field's purpose stays clear from its content) |
 | Sign-in is the first screen; setup steps only for new members (2026-10-14) | Someone signed out must not click through three screens to get back in | Language is a link, not a question; returning members are not asked for notifications |
 | Progress bar out of 6 whose last step, "done", is never shown | The waiting screen must read as not finished | A step that does not exist |
 | `account_exists()` callable signed out | "No account yet, create one" instead of a puzzling "wrong password" | Anyone can learn whether an address has an account |
-| Sign-up link needs no tap; reset link keeps one (2026-10-14) | A sign-up link only confirms an address (the account still waits for an admin), so Safari shows "go back to the app" and the app signs in with the password it holds | A mail scanner can confirm an address for an account someone else made; a reset without the tap would let a stranger in through the victim's mail scanner, so it keeps it |
-| Password forms submit on the person's own tap (2026-10-14) | Safari offers "Save password?" only for a submission a tap made; a submit from code after the server's answer got no offer at all | The phone also offers to save a wrong password; a "Continue" tap after success would avoid it, at one more tap (declined) |
+| The email link's page asks for one tap before handing the sign-in over (2026-10-17, the user) | A mail scanner that opens links by itself must not sign in a stranger who typed someone else's address | One more tap; a person tricked into tapping still lets the stranger in (the page warns) |
 | "This email already has an account" on sign-up | A wait for an email Supabase never sends would leave a member stuck | Reveals that an address has an account |
 | Notification question remembered by a device cookie, read by the layout | The server decides which step to show, so no flash of Home before the question | Asked again on a new phone or after 400 days without granting; a device that already had them on sees the step for a moment |
 | Install guide on every phone visit in a browser; only computers may skip | On iPhone, notifications need the Home Screen app | An admin on a phone must install too |
@@ -438,7 +452,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
 | The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
 | The prayer list groups people by name, because its view carries no author id | The id is what would unmask an anonymous request, so it stays out of the feed altogether | Two members with one name share a group in a week (they look the same on screen anyway) |
-| The event editor is a route (`/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
+| An event's page is a route (`/events/[eventId]`) that slides in from the right, not a sheet (2026-10-17, the user) | A big picture and three facts read better on a whole screen than in 60% of one; the phone's back works | One more page per event; the slide is a CSS animation on arrival only (Back does not slide out) |
+| The event editor is a route (`/events/[eventId]/edit`, new at `/events/new`; it was `/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
 | One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
 | Cancelling an event for good is the app's delete, and it lingers a week for members | One red button instead of Cancel and Remove; people who missed the push still see it struck through | It cannot be undone from the app; the week is a filter in the schedule query, not a stored state |
@@ -470,6 +485,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Load bge-m3's official `.bin` weights, not a converted `.safetensors` | The conversion is an unmerged bot PR; measured identical vectors and no faster load | Relies on torch ≥ 2.6, which the image has |
 | No RAG framework | Every stage is visible, testable code | We hand-write what frameworks provide |
 | **The service worker saves only `/_next/static/*`, cache-first, by hand (no Workbox)** | Measured: after a restart iOS had dropped 9 of 10 code files and refetching them was 21 of 22.5 s. Their names change with their content, so a saved copy is never stale | Pages still wait on the server (about 1 s, 3–5 s when Netlify is cold); old files are only trimmed past 150, not per deploy |
+| **The service worker also saves Home and shows it at launch, then replaces it with the fresh page (2026-10-17)** | After a few hours away the server's answer took ~10 s (network waking, sign-in renewed, database read), all of it on a blank screen | For about a second the saved Home can be out of date (Admin tile, a setup step); the server checks every action anyway. One saved copy per phone: sign-out and an ended session delete it, and the language toggle does too |
+| **Tabs are loaded whole in the background (`prefetch={true}`), kept 10 minutes** | A tap on a tab shows its content at once instead of the grey placeholder | About 15 extra server requests per launch (each tab, Settings); a tab tapped after 10 minutes is asked for again |
 
 ## 10. Change Log
 - 2026-09-14: Harness files; app shell; auth (email code, proxy redirects); chat (schema + RLS, Realtime, push, service worker); first Netlify deploy.
@@ -566,3 +583,31 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-14: Admin tile on Home for managers; "3 🙏" beside my own requests (`ui/CountPill`, prayer SQL 5b); a reward when praying (`ui/Celebrate`, pop/ring/float keyframes); picture viewer: tap the dark to close, white X and download above the picture, arrows under it at its edges (`Lightbox`, `IconButton` `onDark`, `group-info/savePhoto.ts`). Launch measured: server 3.3 s cold / 0.4 s warm, ~900 KB of scripts on every launch (nothing cached by the service worker).
 - 2026-10-14: fast launch (B28). Measured on an iPhone with a temporary on-screen timer: after a restart the code files took 21 of 22.5 s (iOS had dropped 9 of 10 from its cache; they were 260 KB compressed, not 900 KB as noted earlier). `sw.js` now keeps them (`CACHE`, `static-v1`); only files marked `immutable` are saved and a storage error falls back to the network. After: 10/10 saved, tappable 6.85 s (was 22.54 s), the new `sw.js` arrived without a reinstall. iPhone launch pictures tried and removed: none showed, even after re-adding the app. The Funnel test address serves port 3000.
 - 2026-10-15: review before the production push. Fixed: the person and group editors reload on arrival (`components/RefreshOnArrival.tsx`; a kept copy showed old switches, and a second tap undid a change); the "Chưa vào nhóm" card refreshes itself (`useFresh`); saving a picture says when it failed (banner); the security test now expects the prayer count for the author only (5b). Removed: unused strings, `MAX_MEMBER_COUNT_DIGITS` in group-info, the old sheet's `rise`/`fade` keyframes. `npm test` 116/116, `npm run test:rls` 94/94, build clean.
+- 2026-10-17: fixed, found by the user: a group's new name did not stay. The group editor had two forms and two Saves; the blue one saved only when / where / notes. Now one form (`group-info/GroupInfoForm`: name, size, when, where, notes) and one Save; `saveGroupInfo` writes `groups` (name, member_count) then `group_info`. Removed `groups/GroupDetailsForm`, `saveGroup`, `memberCountField`. No other screen has two forms. Seen on a local production build as a throwaway admin.
+- 2026-10-17: saved Home at launch (B29, Home only). `sw.js` `HOME` part (`home-v1`), `RefreshSavedPage` in the root layout, `lib/savedHome.ts` (language toggle), tab bar `prefetch={true}`, `staleTimes.static` 1 day → 10 min. Checked in the preview, signed in: the saved Home on screen in 3 ms, the fresh request at 78 ms; all tabs loaded behind it; Prayer opened in 46 ms with no request; a page load of `/login` deleted the saved Home. Not yet measured on the iPhone.
+- 2026-10-17: group pictures are kept at up to 1 MB instead of about 300 KB (the user: it looked ugly). `lib/shrinkImage.ts` `shrinkUnder` tries quality 0.92 → 0.65 at 2560 pixels and keeps the first under `FULL_MAX_BYTES` (1,000,000), inside the bucket's unchanged 1 MB limit, so no SQL. Cost: the free gigabyte holds about 1,000 pictures, not 3,000, and each opens more slowly on a weak connection. Thumbnails (30 KB) unchanged.
+- 2026-10-17: launch pictures back for a second try, with Apple's `apple-mobile-web-app-capable` tag (`metadata.other`) next to Next's `mobile-web-app-capable`: `public/launch` (13 PNGs, 1.4 MB), `src/lib/launchScreens.json`, `scripts/make-launch-images.mjs`, `proxy.ts` skips `launch/`. Served over the Funnel; not yet seen on the phone. If they still do not show, remove them again.
+- 2026-10-17: the Events tab's rows look like the Admin tab's people rows: the picture (calendar icon without one), the title, and "time · place" under it; `ui/RowLabel` deleted. Times are "7:00 PM" / "7:00 Tối" and Sunday is "Chúa Nhật" (the user's words), from `i18n/clock.ts`, in events (rows, details, editor dates, notifications), group meeting days and prayer reminder days. Group cards still write the time as 19:30 in Vietnamese.
+- 2026-10-17: `ui/Card`: the picture area is always 16:9 (the picture is absolute, `object-cover`, centred), because a tall picture stretched its box. Card heights still follow their text (subtitle, member circles): the user's choice. Seen on the Groups tab with portrait and landscape pictures: every picture area 255 × 454 at that width.
+- 2026-10-17: every time on screen now goes through `i18n/clock.ts` `clockTime("HH:MM", language)`: group cards and sheets ("Thứ Ba @ 7:30 Tối"), the prayer reminders list, chat's time lines (chat is off), alongside events. The time fields themselves (`<input type="time">`) stay in the phone's own picker. 122 tests.
+- 2026-10-17: cancelled dates are hidden on the Events tab (the user: cluttered), behind a new switch `SWITCHES.canceledEvents` (false), filtered in `EventSchedule`. The editor still lists them with Undo; a weekly event cancelled for good disappears from the tab at once instead of lingering struck through for a week.
+- 2026-10-17: a group's name and place in English too (the user: like events). `groups.name_en` (groups 2e) and `group_info.location_en` (group-info 8), returned by `group_directory()`; the editor shows each as one bilingual box (Vietnamese over English), cards and the sheet show the reader's language, the other while one is missing (`group-info/bilingual.ts`). SQL: `docs/sql-to-run-2026-10-17.sql`, needed BEFORE this code goes live (Save writes the new columns). Admin screens (people, person's groups, editor title) still show the Vietnamese name.
+- 2026-10-17: the Groups page is "Nhóm nhỏ" in Vietnamese (was "Nhóm", which members read as a worship service): `SHELL_STRINGS.groupsTab` (tab, Home tile, page title) and the groups feature's `adminHeading` (a person's groups on the Admin tab).
+- 2026-10-17: a group's pictures swipe in the large view (the user): `ui/Lightbox` + `ui/hooks/useSwipe` (left = next, right = before; at least 50 px and more sideways than vertical). The arrows stay for anyone who taps.
+- 2026-10-17: new feature `launch-info` (B42): the admins' "i" on Home with this launch's times and where its code files came from. `isSavedCopy` moved into `lib/savedHome.ts`, shared with `RefreshSavedPage`. Seen in the preview at phone width; `npm test` 126/126.
+- 2026-10-17: the picture swipe now drags (the user: a native iOS feel): `ui/hooks/useSwipe` returns an `offset` that follows the thumb; let go past 60 px or in a quick flick and the picture slides off (250 ms) while the next slides in from the other side, otherwise it springs back; at the first or last picture it moves a third as far (rubber band). `Lightbox` applies it as a transform; `touch-pan-y` leaves vertical moves to the browser.
+- 2026-10-17: group cards show only when the group meets and its members; the member's sheet shows when, a contact number (tap: Call / Text / Copy, `ContactLine`, `phone.ts`), notes and pictures. `group_info.contact_phone` (group-info 9, digits and + ( ) - . only, so nothing but a number reaches the `tel:`/`sms:` links). Where a group meets is kept but hidden everywhere by `SWITCHES.groupLocation` (false). SQL: `docs/sql-to-run-2026-10-17b.sql`, needed before this code goes live.
+- 2026-10-17: `ui/Button` variant `inline` (no side padding) for the group sheet's phone number, which sat 16 px right of its label; the side padding moved from `BASE` into each variant so two padding classes never meet on one button.
+- 2026-10-17: Events tab is "Lịch sinh hoạt"; each event shows once, at its next date (`occurrences.ts` `nextOfEach`, tested). A tap opens the event's own page for everyone (`/events/[eventId]`, `EventPage`, slides in: `--animate-slide-in`): a big picture, then time, place and contact with icons (`ui/IconLine`), the description, and Edit for admins (editor now `/events/[eventId]/edit`, new at `/events/new`; `EventDetails` sheet deleted). `events.contact_phone` (events 3g; `upcoming_events`/`managed_events` return it). The tap-to-call number is shared: `src/components/PhoneNumber.tsx` + `src/lib/phone.ts` (was group-info's `ContactLine`/`phone.ts`), strings in `COMMON`. SQL: `docs/sql-to-run-2026-10-17c.sql`, needed before this code goes live.
+- 2026-10-17: sign-in by email link, no passwords (the user). `/login`: email, "Sign in", "Create new account?" under it (the separate button is gone); an unknown address gets the "Account not created yet. Create new account?" banner. Sign-up: name + email, the same link. The link's page asks one tap, then the app collects the sign-in through the existing hand-off (`useEmailLink`: `accountExists`, `sendSignInLink` = `signInWithOtp`, `signInWithLink` = `verifyOtp` type `email`). Deleted: the password routes (`/api/auth/sign-in`, `/new-password`), `/login/confirmed`, `/settings/password`, `server/signIn.ts`, `PasswordField`, `ForgotPasswordForm`, `NewPasswordForm`, `EmailConfirmed`, `useConfirmedLink`, `useProblemBanner`, `useTypedEmail`, `passwordManager.ts`, `ui/PasswordInput`. Seen on a local production build: the screens, the banner, and the hand-off signing the waiting app in. Needs the "Magic Link" and "Confirm signup" templates changed in Supabase (auth README, Setup 5).
+- 2026-10-17: screens slide like an iPhone's (the user): forward, the new screen comes in from the right; back (the arrow, or a swipe from the left edge in the installed app), it leaves to the right and uncovers the one under it. React's `<ViewTransition>` in the root layout (`components/PageSlide.tsx`), transition types `GO_FORWARD`/`GO_BACK` (`lib/slide.ts`) on Home's tiles, list rows (`ui/ListRow`), the top bar's icons and back arrow, and the `router.push` calls that open an editor; CSS in `globals.css`. Tab-bar taps and refreshes do not move. Every main tab (Events, Prayer, Groups, Admin) has a back arrow to Home. `lib/useSwipeBack.ts`. The event page's own slide-in keyframe is gone. `ui/ListRow`'s button is `type="button"` (it submitted the sign-up form). Seen on a local build: forward from a Home tile and from an event row, back to the list and to Home.
+- 2026-10-17: text size (the user): new feature `text-size`, Gọn / Chữ to in Settings and on sign-up, kept per phone in a cookie the root layout reads into `<html data-text-size>`; Chữ to sets `--text-scale: 1.2` (17 → 20.4 px). With big text or the Admin tab, the tab bar says "Lịch" (`SHELL_STRINGS.eventsTabShort`, `AppTabs` `bigText`). Seen on a local build.
+- 2026-10-17: slides and signed-out screens polished (the user). The sliding screen is white and a screen tall (it was see-through: both screens showed); the tab bar is its own layer that stays on top and still (`slide-anchor-tab-bar`); the screen underneath no longer drifts, only the top one moves; tab-bar taps slide too (a tab to the right goes forward, one to the left back). The tab bar's room (`pb-24`) moved from `<main>` into `PageSlide`, so a short screen does not scroll. Signed-out screens: centred (`SignedOutFrame` fills the screen), a back arrow left of "English" on sign-up, "I already have an account" removed, more space before "Create new account?", shorter words on "check your email" and the link's page. Setup steps no longer count signing in: sign-up is "Step 1 / 6".
+- 2026-10-17: sign-up steps slide (the user): text size first ("Step 1 / 7", `Welcome`'s `firstStep` from the login page), then name and email, then "check your email"; each slides in from the right through `lib/slide.ts` `slide()` (a state change in a transition carrying the direction), each has a back arrow to the one before ("I already have an account", "Start again" and the spam line are gone). Check-your-email: heading and address in bold, one line.
+- 2026-10-17: the tab bar's direction (the user): Home slides the screen away (back); every other tab slides in (forward), wherever it sits.
+- 2026-10-17: the small text choice reads "Chữ nhỏ" / "Small text" (was "Gọn" / "Compact"; the user).
+- 2026-10-17: the setup bar counts only the steps this phone will show (the user: it jumped from 2 to 5): `components/setupSteps.ts` `stepsFor` (tested) leaves out install in the installed app and notifications answered before on this phone or impossible in this browser; `SetupProgress` works it out after the first draw.
+- 2026-10-17: a group's card opens its own page (`/groups/<id>/about`, `group-info/GroupPage`), shaped like an event's: big picture, when / where / contact with icons, notes, pictures, Edit for admins; `GroupInfoSheet` deleted. Sign-up's first step is titled "Chọn cỡ chữ" in bold (`TextSizeChoice asStep`).
+- 2026-10-17: the phone number sits level with its icon (`ui/Button` `inline` keeps its 48 px tap area with `-my-3` instead of pushing the line down; measured within 2 px); notes (group) and description (event) are icon lines too (`NotebookText`).
+- 2026-10-17: the tab bar slides only to and from Home (the user): from Home a tab slides in, to Home it slides away, an inner screen (an event's page) to its own tab slides away, and between two tabs nothing moves (`AppTabs` `direction`).
+- 2026-10-17: the install guide in the clean look (the user): full screen (no tab bar, no sign-out), logo and bold heading, steps as the button to look for in a grey circle (`ui/RoundIcon`, `InstallStep`), no numbers; iOS 26 Safari gets a first "•••" step (`device.ts` `hasGlassToolbar`, tested). `SignOutButton` lost its `variant`. Trade-off: the 2026-10-14 way out for a wrong account in Safari is gone.

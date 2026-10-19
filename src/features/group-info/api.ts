@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/client";
-import { shrinkImage } from "@/lib/shrinkImage";
+import { shrinkImage, shrinkUnder } from "@/lib/shrinkImage";
 import {
+  FULL_MAX_BYTES,
   FULL_SIDE,
   PHOTO_BUCKET,
   PHOTO_PAGE_SIZE,
@@ -14,7 +15,7 @@ import {
 } from "./types";
 
 // Group-info API: every call the browser makes for this feature. All go straight to Supabase; the
-// policies in schema.sql (and, for the number of members, in the groups feature's) decide what is allowed.
+// policies in schema.sql (and, for a group's name and number of members, the groups feature's) decide what is allowed.
 
 // GET the Groups page's list again, as the page first read it (server/queries.ts): `group_directory()`.
 // For the list to refresh itself on arrival, without reloading the page.
@@ -24,10 +25,19 @@ export async function getGroupDirectory(): Promise<DirectoryGroup[]> {
   return data;
 }
 
-// PUT when, where and notes for a group, from its editor (an empty field = "not said"). The group's row is
-// made the first time and changed after that. Needs the "groups.manage" permission (schema.sql, section 3).
+// PUT everything the group editor shows, for its one Save (an empty field = "not said"). Two writes: the name
+// and size live on the group itself (the groups feature's table and policy), when, where and notes on its
+// `group_info` row, made the first time and changed after that. Both need the "groups.manage" permission.
+// Not one transaction: if the second fails the banner says so, and Save again writes both (each is idempotent).
 export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Promise<void> {
-  const { error } = await createClient()
+  const supabase = createClient();
+  const { error: groupError } = await supabase
+    .from("groups")
+    .update({ name: draft.name.trim(), name_en: draft.nameEn.trim() || null, member_count: draft.memberCount === "" ? null : Number(draft.memberCount) })
+    .eq("id", groupId);
+  if (groupError) throw new Error(groupError.message);
+
+  const { error } = await supabase
     .from("group_info")
     .upsert(
       {
@@ -35,7 +45,9 @@ export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Pro
         meets_weekday: draft.meetsWeekday === "" ? null : Number(draft.meetsWeekday),
         meets_time: draft.meetsTime || null,
         location: draft.location.trim() || null,
+        location_en: draft.locationEn.trim() || null,
         notes: draft.notes.trim() || null,
+        contact_phone: draft.contactPhone.trim() || null,
       },
       { onConflict: "group_id" },
     );
@@ -79,7 +91,7 @@ export async function addPhoto(groupId: string, photo: NewPhoto): Promise<void> 
   const supabase = createClient();
   const id = crypto.randomUUID(); // made here, because the files are named after it before the row exists
   const paths = photoPaths(groupId, id);
-  const [small, full] = await Promise.all([shrinkImage(photo.file, SMALL_SIDE, 0.7), shrinkImage(photo.file, FULL_SIDE, 0.8)]);
+  const [small, full] = await Promise.all([shrinkImage(photo.file, SMALL_SIDE, 0.7), shrinkUnder(photo.file, FULL_SIDE, FULL_MAX_BYTES)]);
 
   const bucket = supabase.storage.from(PHOTO_BUCKET);
   const uploads = await Promise.all([

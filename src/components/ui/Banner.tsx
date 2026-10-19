@@ -5,7 +5,7 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   kind: keyof typeof KINDS;
   message: string;
   more?: number;
-  actionLabel?: string; // a way out, written as a link after the message ("Forgot password?")
+  actionLabel?: string; // a way out, written as a link after the message ("Create new account?")
   onAction?: () => void;
 };
 

@@ -37,7 +37,8 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
-| Shell | `src/app/events/[eventId]/page.tsx` | The editor's screen for one event, or for `new`, opened from the Events tab; 404 without `events.manage` |
+| Shell | `src/app/events/[eventId]/page.tsx` | One event's page, for everyone (`EventPage`); 404 once it is off the schedule |
+| Shell | `src/app/events/[eventId]/edit/page.tsx`, `src/app/events/new/page.tsx` | The editor for one event, or a new one; 404 without `events.manage` |
 
 ## Four tables, on purpose
 | Table | Why separate |
@@ -102,10 +103,12 @@ every case the list has to handle (see **Seed data** below).
 
 ## Expected behavior
 - The Events tab lists every upcoming date, oldest first, grouped under Today / Tomorrow / a weekday. Each
-  row starts with the time in bold, in a box of fixed width ("7:00" over "PM"), then the picture, then the
-  title with the location beneath. Times, pictures and titles line up down
-  the list.
-- A cancelled date is grey, struck through and says "Cancelled" beneath, not hidden.
+  row is shaped like a person's row on the Admin tab: the picture (a calendar icon until one is set), then the
+  title with "7:00 PM · Hall" beneath ("7:00 Tối" in Vietnamese; since 2026-10-17, when the bold time box went).
+  Sunday is written "Chúa Nhật".
+- A cancelled date is not shown on the Events tab (since 2026-10-17, the user: cluttered; `SWITCHES.canceledEvents`).
+  Switched back on, it is grey, struck through and says "Cancelled" beneath. The editor's "Next dates" always
+  lists it, with Undo.
 - Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
   outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
@@ -199,3 +202,13 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
 - A weekly event is one row, so any change from its editor, picture included, applies to every week.
 - An event with no date left in the coming weeks no longer appears anywhere to edit (the Admin list is gone).
 - `EventAdmin` and `EventAdminRow` were removed. NOT seen signed in (needs an admin in the preview).
+
+## One date per event, and an event's own page (2026-10-17, the user)
+- The tab is "Lịch sinh hoạt" in Vietnamese. Each event shows **once**, at its next date: a weekly event never
+  shows a second week ahead (`nextOfEach`, tested). A cancelled week is hidden, so the week after shows instead.
+- **A tap opens the event's page** (`/events/<id>`, `EventPage`) for everyone, sliding in from the right with
+  a back arrow: a big picture (a calendar icon without one), then three lines with icons (`ui/IconLine`): the
+  clock (date, time, "every week"), the map pin (place) and the phone (`events.contact_phone`, tap: Call / Text /
+  Copy, shared `src/components/PhoneNumber.tsx`); then the description. Admins see Edit at the bottom, which opens
+  `/events/<id>/edit`; the + opens `/events/new`. The `EventDetails` sheet is gone.
+- **SQL:** section 3g (`docs/sql-to-run-2026-10-17c.sql`). Until it is run, Save in the editor fails.

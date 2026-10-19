@@ -20,8 +20,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Browser API | `api.ts` | `getGroupDirectory`, `saveGroupDetail` (one detail), `saveMemberCount`, `getPhotos` (a page, signed), `addPhoto`, `removePhoto` |
 | Server reads | `server/queries.ts` | `getGroupDirectory` |
 | State | `hooks/useGroupPhotos.ts` | A group's pictures: the first page, more at the end, add, remove |
-| UI | `components/GroupDirectory.tsx` | The list; which group's sheet is open |
-| UI | `components/GroupInfoSheet.tsx` | The sheet: the number of members, the three details, the pictures; which line is being edited |
+| UI | `components/GroupDirectory.tsx` | The cards; a tap opens the group's page |
+| UI | `components/GroupPage.tsx` | A group's page (`/groups/<id>/about`), shaped like an event's: big picture, when / contact with icons, notes, pictures, Edit for admins |
 | UI | `components/GroupDetail.tsx` | One labelled line, with a pencil for a group manager |
 | UI | `components/GroupDetailForm.tsx` | One line as a box, with Save and Cancel |
 | UI | `components/GroupPhotos.tsx` | The strip, the large view, "Add a photo" (the group's people, managers) and "Remove this photo" (managers) |
@@ -71,7 +71,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   The cost: a signed address is new each time, so the phone downloads a picture again on every visit
   instead of keeping it. The small files are about 30 KB each, six at a time.
 - **Shrunk on the phone before sending** (`src/lib/shrinkImage.ts`, shared with the row pictures): a camera photo is 3 to 8 MB; what is stored is
-  about 300 KB plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
+  just under 1 MB (2560 pixels, the best quality that fits: `shrinkUnder`; it was 300 KB until 2026-10-17,
+  which the user found ugly) plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
   over 1 MB or not a JPEG, so a caller that skips the shrinking is refused, not trusted.
 - **Six at a time**, newest first, loaded when the sheet opens, not with the page. Scrolling the strip to
   its end loads the next six (`PhotoStripEnd`, `useWhenVisible`).
@@ -114,14 +115,16 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - A sheet left open for more than an hour shows broken pictures: their addresses ran out. Reopening it fixes it.
 - An upload cut off between the two files or before the row leaves files nobody sees; they only take up room.
 - A removed group's pictures leave with it (the rows are unreadable); the files stay in the bucket.
-- Free storage is 1 GB: about 3,000 pictures at these sizes. Nothing counts them or stops at a limit (B40).
+- Free storage is 1 GB: about 1,000 pictures at these sizes (3,000 before 2026-10-17). Nothing counts them or stops at a limit (B40).
 - Two members saving at once: the later save wins, whole.
 
 ## Remove
 Delete this folder and the `// GROUP-INFO` lines in `src/app/groups/page.tsx` (the Groups tab then needs
 `oldGroupsPage` on, or its entries removed from `AppTabs.tsx` and `HomeTiles.tsx`). Run the DROP at the
 bottom of `schema.sql` (empty the bucket in the dashboard first). The three picture components in
-`src/components/ui/` and their demo on `/ui` can stay or go with it.
+`src/components/ui/` and their demo on `/ui` can stay or go with it. The group editor
+(`src/app/groups/manage/[groupId]/page.tsx`) then has no field for a group's name and size: give the groups
+feature a small form for them (`saveGroup` in its git history, before 2026-10-17).
 
 ## Cards, and when a group meets (2026-10-14)
 - **Cards** (`GroupDirectory`): a card per group (`ui/Card`): its picture, a pulsing green dot (always on),
@@ -130,9 +133,9 @@ bottom of `schema.sql` (empty the bucket in the dashboard first). The three pict
 - **Members** tap a card for a read-only sheet (`GroupInfoSheet`): when, where, notes, members, pictures;
   a group's own people may add pictures. The pencils are gone (`GroupDetail`, `GroupDetailForm` removed).
 - **Admins** tap a card for the group's editor (see the groups README); this feature brings `GroupInfoForm`
-  (a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
+  (name, number of members, a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
 - **When:** `group_info.meets_weekday` (0 = Sunday) and `meets_time`, written by `meeting.ts` as "Tuesdays @
-  7:30 PM" / "Thứ Ba @ 19:30" (tested). The old free-text `meets_at` is shown until a day and time are saved.
+  7:30 PM" / "Thứ Ba @ 7:30 Tối" (tested; "19:30" until 2026-10-17). The old free-text `meets_at` is shown until a day and time are saved.
 - **Why initials only:** a member may not read who is in another group (group_members shows each person their
   own rows), so the database hands out the least that draws the circles, and only to approved members.
 - **SQL:** section 7 of `schema.sql` (safe to run again). Until it is run the Groups tab is empty.
@@ -143,3 +146,53 @@ bottom of `schema.sql` (empty the bucket in the dashboard first). The three pict
 The large view has a download button (`savePhoto.ts`): on an iPhone it opens the share sheet, whose "Save
 Image" puts the picture in Photos (a web page cannot write there itself); on a computer it downloads the file.
 NOT tried on a phone.
+
+## One Save on the group editor (2026-10-17)
+- **Found by the user:** a changed name did not stay. The editor had two forms: name and size with a grey Save
+  (groups' `GroupDetailsForm`), and when / where / notes with the blue Save (this feature). Reproduced: the
+  blue Save stored where and notes, and the typed name was lost on reload.
+- **Now:** `GroupInfoForm` holds all six fields and `saveGroupInfo` writes both tables, the group's name and
+  size first (the groups feature's table and policy; this feature wrote `member_count` before 2026-10-14 too),
+  then `group_info`. Not one transaction: if the second write fails, the banner says so and Save writes both
+  again. Save is off while the name is empty (the database refuses an empty name).
+- **Seen** on a local production build as a throwaway admin: name, 12 members and a place changed, one tap on
+  Save, all three still there after a reload and in the database. Not seen on an iPhone.
+
+## English name and place (2026-10-17)
+- The user asked for a group's name and place in English too, like an event. `groups.name` and
+  `group_info.location` stay the Vietnamese; `groups.name_en` (groups `schema.sql` 2e) and
+  `group_info.location_en` (section 8) hold the English, both optional and written only with `groups.manage`.
+- **Editor:** the name and the place are one grey box each, Vietnamese on top, English under it
+  (`ui/BilingualInput`, as in the event editor). They do not stop the typing at 60 / 150 characters as the
+  single boxes did; the database refuses a longer one and the banner says it could not save.
+- **Cards and the sheet** show the reader's language, and the other one while it is missing
+  (`bilingual.ts` + `t()`), so an English reader of a group with no English name sees the Vietnamese.
+- **Elsewhere** (the Admin people screens, the editor's own title, notifications) the Vietnamese name shows.
+- **SQL:** `docs/sql-to-run-2026-10-17.sql` (2e, then 8; safe to run again). Run it before this code goes
+  live: until then Save fails, because it writes the new columns.
+
+## Swipe in the large view (2026-10-17)
+A swipe left shows the next picture, a swipe right the one before (`ui/Lightbox`, `ui/hooks/useSwipe`). The
+arrows stay. At the last picture of the strip's loaded page a swipe left does nothing (more load from the strip).
+
+## Cards, the sheet and a contact number (2026-10-17, the user)
+- **Card:** the picture, the name, when the group meets, and the member circles. Nothing else.
+- **Sheet** (a member taps a card): When, Contact, Notes, then the pictures. The number of members left the
+  sheet (the circles on the card say it).
+- **Contact** (`group_info.contact_phone`, section 9): a phone number as typed. Tapping it shows Call, Text and
+  Copy (`src/components/PhoneNumber.tsx`, shared with events since 2026-10-17): the first two open the phone's own apps (`tel:` / `sms:`, digits from `src/lib/phone.ts`, tested),
+  Copy puts the number on the clipboard. The database takes digits, spaces and + ( ) - . only, so nothing else
+  can sit behind those links.
+- **Where** stays in the database and in `GroupInfoDraft` (a saved place is kept on every Save), but is shown
+  nowhere while `SWITCHES.groupLocation` is false: not on the card, the sheet or the editor.
+- **SQL:** `docs/sql-to-run-2026-10-17b.sql`. Until it is run the editor's Save fails (it writes `contact_phone`).
+
+## A group's page instead of its sheet (2026-10-17, the user)
+- A tap on a card opens the group's own page for everyone, sliding in from the right, shaped exactly like an
+  event's page: the big picture (a people icon without one), then lines with icons (`ui/IconLine`): the clock
+  (when it meets), the map pin (where, only while `SWITCHES.groupLocation` is on) and the phone (`PhoneNumber`),
+  then the notes and the group's pictures. An admin finds "Edit group" at the bottom, which opens the editor.
+- The address is `/groups/<id>/about` (`src/app/groups/[groupId]/about/page.tsx`), because `/groups/<id>` is
+  the group's chat (switched off). It reads `group_directory()` like the Groups tab.
+- `GroupInfoSheet` is gone (the user: no more group pop-ups).
+- Seen on a local production build: "Thứ Ba @ 7:30 Tối", the number, the notes. Not seen: a real picture.

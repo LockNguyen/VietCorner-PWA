@@ -50,8 +50,8 @@ The phone's system font. Sentence case; never capitals-only.
 | `text-small` | 14 | regular | Subtitles, labels, sender names, time lines |
 | `text-tab` | 13 | regular | Tab labels |
 
-Sizes are in `rem` and the root size is `106.25% × --text-scale` (default 1), so a future "larger text"
-setting changes one number and the phone's own text-size setting is still respected.
+Sizes are in `rem` and the root size is `106.25% × --text-scale` (default 1). "Chữ to" (the `text-size`
+feature) sets it to 1.2; the phone's own text-size setting is still respected.
 
 ### Space, size and shape
 | Token | Value | Used for |
@@ -68,7 +68,8 @@ setting changes one number and the phone's own text-size setting is still respec
 | `radius-full` | circle | Avatars |
 
 ### Motion
-Screens slide, sheets rise, banners fade; about 200 ms; nothing bounces. All of it is switched off when the
+Screens slide (forward in from the right, back out to the right; 350 ms, `PageSlide`), sheets rise, banners
+fade; nothing bounces. All of it is switched off when the
 phone asks for reduced motion.
 
 ## 3. The frame
@@ -116,9 +117,9 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 - **Buttons:** `touch` tall, `radius-control`, flat. One `primary` per screen or sheet at most. `danger` is
   for what cannot be undone from the app (remove a group, cancel an event for good, delete a request);
   everything else that changes something is `quiet`; `text` backs out.
-- **Fields:** a label above in `text-small` `subtle`. Sign-in is the one exception: its two fields carry
-  their word inside (as in the big messaging apps), so the screen is the logo, two fields and one button.
-  A password field shows an eye at its end (`PasswordInput`) instead of a "Show password" switch.
+- **Fields:** a label above in `text-small` `subtle`. Sign-in and sign-up are the exception: their fields
+  carry their word inside (as in the big messaging apps), so sign-in is the logo, one field and one button.
+  (There are no password fields since 2026-10-17: sign-in is by email link.)
 - **Forms** say what is wrong on submit, then live while the field is being fixed. Hints sit beside the
   field, never in a banner.
 - **Banners:** at the bottom, above the tab bar. Success stays 2 seconds, errors 8; a tap dismisses one

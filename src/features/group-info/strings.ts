@@ -4,17 +4,19 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
-  // The sheet about one group
+  // A group's page, and its editor
+  editGroup: { en: "Edit group", vi: "Sửa nhóm" } satisfies Text, // the admin's button on a group's page
+  groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
+  memberCountField: { en: "Number of members", vi: "Số thành viên" } satisfies Text,
   when: { en: "When", vi: "Thời gian" } satisfies Text,
   where: { en: "Where", vi: "Địa điểm" } satisfies Text,
   notes: { en: "Notes", vi: "Ghi chú" } satisfies Text,
+  contact: { en: "Contact", vi: "Liên lạc" } satisfies Text,
   savePhoto: { en: "Save to phone", vi: "Lưu về máy" } satisfies Text, // the viewer's download button
   couldNotSavePhoto: { en: "Could not save the picture. Please try again.", vi: "Không lưu được hình. Xin thử lại." } satisfies Text,
   pickDay: { en: "Day", vi: "Ngày" } satisfies Text, // the weekday picker before a day is chosen
   time: { en: "Time", vi: "Giờ" } satisfies Text,
   addGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text, // the + on the Groups tab
-  membersLabel: { en: "Members", vi: "Thành viên" } satisfies Text,
-  nothingYet: { en: "No details yet.", vi: "Chưa có thông tin." } satisfies Text,
   cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
 
   // Pictures

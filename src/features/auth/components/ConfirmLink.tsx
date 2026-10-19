@@ -10,7 +10,7 @@ import { STRINGS } from "../strings";
 
 type Props = { attempt: string | undefined; tokenHash: string | undefined }; // from the link's address
 
-// The screen a password-reset link opens. In the browser that asked it signs in and moves on; anywhere else it
+// The screen a sign-in email's link opens. In the browser that asked it signs in and moves on; anywhere else it
 // asks for one tap, then sends the person back to the app (hooks/useConfirmLink.ts).
 export default function ConfirmLink({ attempt, tokenHash }: Props) {
   const { t } = useLanguage(); // I18N

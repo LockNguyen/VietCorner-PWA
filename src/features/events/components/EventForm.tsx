@@ -13,7 +13,7 @@ import { LANGUAGE_NAMES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
 import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
-import type { EventDraft } from "../types";
+import { MAX_PHONE_LENGTH, type EventDraft } from "../types";
 
 type Props = {
   initial: EventDraft;
@@ -96,6 +96,18 @@ export default function EventForm({ initial, onSave }: Props) {
           />
         </Field>
       )}
+
+      <Field label={t(STRINGS.contactField)}>
+        <TextInput
+          type="tel"
+          inputMode="tel"
+          autoComplete="off"
+          placeholder="(336) 555-0101"
+          maxLength={MAX_PHONE_LENGTH}
+          value={draft.contactPhone}
+          onChange={(event) => setDraft({ ...draft, contactPhone: event.target.value })}
+        />
+      </Field>
 
       <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)}>
         {t(COMMON.save)}

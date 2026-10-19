@@ -5,25 +5,29 @@ import IconLink from "@/components/ui/IconLink";
 import TopBar from "@/components/ui/TopBar";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
+import { GO_BACK, GO_FORWARD } from "@/lib/slide";
+import { useSwipeBack } from "@/lib/useSwipeBack";
 import { SHELL_STRINGS } from "./strings";
 
 type Props = {
   title: Text | string; // a string is data rather than a label, like a group's name
-  backHref?: string; // set on a sub-screen: where its back arrow leads
+  backHref?: string; // where its back arrow leads: Home for a main tab, the list for a screen opened from one
   plain?: boolean; // no icons at all: the screen shown before signing in
 };
 
-// The top bar as this app fills it: the title, a back arrow on sub-screens, the assistant and Settings.
-// A Client Component so the title follows the language toggle at once.
+// The top bar as this app fills it: the title, a back arrow on every screen but Home, the assistant and
+// Settings. Back slides this screen away to the right (also by a swipe from the left edge, in the installed
+// app); the two icons slide theirs in. A Client Component so the title follows the language toggle at once.
 export default function PageHeader({ title, backHref, plain = false }: Props) {
   const { t } = useLanguage(); // I18N
+  useSwipeBack(backHref);
 
   return (
     <TopBar
       title={typeof title === "string" ? title : t(title)}
       left={
         backHref && (
-          <IconLink href={backHref} label={t(SHELL_STRINGS.back)}>
+          <IconLink href={backHref} transitionTypes={GO_BACK} label={t(SHELL_STRINGS.back)}>
             <ChevronLeft />
           </IconLink>
         )
@@ -31,10 +35,10 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
       right={
         !plain && (
           <>
-            <IconLink href="/assistant" label={t(SHELL_STRINGS.assistantTab)}>
+            <IconLink href="/assistant" transitionTypes={GO_FORWARD} label={t(SHELL_STRINGS.assistantTab)}>
               <Bot />
             </IconLink>
-            <IconLink href="/settings" label={t(SHELL_STRINGS.settingsTab)}>
+            <IconLink href="/settings" transitionTypes={GO_FORWARD} label={t(SHELL_STRINGS.settingsTab)}>
               <Settings />
             </IconLink>
           </>

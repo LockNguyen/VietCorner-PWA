@@ -1,6 +1,7 @@
 import { Check, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { GO_FORWARD } from "@/lib/slide";
 
 type Props = {
   title: string;
@@ -18,7 +19,7 @@ const ROW = "flex min-h-row w-full items-center gap-3 py-2 pe-3 text-start focus
 const TONES = { normal: "text-ink", off: "text-subtle line-through" } as const;
 
 // One line of any list: a picture, a title over a subtitle, and something at its right end.
-// With `href` it is a link, with `onClick` a button. Both end in a chevron unless `trailing` is passed;
+// With `href` it is a link that opens a deeper screen, sliding it in from the right; with `onClick` a button. Both end in a chevron unless `trailing` is passed;
 // the `current` one of a set of choices ends in a tick instead.
 export default function ListRow({ title, subtitle, leading, trailing, tone = "normal", current, href, onClick }: Props) {
   const opens = Boolean(href || onClick);
@@ -42,9 +43,9 @@ export default function ListRow({ title, subtitle, leading, trailing, tone = "no
   return (
     <li className={ITEM}>
       {href ? (
-        <Link href={href} aria-current={current} className={ROW}>{content}</Link>
+        <Link href={href} transitionTypes={GO_FORWARD} aria-current={current} className={ROW}>{content}</Link>
       ) : onClick ? (
-        <button onClick={onClick} aria-current={current} className={ROW}>{content}</button>
+        <button type="button" onClick={onClick} aria-current={current} className={ROW}>{content}</button>
       ) : (
         <div className={ROW}>{content}</div>
       )}

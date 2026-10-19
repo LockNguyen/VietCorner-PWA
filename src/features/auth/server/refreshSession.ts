@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const LOGIN_PATH = "/login";
 const HOME_PATH = "/";
-const LINK_PAGES = ["/login/confirm", "/login/confirmed"]; // what the sign-up and reset emails open
+const LINK_PAGES = ["/login/confirm"]; // what the sign-in email opens
 
 // Called by src/proxy.ts before every request.
 // 1) Refreshes the login cookie so users stay signed in.

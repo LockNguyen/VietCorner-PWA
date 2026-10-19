@@ -8,14 +8,19 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const BASE =
-  "relative inline-flex min-h-touch shrink-0 items-center justify-center rounded-control px-4 text-body font-medium " +
+  "relative inline-flex min-h-touch shrink-0 items-center justify-center rounded-control text-body font-medium " +
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action disabled:opacity-50";
+// The side padding is per variant, not in BASE: `inline` has none, and two padding classes on one element
+// would leave which one wins to the order of Tailwind's stylesheet.
 const VARIANTS = {
-  primary: "bg-action text-on-action",
-  quiet: "border border-line bg-surface text-ink",
-  danger: "bg-danger text-on-action",
-  text: "text-action",
-  dangerText: "text-danger", // the small red line under a sheet's button: remove, delete, call off
+  primary: "bg-action text-on-action px-4",
+  quiet: "border border-line bg-surface text-ink px-4",
+  danger: "bg-danger text-on-action px-4",
+  text: "text-action px-4",
+  dangerText: "text-danger px-4", // the small red line under a sheet's button: remove, delete, call off
+  // A tappable value lined up with the words around it (a phone number): no side padding, and the 48 px tap
+  // area reaches above and below the line (`-my-3`) instead of pushing it down, so it sits level with an icon.
+  inline: "-my-3 text-action",
 } as const;
 
 // A button. While `pending` it takes no taps and shows the circle, with `pendingLabel` beside it if given.

@@ -83,3 +83,10 @@ export function scheduleOf(events: ScheduledEvent[], language: Language, from: D
 
   return upcomingOccurrences(readable, canceledDates, from);
 }
+
+// The first date of each event, in the order given (soonest first): a weekly event is shown once, at its
+// next date, never a second week ahead (the user, 2026-10-17: one instance at all times).
+export function nextOfEach(occurrences: Occurrence[]): Occurrence[] {
+  const seen = new Set<string>();
+  return occurrences.filter((occurrence) => !seen.has(occurrence.event.id) && seen.add(occurrence.event.id));
+}

@@ -27,7 +27,7 @@ events or prayer: their tables point at `groups`.
 | UI | `components/UnassignedCard.tsx` | The last card on the Groups tab, for an admin: everyone in no group yet; refreshes itself (`useFresh`) |
 | UI | `components/PersonGroups.tsx` | On a person's screen (Admin): a switch per group |
 | UI | `components/GroupThumbnail.tsx` | The group's picture: choose or replace, remove |
-| UI | `components/GroupDetailsForm.tsx`, `GroupMemberRow.tsx`, `AddMemberForm.tsx` | Name and size with one Save; one person with Remove; the list of people to add |
+| UI | `components/GroupMemberRow.tsx`, `AddMemberForm.tsx` | One person with Remove; the list of people to add. A group's name and size are saved by group-info's `GroupInfoForm` on the editor (2026-10-17) |
 | UI | `components/UnassignedSheet.tsx` | Everyone in no group yet |
 | Text | `strings.ts` | The Join button. Group names are data. |
 | Shell | `src/app/groups/page.tsx`, the Groups tab in `AppTabs.tsx` | The list page |
@@ -152,3 +152,7 @@ opens its editor (`src/app/groups/manage/[groupId]/page.tsx`), which composes th
 and size, people and remove with group-info's when/where/notes and pictures. "Chưa vào nhóm" (in no group)
 is the last card. A person's groups can also be switched on their screen in the Admin tab (`PersonGroups`).
 `createGroup` now returns the new id. NOT seen signed in.
+
+## English name (2026-10-17)
+`groups.name_en` (section 2e): a group's English name, optional; `name` stays the Vietnamese one. Written by
+group-info's editor, shown by group-info's cards and sheet. Everything in this feature still shows `name`.

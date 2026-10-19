@@ -7,6 +7,8 @@ export const SWITCHES = {
   joining: false, // asking to join a group, the admin's "Waiting to join" list, and both their notifications
   oldGroupsPage: false, // the Groups list whose rows join a group or open its chat; off = the group-info page instead
   eventChangePush: false, // "cancelled" / "back on" to everyone who could see the event
+  canceledEvents: false, // cancelled dates on the Events tab, struck through (the user, 2026-10-17: cluttered); the editor still lists them with Undo
+  groupLocation: false, // where a group meets, on its card, its sheet and the editor (the user, 2026-10-17: kept, not used yet); saved values stay
   eventReminders: false, // the reminders before an event, and the switches that set them
   prayedForPush: false, // "N people prayed for you" to a request's author
   namePush: false, // a name waiting for approval (to managers), a name approved (to the person)

@@ -12,8 +12,8 @@ System docs: `.claude/architecture.md`.
 | Pure logic | `device.ts` | `deviceOf(userAgent, standalone, touchPoints)`: installed, inApp, iphone, android, other |
 | State | `hooks/useInstall.ts` | Reads the device; holds Chrome's install prompt; "Continue in this browser" |
 | UI | `components/InstallGate.tsx` | The guide until the app runs from the Home Screen, then its children |
-| UI | `components/InstallGuide.tsx` | Heading, then a one-tap Install button or numbered steps |
-| UI | `components/InstallStep.tsx` | One numbered instruction with the icon to look for |
+| UI | `components/InstallGuide.tsx` | Full screen (no tab bar): logo, bold heading, then a one-tap Install button or the steps |
+| UI | `components/InstallStep.tsx` | One instruction: the button to look for in a grey circle (`ui/RoundIcon`), a few words |
 | Shell | `src/app/login/page.tsx` | `<InstallGate><Welcome /></InstallGate>` (line marked `INSTALL`) |
 
 ## Flow
@@ -51,3 +51,17 @@ README, "Safari first"). Since it takes the place of every page, Settings includ
 (`footer`, the auth feature's `SignOutButton` as a link): without it, someone signed in with the wrong
 account in Safari was stuck on the guide (found on the iPhone, 2026-10-14). NOT seen on screen: the guide
 only shows signed in, which cannot be done in the preview.
+
+## The clean look (2026-10-17, the user)
+- The guide covers the whole screen (`fixed`, above the tab bar), in the calm shape of the sign-in screens: the
+  bar for a new member, "English" at the top right, then centred the logo, a bold heading and short lines.
+- **No numbers:** each step shows the button to look for in a light grey circle, as the iPhone draws them
+  (`ui/RoundIcon`): iPhone `Share` → `SquarePlus` "Add to Home Screen" → "Thêm"; Android ⋮ → "Install app".
+- **iOS 26 Safari** ("Liquid Glass") hides Share behind •••: then a first step "Tap ••• at the bottom" is added.
+  Detected by `hasGlassToolbar` (device.ts, tested) from Safari's "Version/26", because iOS 26 still reports an
+  older system version.
+- **No sign-out under the guide any more** (the user). This undoes the 2026-10-14 way out: someone signed in to
+  the wrong account in Safari must clear Safari's website data, or install and sign out in Settings.
+- Only a computer may "Continue in this browser".
+- Seen on a local production build as Android at 375 px. NOT seen: the iPhone steps (the preview cannot pose
+  as an iPhone), iOS 26 on a real phone.

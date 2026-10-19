@@ -241,6 +241,13 @@ create policy "Group managers manage group pictures" on storage.objects
   using (bucket_id = 'group-thumbnails' and (select public.has_permission('groups.manage')))
   with check (bucket_id = 'group-thumbnails' and (select public.has_permission('groups.manage')));
 
+-- 2e. A group's name in English (2026-10-17) ---------------------------------
+-- This section can be run again by itself. `name` is the group's Vietnamese name, as it always was;
+-- `name_en` is its English one, optional. An English reader sees `name_en`, or `name` while there is none,
+-- the way an event written in one language still has a title (group-info shows it).
+alter table public.groups add column if not exists name_en text check (length(trim(name_en)) between 1 and 60);
+grant update (name_en) on public.groups to authenticated; -- only with the manager policy in section 2
+
 -- 3. Seed data ------------------------------------------------------------
 
 insert into public.groups (name) values ('Test Group'), ('Bible Study');

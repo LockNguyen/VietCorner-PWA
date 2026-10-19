@@ -8,6 +8,7 @@ import Select from "@/components/ui/Select";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { clockTime, withChurchSunday } from "@/features/i18n/clock"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
@@ -36,7 +37,7 @@ export default function PrayerReminderAdmin({ reminders }: Props) {
 
   // 1 January 2023 was a Sunday, so day 1 + n of that month is weekday n. Read in UTC so no timezone moves it.
   const weekdayName = (day: number) =>
-    new Date(Date.UTC(2023, 0, 1 + day)).toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: "UTC" });
+    withChurchSunday(new Date(Date.UTC(2023, 0, 1 + day)).toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: "UTC" }));
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -59,7 +60,7 @@ export default function PrayerReminderAdmin({ reminders }: Props) {
       <SectionHeading>{t(STRINGS.remindersHeading)}</SectionHeading>
       <ul>
         {reminders.map((reminder) => (
-          <PrayerReminderRow key={reminder.id} reminder={reminder} when={`${weekdayName(reminder.weekday)} · ${reminder.send_at.slice(0, 5)}`} />
+          <PrayerReminderRow key={reminder.id} reminder={reminder} when={`${weekdayName(reminder.weekday)} · ${clockTime(reminder.send_at, language)}`} />
         ))}
       </ul>
 

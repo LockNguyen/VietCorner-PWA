@@ -427,11 +427,102 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       to merge (the `agent-a0-a1` worktree holds uncommitted `services/ai` work, not deployed by Netlify, left
       alone). Strict review of `de75e01` + B28: 3 must-fix (stale security test, admin editors showing a kept
       copy, a silent failure saving a picture) and 7 cleanups, all fixed on the user's word. `npm test` 116/116,
-      `npm run test:rls` 94/94, build clean. Committed on `sheets-and-admin`, `main` fast-forwarded, NOT pushed.
+      `npm run test:rls` 94/94, build clean. Committed `744998f` on `sheets-and-admin`, `main` fast-forwarded and **pushed on the user's word
+      (2026-10-15)**; Netlify deploys from it.
       NOT seen signed in: any admin screen (the preview browser is signed out). Backlog B41 added.
 
+- [x] **Group name did not save (2026-10-17, found by the user).** Cause: two forms and two Saves on the group
+      editor; the blue one saved only when / where / notes. Fixed on the user's word (option A): one form, one
+      Save (`GroupInfoForm`), `GroupDetailsForm` deleted. Seen on a local production build with a throwaway admin
+      (deleted after). No other screen has two forms. Committed, NOT pushed.
+
+- [x] **Saved Home at launch (B29, Home part)** (2026-10-17, NOT committed). `sw.js` `HOME` (`home-v1`),
+      `RefreshSavedPage`, `lib/savedHome.ts`, tab bar `prefetch={true}`, `staleTimes.static` 10 min. Checked in the
+      preview signed in (saved Home 3 ms, fresh request 78 ms, Prayer tab 46 ms with no request, `/login` deletes).
+      Production build on port 3000 behind Funnel 8443 (the other session's server there was stopped for the build).
+
+- [x] **Group pictures up to 1 MB (2026-10-17, the user: 300 KB looked ugly).** `shrinkUnder` at 2560 px, best
+      quality under 1,000,000 bytes; bucket limit unchanged (no SQL). NOT tried with a real phone photo.
+      Committed, NOT pushed.
+
+- [x] **Events rows like the people rows; "7:00 Tối"; "Chúa Nhật" (2026-10-17, the user's words).** `i18n/clock.ts`
+      (tested), `EventRow` = picture · title · "time · place"; `RowLabel` deleted. 121 tests. Seen on a local production
+      build at 375 px: "Chúa Nhật, 25 tháng 10", "10:30 Sáng", "11:30 Trưa", "Đã hủy · 2:00 Chiều". Group cards still say 19:30 in Vietnamese.
+
+- [x] **"7:00 Tối" everywhere (2026-10-17, the user's word).** Group cards and sheets, prayer reminders list, chat
+      time lines now use `clockTime` too. Phone time pickers are the phone's own. 122 tests.
+
+- [x] **Cancelled dates hidden on the Events tab (2026-10-17, the user: cluttered).** `SWITCHES.canceledEvents`
+      = false; the editor still shows them with Undo. 122 tests.
+
+- [x] **English group names and places (2026-10-17, the user: like events).** `groups.name_en`, `group_info.location_en`,
+      bilingual boxes in the editor, the reader's language on cards and the sheet. 1 security case added.
+      SQL run by the user (2026-10-17); `npm run test:rls` 95/95. Seen on a local production build as a throwaway
+      admin (deleted after): the editor's Save stored an English name and place; an English reader's card reads
+      "Debug English name · Main hall". Not seen on an iPhone.
+
+- [x] **The Groups page is "Nhóm nhỏ" in Vietnamese (2026-10-17, the user: "Nhóm" reads as a worship service).**
+      The tab, the Home tile, the page title and the person screen's heading.
+
+- [x] **Group pictures swipe left and right in the large view (2026-10-17, the user).** `ui/hooks/useSwipe` in
+      `Lightbox`; arrows kept. NOT tried with a finger on a phone.
+
+- [x] **B42 launch-info** (2026-10-17, NOT committed): admins' "i" on Home → "For developers: this launch".
+      `src/features/launch-info/`, line `LAUNCH-INFO` in `src/app/page.tsx`. Seen in the preview at phone width.
+
+- [x] **The picture swipe drags, iPhone-Photos style (2026-10-17, the user).** Follows the thumb, slides off and
+      in, springs back, rubber band at the ends. NOT tried with a finger on a phone.
+
+- [x] **Group cards: when + members; sheet: when, contact (Call / Text / Copy), notes, pictures (2026-10-17, the
+      user).** Location kept, hidden (`SWITCHES.groupLocation`). SQL run by the user; `npm run test:rls` 96/96. Seen as a
+      throwaway member: card "Thứ Ba @ 7:30 Tối" + circles; sheet Thời gian, Liên lạc, Ghi chú; tapping the number
+      shows Gọi / Nhắn tin / Sao chép. NOT tried: the call and text apps opening on a phone. The number now
+      lines up with its label (`Button` variant `inline`, no side padding).
+
+- [x] **Events: "Lịch sinh hoạt", one date per event, an event page (2026-10-17, the user).** Tap → `/events/<id>`
+      slides in: big picture, time / place / contact with icons, description, Edit for admins. Editor at
+      `/events/<id>/edit`. SQL run by the user; `npm run test:rls` 97/97. Seen on a local production build as a
+      throwaway member: the page slides in; picture; "Chúa Nhật, 18 tháng 10 / 10:30 Sáng – 11:30 Trưa · Hằng
+      tuần", the place, a test number (removed after) with Gọi / Nhắn tin / Sao chép. Debt: the number sits a few
+      px below its phone icon (the button is 48 px tall). NOT seen: the Edit button (no admin signed in).
+
+- [x] **Sign-in by email link, no passwords (2026-10-17, the user).** Email → link → one tap in Safari → the app
+      signs itself in (hand-off). Sign-up = name + email, same link. "Create new account?" replaces "Forgot
+      password?"; the separate button is gone. Seen on a local production build (screens, banner, hand-off to
+      Home). **WAITS ON THE USER: Supabase → Email Templates "Magic Link" and "Confirm signup" (auth README,
+      Setup 5), then one real sign-in from an iPhone.**
+
+- [x] **Screens slide; back to Home everywhere; text size (2026-10-17, the user).** Forward slides in from the
+      right, back (arrow, or swipe from the left edge in the installed app) slides out and uncovers the screen
+      under it (`ViewTransition`). Events, Prayer, Groups, Admin have a back arrow to Home. Settings and sign-up:
+      Cỡ chữ Gọn / Chữ to (per phone); with big text or the Admin tab the tab reads "Lịch". Seen on a local build.
+      NOT seen: an iPhone (needs iOS 18 for the slides), five tabs in big text.
+
+- [x] **Slides and signed-out screens polished (2026-10-17, the user).** Solid sliding screen, tab bar on top and
+      still, only the top screen moves, tabs slide by position. Sign-in/sign-up centred; sign-up: Step 1 / 6, back
+      arrow, no "I already have an account"; fewer words on "check your email" and the link page. Seen on a local
+      build (mid-slide pictures). Known: a screen not kept in memory slides in as its grey placeholder.
+
+- [x] **Sign-up steps slide; text size first (2026-10-17, the user).** Step 1 / 7 Cỡ chữ → name + email → check your
+      email, each sliding in, each with a back arrow. Seen on a local build. Explained to the user: the bar jumped
+      from 2 to 5 on their phone because install (already installed) and notifications (answered before on that
+      phone, cookie) are skipped.
+
+- [x] **Setup bar counts only this phone's steps (2026-10-17, the user).** `setupSteps.ts` (4 tests). Seen: a fresh
+      desktop browser counts 7. NOT seen on screen: a phone that skips steps (the rule is tested only).
+
+- [x] **Group page instead of the group sheet; "Chọn cỡ chữ" title (2026-10-17, the user).** A card opens
+      `/groups/<id>/about`, like an event's page; Edit for admins. Seen on a local build.
+
+- [x] **Install guide in the clean look (2026-10-17, the user).** Full screen, no tab bar, no sign-out, grey round
+      icons instead of numbers, ••• first on iOS 26 Safari. Seen as Android at 375 px. NOT seen: the iPhone steps.
+      Debt: a wrong account signed in in Safari has no way out on the guide (the user's choice).
+
 ## ➡️ Next 3 Micro-Steps
-1. User: say "push" → `git push origin main` (Netlify deploys). Check the Netlify build passed.
+1. User: on the iPhone (8443), delete the app and add it again (iOS reads launch pictures at install), open it twice, leave it a few
+   hours, open it: logo or black? time black/white; does Home appear at once? Then tap the "i" and screenshot it. If no logo, remove `public/launch`,
+   `launchScreens.json`, the script, the layout lines and `launch/` in proxy.ts again.
+1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
    picture), Prayer bell, Admin → a person (a role switch, a group switch, back and in again).
 3. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include

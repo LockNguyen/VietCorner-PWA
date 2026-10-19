@@ -14,7 +14,7 @@ export default async function EventsPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.eventsTab} />
+      <PageHeader title={SHELL_STRINGS.eventsTab} backHref="/" />
       <EventSchedule events={events} canManage={permissions.includes(MANAGE_EVENTS)} />
     </>
   );

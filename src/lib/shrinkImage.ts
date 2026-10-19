@@ -21,6 +21,21 @@ export async function shrinkImage(file: Blob, maxSide: number, quality: number):
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("could not shrink the picture"))), "image/jpeg", quality);
   });
 }
+// why: from nearly untouched down to plainly softened; tried in this order, so a picture keeps the best quality
+// that fits. Below 0.65 a JPEG shows blocks in skies and faces.
+const QUALITIES = [0.92, 0.85, 0.75, 0.65];
+
+// Returns the picture as a JPEG at most `maxSide` pixels long, at the best quality whose file is under
+// `maxBytes`. A picture still over at the lowest quality is returned anyway: the bucket's own limit decides.
+export async function shrinkUnder(file: Blob, maxSide: number, maxBytes: number): Promise<Blob> {
+  let shrunk = file;
+  for (const quality of QUALITIES) {
+    shrunk = await shrinkImage(file, maxSide, quality);
+    if (shrunk.size <= maxBytes) break;
+  }
+  return shrunk;
+}
+
 // A picture at the size of the small tile that starts a row (events, groups).
 // why 400: the tile is 88 points wide; 400 pixels keeps it sharp on a 3x phone screen, at about 30 KB.
 export function shrinkToThumbnail(file: Blob): Promise<Blob> {

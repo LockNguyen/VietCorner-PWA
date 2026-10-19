@@ -1,7 +1,7 @@
 "use client";
 
+import { CalendarDays } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
-import RowLabel from "@/components/ui/RowLabel";
 import Thumbnail from "@/components/ui/Thumbnail";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
@@ -9,22 +9,22 @@ import { formatTime } from "../formatting";
 import { STRINGS } from "../strings";
 import { THUMBNAIL_BUCKET, type Occurrence } from "../types";
 
-type Props = { occurrence: Occurrence; onOpen: () => void };
+type Props = { occurrence: Occurrence };
 
-// One line of the schedule: the time, the picture, the title, and what else matters at a glance.
-export default function EventRow({ occurrence, onOpen }: Props) {
+// One line of the schedule, shaped like a row of the Admin tab's people: the picture, the title, and under it
+// the time and the place ("7:00 Tối · Hội trường"), "Cancelled" first when it is called off. Opens the event's page.
+export default function EventRow({ occurrence }: Props) {
   const { t, language } = useLanguage(); // I18N
   const { event, startsAt, canceled } = occurrence;
-  const notes = [canceled && t(STRINGS.canceled), event.text.location];
+  const notes = [canceled && t(STRINGS.canceled), formatTime(startsAt, language), event.text.location];
 
   return (
     <ListRow
-      onClick={onOpen}
+      href={`/events/${event.id}`}
       leading={
-        <>
-          <RowLabel>{formatTime(startsAt, language)}</RowLabel>
-          <Thumbnail src={event.thumbnail_path ? publicFileUrl(THUMBNAIL_BUCKET, event.thumbnail_path) : undefined} />
-        </>
+        <Thumbnail src={event.thumbnail_path ? publicFileUrl(THUMBNAIL_BUCKET, event.thumbnail_path) : undefined}>
+          <CalendarDays />
+        </Thumbnail>
       }
       title={event.text.title}
       subtitle={notes.filter(Boolean).join(" · ")}

@@ -6,6 +6,7 @@ import LanguageToggle from "@/features/i18n/components/LanguageToggle"; // I18N
 import NameSection from "@/features/profiles/components/NameSection"; // PROFILES
 import { getMyProfile, getMyRequestedName } from "@/features/profiles/server/queries"; // PROFILES
 import NotificationSection from "@/features/push/components/NotificationSection"; // PUSH
+import TextSizeChoice from "@/features/text-size/components/TextSizeChoice"; // TEXT-SIZE
 import { createClient } from "@/lib/supabase/server";
 
 export default async function SettingsPage() {
@@ -22,6 +23,7 @@ export default async function SettingsPage() {
       {profile && <NameSection name={profile.name} requestedName={requestedName} />} {/* PROFILES */}
       <NotificationSection /> {/* PUSH */}
       <AccountSection email={user?.email ?? ""} /> {/* AUTH */}
+      <TextSizeChoice /> {/* TEXT-SIZE */}
       <LanguageToggle /> {/* I18N */}
     </>
   );

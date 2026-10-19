@@ -21,10 +21,11 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | Data | `schema.sql` | `user_settings(user_id, language)`, owner-only RLS |
 | Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `LANGUAGES`, `DEFAULT_LANGUAGE`, `LOCALES` (date formats), `isLanguage` |
 | Pure logic | `translate.ts` | `translate(text, language)`; falls back to the other language rather than showing nothing |
+| Pure logic | `clock.ts` | `clockTime("19:00", language)`: "7:00 PM" / "7:00 Tối"; every time the app shows goes through it (Sáng before 11, Trưa to 13, Chiều to 18, Tối after); `withChurchSunday(text)`: "Chủ Nhật" → "Chúa Nhật". Tested |
 | Text | `strings.ts` | This feature's own labels |
 | Browser API | `api.ts` | `saveLanguage` (upsert, RLS allows only your own row) |
 | Server reads | `server/queries.ts` | `getLanguage(supabase)` → the user's language or `null`; `getLanguagesOf(admin, userIds)` for text the server writes to others |
-| State | `components/LanguageProvider.tsx` | Holds the language for the whole app; writes the device copy and the database |
+| State | `components/LanguageProvider.tsx` | Holds the language for the whole app; writes the device copy and the database; deletes the Home saved for the next launch (`lib/savedHome.ts`), which is in the old language |
 | State | `hooks/useLanguage.ts` | `{ language, setLanguage, t }` for client components |
 | UI | `components/LanguageToggle.tsx` | One row per language, each written in its own language (Settings) |
 | UI | `components/LanguageLink.tsx` | The other language as one quiet link, at the top right (sign-in, the install guide) |

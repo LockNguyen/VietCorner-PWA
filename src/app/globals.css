@@ -80,6 +80,11 @@
 }
 
 /* Room for the phone's own furniture: the status bar and notch above, the home indicator below. */
+/* Names the tab bar for the screen slides (below), so it stays on top and still while a screen slides. */
+@utility slide-anchor-tab-bar {
+  view-transition-name: tab-bar;
+}
+
 @utility pt-safe {
   padding-top: env(safe-area-inset-top);
 }
@@ -122,7 +127,76 @@ body {
   overscroll-behavior: none;
 }
 
-/* A percentage, so the phone's own text-size setting still applies. --text-scale is the future "larger text" setting. */
+/* A percentage, so the phone's own text-size setting still applies. --text-scale is the "Chữ to" setting
+   (features/text-size): every text size is in rem, so this one number makes all text bigger; spacing is in
+   px and stays. why 1.2: 17 px body text becomes about 20 px, the size iOS's own "Larger Text" reaches first. */
 html {
   font-size: calc(106.25% * var(--text-scale, 1));
+}
+html[data-text-size="big"] {
+  --text-scale: 1.2;
+}
+
+/* Screens sliding (src/components/PageSlide.tsx, src/lib/slide.ts), as an iPhone pushes and pops pages.
+   Forward: the new screen comes in from the right over the old one. Back: the screen leaves to the right on
+   top, uncovering the one under it. The screen underneath stays still (the user, 2026-10-17: two screens
+   moving at different speeds looked wrong); only the top one moves.
+   The iPhone's own curve and length. The tab bar is outside the sliding screen, so it stays put. */
+:root {
+  --slide: 350ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+::view-transition {
+  pointer-events: none; /* taps during a slide reach the page, not the picture of it */
+}
+/* The tab bar is its own layer above the sliding screen and never moves: without this the white screen,
+   a screen tall, was drawn over it for the length of the slide (seen 2026-10-17). */
+::view-transition-group(tab-bar) {
+  animation: none;
+  z-index: 2;
+}
+::view-transition-old(tab-bar) {
+  display: none;
+}
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+::view-transition-group(.slide-forward),
+::view-transition-group(.slide-back) {
+  animation: none; /* the two screens differ in height: no resizing between them, only the slide */
+}
+::view-transition-old(.slide-forward),
+::view-transition-new(.slide-forward),
+::view-transition-old(.slide-back),
+::view-transition-new(.slide-back) {
+  mix-blend-mode: normal; /* the browser's default blends the two pictures, which would brighten the overlap */
+}
+::view-transition-new(.slide-forward) {
+  animation: var(--slide) slide-from-right;
+}
+::view-transition-old(.slide-forward) {
+  animation: none;
+}
+::view-transition-old(.slide-back) {
+  z-index: 1; /* the leaving screen stays on top while it slides off */
+  animation: var(--slide) slide-to-right;
+}
+::view-transition-new(.slide-back) {
+  animation: none;
+}
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-to-right {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
 }

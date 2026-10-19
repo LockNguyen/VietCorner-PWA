@@ -2,7 +2,8 @@
 
 import { Plus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { GO_FORWARD } from "@/lib/slide";
+import type { ReactNode } from "react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import IconButton from "@/components/ui/IconButton";
@@ -10,16 +11,17 @@ import LiveDot from "@/components/ui/LiveDot";
 import MemberCircles from "@/components/ui/MemberCircles";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
+import { SWITCHES } from "@/lib/switches";
 import { useFresh } from "@/lib/useFresh";
 import { getGroupDirectory } from "../api";
+import { locationText, nameText } from "../bilingual";
 import { formatMeeting } from "../meeting";
 import { members, STRINGS } from "../strings";
 import { GROUP_THUMBNAIL_BUCKET, MAX_CIRCLES, type DirectoryGroup } from "../types";
-import GroupInfoSheet from "./GroupInfoSheet";
 
 type Props = {
   groups: DirectoryGroup[]; // as the page loaded them
-  // Holds "groups.manage": a + for a new group, and a card opens the group's editor instead of its sheet.
+  // Holds "groups.manage": a + for a new group (a card opens the group's page for everyone; its Edit is there).
   canManage: boolean;
   last?: ReactNode; // after the groups, for an admin: everyone who is in no group yet (the groups feature)
 };
@@ -30,15 +32,12 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
   const { t, language } = useLanguage(); // I18N
   const router = useRouter();
   const groups = useFresh(loaded, getGroupDirectory);
-  const [openId, setOpenId] = useState<string | null>(null);
-  // Found again on every render, so the sheet shows the newest details and closes if its group is removed.
-  const open = groups.find((group) => group.id === openId);
 
   return (
     <div className="flex flex-col gap-4 px-3 pt-2 pb-4">
       {canManage && (
         <div className="flex justify-end">
-          <IconButton tone="filled" label={t(STRINGS.addGroup)} onClick={() => router.push("/groups/manage/new")}>
+          <IconButton tone="filled" label={t(STRINGS.addGroup)} onClick={() => router.push("/groups/manage/new", { transitionTypes: GO_FORWARD })}>
             <Plus />
           </IconButton>
         </div>
@@ -54,9 +53,9 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
             src={group.thumbnail_path ? publicFileUrl(GROUP_THUMBNAIL_BUCKET, group.thumbnail_path) : undefined}
             placeholder={<Users className="size-8" />}
             badge={<LiveDot />}
-            title={group.name}
-            subtitle={[when, group.location].filter(Boolean).join(" · ") || undefined}
-            onClick={() => (canManage ? router.push(`/groups/manage/${group.id}`) : setOpenId(group.id))}
+            title={t(nameText(group))}
+            subtitle={[when, SWITCHES.groupLocation && t(locationText(group))].filter(Boolean).join(" · ") || undefined}
+            onClick={() => router.push(`/groups/${group.id}/about`, { transitionTypes: GO_FORWARD })}
           >
             {total > 0 && (
               <MemberCircles initials={group.member_initials} total={total} max={MAX_CIRCLES} label={t(members(total))} />
@@ -66,7 +65,6 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
       })}
 
       {last}
-      {open && <GroupInfoSheet key={open.id} group={open} onClose={() => setOpenId(null)} />}
     </div>
   );
 }

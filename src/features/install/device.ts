@@ -18,3 +18,11 @@ export function deviceOf(userAgent: string, standalone: boolean, touchPoints: nu
   if (/Android/.test(userAgent)) return "android";
   return "other";
 }
+
+// Whether this iPhone's Safari has the "Liquid Glass" look (iOS 26 and later), where the Share button sits
+// behind ••• at the bottom right instead of on the toolbar. Read from "Version/26": iOS 26 Safari still reports
+// an older system version ("iPhone OS 18_6"), but its own version number is the real one.
+export function hasGlassToolbar(userAgent: string): boolean {
+  const version = Number(/Version\/(\d+)/.exec(userAgent)?.[1] ?? 0);
+  return version >= 26;
+}

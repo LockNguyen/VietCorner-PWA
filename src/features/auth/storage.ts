@@ -1,17 +1,11 @@
-// The email this device asked for and is waiting on (confirm a new account, or reset a password), kept on the device.
+// The sign-in this device asked for and is waiting on, kept on the device.
 //
 // Why on the device and not in memory: an iPhone often reloads the installed app when the person comes
-// back from their email. Without this the app would return to "enter your email", and a reset would lose
-// the secret key that collects it.
+// back from their email. Without this the app would return to "enter your email", and lose the secret key
+// that collects the sign-in (handoff.ts).
 
-export type PendingSignIn =
-  // A new account: the link confirms the address at Supabase; the app then signs in with the password.
-  | { purpose: "signup"; email: string; sentAt: number }
-  // A reset: the link's sign-in is handed back to the holder of `claimKey` (handoff.ts).
-  | { purpose: "recovery"; claimKey: string; email: string; sentAt: number };
-
-// After a reset's link is used: choose the new password.
-export const NEW_PASSWORD_PATH = "/settings/password";
+// `claimKey`: the secret whose hash the email's link carries; whoever holds it collects the sign-in.
+export type PendingSignIn = { claimKey: string; email: string; sentAt: number };
 
 const KEY = "vietcorner.signin";
 
@@ -31,9 +25,8 @@ export function savePendingSignIn(pending: PendingSignIn): void {
 export function readPendingSignIn(now = Date.now()): PendingSignIn | null {
   try {
     const pending = JSON.parse(window.localStorage.getItem(KEY) ?? "null") as PendingSignIn | null;
-    // A wait saved before passwords existed has no purpose: it was for a sign-in link that no longer exists.
-    // sentAt is ms since 1970.
-    return pending?.purpose && now - pending.sentAt < LINK_LIFETIME_MS ? pending : null;
+    // A wait saved in the password era (a new account, without a key) cannot be collected: ignored.
+    return typeof pending?.claimKey === "string" && now - pending.sentAt < LINK_LIFETIME_MS ? pending : null;
   } catch {
     return null;
   }

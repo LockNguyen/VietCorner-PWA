@@ -8,7 +8,7 @@ export const STRINGS = {
   noGroups: { en: "There are no groups yet.", vi: "Chưa có nhóm nào." } satisfies Text,
 
   // Admin section
-  adminHeading: { en: "Groups", vi: "Nhóm" } satisfies Text,
+  adminHeading: { en: "Groups", vi: "Nhóm nhỏ" } satisfies Text,
   groupName: { en: "Group name", vi: "Tên nhóm" } satisfies Text,
   newGroup: { en: "New group", vi: "Nhóm mới" } satisfies Text,
   createGroup: { en: "Create group", vi: "Tạo nhóm" } satisfies Text,
@@ -17,7 +17,6 @@ export const STRINGS = {
   choosePicture: { en: "Choose a picture", vi: "Chọn hình" } satisfies Text,
   changePicture: { en: "Choose another picture", vi: "Chọn hình khác" } satisfies Text,
   removePicture: { en: "Remove the picture", vi: "Gỡ hình" } satisfies Text,
-  memberCountField: { en: "Number of members", vi: "Số thành viên" } satisfies Text,
   peopleHeading: { en: "In the app", vi: "Trong ứng dụng" } satisfies Text,
   nobodyYet: { en: "Nobody yet.", vi: "Chưa có ai." } satisfies Text,
   addPersonField: { en: "Add a person", vi: "Thêm người" } satisfies Text,

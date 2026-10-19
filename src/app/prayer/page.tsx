@@ -20,7 +20,7 @@ export default async function PrayerPage() {
 
   return (
     <>
-      <PageHeader title={SHELL_STRINGS.prayerTab} />
+      <PageHeader title={SHELL_STRINGS.prayerTab} backHref="/" />
       <PrayerBoard
         initialRequests={requests}
         userId={user.id} // keys the "prayed an hour ago" memory on a shared phone

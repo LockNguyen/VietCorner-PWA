@@ -1,17 +1,15 @@
 import type { ReactNode } from "react";
+import RoundIcon from "@/components/ui/RoundIcon";
 import Text from "@/components/ui/Text";
 
-type Props = { number: number; icon?: ReactNode; children: string };
+type Props = { icon: ReactNode; children: string };
 
-// One numbered instruction, with the icon the person should look for on their screen.
-export default function InstallStep({ number, icon, children }: Props) {
+// One instruction: the button to look for, drawn as the phone draws it (a grey circle), and a few words.
+export default function InstallStep({ icon, children }: Props) {
   return (
-    <li className="flex items-start gap-3">
-      <Text as="span" variant="tile">{number}.</Text>
-      <div className="flex flex-1 flex-col gap-1">
-        <Text>{children}</Text>
-        {icon}
-      </div>
+    <li className="flex items-center gap-4">
+      <RoundIcon>{icon}</RoundIcon>
+      <Text>{children}</Text>
     </li>
   );
 }
