@@ -21,15 +21,15 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Server reads | `server/queries.ts` | `getGroupDirectory` |
 | State | `hooks/useGroupPhotos.ts` | A group's pictures: the first page, more at the end, add, remove |
 | UI | `components/GroupDirectory.tsx` | The cards; a tap opens the group's page |
-| UI | `components/GroupPage.tsx` | A group's page (`/groups/<id>/about`), shaped like an event's: big picture, when / contact with icons, notes, pictures, Edit for admins |
+| UI | `components/GroupPage.tsx` | A group's page (`/groups/<id>/about`), shaped like an event's: big picture, when / contact with icons, notes, pictures; admins get a round pencil held under the top bar (`ui/Toolbar`) |
 | UI | `components/GroupDetail.tsx` | One labelled line, with a pencil for a group manager |
 | UI | `components/GroupDetailForm.tsx` | One line as a box, with Save and Cancel |
-| UI | `components/GroupPhotos.tsx` | The strip, the large view, "Add a photo" (the group's people, managers) and "Remove this photo" (managers) |
+| UI | `components/GroupPhotos.tsx` | The strip, the large view, a + square first in the strip that opens "Add a photo" (the group's people, managers) and "Remove this photo" (managers) |
 | UI | `components/PhotoStripEnd.tsx` | The marker after the last picture: scrolled into view, it loads more |
 | UI | `components/AddPhotoForm.tsx` | The picture, an optional date, an optional line of words |
 | Text | `strings.ts` | Labels. What a group writes is data |
 | Shell | `src/app/groups/page.tsx` (`// GROUP-INFO` lines) | Draws this list, or the old one when `oldGroupsPage` is on |
-| Shared UI | `src/components/ui/PhotoStrip.tsx`, `PhotoThumb.tsx`, `Lightbox.tsx` | Built for this feature; shown on `/ui` |
+| Shared UI | `src/components/ui/PhotoStrip.tsx`, `PhotoThumb.tsx`, `PhotoAddTile.tsx`, `Lightbox.tsx` | Built for this feature; shown on `/ui` |
 
 ## Decisions worth knowing
 - **It replaces the old Groups page, which is switched off, not deleted** (`SWITCHES.oldGroupsPage`). The
@@ -94,7 +94,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   right; it scrolls sideways, and at its end a turning circle appears while six more arrive.
 - Tapping a picture darkens the screen and shows it whole, with its date and words beneath, an X, and
   arrows to the pictures either side (no arrow at the first and the last). Escape or the X closes it.
-- Someone in the group, and an admin, also see "Add a photo" (a form: the picture, a date, a few words;
+- Someone in the group, and an admin, also see a square with a + first in the strip (even with no pictures yet); it opens "Add a photo" below the strip (a form: the picture, a date, a few words;
   "Sending…" while it uploads, then "Photo added" and the picture first in the strip). Only an admin
   sees "Remove this photo" in the large view.
 - Someone who cannot add, looking at a group with no pictures, sees no Photos section at all.
@@ -191,7 +191,7 @@ arrows stay. At the last picture of the strip's loaded page a swipe left does no
 - A tap on a card opens the group's own page for everyone, sliding in from the right, shaped exactly like an
   event's page: the big picture (a people icon without one), then lines with icons (`ui/IconLine`): the clock
   (when it meets), the map pin (where, only while `SWITCHES.groupLocation` is on) and the phone (`PhoneNumber`),
-  then the notes and the group's pictures. An admin finds "Edit group" at the bottom, which opens the editor.
+  then the notes and the group's pictures. An admin finds a round blue pencil held under the top bar (like prayer's +), which opens the editor.
 - The address is `/groups/<id>/about` (`src/app/groups/[groupId]/about/page.tsx`), because `/groups/<id>` is
   the group's chat (switched off). It reads `group_directory()` like the Groups tab.
 - `GroupInfoSheet` is gone (the user: no more group pop-ups).

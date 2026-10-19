@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Button from "@/components/ui/Button";
 import Lightbox from "@/components/ui/Lightbox";
+import PhotoAddTile from "@/components/ui/PhotoAddTile";
 import PhotoStrip from "@/components/ui/PhotoStrip";
 import PhotoThumb from "@/components/ui/PhotoThumb";
 import Text from "@/components/ui/Text";
@@ -26,7 +27,8 @@ type Props = {
 };
 
 // A group's pictures inside its sheet: a strip that scrolls sideways and loads more at its end, the large
-// view a tap opens (with saving a picture to the phone), adding a picture (the group's people and managers) and removing one (managers).
+// view a tap opens (with saving a picture to the phone), adding a picture (the group's people and managers: a +
+// square first in the strip, the user 2026-10-19) and removing one (managers).
 // Nothing at all for a reader of a group that has no pictures.
 export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: Props) {
   const { t, language } = useLanguage(); // I18N
@@ -56,23 +58,15 @@ export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: P
     <div className="flex flex-col gap-3">
       <Text variant="small" tone="subtle">{t(STRINGS.photos)}</Text>
 
-      {photos.length > 0 && (
-        <PhotoStrip>
-          {photos.map((photo) => (
-            <PhotoThumb key={photo.id} src={photo.smallUrl} alt={altFor(photo)} onClick={() => setOpenId(photo.id)} />
-          ))}
-          {hasMore && <PhotoStripEnd onReached={loadMore} loadedSoFar={photos.length} />}
-        </PhotoStrip>
-      )}
-
-      {canAdd &&
-        (adding ? (
-          <AddPhotoForm onAdd={add} onDone={() => setAdding(false)} />
-        ) : (
-          <Button variant="quiet" onClick={() => setAdding(true)}>
-            {t(STRINGS.addPhoto)}
-          </Button>
+      <PhotoStrip>
+        {canAdd && <PhotoAddTile label={t(STRINGS.addPhoto)} onClick={() => setAdding(true)} />}
+        {photos.map((photo) => (
+          <PhotoThumb key={photo.id} src={photo.smallUrl} alt={altFor(photo)} onClick={() => setOpenId(photo.id)} />
         ))}
+        {hasMore && <PhotoStripEnd onReached={loadMore} loadedSoFar={photos.length} />}
+      </PhotoStrip>
+
+      {adding && <AddPhotoForm onAdd={add} onDone={() => setAdding(false)} />}
 
       {open && (
         <Lightbox

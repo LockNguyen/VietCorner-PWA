@@ -1,10 +1,11 @@
 "use client";
 
-import { Clock, MapPin, NotebookText, Phone, Users } from "lucide-react";
+import { Clock, MapPin, NotebookText, Pencil, Phone, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PhoneNumber from "@/components/PhoneNumber";
-import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
 import IconLine from "@/components/ui/IconLine";
+import Toolbar from "@/components/ui/Toolbar";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { publicFileUrl } from "@/lib/publicFileUrl";
 import { GO_FORWARD } from "@/lib/slide";
@@ -17,7 +18,7 @@ import GroupPhotos from "./GroupPhotos";
 
 type Props = {
   group: DirectoryGroup;
-  canManage: boolean; // an admin: an Edit button at the bottom, opening the group's editor
+  canManage: boolean; // an admin: a round pencil held under the top bar, opening the group's editor
 };
 
 // One group, as its own screen sliding in from the right, shaped exactly like an event's page (the user,
@@ -32,6 +33,19 @@ export default function GroupPage({ group, canManage }: Props) {
 
   return (
     <div className="flex flex-col gap-5 px-3 pt-3 pb-6">
+      {/* The same held round button as the prayer page's +, with a pencil (the user, 2026-10-19). */}
+      {canManage && (
+        <Toolbar>
+          <IconButton
+            tone="filled"
+            label={t(STRINGS.editGroup)}
+            onClick={() => router.push(`/groups/manage/${group.id}`, { transitionTypes: GO_FORWARD })}
+          >
+            <Pencil />
+          </IconButton>
+        </Toolbar>
+      )}
+
       <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-control bg-fill text-subtle">
         {picture ? <img src={picture} alt="" className="size-full object-cover" /> : <Users className="size-12" />}
       </div>
@@ -60,12 +74,6 @@ export default function GroupPage({ group, canManage }: Props) {
       </div>
 
       <GroupPhotos groupId={group.id} groupName={t(nameText(group))} canAdd={group.is_member} canRemove={false} />
-
-      {canManage && (
-        <Button variant="quiet" onClick={() => router.push(`/groups/manage/${group.id}`, { transitionTypes: GO_FORWARD })}>
-          {t(STRINGS.editGroup)}
-        </Button>
-      )}
     </div>
   );
 }

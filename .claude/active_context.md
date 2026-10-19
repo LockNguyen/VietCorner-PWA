@@ -534,6 +534,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 
 ## ➡️ Next 3 Micro-Steps
 00. User: in Vietnamese, glance over the new wording (sign-in errors, waiting screen, install guide, Prayer, assistant): strings pass done 2026-10-19, typechecked, not seen on a phone.
+0d. User: signed in, open a group page: as a member, a + square first in the photo strip opens the add form; as an admin, a round blue pencil under the top bar opens the editor (2026-10-19, typechecked only).
 1. User: run `docs/sql-to-run-2026-10-19.sql` in Supabase (auth links, avatars bucket, prayer view, people list),
    then `npm run test:rls`. Run it minutes before the deploy: the live code needs `login_handoffs`, this code
    `sign_in_links` (sign-in fails in between), and this code's Prayer tab is empty until the view has `author_avatar`.

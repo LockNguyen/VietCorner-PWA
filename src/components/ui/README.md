@@ -51,6 +51,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `Spinner` | The turning circle. Inline, so beside text it centres on the lowercase letters. | | |
 | `PhotoStrip` | A row of pictures that scrolls sideways and fades out at the right. Children are `PhotoThumb`s (and other `<li>`s). | | |
 | `PhotoThumb` | One small square picture in a strip, cropped to fill; a button. Three tenths of the strip wide, so a fourth shows its edge. | | `src`, `alt` |
+| `PhotoAddTile` | The first square in a strip, the size of a `PhotoThumb`, with a + that adds a picture; a button. | | `label` (read by screen readers) |
 | `Lightbox` | One picture, whole, over a darkened screen, with arrows to its neighbours and an X. Open while rendered; Escape closes. Children go under the caption. | | `src`, `alt`, `caption`, `labels`, `onPrevious`, `onNext`, `onClose` |
 
 ## Conventions the list relies on
