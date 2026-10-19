@@ -508,14 +508,33 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       icons instead of numbers, ••• first on iOS 26 Safari. Seen as Android at 375 px. NOT seen: the iPhone steps.
       Debt: a wrong account signed in in Safari has no way out on the guide (the user's choice).
 
+- [x] **Launch-day feedback (2026-10-19, the user's 8 points).** Built on branch `claude/nifty-curie-vqwvab`:
+      1. Events as photo cards (`ui/PhotoCard`, church picture, white text). 2. Staff page + Home tile above Admin
+      (`features/staff`, placeholders for Pastor Khai's number, photo and Vietnamese spelling). 3. No "(bạn)" on
+      my prayer requests. 4. Prayer toolbar held under the top bar. 5. Keyboard bug: cause = vaul lifts the sheet
+      by the keyboard's height while iOS scrolls to the field (double lift); fix = writing/editing a request are
+      screens (`/prayer/new`, `/prayer/<id>/edit`), rule recorded: no text field in a sheet. 6. Worship music
+      play/pause + 4 s swaying bubble (needs `public/audio/worship.mp3` from the user). 7. Same-day sign-in links
+      all work (`sign_in_links`, `/api/auth/link`, one device key per church day, `generateLink` at collection).
+      8. Settings headings big/bold with icons; avatar choose → crop (`react-easy-crop`) → save, shown on prayer and
+      the people list. Evidence: `npm test` 130/130, `npm run build` clean, new components seen on `/ui` at 375 px
+      (screenshots). NOT verified: anything signed in (no database in this container), the SQL, the sign-in end
+      to end, any iPhone (keyboard, music, cropper pinch).
+      Debt: chat avatars (B42); a rate limit on our link route (B43); an event's own 400 px picture is soft on a card.
+
 ## ➡️ Next 3 Micro-Steps
-1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
+1. User: run `docs/sql-to-run-2026-10-19.sql` in Supabase (auth links, avatars bucket, prayer view, people list),
+   then `npm run test:rls`. Run it minutes before the deploy: the live code needs `login_handoffs`, this code
+   `sign_in_links` (sign-in fails in between), and this code's Prayer tab is empty until the view has `author_avatar`.
+2. User: add `public/audio/worship.mp3` (a track the church may play), Pastor Khai's number, photo
+   (`public/images/staff/`) and the Vietnamese spelling of his name/title (`features/staff/directory.ts`).
+3. User + Claude on an iPhone: write and edit a prayer request (keyboard), play music, choose a picture, and
+   sign in by tapping an OLDER of two same-day emails.
+
+Older, still open: 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
    picture), Prayer bell, Admin → a person (a role switch, a group switch, back and in again).
-3. User: Supabase → URL Configuration: Site URL `https://vietcorners.netlify.app`, Redirect URLs include
-   `https://vietcorners.netlify.app/login/**`; then one sign-up and one password reset from an iPhone.
-
-Older, still open: 1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
+Even older: 1. User: Redirect URL `https://desktop-2bln504.tail714ada.ts.net:8443/login/**` (and check the Site URL is
    the Netlify address), the new "Confirm signup" template (auth README, Setup 3 and 5).
 2. User + Claude: one fresh account end to end on an iPhone (install → language → create → email → name →
    notifications → waiting) and one password reset; check "Save password?" appears on both phones.

@@ -18,3 +18,8 @@ export function formatLongDate(date: Date, language: Language): string {
     date.toLocaleDateString(LOCALES[language], { weekday: "long", day: "numeric", month: "long", timeZone: CHURCH_TIME_ZONE }),
   );
 }
+
+// "Chúa Nhật" / "Sunday": the day a card names, its date being in the heading above it.
+export function formatWeekday(date: Date, language: Language): string {
+  return withChurchSunday(date.toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: CHURCH_TIME_ZONE }));
+}

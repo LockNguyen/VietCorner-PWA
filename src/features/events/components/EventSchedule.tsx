@@ -16,7 +16,7 @@ import { formatLongDate } from "../formatting";
 import { nextOfEach, scheduleOf } from "../occurrences";
 import { STRINGS } from "../strings";
 import type { Occurrence, ScheduledEvent } from "../types";
-import EventRow from "./EventRow";
+import EventCard from "./EventCard";
 
 type Props = {
   events: ScheduledEvent[]; // as the page loaded them
@@ -57,11 +57,11 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
       {groupByDay(occurrences).map(([day, ofThatDay]) => (
         <section key={day}>
           <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
-          <ul>
+          <div className="flex flex-col gap-4 px-3">
             {ofThatDay.map((occurrence) => (
-              <EventRow key={occurrence.event.id} occurrence={occurrence} />
+              <EventCard key={occurrence.event.id} occurrence={occurrence} />
             ))}
-          </ul>
+          </div>
         </section>
       ))}
 

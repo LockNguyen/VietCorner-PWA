@@ -5,6 +5,8 @@ import BubbleRun from "@/components/ui/BubbleRun";
 import TimeLine from "@/components/ui/TimeLine";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
+import { AVATAR_BUCKET } from "@/features/profiles/types"; // PROFILES
+import { publicFileUrl } from "@/lib/publicFileUrl";
 import type { PersonGroup, WeekGroup } from "../grouping";
 import { STRINGS, weeksAgo } from "../strings";
 import type { PrayerRequest } from "../types";
@@ -34,15 +36,21 @@ export default function PrayerWeek({ week, canPrayFor, onPray, onManage }: Props
   }
 
   function nameOf(person: PersonGroup): string {
-    if (person.name === null) return t(STRINGS.anonymous);
-    return person.mine ? `${person.name} (${t(STRINGS.you)})` : person.name;
+    // No "(you)" after my own name: elderly members read it as a mistake in their name (the user, 2026-10-19).
+    return person.name ?? t(STRINGS.anonymous);
+  }
+
+  // A person's requests share an author, so the first one's picture is theirs. Anonymous ones have none.
+  function avatarOf(person: PersonGroup) {
+    const path = person.requests[0].author_avatar;
+    return <Avatar src={path ? publicFileUrl(AVATAR_BUCKET, path) : undefined} />;
   }
 
   return (
     <section className="flex flex-col gap-4 px-3">
       <TimeLine>{label()}</TimeLine>
       {week.people.map((person) => (
-        <BubbleRun key={`${person.name}-${person.mine}`} side="theirs" name={nameOf(person)} avatar={<Avatar />}>
+        <BubbleRun key={`${person.name}-${person.mine}`} side="theirs" name={nameOf(person)} avatar={avatarOf(person)}>
           {person.requests.map((request) => (
             <PrayerBubble
               key={request.id}

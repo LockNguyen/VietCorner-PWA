@@ -12,18 +12,20 @@ name), which can each be run again by themselves: that is how they are changed.
 ## Files
 | Layer | File | Job |
 |---|---|---|
-| Data | `schema.sql` | `profiles`, the trigger that makes a row per account, who reads names, `name_requests` with `set_my_name` and `approve_name_request`, DROPs |
-| Types | `types.ts` | `Profile` (my own), `Names` (others', by user id), `NameOutcome`, `NameRequest`, `MAX_NAME_LENGTH` |
+| Data | `schema.sql` | `profiles`, the trigger that makes a row per account, who reads names, `name_requests` with `set_my_name` and `approve_name_request`, the `avatars` bucket with `set_my_avatar` (section 6), DROPs |
+| Types | `types.ts` | `Profile` (my own), `Names` (others', by user id), `NameOutcome`, `NameRequest`, `MAX_NAME_LENGTH`, `AVATAR_BUCKET`, `AVATAR_SIDE` |
 | Text | `strings.ts` | The question, the field's label, the buttons |
-| Browser API | `api.ts` | `saveName` (POST `/api/names/request`), `approveNameRequest` (POST `/api/names/approve`), `declineNameRequest`, `getNames` |
-| Server reads | `server/queries.ts` | `getMyProfile`, `getNames`, `getMyRequestedName` (Settings), `getNameRequests` (Admin) |
+| Browser API | `api.ts` | `saveName` (POST `/api/names/request`), `approveNameRequest` (POST `/api/names/approve`), `declineNameRequest`, `getNames`, `setAvatar`, `removeAvatar` |
+| Server reads | `server/queries.ts` | `getMyProfile`, `getNames`, `getMyRequestedName` and `getMyAvatar` (Settings), `getNameRequests` (Admin) |
 | Server logic | `server/nameRequests.ts` | `setMyName`, `approveNameRequest`: the database function as the **user**, then the notification |
 | Server logic | `server/notifyName.ts` | **Admin** client: managers hear of a request, the person hears of an approval (`// PUSH`, `// I18N`, `// GROUPS`) |
 | Routes | `src/app/api/names/request/route.ts`, `approve/route.ts` | Verify (401) → validate (400) → the server function (403 when refused) |
+| State | `hooks/useAvatarChange.ts` | Choosing my picture: the chosen file, its framing, crop + save, Cancel, Remove |
 | State | `hooks/useNames.ts` | The names on a screen that keeps receiving people (a chat): fetches whoever is new, once |
 | UI | `components/NameStep.tsx` | The question, shown by the layout in place of every screen until answered |
 | UI | `components/NameSection.tsx` | The Settings block: my name, Save, and the name I asked for while it waits |
 | UI | `components/NameRequestAdmin.tsx`, `NameRequestRow.tsx` | The admin section "Names waiting for approval"; one request with Approve and Decline |
+| UI | `components/AvatarSection.tsx` | The Settings block: my picture, choose a file, frame it in a circle (`ui/ImageCropper`), Use / Cancel, Remove |
 | UI | `components/NameForm.tsx` | The field and its button, used by both |
 | Shell | `src/app/layout.tsx`, `src/app/settings/page.tsx`, `src/app/admin/page.tsx` | Lines marked `PROFILES` |
 
@@ -96,3 +98,22 @@ The sign-up screen asks for the name with the email and password. It travels as 
 metadata, and `create_profile()` (schema.sql, section 2) saves it as the name at once: a new account is in
 no group, where no approval is needed. Blank or longer than 60 characters, it falls back to the email's
 stand-in and `NameStep` asks as before. **Needs section 2 run again** (`create or replace`, safe to repeat).
+
+## My picture (2026-10-19, the user)
+- **Setup:** `schema.sql` section 6 (column, bucket, storage policy, `set_my_avatar`), then
+  `prayer/schema.sql` 5b and `people/schema.sql` 3, which read the new column.
+- **Flow:** Settings → Ảnh đại diện → choose a file → the picture fills a dark box with a circle over it: drag
+  to move, pinch to zoom (`react-easy-crop`) → "Dùng ảnh này" crops the circle's square on the phone to a
+  400 px JPEG (`lib/cropImage.ts`), uploads it to `avatars/<my id>/<random>.jpg`, points my profile at it
+  (`set_my_avatar`), erases the old file, and the page reloads showing it. "Hủy" puts the choice aside;
+  "Xóa ảnh" (small red line) goes back to the default figure.
+- **Where it shows:** Settings (96 px), beside my requests on the Prayer tab and in the Admin people list
+  (32 px). Not on group cards (initials) or in chat (switched off).
+- **Decisions:** no approval for a picture (unlike a name); a public bucket, as for event pictures (the
+  architecture's Key Decisions); the storage policy keys on the folder name, so nobody writes into another's
+  folder, and `set_my_avatar` refuses a path outside my own folder.
+- **Edge cases:** a picture taken sideways is turned upright (`createImageBitmap` reads the camera's note,
+  as the preview does). A failed upload leaves the old picture and the chooser open, with the banner. A file
+  left behind by a failure in between is on no screen.
+- **Seen:** the cropper on `/ui` at 375 px, reporting the kept square after a drag. **NOT seen:** Settings
+  signed in, an upload, a pinch on a real phone.

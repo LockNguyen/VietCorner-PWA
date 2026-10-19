@@ -14,9 +14,14 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `TabBar` | The bar at the bottom: an icon and a word per destination | | `tabs`: `{ href, label, icon, active }[]` |
 | `IconLink` | A link shown as an icon alone, on the top bar | | `label` (read by screen readers) |
 | `PhotoTile` | A large tile that opens an area: a photo under a dark veil (`src`), or flat grey without one | | `title`, `src`; children are the artwork above the title |
+| `PhotoCard` | A large card that opens one thing (an event): a photo under a veil darkest at the bottom, a bold white title, a semibold line, plainer lines | | `src`, `title`, `subtitle`, `details` (lines); a `Link` |
+| `PersonCard` | One person on a card: their picture at the left, the name in bold, children under it (a phone number). Not itself a button | | `picture`, `name` |
+| `Toolbar` | A row of buttons at the right end, held just under the top bar while the screen scrolls (`sticky`, utility `top-under-bar`) | | |
+| `NudgeBubble` | A blue speech bubble under a button, its tail pointing up at it; fades in, then sways sideways. Never takes a tap. Put it in a `relative` box around the button | | |
+| `ImageCropper` | Framing a picture in a circle: drag to move, pinch to zoom (on `react-easy-crop`). Holds no state: the caller passes `position` and `zoom` and hears the kept square | | `src`, `position`, `zoom`, `onPositionChange`, `onZoomChange`, `onCropped` |
 | `ListRow` | One line of any list: picture, title over subtitle, something at the right end. Renders its own `<li>`; put it in a `<ul>`. | `tone`: `normal`, `off` (called off: grey, struck through) | `title`, `subtitle`, `leading`, `trailing`, `current`, and `href` (a link) or `onClick` (a button); either adds a chevron unless `trailing` is passed (`null` for nothing); the `current` one of a set of choices ends in a tick |
 | `Thumbnail` | The picture at the start of a row: `src` cropped to fill the tile, or a tinted tile holding an icon or a few characters | | `src` |
-| `SectionHeading` | The small grey heading above a group of rows | | |
+| `SectionHeading` | The heading above a group of rows | `variant`: `small` (grey, 14: a list's days and groups), `large` (bold, 20: Settings, the staff page) | `icon`: a lucide icon before the words, in blue |
 | `EmptyState` | What a screen shows with nothing to list | | `message`; children are the next step |
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
 | `Field` | A label above one control; under it, what is wrong, once the form has been tried | | `label`, `problem` |
@@ -34,7 +39,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `BilingualInput` | One text in two languages as one grey box: the first language on top, a hairline, the other below; an empty half shows its language | | `top`, `bottom` (`value`, `onChange`, `placeholder`, `label`), `rows` |
 | `LogoMark` | The stand-in logo: the app's own icon file | | |
 | `RoundIcon` | An icon or a short word in a light grey circle, as the iPhone draws its toolbar buttons (the install steps). Decorative | | |
-| `Avatar` | A person's picture: the same default one for everybody until pictures can be set | | |
+| `Avatar` | A person's picture in a circle: their own (`src`), or the same default figure | `size`: `small` (32, beside a name), `large` (96, Settings, a staff card) | `src` |
 | `Bubble` | One message, at most 70% wide | `tone`: `mine`, `theirs`, `failed` | |
 | `BubbleRun` | One speaker's messages in a row: the name above, the avatar beside the last. Runs are 16 apart (the parent's gap). | `side`: `mine`, `theirs` | `name`, `avatar` |
 | `TimeLine` | A small centred label between messages: a time, or a week | | |
@@ -57,7 +62,7 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
   plain) depending on what it does. Its props are the short list in the table.
 - `TextInput`, `TextArea` and `Select` share one look, the constant in `controlLook.ts`. It is the only file
   here that is not a component.
-- `Sheet` and `Lightbox` are the only components built on a library (`@radix-ui/react-dialog`): keeping focus inside an
+- `Sheet` (`vaul`), `ImageCropper` (`react-easy-crop`) and `Lightbox` are the only components built on a library (`@radix-ui/react-dialog`): keeping focus inside an
   overlay and telling a screen reader about it is easy to get subtly wrong by hand.
 - Which button: `primary` for the one main action of a screen or sheet, `danger` for what cannot be undone
   from the app, `quiet` for everything else, `text` for backing out.
@@ -81,3 +86,5 @@ right edges with the caption between them, and closes on a tap on the dark aroun
 2026-10-17: `Lightbox` also turns on a swipe: left = next picture, right = the one before (`hooks/useSwipe`, at
 least 50 px and more sideways than up or down). Since the same day it drags: the picture follows the thumb, slides
 away and in, springs back, and moves a third as far where there is no picture that way.
+2026-10-19: `Sheet` never holds a text field: on an iPhone the keyboard pushed the sheet off the top (vaul lifts it
+by the keyboard's height while iOS also scrolls to the field). A form with typing is a screen of its own.

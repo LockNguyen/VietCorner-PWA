@@ -6,7 +6,7 @@ import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useConfirmTap } from "@/lib/useConfirmTap";
 import { STRINGS } from "../strings";
 
-type Action = "answered" | "edit" | "delete";
+type Action = "answered" | "delete";
 type Props = { pending: Action | null; onAnswered: () => void; onEdit: () => void; onDelete: () => void };
 
 // A request's three options, quietest last: "answered" in blue, "edit", and "delete" as a small red line

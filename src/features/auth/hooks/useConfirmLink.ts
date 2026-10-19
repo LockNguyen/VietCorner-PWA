@@ -1,32 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { leaveSignIn, signInWithLink } from "../api";
-import { attemptOf } from "../handoff";
-import { clearPendingSignIn, readPendingSignIn } from "../storage";
+import { collectSignIn, leaveSignIn, signInWithLink } from "../api";
+import { hashOf } from "../handoff";
+import { clearPendingSignIn, readTodaysClaimKey } from "../storage";
 
 // Where the opened link stands:
 //   checking  working out which browser this is
 //   ask       another browser asked: wait for a tap before handing the sign-in over
 //   left      handed over; the person goes back to the app
-//   failed    the link is incomplete, too old or already used
+//   failed    the link is incomplete, from another day, or already used
 export type ConfirmState = "checking" | "ask" | "left" | "failed";
 
-// What an opened sign-in link does. In the browser that asked (it holds the key the link names) it signs in
-// right here. In any other browser, which is every iPhone, where links open in Safari and not in the
+// What an opened sign-in link does. In the browser that asked today (it holds the key the link names) it
+// signs in right here. In any other browser, which is every iPhone, where links open in Safari and not in the
 // installed app, it asks for one tap, then hands the sign-in to the one that asked.
-export function useConfirmLink(attempt: string | undefined, tokenHash: string | undefined) {
+export function useConfirmLink(attempt: string | undefined, linkKey: string | undefined) {
   const [state, setState] = useState<ConfirmState>("checking");
 
   useEffect(() => {
     async function decide() {
-      if (!attempt || !tokenHash) return setState("failed");
+      if (!attempt || !linkKey) return setState("failed");
 
-      const pending = readPendingSignIn();
-      const askedHere = pending !== null && (await attemptOf(pending.claimKey)) === attempt;
+      const claimKey = readTodaysClaimKey();
+      const askedHere = claimKey !== null && (await hashOf(claimKey)) === attempt;
       if (!askedHere) return setState("ask");
 
       try {
+        await leaveSignIn(attempt, linkKey);
+        const tokenHash = await collectSignIn(claimKey);
+        if (!tokenHash) throw new Error("collected meanwhile by the app"); // another tab of this browser won
         await signInWithLink(tokenHash);
         clearPendingSignIn();
         window.location.assign("/"); // a full page load, so the proxy sees the new login cookie
@@ -35,12 +38,12 @@ export function useConfirmLink(attempt: string | undefined, tokenHash: string | 
       }
     }
     decide();
-  }, [attempt, tokenHash]);
+  }, [attempt, linkKey]);
 
   // Runs on a tap, never by itself: a mail scanner that opens links must not be able to confirm anything.
   async function confirm() {
     try {
-      await leaveSignIn(attempt!, tokenHash!);
+      await leaveSignIn(attempt!, linkKey!);
       setState("left");
     } catch {
       setState("failed");

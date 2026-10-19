@@ -183,12 +183,54 @@ $$;
 revoke execute on function public.approve_name_request (uuid) from public, anon;
 grant execute on function public.approve_name_request (uuid) to authenticated;
 
--- 6. Undo (removing the foundation) ---------------------------------------
+-- 6. A picture of yourself (2026-10-19) -----------------------------------
+-- This section can be run again by itself. Run it before the sections that show the picture:
+-- features/prayer/schema.sql 5b and features/people/schema.sql 3.
+-- The file lives in Storage, in a folder named after its owner's id; the profile keeps its path. A new
+-- picture is a new file with a new name, so a phone that kept the old one never shows it in place of the new.
+alter table public.profiles add column if not exists avatar_path text check (char_length(avatar_path) <= 200);
+
+-- A PUBLIC bucket, as the events' pictures are: a face beside a name on every prayer request, and a public
+-- address lets the phone keep it instead of asking for a signed one per person on every screen. Anyone holding
+-- a file's address can open it; the address is not guessable (two random ids). JPEG only, 200 KB at most:
+-- Storage enforces both, whatever a browser sends.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 204800, array['image/jpeg'])
+on conflict (id) do update
+set public = excluded.public, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+-- Each person puts files in, lists and takes out only their own folder. Reading through the public address
+-- needs no policy.
+drop policy if exists "People manage their own picture" on storage.objects;
+create policy "People manage their own picture" on storage.objects
+  for all to authenticated
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text)
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = (select auth.uid())::text);
+
+-- Points my profile at a file in my own folder, or at none (null). A function, as for the name (section 5):
+-- the table has no update grant. Nobody needs to approve a picture (the user, 2026-10-19).
+create or replace function public.set_my_avatar(path text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if path is not null and split_part(path, '/', 1) <> auth.uid()::text then
+    raise exception 'Not your picture';
+  end if;
+  update public.profiles set avatar_path = path where user_id = auth.uid();
+end;
+$$;
+
+revoke execute on function public.set_my_avatar (text) from public, anon;
+grant execute on function public.set_my_avatar (text) to authenticated;
+
+-- 7. Undo (removing the foundation) ---------------------------------------
 -- The prayer feed reads names: recreate `prayer_feed` without them first (features/prayer/schema.sql).
 -- drop trigger if exists create_profile_for_new_user on auth.users;
 -- drop function if exists public.create_profile ();
 -- drop function if exists public.approve_name_request (uuid);
 -- drop function if exists public.set_my_name (text);
+-- drop function if exists public.set_my_avatar (text);
+-- drop policy if exists "People manage their own picture" on storage.objects;
+-- delete from storage.buckets where id = 'avatars'; -- empty it first: Storage → avatars
 -- drop table if exists public.name_requests;
 -- drop table if exists public.profiles;
 -- drop function if exists public.shares_a_group_with (uuid);

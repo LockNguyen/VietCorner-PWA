@@ -1,5 +1,6 @@
 "use client";
 
+import { UserRound } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Text from "@/components/ui/Text";
 import { COMMON } from "@/features/i18n/common"; // I18N
@@ -15,7 +16,7 @@ export default function NameSection({ name, requestedName }: Props) {
 
   return (
     <section>
-      <SectionHeading>{t(STRINGS.nameField)}</SectionHeading>
+      <SectionHeading variant="large" icon={<UserRound />}>{t(STRINGS.nameField)}</SectionHeading>
       <div className="flex flex-col gap-2 px-3">
         <NameForm name={name} submitLabel={t(COMMON.save)} />
         {requestedName && (

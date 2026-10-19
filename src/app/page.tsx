@@ -5,7 +5,7 @@ import { getMyPermissions } from "@/features/permissions/server/queries"; // PER
 import { managesSomething } from "@/features/permissions/types"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 
-// Home: where the app opens. Three tiles, and a fourth (Admin) for whoever manages something.
+// Home: where the app opens. A tile for each area and Staff, and one more (Admin) for whoever manages something.
 export default async function HomePage() {
   const permissions = await getMyPermissions(await createClient()); // PERMISSIONS: read from the token, no trip
 

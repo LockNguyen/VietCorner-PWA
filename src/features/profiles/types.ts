@@ -19,5 +19,12 @@ export type NameRequest = {
   requested_at: string;
 };
 
+// The public storage bucket people's pictures live in (schema.sql section 6), each in a folder named after its owner.
+export const AVATAR_BUCKET = "avatars";
+
+// why: the largest circle a picture is shown in is 96 points; 400 pixels keeps it sharp on a 3x screen at
+// about 30 KB, well under the bucket's 200 KB limit.
+export const AVATAR_SIDE = 400;
+
 // why: the database rejects anything longer (schema.sql); the field stops the typing at the same number.
 export const MAX_NAME_LENGTH = 60;

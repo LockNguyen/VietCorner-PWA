@@ -7,6 +7,7 @@ export type PrayerRequest = {
   is_mine: boolean; // decided by the database, so the author's id never reaches the browser
   prayer_count: number | null; // how many prayed: given to the author only (schema.sql 5b), null for everyone else
   author_name: string | null; // null when the request is anonymous
+  author_avatar: string | null; // their picture's path in the profiles' AVATAR_BUCKET; null when anonymous or none
 };
 
 // What the composer sends. Who wrote it comes from the login token, never from here.
@@ -16,7 +17,7 @@ export type NewPrayerRequest = {
 };
 
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.
-export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count";
+export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count, author_avatar";
 
 // why: enough to fill several screens of a phone, small enough to arrive fast on a slow connection.
 // Older requests load when the reader reaches the bottom.
@@ -24,6 +25,13 @@ export const PAGE_SIZE = 20;
 
 // why: the database rejects anything longer (schema.sql); the composer stops the typing at the same number.
 export const MAX_BODY_LENGTH = 1000;
+
+// The soft worship music the Prayer tab can play while members pray: one file the church has the rights to,
+// added by hand (the prayer README). Looped, so a long prayer never ends in silence.
+export const WORSHIP_MUSIC_URL = "/audio/worship.mp3";
+
+// why: long enough to read the first requests, soon enough to still be on the tab (the user, 2026-10-19).
+export const MUSIC_NUDGE_AFTER_MS = 4000;
 
 // --- Reminders (admin configuration) ---------------------------------------------------------------------
 

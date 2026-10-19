@@ -64,6 +64,7 @@ src/
   lib/useFresh.ts    A list shows what the page loaded, then re-reads itself on arrival and on return to the app.
   components/RefreshOnArrival.tsx  An admin editor (a person, a group) reloads its page on arrival: its switches must not show a kept copy.
   lib/shrinkImage.ts   A photo → a smaller JPEG in the browser, before upload.
+  lib/cropImage.ts     The square a person framed → a small JPEG in the browser (their picture).
   lib/publicFileUrl.ts The address of a file in a public storage bucket.
   lib/useWhenVisible.ts  Calls back when an element scrolls into view: "load more" (prayer, group pictures).
   lib/useScrollToEnd.ts  Keeps the newest message of a conversation in view (chat, the assistant).
@@ -195,15 +196,16 @@ told once per account, the person is told when approved. No tables: "waiting" is
 ### 6.1 auth → [README](../src/features/auth/README.md)
 Email only, no passwords (2026-10-17). `/login` opens on sign-in (no bar): the address, "Sign in", and
 "Create new account?" under it. An address with no account (`account_exists()`) gets the banner "Account not
-created yet. Create new account?" and no email; otherwise Supabase emails a sign-in link (`signInWithOtp`,
-never creating an account). "Create an account" asks name and email and sends the same link (the name goes in
-as metadata, saved by the profiles trigger). An iPhone opens links in Safari, which shares no login with the
-Home Screen app, so the link hands the sign-in to the device that asked: the app keeps a secret key and puts
-only its hash in the link; the browser that opens the link leaves Supabase's one-time token under that hash,
-after one tap ("Sign in"); the app collects it with the key and signs in. Sessions live in `sb-*`
-cookies for up to 400 days, renewed on every visit; `src/proxy.ts` refreshes them and redirects logged-out
-visitors. Table: `login_handoffs` (server-only).
-Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the README says what guards them).
+created yet. Create new account?" and no email; otherwise our server has Supabase email a sign-in link
+(`POST /api/auth/link` → `signInWithOtp`, never creating an account). "Create an account" asks name and email
+and sends the same link (the name goes in as metadata, saved by the profiles trigger). An iPhone opens links in
+Safari, which shares no login with the Home Screen app, so the link hands the sign-in to the device that asked:
+the app keeps a secret key (one per church day) and puts only its hash in the link; our server adds a key of its
+own that only the email carries. One tap ("Sign in") on the link's page marks it tapped; the app collects with
+its key and gets a fresh one-time token (`generateLink`). Every link of the same church day works, even after
+newer ones were sent (2026-10-19). Sessions live in `sb-*` cookies for up to 400 days, renewed on every visit;
+`src/proxy.ts` refreshes them and redirects logged-out visitors. Table: `sign_in_links` (server-only).
+Routes: `POST /api/auth/link`, `/handoff`, `/claim` (none has a user to verify; the README says what guards them).
 
 ### 6.13 install → [README](../src/features/install/README.md)
 `/login` in a browser tab shows how to put the app on the Home Screen before the setup: Chrome's own
@@ -248,6 +250,10 @@ with `groups.manage` approves in the Admin tab, so nobody can take another's nam
 Routes: `POST /api/names/request`, `POST /api/names/approve` (each notifies).
 Names are looked up by user id, never copied onto a message: pages call `getNames`, chat keeps up with new
 senders through `useNames`, and the prayer feed joins them in its view. Tables: `profiles`, `name_requests`.
+A picture (2026-10-19): chosen in Settings, framed in a circle (`ui/ImageCropper`, drag and pinch), cropped to a
+400 px JPEG on the phone (`lib/cropImage.ts`), saved to the public bucket `avatars` in the owner's folder and
+pointed at by `profiles.avatar_path` through `set_my_avatar`. Shown beside prayer requests (`prayer_feed.author_avatar`,
+null when anonymous) and in the Admin people list (`people_list().avatar_path`).
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
@@ -266,7 +272,9 @@ and soft-deleted rows are excluded by the policy. Whoever holds `events.manage` 
 cancels from the Admin tab, where each event opens its own screen (`/admin/events/<id>`, or `/new`): one date (undoable), or the whole event for good, which members then see struck
 through for a week. Cancelling goes through a route; its push to the church, and the reminders before an event, are
 switched off for now (`eventChangePush`, `eventReminders`). Every date and time is church time (`America/New_York`), computed in
-one file, `churchTime.ts`.
+one file, `churchTime.ts`. The schedule shows each event as a card (`ui/PhotoCard`, 2026-10-19): its own
+picture, or the church's (`public/images/home/events.png`), darkened, with the title, "weekday · time", the
+place and the contact number in white.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
 The church's groups and who is in which: `groups` and `group_members`. Since 2026-10-12 only chat shares
@@ -290,7 +298,17 @@ the `prayer_feed` view, which leaves out who wrote an anonymous request. Praying
 `pray_for_request` function adds exactly one, then the author would be told by push ("N people prayed for you", switched off:
 `prayedForPush`); the count is shown nowhere. The one-hour pause between prayers is a timestamp on the device, not a timer.
 Authors edit, delete, or mark a request answered; an answered one leaves the list but stays in the table.
+Writing and editing a request are screens of their own (`/prayer/new`, `/prayer/<id>/edit`; 2026-10-19: the
+iPhone keyboard pushed a sheet with a text field off the top). Above the list, held under the top bar, a
+toolbar: the admin's bell, play/pause for worship music (`public/audio/worship.mp3`, looped, stopped on leaving
+the tab), and the +. After 4 seconds on the tab a bubble under play asks "Bạn có muốn cầu nguyện bây giờ?" until
+the music is first played.
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
+
+### 6.15 staff → [README](../src/features/staff/README.md)
+Who the church's staff are: a page (`/staff`) opened from a tile on Home, not a tab. Each person is their role
+as a heading, then a card with their photo, name and number (tap: call, text or copy, `components/PhoneNumber`).
+A fixed list in `directory.ts`; photos in `public/images/staff`. No data, no server code.
 
 ### 6.7 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -312,12 +330,13 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `storage.objects`, buckets `event-thumbnails`, `group-thumbnails` | events, groups | The picture that starts a row. **Public** to read by address; JPEG only, 200 KB at most; written, listed and erased only with `events.manage` / `groups.manage`. |
 | `storage.objects`, bucket `group-photos` | group-info | The pictures' files, private: JPEG only, 1 MB at most. Read (to sign an address) by approved members; uploaded and erased under the same rules as the rows (the group is read from the file's folder name). |
 | `messages` | chat | Members read; members insert as themselves; in the Realtime publication |
-| `login_handoffs` | auth | A sign-in waiting to be collected by the device that asked: the hash of that device's key, and the link's token. **Server-only:** no grants, no policies. Deleted when collected, or after an hour. |
+| `sign_in_links` | auth | Every sign-in link emailed today: the hash of the key only that email carries, the asking device's attempt, the address, the end of the church day, and when it was tapped. **Server-only:** no grants, no policies. A device's rows are deleted when it collects; past days' rows by the next link sent. Replaced `login_handoffs` (2026-10-19). |
 | `push_subscriptions` | push | Users manage their own rows; the admin client reads all to send pushes |
 | `push_sent_once` | push | One row per scheduled send already made, by key. **Server-only**; written by `claim_push_once`. |
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
-| `profiles` | profiles | One row per account: the name others see. Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; no direct write: `set_my_name` and `approve_name_request` change it; nobody inserts or deletes. |
+| `profiles` | profiles | One row per account: the name others see, and `avatar_path` (their picture, or null). Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; no direct write: `set_my_name`, `approve_name_request` and `set_my_avatar` change it; nobody inserts or deletes. |
+| `storage.objects`, bucket `avatars` | profiles | People's pictures. **Public** to read by address; JPEG only, 200 KB at most; each person writes, lists and erases only the folder named after their own id. |
 | `name_requests` | profiles | A name someone in a group asked for. The owner reads their own; `groups.manage` reads all, declines (delete) and approves (function). Written only by `set_my_name`. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
 | `events` | events | When an event happens, and its picture's path (`thumbnail_path`). Always church-wide; `group_id` is unused. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
@@ -325,7 +344,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
 | `prayer_requests` | prayer | Members insert (2 columns; `group_id` is unused), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
-| `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name (`profiles`), without the author of an anonymous one and without the count. |
+| `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name and picture (`profiles`), without either for an anonymous one, and the count for the author only. |
 | `prayer_reminders` | prayer | A weekly nudge to the whole church, several allowed (rows that still name a group are never sent). Read and written only with `prayer.reminders`. |
 
 Every table a member can reach also carries the restrictive policy "Approved accounts only"
@@ -390,6 +409,12 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Admin tools on their own tabs; the Admin tab = waiting lists + everyone (2026-10-14) | Each thing is managed where it lives; a person's rights and groups in one place | Events with no coming date can no longer be reached to edit |
 | Sheets on `vaul`, at most 60% tall, closing by sliding away (swipe down too) | Feels like the phone's own sheets; the X never leaves a thumb's reach | One more library; the slide-out is timed by us (500 ms), since vaul reports it only for closes it starts |
 | Big editors are screens, sheets only for short things | A long editor in 60% of the screen scrolls forever | More screens and routes |
+| A text field never goes in a sheet; writing gets its own screen (2026-10-19, the prayer request) | iOS scrolls the page up to show a focused field while vaul lifts the bottom sheet by the keyboard's height: the sheet went off the top (picture from a member). A field at the top of a plain page is never covered | One more screen and a slide per request written |
+| Every sign-in link of the same church day works (2026-10-19, the user) | Members ask twice, Gmail folds the emails together and hides one; a tapped older link left the app waiting forever. One device key per day, and our own key per email, so a newer email no longer cancels an older one | A link lives until midnight at church instead of an hour; the server sends the email (a route) and makes the token at collection (`generateLink`, service role) |
+| Pictures of people in a public bucket (`avatars`, 2026-10-19) | A face beside each request: a public address the phone keeps, no signing per person per screen | Anyone holding a file's address can open it (it is two random ids); group photos stay private |
+| Cropping on `react-easy-crop` (2026-10-19) | Dragging and pinching a picture by hand, on every phone, is easy to get subtly wrong | One more library (no dependencies but one tiny one) |
+| Staff are a fixed list in code (2026-10-19, the user) | A few people who change rarely: a line of code beats a table, rules and an editor | A code change and a deploy to change staff |
+| Worship music is one file the church supplies (`public/audio/worship.mp3`) | Only a track the church has the rights to may be played | Until it is added, Play says the music could not play |
 | The author sees how many prayed ("3 🙏", `prayer_feed.prayer_count` for the author only) (2026-10-14) | The user wants people to see the prayers their request received | Reverses the 2026-10-06 choice; still nobody else sees a count |
 | Group cards show members' initials, not names (`group_member_initials`) | The circles need someone's presence, not who they are; a member may not read another group's members | Two people with the same initials look alike |
 | One role per permission, toggled per person | An admin hands out one task at a time; rights stay roles | Four more roles to understand |
@@ -591,3 +616,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-17: the phone number sits level with its icon (`ui/Button` `inline` keeps its 48 px tap area with `-my-3` instead of pushing the line down; measured within 2 px); notes (group) and description (event) are icon lines too (`NotebookText`).
 - 2026-10-17: the tab bar slides only to and from Home (the user): from Home a tab slides in, to Home it slides away, an inner screen (an event's page) to its own tab slides away, and between two tabs nothing moves (`AppTabs` `direction`).
 - 2026-10-17: the install guide in the clean look (the user): full screen (no tab bar, no sign-out), logo and bold heading, steps as the button to look for in a grey circle (`ui/RoundIcon`, `InstallStep`), no numbers; iOS 26 Safari gets a first "•••" step (`device.ts` `hasGlassToolbar`, tested). `SignOutButton` lost its `variant`. Trade-off: the 2026-10-14 way out for a wrong account in Safari is gone.
+- 2026-10-19: launch-day feedback (the user). Events are cards (`ui/PhotoCard`: the event's picture or the church's, darkened, white title / "weekday · time" / place / contact; `EventRow` → `EventCard`, `formatWeekday`). Staff page (`features/staff`, `/staff`, a Home tile above Admin; `ui/PersonCard`, `ui/Avatar` `large` + `src`). Prayer: no "(bạn)" after my own name; a sticky toolbar (`ui/Toolbar`, utility `top-under-bar`) with the bell, play/pause worship music (`useWorshipMusic`) and +; after 4 s a swaying bubble under play (`ui/NudgeBubble`, `useShowAfter`); writing and editing a request moved from sheets to `/prayer/new` and `/prayer/<id>/edit` (`useRequestWriting`; `post`/`edit` left `usePrayerFeed`) because the iPhone keyboard pushed the sheet off the screen. Settings headings big and bold with an icon (`ui/SectionHeading` `variant="large"`, `icon`). My picture in Settings: choose, frame, crop, save (`profiles` `AvatarSection`, `useAvatarChange`, `setAvatar`/`removeAvatar`, `ui/ImageCropper` on `react-easy-crop`, `lib/cropImage.ts`), shown on prayer requests and in the people list. Sign-in: every link of the same church day works (`sign_in_links` replaces `login_handoffs`; `POST /api/auth/link`; `storage.todaysClaimKey`; `handoff.ts` `newSecret`/`hashOf`; `churchTime.endOfChurchDay`). `npm test` 130/130, build clean; new components seen on `/ui` at 375 px. NOT run: any of the SQL, the sign-in end to end, an iPhone. Needs SQL: `auth/schema.sql` 1-2, `profiles/schema.sql` 6, then `prayer/schema.sql` 5b and `people/schema.sql` 3.

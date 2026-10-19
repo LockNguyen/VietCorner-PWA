@@ -1,22 +1,21 @@
 "use client";
 
-import { Bell, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GO_FORWARD } from "@/lib/slide";
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
-import IconButton from "@/components/ui/IconButton";
-import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { Text } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { byWeekThenPerson } from "../grouping";
 import { usePrayerCooldown } from "../hooks/usePrayerCooldown";
 import { usePrayerFeed } from "../hooks/usePrayerFeed";
+import { useShowAfter } from "../hooks/useShowAfter";
+import { useWorshipMusic } from "../hooks/useWorshipMusic";
 import { STRINGS } from "../strings";
-import type { PrayerRequest } from "../types";
+import { MUSIC_NUDGE_AFTER_MS, type PrayerRequest } from "../types";
 import OlderRequestsMarker from "./OlderRequestsMarker";
-import PrayerComposer from "./PrayerComposer";
+import PrayerToolbar from "./PrayerToolbar";
 import PrayerWeek from "./PrayerWeek";
 import RequestOptions from "./RequestOptions";
 
@@ -26,16 +25,17 @@ type Props = {
   canManageReminders: boolean; // an admin: a bell beside the + opens the weekly reminders
 };
 
-// The Prayer tab: the button that adds a request, then every request in the church, by week and by person.
-// It connects the two hooks to the components below it; each of those only renders.
+// The Prayer tab: the toolbar (music, and the + that opens the screen for a new request), then every request
+// in the church, by week and by person. It connects the hooks to the components below it; those only render.
 export default function PrayerBoard({ initialRequests, userId, canManageReminders }: Props) {
   const { t } = useLanguage(); // I18N
   const router = useRouter();
   const feed = usePrayerFeed(initialRequests);
   const cooldown = usePrayerCooldown(userId);
   const showBanner = useBanner();
+  const music = useWorshipMusic();
+  const stayed = useShowAfter(MUSIC_NUDGE_AFTER_MS);
   const [managing, setManaging] = useState<PrayerRequest | null>(null); // whose options are open
-  const [writing, setWriting] = useState(false); // the sheet for a new request is open
 
   // Says how an action went, then passes its answer on. `done` is left out where the screen already shows it.
   async function report(action: Promise<boolean>, done?: Text): Promise<boolean> {
@@ -52,18 +52,22 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
+  async function toggleMusic() {
+    if (!(await music.toggle())) showBanner({ kind: "error", message: t(STRINGS.musicFailed) });
+  }
+
+  const open = (href: string) => router.push(href, { transitionTypes: GO_FORWARD });
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex justify-end gap-3 px-3 pt-2">
-        {canManageReminders && (
-          <IconButton label={t(STRINGS.remindersHeading)} onClick={() => router.push("/prayer/reminders", { transitionTypes: GO_FORWARD })}>
-            <Bell />
-          </IconButton>
-        )}
-        <IconButton tone="filled" label={t(STRINGS.addRequest)} onClick={() => setWriting(true)}>
-          <Plus />
-        </IconButton>
-      </div>
+      <PrayerToolbar
+        canManageReminders={canManageReminders}
+        playing={music.playing}
+        nudging={stayed && !music.started} // once the music has played, the hint has done its job
+        onReminders={() => open("/prayer/reminders")}
+        onToggleMusic={toggleMusic}
+        onAdd={() => open("/prayer/new")}
+      />
 
       {feed.requests.length === 0 ? (
         <EmptyState message={t(STRINGS.emptyState)} />
@@ -75,15 +79,10 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
 
       {feed.hasMore && <OlderRequestsMarker onReached={() => report(feed.loadOlder())} loadedSoFar={feed.requests.length} />}
 
-      {writing && (
-        <PrayerComposer onPost={(request) => report(feed.post(request), STRINGS.shared)} onClose={() => setWriting(false)} />
-      )}
-
       {managing && (
         <RequestOptions
-          request={managing}
           onAnswered={() => report(feed.answer(managing.id), STRINGS.markAnswered)}
-          onEdit={(body) => report(feed.edit(managing.id, body), COMMON.saved)}
+          onEdit={() => open(`/prayer/${managing.id}/edit`)}
           onDelete={() => report(feed.remove(managing.id), STRINGS.deleted)}
           onClose={() => setManaging(null)}
         />

@@ -1,38 +1,50 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { attemptOf } from "../handoff";
+import { hashOf } from "../handoff";
 
 // The two halves of handing a sign-in from the browser that opened the email to the device that asked.
-// Both use the admin client: `login_handoffs` is closed to every browser (schema.sql).
+// Both use the admin client: `sign_in_links` is closed to every browser (schema.sql).
 // Neither has a signed-in user to check: this is how one signs in. What protects it is in handoff.ts.
 
-// why: Supabase honours an email link for an hour; a row older than that can sign nobody in.
-const HANDOFF_LIFETIME_MS = 60 * 60 * 1000;
-
-const cutoff = () => new Date(Date.now() - HANDOFF_LIFETIME_MS).toISOString();
-
-// Leaves the link's token under `attempt`, for the device whose key hashes to it.
-// The first one left wins: a second call for the same attempt changes nothing.
-export async function leaveSignIn(attempt: string, tokenHash: string): Promise<void> {
-  const admin = createAdminClient();
-  // Tidy first: rows nobody collected would otherwise stay for good. There is no scheduler for this.
-  await admin.from("login_handoffs").delete().lt("created_at", cutoff());
-
-  const { error } = await admin
-    .from("login_handoffs")
-    .upsert({ attempt, token_hash: tokenHash }, { onConflict: "attempt", ignoreDuplicates: true });
+// Marks a link as tapped, for the device whose `attempt` it names. False when the key is not one we sent
+// for that attempt today: a made-up link, a link from another day, or one already collected.
+export async function leaveSignIn(attempt: string, linkKey: string): Promise<boolean> {
+  const now = new Date().toISOString();
+  const { data, error } = await createAdminClient()
+    .from("sign_in_links")
+    .update({ approved_at: now })
+    .eq("key_hash", await hashOf(linkKey))
+    .eq("attempt", attempt)
+    .gt("expires_at", now)
+    .select("key_hash");
   if (error) throw new Error(error.message);
+  return data.length > 0;
 }
 
-// Collects what was left for the holder of `claimKey`, once: the row is deleted as it is read.
-// Null while nothing has been left, which is the usual answer: the asking device calls this until there is.
+// Collects a tapped link for the holder of `claimKey`, once: a fresh one-time token for its address, which
+// the device trades for a session. Null while none of today's links has been tapped, which is the usual
+// answer: the asking device calls this until there is one.
 export async function collectSignIn(claimKey: string): Promise<string | null> {
-  const { data, error } = await createAdminClient()
-    .from("login_handoffs")
+  const admin = createAdminClient();
+  const attempt = await hashOf(claimKey);
+  const now = new Date().toISOString();
+
+  // Deleted as it is read, so two calls at once cannot both collect it.
+  const { data, error } = await admin
+    .from("sign_in_links")
     .delete()
-    .eq("attempt", await attemptOf(claimKey))
-    .gte("created_at", cutoff())
-    .select("token_hash");
+    .eq("attempt", attempt)
+    .not("approved_at", "is", null)
+    .gt("expires_at", now)
+    .select("email");
   if (error) throw new Error(error.message);
-  return data[0]?.token_hash ?? null;
+  if (data.length === 0) return null;
+
+  // The day's other links for this device are spent with it: one sign-in per tap.
+  await admin.from("sign_in_links").delete().eq("attempt", attempt);
+
+  // Made now, used within seconds: generating a token never sends an email.
+  const { data: link, error: linkError } = await admin.auth.admin.generateLink({ type: "magiclink", email: data[0].email });
+  if (linkError) throw new Error(linkError.message);
+  return link.properties.hashed_token;
 }

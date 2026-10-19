@@ -1,8 +1,9 @@
 "use client";
 
-import { CalendarDays, HandHeart, ShieldCheck, Users } from "lucide-react";
+import { CalendarDays, Contact, HandHeart, ShieldCheck, Users } from "lucide-react";
 import PhotoTile from "@/components/ui/PhotoTile";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { STRINGS as STAFF_STRINGS } from "@/features/staff/strings"; // STAFF
 import { GO_FORWARD } from "@/lib/slide";
 import { SHELL_STRINGS } from "./strings";
 
@@ -11,12 +12,13 @@ const TILES = [
   { href: "/events", title: SHELL_STRINGS.eventsTab, Icon: CalendarDays, photo: "/images/home/events.png" },
   { href: "/prayer", title: SHELL_STRINGS.prayerTab, Icon: HandHeart, photo: "/images/home/prayer.png" },
   { href: "/groups", title: SHELL_STRINGS.groupsTab, Icon: Users, photo: "/images/home/groups.png" },
+  { href: "/staff", title: STAFF_STRINGS.title, Icon: Contact, photo: undefined }, // STAFF: not a tab, so only here
 ];
 
 // The fourth tile, for whoever manages something: the Admin tab. No photo: its icon on grey.
 const ADMIN_TILE = { href: "/admin", title: SHELL_STRINGS.adminTab, Icon: ShieldCheck, photo: undefined };
 
-// Home's content for now: one large tile into each area, and Admin for admins. It becomes a dashboard later.
+// Home's content for now: one large tile into each area (Staff last), and Admin for admins. It becomes a dashboard later.
 export default function HomeTiles({ showAdmin }: { showAdmin: boolean }) {
   const { t } = useLanguage(); // I18N
   const tiles = showAdmin ? [...TILES, ADMIN_TILE] : TILES;

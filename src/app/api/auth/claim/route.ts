@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { isHex64 } from "@/features/auth/handoff";
 import { collectSignIn } from "@/features/auth/server/handoff";
 
-// POST { claimKey } → { tokenHash } — the sign-in left for the device holding this secret key, or null
-// while nothing has been left yet. Answers once: collecting removes it.
+// POST { claimKey } → { tokenHash } — a one-time token for the device holding this secret key, once one of
+// its links has been tapped; null until then. Answers once: collecting spends the day's links.
 //
 // No signed-in user to verify: the caller is signing in. The key is the proof: 32 random bytes that never
 // left the device that asked, so guessing someone else's is not possible.

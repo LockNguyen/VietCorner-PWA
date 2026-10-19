@@ -92,9 +92,11 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
 | Text | `Text` | Every piece of text outside a control | `tile`, `body`, `small`; tone `ink`, `subtle`, `danger` |
 | List | `ListRow` | Thumbnail, title, subtitle, trailing chevron or control | link, static |
 | | `Thumbnail` | A picture, or a tinted tile with an icon or letter | |
-| | `Avatar` | A person's picture: the default one for everybody today | |
+| | `Avatar` | A person's picture: their own, or the default figure | `small` (32), `large` (96) |
 | | `PhotoTile` | Home's large tile: artwork and a title on flat grey today; a picture under a dark overlay once photos exist (B32) | |
-| | `SectionHeading` | The small grey heading above a group of rows | |
+| | `SectionHeading` | The heading above a group of rows, with an optional icon | `small` (grey, 14), `large` (bold, 20) |
+| | `PhotoCard` | A card over a darkened photo, white words: an event on the schedule | |
+| | `PersonCard` | A person: picture, bold name, a number under it | |
 | Controls | `Button` | Any button; shows the turning circle while pending | `primary`, `quiet`, `danger`, `text` |
 | | `IconButton` | An icon alone, with a screen-reader name | `action`, `filled`, `danger`; `regular`, `large` (the assistant's microphone) |
 | | `Field` | A label above a control and, once the form has been tried, what is wrong with it | |
@@ -132,7 +134,8 @@ today is listed in `src/components/ui/README.md` and shown in every state at `/u
   an hour or more. Prayer requests are all at the left, mine included, grouped by week and then by person,
   as runs like chat's. Nothing sits between two requests: Pray is a round `Chip` on the bubble's
   own line, 8 to its right and level with its middle (purple; a green tick once given), my own request has a small round grey pencil in the same place, which opens its options, and the list
-  shows no date or group. A request is written in a sheet, opened by the round plus at the top right.
+  shows no date or group. A request is written on its own screen, opened by the round plus at the top right (a sheet with a text field
+  is pushed off the screen by the iPhone keyboard, 2026-10-19).
   A banner raised on a chat screen covers the composer until it leaves or is tapped away.
 - **People** are shown by name with an `Avatar`; until someone has given a name, the part of their email
   before the @. A row that already carries two buttons (a join request) shows the name without the avatar. Nobody is greeted and no form of address is used.
@@ -174,3 +177,14 @@ Each is installed in the slice that first uses it, not before.
   "+1". The only motion in the app that springs past its size: a moment of thanks (the user asked for it,
   2026-10-14). Never confetti. Off with reduced motion.
 - **Admins get a fourth Home tile, Admin** (2026-10-14), its icon on grey until a photo is chosen.
+
+## Launch-day feedback (2026-10-19, the user)
+- **A sheet never holds a text field.** Typing happens on a screen of its own, the field at the top.
+- **Settings headings are big and bold** (`SectionHeading` `large`: 20 bold `ink`) with a blue icon at their left,
+  bigger than the options under them, so each setting is found at a glance.
+- **Events are photo cards:** white text on a photo darkened most where the text is (90% `ink` at the bottom).
+  Title 20 bold, when 17 semibold, place and contact 17 regular.
+- **Toolbars stay put:** the buttons above a list (Prayer's bell, Play, +) are held under the top bar.
+- **The music bubble** is the second motion that draws the eye (after the prayer reward): a fade, then a slow
+  8 px sway, 1.8 s, until the music is played. Off with reduced motion (it simply shows).
+- **People have pictures:** chosen and framed in Settings; the default figure until then.

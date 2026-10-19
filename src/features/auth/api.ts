@@ -13,18 +13,13 @@ export async function accountExists(email: string): Promise<boolean> {
 
 // Email a link that signs in (the README, "Hand-off"). `attempt` names this device's request in the link,
 // so whichever browser opens the email can hand the sign-in back to this one. With `name` it may also
-// create the account (sign-up): the name rides along as metadata, and the profiles trigger makes it the
-// person's name. Without it an unknown address is refused, so signing in never makes an account.
-export async function sendSignInLink(email: string, attempt: string, name?: string) {
-  const { error } = await createClient().auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: name !== undefined,
-      data: name !== undefined ? { name } : undefined,
-      emailRedirectTo: `${window.location.origin}/login/confirm?attempt=${attempt}`,
-    },
+// create the account (sign-up). Through our server, which adds a key of its own to the link (server/sendLink.ts).
+// A refusal is thrown with Supabase's status and code, as errors.ts expects; no connection, as status 0.
+export async function sendSignInLink(email: string, attempt: string, name?: string): Promise<void> {
+  const response = await post("/api/auth/link", { email, attempt, ...(name !== undefined && { name }) }).catch(() => {
+    throw { status: 0 };
   });
-  if (error) throw error;
+  if (!response.ok) throw { status: response.status, code: (await response.json()).code };
 }
 
 // Trade the link's one-time token for a session. On success, Supabase stores it in cookies.
@@ -34,13 +29,13 @@ export async function signInWithLink(tokenHash: string) {
   if (error) throw error;
 }
 
-// POST the link's token for the device that asked: this browser is not the one signing in.
-export async function leaveSignIn(attempt: string, tokenHash: string): Promise<void> {
-  const response = await post("/api/auth/handoff", { attempt, tokenHash });
+// POST the link's key: it was tapped, so the device that asked may now collect the sign-in.
+export async function leaveSignIn(attempt: string, linkKey: string): Promise<void> {
+  const response = await post("/api/auth/handoff", { attempt, linkKey });
   if (!response.ok) throw new Error((await response.json()).error);
 }
 
-// POST my secret key to collect a sign-in left for this device. Null while nothing has been left yet.
+// POST my secret key to collect a tapped link's sign-in, as a one-time token. Null while none has been tapped.
 export async function collectSignIn(claimKey: string): Promise<string | null> {
   const response = await post("/api/auth/claim", { claimKey });
   if (!response.ok) throw new Error((await response.json()).error);

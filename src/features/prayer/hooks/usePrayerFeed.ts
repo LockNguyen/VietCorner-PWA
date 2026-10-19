@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useOnArrival } from "@/lib/useOnArrival";
-import { createRequest, deleteRequest, editRequest, getRequests, markAnswered, prayFor } from "../api";
+import { deleteRequest, getRequests, markAnswered, prayFor } from "../api";
 import { withNewest } from "../feed";
-import { PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "../types";
+import { PAGE_SIZE, type PrayerRequest } from "../types";
 
 // The list as it was last shown. It outlives leaving the tab, so coming back starts from it and not from
 // the page's kept, older copy (src/lib/README.md); a full page load (signing out) empties it.
 let lastShown: PrayerRequest[] | undefined;
 
-// The list of requests on screen, and everything that changes it. Each action resolves to whether it
+// The list of requests on screen, and every change made from it (writing one has its own screen). Each action resolves to whether it
 // worked; saying so is the board's job. Refreshed on arrival, not live (the prayer README).
 export function usePrayerFeed(initialRequests: PrayerRequest[]) {
   const [requests, setRequests] = useState(lastShown ?? initialRequests);
@@ -64,24 +64,6 @@ export function usePrayerFeed(initialRequests: PrayerRequest[]) {
       loadingOlder.current = false;
       return loaded;
     },
-
-    // The new request is read back rather than built here: its author line is the view's
-    // to decide. Starting again from the newest page also picks up what others posted meanwhile.
-    post: (request: NewPrayerRequest) =>
-      attempt(async () => {
-        await createRequest(request);
-        const newest = await getRequests();
-        setRequests(newest);
-        setHasMore(newest.length === PAGE_SIZE);
-      }),
-
-    edit: (requestId: string, body: string) =>
-      attempt(async () => {
-        await editRequest(requestId, body);
-        setRequests((current) =>
-          current.map((request) => (request.id === requestId ? { ...request, body } : request)),
-        );
-      }),
 
     // An answered request leaves the list for everyone. It stays in the database (schema.sql).
     answer: (requestId: string) =>

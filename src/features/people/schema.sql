@@ -22,7 +22,7 @@ on conflict do nothing;
 -- and every membership), so it checks the caller itself.
 drop function if exists public.people_list ();
 create function public.people_list()
-returns table (user_id uuid, name text, email text, signed_up_at timestamptz, roles text[], group_ids uuid[])
+returns table (user_id uuid, name text, email text, signed_up_at timestamptz, roles text[], group_ids uuid[], avatar_path text)
 language sql stable security definer set search_path = '' as $$
   select
     u.id,
@@ -33,7 +33,8 @@ language sql stable security definer set search_path = '' as $$
     coalesce((select array_agg(m.group_id)
               from public.group_members m
               join public.groups g on g.id = m.group_id and g.deleted_at is null
-              where m.user_id = u.id), '{}')
+              where m.user_id = u.id), '{}'),
+    p.avatar_path -- their picture (2026-10-19; needs features/profiles/schema.sql section 6 first)
   from auth.users u
   left join public.profiles p on p.user_id = u.id
   where (select public.has_permission('users.manage'))

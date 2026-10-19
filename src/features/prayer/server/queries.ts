@@ -16,6 +16,17 @@ export async function getLatestRequests(supabase: SupabaseClient): Promise<Praye
   return data as PrayerRequest[];
 }
 
+// One of my own requests, for its edit screen; null when it is not mine or no longer listed.
+export async function getMyRequest(supabase: SupabaseClient, requestId: string): Promise<PrayerRequest | null> {
+  const { data } = await supabase
+    .from("prayer_feed")
+    .select(FEED_COLUMNS)
+    .eq("id", requestId)
+    .eq("is_mine", true)
+    .maybeSingle();
+  return data as PrayerRequest | null;
+}
+
 // The church's prayer reminders, in the order a week runs. Empty for anyone without the "prayer.reminders"
 // permission: members cannot read this table.
 export async function getPrayerReminders(supabase: SupabaseClient): Promise<PrayerReminder[]> {

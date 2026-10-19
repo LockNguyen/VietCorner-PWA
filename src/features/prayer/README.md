@@ -11,6 +11,9 @@ have not been run, then this
 `schema.sql` in Supabase → SQL Editor. Copy it from the editor, not from terminal output. It is **not** safe
 to run twice (plain `create`), except section 4, the view, which is how the view is changed.
 
+**Worship music:** put one MP3 the church has the rights to at `public/audio/worship.mp3` (a soft
+instrumental, a few minutes; it loops). Without it, Play says "The music could not play."
+
 ## Files
 | Layer | File | Job |
 |---|---|---|
@@ -22,24 +25,29 @@ to run twice (plain `create`), except section 4, the view, which is how the view
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
 | Browser API | `api.ts` | `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
-| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page |
+| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to every approved member, once, per language |
 | Server logic | `server/notifyAuthor.ts` | **Admin** client: the author and the count → `sendPush`, in the author's language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
-| State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, posting, editing, answering, deleting, praying, one error flag |
+| State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
+| State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
+| State | `hooks/useWorshipMusic.ts` | The looping worship track: play, pause, stopped on leaving; `started` once played |
+| State | `hooks/useShowAfter.ts` | True once the screen has been open a while: the music bubble after 4 s |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
 | State | `src/lib/useWhenVisible.ts` | "Call this when the element scrolls into view" (shared with the group photos) |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
-| UI | `components/PrayerComposer.tsx` | The sheet for a new request: the words and "Hide my name" |
+| UI | `components/PrayerToolbar.tsx` | Held under the top bar: the admin's bell, play/pause music with its bubble, the + |
+| UI | `components/PrayerComposer.tsx` | The new-request screen: the words at the top, "Hide my name", Share |
 | Pure logic | `grouping.ts` | `byWeekThenPerson`: the feed → weeks (Sunday, church time) → people → their requests |
 | UI | `components/PrayerWeek.tsx` | One week: its label, then each person's requests as a run of bubbles under their name |
 | UI | `components/PrayerBubble.tsx` | One request: someone else's has the round Pray chip beside it; my own has a small grey pencil that opens its options |
-| UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit, Delete, Cancel, two by two |
-| UI | `components/RequestEditor.tsx` | The sheet's edit form |
+| UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit (opens the edit screen), Delete |
+| UI | `components/RequestEditor.tsx` | The edit screen's form: the words, Save |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
 | UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: the church's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |
+| Shell | `src/app/prayer/new/page.tsx`, `src/app/prayer/[requestId]/edit/page.tsx` | Writing and editing a request, each its own screen |
 
 ## How anonymity is guaranteed
 RLS hides **rows**, not columns. If members could read `prayer_requests`, any of them could open the browser
@@ -75,6 +83,16 @@ And a small group can guess from timing or wording — no software fixes that.
 - **An answered request leaves the list but stays in the database** (`answered_at`), for an end-of-year look
   back at answered prayers. It cannot be un-answered from the app.
 - **Editing changes the words only.** The group and "Hide my name" stay as posted. An edit leaves no mark.
+- **Writing and editing are screens, not sheets** (2026-10-19). On an iPhone, a focused field in a sheet held
+  at the bottom was lifted twice, once by vaul (by the keyboard's height) and once by iOS (scrolling the page
+  to show the field), and went off the top of the screen (a member's screenshot). A field at the top of a plain
+  page is one the keyboard never covers, on any iOS version. Saving slides back to the list, which reads
+  itself again on arrival.
+- **No "(you)" after my own name** (2026-10-19): elderly members read "(bạn)" as a mistake in their name. My
+  requests still come first in each week.
+- **The worship music plays only on the Prayer tab** and stops on leaving it: it is for praying over the list.
+  It starts only on a tap (phones refuse sound otherwise). The bubble under Play appears after 4 seconds on the
+  tab, sways gently, never takes a tap, and goes once the music has played on that visit.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
 - **A request is shown whole.** No "more…", no date and no group between requests: only the Pray chip, which sits on the same line as the bubble it belongs to (decided 2026-10-08, after three layouts that were unclear).
@@ -93,20 +111,24 @@ And a small group can guess from timing or wording — no software fixes that.
   the pages and show a row twice.
 
 ## Expected behavior
-- Posting puts the request at the top, under the author's name. With "Hide my name", others see
-  "Anonymous"; the author sees "Anonymous (you)".
+- The + opens "Lời xin cầu nguyện mới" as its own screen, the box at the top; Share slides back to the list
+  with the request at the top, under the author's name. With "Hide my name", everyone sees "Anonymous".
+- Above the list, held under the blue bar while scrolling: (the bell, for admins) Play, and the round +. Play
+  starts the looping music and becomes Pause. After 4 seconds on the tab, a blue bubble under Play asks "Bạn
+  có muốn cầu nguyện bây giờ?" and sways sideways until the music is played.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
   their name: my own named requests first, then people in the order of their newest request; anonymous
   requests share one group (my anonymous ones stay there, or their place would give them away). Every
-  request is at the left, mine included; my own named group says "(you)".
+  request is at the left, mine included, under my name alone. Beside each name, the person's picture, or the
+  default figure (always for anonymous requests).
   (This layout has not been looked at on any screen yet, 2026-10-08.)
 - A request shows in full, as a grey bubble. No date and no group name on the list: the week label is the time.
 - Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
   that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
 - Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has a small round grey pencil button in the same place (32 across, two thirds of the Pray chip), which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
-  Answered and Delete both take it off the list at once; Edit opens the words for changing.
+  Answered and Delete both take it off the list at once; Edit slides in the edit screen, Save slides back.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). There can be several reminders on one day at different times, but
   not the same day and time twice; trying to raises the banner "There already is a reminder at that
@@ -129,7 +151,13 @@ real notification arriving on a phone.**
 - An author gets at most one "prayed for you" notification a minute, across all their requests (the `push`
   README). The next one carries the running total, so no prayer goes uncounted, only unannounced.
 - Two members with the same name share a group within a week: the feed carries no author id to tell them apart.
-- A request is written in a sheet opened by the round plus at the top right; sharing closes it, a failure leaves the words in place.
+- A request is written on its own screen opened by the round plus at the top right; sharing goes back to the list, a failure leaves the words in place.
+- The edit screen for a request that is not mine, or no longer listed, answers 404.
+- Before `profiles/schema.sql` section 6 and this file's 5b are run, the view has no `author_avatar` and the
+  Prayer tab is empty (as with 5b before): run them together.
+- The phone pauses the music by itself (a call, another app's sound): the button turns back to Play.
+- **Not seen (2026-10-19):** any of this signed in, the music on an iPhone with the screen locked, the
+  keyboard on the new screens on an iPhone. The toolbar and bubble were seen on `/ui` at 375 px.
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
 ## Not built yet
@@ -137,7 +165,7 @@ real notification arriving on a phone.**
 - **The end-of-year look back** at answered requests (backlog B19). The data is already being kept.
 
 ## Remove
-Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
+Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, `public/audio/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
 in `src/components/strings.ts`, and the "prayer requests" block in `tests/rls.test.ts`. Run the DROP
 statements at the bottom of `schema.sql`.
 

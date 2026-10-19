@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { accountExists, collectSignIn, sendSignInLink, signInWithLink } from "../api";
-import { attemptOf, newClaimKey } from "../handoff";
+import { hashOf } from "../handoff";
 import { GO_BACK, GO_FORWARD, slide } from "@/lib/slide";
-import { clearPendingSignIn, readPendingSignIn, savePendingSignIn, type PendingSignIn } from "../storage";
+import { clearPendingSignIn, readPendingSignIn, savePendingSignIn, todaysClaimKey, type PendingSignIn } from "../storage";
 
 // why: each check is one small read of our own table, so it may be quick: the app moves on within seconds
 // of the tap in Safari. It also checks the moment the person returns to the app.
@@ -27,14 +27,15 @@ export function useEmailLink(onFailed: (error: unknown) => void) {
   // `name` only for a new account. A sign-in first checks that the address has one, so it can say so.
   async function sendLink(email: string, name?: string) {
     if (name === undefined && !(await accountExists(email))) throw { code: "no_account" };
-    const claimKey = newClaimKey();
-    await sendSignInLink(email, await attemptOf(claimKey), name);
+    const claimKey = todaysClaimKey(); // the same for every link today: an older email still signs in here
+    await sendSignInLink(email, await hashOf(claimKey), name);
     const pending = { claimKey, email, sentAt: Date.now() };
     savePendingSignIn(pending);
     slide(GO_FORWARD, () => setWaiting(pending)); // "check your email" slides in like the steps before it
   }
 
-  // The back arrow while waiting: forget the wait and slide back to the screen that asked.
+  // The back arrow while waiting: forget the wait and slide back to the screen that asked. Today's key stays,
+  // so a link from before still works once the person asks again.
   function startOver() {
     clearPendingSignIn();
     slide(GO_BACK, () => setWaiting(null));

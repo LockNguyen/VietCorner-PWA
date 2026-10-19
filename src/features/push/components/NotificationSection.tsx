@@ -1,5 +1,6 @@
 "use client";
 
+import { Bell } from "lucide-react";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Switch from "@/components/ui/Switch";
 import Text from "@/components/ui/Text";
@@ -24,7 +25,7 @@ export default function NotificationSection() {
 
   return (
     <section>
-      <SectionHeading>{t(STRINGS.heading)}</SectionHeading>
+      <SectionHeading variant="large" icon={<Bell />}>{t(STRINGS.heading)}</SectionHeading>
       <div className="flex flex-col gap-1 px-3">
         <Switch
           label={t(STRINGS.onThisDevice)}

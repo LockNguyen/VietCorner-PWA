@@ -77,6 +77,28 @@
       opacity: 0;
     }
   }
+
+  /* The bubble suggesting music on the Prayer tab (the user, 2026-10-19): it fades in, then sways a little
+     to the side and back, over and over, as if nudging. Small and slow, so it reads as a hint, not an alarm. */
+  --animate-fade-in: fade-in 600ms ease-out both;
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  --animate-nudge: nudge 1.8s ease-in-out infinite;
+  @keyframes nudge {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    50% {
+      transform: translateX(-8px);
+    }
+  }
 }
 
 /* Room for the phone's own furniture: the status bar and notch above, the home indicator below. */
@@ -98,6 +120,12 @@
    message field. A custom utility must never be `<property>-<a theme key>`. */
 @utility bottom-over-tabs {
   bottom: calc(var(--spacing-tabs) + env(safe-area-inset-bottom));
+}
+
+/* Where a toolbar held while scrolling sits: just under the top bar, which is itself held at the top.
+   NOT `top-bar`: that class exists already from `--spacing-bar` and lacks the status bar's inset. */
+@utility top-under-bar {
+  top: calc(var(--spacing-bar) + env(safe-area-inset-top));
 }
 
 /* Where banners sit: just clear of the tab bar and the phone's home indicator. */

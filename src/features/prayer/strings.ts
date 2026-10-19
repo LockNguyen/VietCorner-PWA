@@ -21,7 +21,6 @@ export const STRINGS = {
 
   // One request
   anonymous: { en: "Anonymous", vi: "Ẩn danh" } satisfies Text,
-  you: { en: "you", vi: "bạn" } satisfies Text,
   prayButton: { en: "Pray", vi: "Cầu nguyện" } satisfies Text,
   prayed: { en: "Prayed", vi: "Đã cầu nguyện" } satisfies Text,
   manage: { en: "Options for this request", vi: "Tùy chọn cho lời xin này" } satisfies Text,
@@ -32,7 +31,13 @@ export const STRINGS = {
   markAnswered: { en: "Answered", vi: "Đã được nhậm lời" } satisfies Text,
   editRequest: { en: "Edit", vi: "Sửa" } satisfies Text,
   deleteRequest: { en: "Delete", vi: "Xóa" } satisfies Text,
-  cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
+  editTitle: { en: "Edit prayer request", vi: "Sửa lời xin cầu nguyện" } satisfies Text, // the edit screen's title
+
+  // The worship music above the list, and the bubble that suggests it
+  playMusic: { en: "Play worship music", vi: "Mở nhạc thờ phượng" } satisfies Text,
+  pauseMusic: { en: "Pause the music", vi: "Tạm dừng nhạc" } satisfies Text,
+  musicFailed: { en: "The music could not play.", vi: "Không mở được nhạc." } satisfies Text,
+  prayNow: { en: "Would you like to pray now?", vi: "Bạn có muốn cầu nguyện bây giờ?" } satisfies Text,
 
   // Admin section: when the church is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,

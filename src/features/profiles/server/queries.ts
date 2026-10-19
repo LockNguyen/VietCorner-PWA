@@ -10,6 +10,13 @@ export async function getMyProfile(supabase: SupabaseClient, userId: string): Pr
   return data ? { name: data.name, named: data.named_at !== null } : null;
 }
 
+// The path of my picture, or null for none. Read by Settings only, and apart from `getMyProfile`, which
+// every page reads: a missing column (schema.sql section 6 not run yet) then costs only the picture.
+export async function getMyAvatar(supabase: SupabaseClient, userId: string): Promise<string | null> {
+  const { data } = await supabase.from("profiles").select("avatar_path").eq("user_id", userId).maybeSingle();
+  return data?.avatar_path ?? null;
+}
+
 // The names of these people, in one read. Works with the user's client (any signed-in user may read names)
 // and with the admin client (a notification written on the server).
 export async function getNames(supabase: SupabaseClient, userIds: string[]): Promise<Names> {

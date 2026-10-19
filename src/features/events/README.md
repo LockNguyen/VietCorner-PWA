@@ -18,7 +18,7 @@ every case the list has to handle (see **Seed data** below).
 | Types | `types.ts` | `EventRow`, `EventText`, `ChurchEvent`, `Occurrence`; for the admin section `ManagedEvent`, `EventDraft`, `MANAGE_EVENTS` |
 | Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule |
 | Pure logic | `reminders.ts` | `dueReminders`: which reminders of an event should go out now |
-| Pure logic | `formatting.ts` | Dates and times in the reader's language, always in church time |
+| Pure logic | `formatting.ts` | Dates, weekdays and times in the reader's language, always in church time |
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
 | Browser API | `api.ts` | `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
@@ -28,7 +28,7 @@ every case the list has to handle (see **Seed data** below).
 | Server logic | `server/notifyScheduleChange.ts` | **Admin** client: every approved member → one push per language (`// PUSH`, `// I18N`, `// PERMISSIONS`). Switched off (`eventChangePush`) |
 | Routes | `src/app/api/events/cancel/route.ts` | POST cancels, DELETE undoes. Verify (401) → validate (400) → change (403 when refused) → 204 |
 | UI | `components/EventThumbnail.tsx` | The editor's picture section: the picture, choose or replace, remove |
-| UI | `components/EventSchedule.tsx`, `EventRow.tsx`, `EventDetails.tsx` | The members' schedule: days, one line per date, the details sheet |
+| UI | `components/EventSchedule.tsx`, `EventCard.tsx` | The members' schedule: days, one card per event (`ui/PhotoCard`) |
 | State | `hooks/useEventChanges.ts` | Every change the editor makes: the call, then reload or go back to the list, then a banner |
 | UI | `components/EventAdmin.tsx` | The admin section: "New event", then the list; each row opens the editor's screen |
 | UI | `components/EventAdminRow.tsx` | One event in the list: a row that opens its editor |
@@ -212,3 +212,15 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
   Copy, shared `src/components/PhoneNumber.tsx`); then the description. Admins see Edit at the bottom, which opens
   `/events/<id>/edit`; the + opens `/events/new`. The `EventDetails` sheet is gone.
 - **SQL:** section 3g (`docs/sql-to-run-2026-10-17c.sql`). Until it is run, Save in the editor fails.
+
+## Each event a card (2026-10-19, the user)
+- **What:** under each day's heading, an event is a card the width of the screen (`ui/PhotoCard`): a picture
+  darkened from the bottom, and over it in white the title (20, bold), "Chúa Nhật · 10:30 Sáng" (17, semibold:
+  the weekday, since the date is the heading), the place, and "Liên lạc: <number>" (17). A tap opens the
+  event's page, where the number can be called (a link cannot hold another button).
+- **Which picture:** the event's own if an admin set one, else the church's (`public/images/home/events.png`,
+  `CHURCH_PICTURE` in `EventCard.tsx`). An event's own picture is 400 px, a little soft at full width.
+- **Contrast:** the veil runs from 90% of `ink` at the bottom to 35% at the top, so the words, which sit at the
+  bottom, read on any photo. Seen on `/ui` at 375 px with the church picture.
+- The time is written the app's way ("10:30 Sáng"), not "10h30": one format on every screen.
+- **NOT seen signed in** on the Events tab (no database in the preview).

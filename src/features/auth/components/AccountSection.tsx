@@ -1,5 +1,6 @@
 "use client";
 
+import { Mail } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -12,7 +13,7 @@ export default function AccountSection({ email }: { email: string }) {
 
   return (
     <section>
-      <SectionHeading>{t(STRINGS.accountHeading)}</SectionHeading>
+      <SectionHeading variant="large" icon={<Mail />}>{t(STRINGS.accountHeading)}</SectionHeading>
       <ul>
         <ListRow title={email} subtitle={t(STRINGS.signedInAs)} />
       </ul>

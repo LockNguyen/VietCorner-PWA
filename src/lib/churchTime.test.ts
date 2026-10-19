@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addWeeks, isoDate, toInstant, wallTime } from "./churchTime";
+import { addWeeks, endOfChurchDay, isoDate, toInstant, wallTime } from "./churchTime";
 
 // In 2026 the church's clocks go forward on 8 March and back on 1 November.
 // Summer: wall time = UTC − 4 h. Winter: wall time = UTC − 5 h.
@@ -58,5 +58,18 @@ describe("one week later", () => {
     const start = toInstant("2026-10-07T19:00");
 
     expect(wallTime(addWeeks(start, 8))).toBe("2026-12-02T19:00");
+  });
+});
+
+describe("the end of the church's day (how long a sign-in link works)", () => {
+  it("is the coming midnight at church, not in UTC", () => {
+    // 11 PM on 19 October at church is already the 20th in UTC; the church's day ends an hour later.
+    expect(endOfChurchDay(new Date("2026-10-20T03:00:00Z")).toISOString()).toBe("2026-10-20T04:00:00.000Z");
+    // Just after midnight starts a whole new day.
+    expect(endOfChurchDay(new Date("2026-10-20T04:01:00Z")).toISOString()).toBe("2026-10-21T04:00:00.000Z");
+  });
+
+  it("follows the clock change: winter midnight is five hours behind UTC", () => {
+    expect(endOfChurchDay(new Date("2026-11-01T12:00:00Z")).toISOString()).toBe("2026-11-02T05:00:00.000Z");
   });
 });

@@ -14,6 +14,7 @@ function request(n: number): PrayerRequest {
     is_mine: false,
     prayer_count: null,
     author_name: "An",
+    author_avatar: null,
   };
 }
 

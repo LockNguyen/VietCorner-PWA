@@ -10,6 +10,15 @@ export const STRINGS = {
   nameField: { en: "Name", vi: "Tên" } satisfies Text,
   continue: { en: "Continue", vi: "Tiếp tục" } satisfies Text,
 
+  // My picture (Settings)
+  pictureHeading: { en: "Picture", vi: "Ảnh đại diện" } satisfies Text,
+  choosePicture: { en: "Choose a picture", vi: "Chọn ảnh" } satisfies Text,
+  changePicture: { en: "Choose another picture", vi: "Chọn ảnh khác" } satisfies Text,
+  cropHint: { en: "Drag to move it. Pinch to make it bigger.", vi: "Kéo để di chuyển. Chụm hai ngón để phóng to." } satisfies Text,
+  usePicture: { en: "Use this picture", vi: "Dùng ảnh này" } satisfies Text,
+  cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
+  removePicture: { en: "Remove picture", vi: "Xóa ảnh" } satisfies Text,
+
   // Changing a name once in a group: a group manager approves it
   sentForApproval: { en: "Sent for approval", vi: "Đã gửi để chờ duyệt" } satisfies Text,
   waitingForApproval: { en: "Waiting for approval", vi: "Đang chờ duyệt" } satisfies Text,

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Mic, Pencil, Settings, Square, Users } from "lucide-react";
+import { Bell, Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Languages, Mic, Pencil, Play, Plus, Settings, Square, Users } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
 import Bubble from "@/components/ui/Bubble";
@@ -12,6 +12,10 @@ import IconButton from "@/components/ui/IconButton";
 import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
 import LogoMark from "@/components/ui/LogoMark";
+import PhoneNumber from "@/components/PhoneNumber";
+import NudgeBubble from "@/components/ui/NudgeBubble";
+import PersonCard from "@/components/ui/PersonCard";
+import PhotoCard from "@/components/ui/PhotoCard";
 import PhotoTile from "@/components/ui/PhotoTile";
 import ProgressBar from "@/components/ui/ProgressBar";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -25,12 +29,14 @@ import TextArea from "@/components/ui/TextArea";
 import TextInput from "@/components/ui/TextInput";
 import Thumbnail from "@/components/ui/Thumbnail";
 import TimeLine from "@/components/ui/TimeLine";
+import Toolbar from "@/components/ui/Toolbar";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { managesSomething } from "@/features/permissions/types"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
 import CardDemo from "./CardDemo";
+import CropperDemo from "./CropperDemo";
 import ComposerDemo from "./ComposerDemo";
 import PhotoDemo from "./PhotoDemo";
 import SheetDemo from "./SheetDemo";
@@ -187,7 +193,7 @@ export default async function ShowcasePage() {
             <Chip tone="done" label="Prayed" disabled><Check aria-hidden /></Chip>
           </div>
         </BubbleRun>
-        <BubbleRun side="theirs" name="Trần Thị Bình (bạn)" avatar={<Avatar />}>
+        <BubbleRun side="theirs" name="Trần Thị Bình" avatar={<Avatar />}>
           <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
             <Chip tone="quiet" size="small" label="Options"><Pencil aria-hidden className="size-4" /></Chip>
@@ -217,6 +223,38 @@ export default async function ShowcasePage() {
         <PhotoTile href="/ui#13" title="Cầu nguyện"><HandHeart className="size-8" /></PhotoTile>
         <PhotoTile href="/ui#13" title="Cầu nguyện" src="/images/home/prayer.png"><HandHeart className="size-8" /></PhotoTile>
       </section>
+
+      <section className="flex flex-col gap-4">
+        <Text as="h2" variant="small" tone="subtle">PhotoCard: an event, then one with a long title and no contact</Text>
+        <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist", "Liên lạc: (336) 555-0101"]} />
+        <PhotoCard href="/ui#15" src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">Toolbar with a NudgeBubble under its play button</Text>
+        <div className="h-28">
+          <Toolbar>
+            <IconButton label="Reminders"><Bell /></IconButton>
+            <div className="relative">
+              <IconButton label="Play"><Play /></IconButton>
+              <NudgeBubble>Bạn có muốn cầu nguyện bây giờ?</NudgeBubble>
+            </div>
+            <IconButton tone="filled" label="New"><Plus /></IconButton>
+          </Toolbar>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <Text as="h2" variant="small" tone="subtle">SectionHeading large, with an icon; PersonCard with a large Avatar (default, then a picture)</Text>
+        <SectionHeading variant="large" icon={<Languages />}>Ngôn ngữ</SectionHeading>
+        <SectionHeading variant="large">Mục sư điều hành</SectionHeading>
+        <PersonCard picture={<Avatar size="large" />} name="Mục sư Khai">
+          <PhoneNumber phone="(336) 555-0101" />
+        </PersonCard>
+        <PersonCard picture={<Avatar size="large" src="/images/home/groups.png" />} name="Nguyễn Văn An" />
+      </section>
+
+      <CropperDemo />
 
       <section className="flex flex-col gap-2">
         <Text as="h2" variant="small" tone="subtle">TabBar: fixed to the bottom of this page, second tab active</Text>

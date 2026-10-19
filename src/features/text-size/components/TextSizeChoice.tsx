@@ -1,5 +1,6 @@
 "use client";
 
+import { ALargeSmall } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import Text from "@/components/ui/Text";
@@ -21,7 +22,7 @@ export default function TextSizeChoice({ asStep = false }: { asStep?: boolean })
           <Text as="h1" variant="tile">{t(STRINGS.stepTitle)}</Text>
         </div>
       ) : (
-        <SectionHeading>{t(STRINGS.heading)}</SectionHeading>
+        <SectionHeading variant="large" icon={<ALargeSmall />}>{t(STRINGS.heading)}</SectionHeading>
       )}
       <ul>
         {SIZES.map((option) => (

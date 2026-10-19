@@ -1,5 +1,6 @@
 "use client";
 
+import { Languages } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "../hooks/useLanguage";
@@ -14,7 +15,7 @@ export default function LanguageToggle() {
 
   return (
     <section>
-      <SectionHeading>{t(STRINGS.languageLabel)}</SectionHeading>
+      <SectionHeading variant="large" icon={<Languages />}>{t(STRINGS.languageLabel)}</SectionHeading>
       <ul>
         {OPTIONS.map((option) => (
           <ListRow

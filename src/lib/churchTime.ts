@@ -48,6 +48,12 @@ export function toInstant(wall: string): Date {
   return new Date(asIfUtc - offsetAt(firstGuess));
 }
 
+// The instant the church's calendar turns to the day after this one: when "today" ends at church.
+export function endOfChurchDay(instant: Date): Date {
+  const nextDay = new Date(Date.parse(`${isoDate(instant)}T00:00:00Z`) + 24 * 60 * 60 * 1000);
+  return toInstant(`${nextDay.toISOString().slice(0, 10)}T00:00`);
+}
+
 // The same wall-clock time, `weeks` weeks later: a 7 PM event stays at 7 PM when the clocks change.
 export function addWeeks(instant: Date, weeks: number): Date {
   const wall = wallTime(instant);

@@ -8,6 +8,7 @@ export type PersonSummary = {
   signed_up_at: string;
   roles: string[]; // what they may do (ROLES below); none = signed up, not let in yet
   group_ids: string[]; // the active groups they are in
+  avatar_path: string | null; // their picture in the profiles' AVATAR_BUCKET; null = the default figure
 };
 
 // The permission this feature checks (schema.sql gives it to "admin").

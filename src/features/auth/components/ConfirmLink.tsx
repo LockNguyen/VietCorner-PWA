@@ -8,13 +8,13 @@ import { usePending } from "@/lib/usePending";
 import { useConfirmLink } from "../hooks/useConfirmLink";
 import { STRINGS } from "../strings";
 
-type Props = { attempt: string | undefined; tokenHash: string | undefined }; // from the link's address
+type Props = { attempt: string | undefined; linkKey: string | undefined }; // from the link's address
 
 // The screen a sign-in email's link opens. In the browser that asked it signs in and moves on; anywhere else it
 // asks for one tap, then sends the person back to the app (hooks/useConfirmLink.ts).
-export default function ConfirmLink({ attempt, tokenHash }: Props) {
+export default function ConfirmLink({ attempt, linkKey }: Props) {
   const { t } = useLanguage(); // I18N
-  const { state, confirm } = useConfirmLink(attempt, tokenHash);
+  const { state, confirm } = useConfirmLink(attempt, linkKey);
   const { pending, run } = usePending<"confirm">();
 
   return (

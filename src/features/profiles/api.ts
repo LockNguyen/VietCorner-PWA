@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/client";
-import type { NameOutcome, NameRequest, Names } from "./types";
+import { AVATAR_BUCKET, type NameOutcome, type NameRequest, type Names } from "./types";
 
 // Every browser → backend call for this foundation.
 // - Setting a name and approving one go through our API routes, because each notifies someone (needs secrets).
-// - Declining a request and reading names go straight to Supabase; RLS in schema.sql decides what is allowed.
+// - Declining a request, reading names and my picture go straight to Supabase; RLS in schema.sql decides what is allowed.
 
 // POST my name. Answers whether it was saved at once or is now waiting for a manager.
 export async function saveName(name: string): Promise<NameOutcome> {
@@ -38,6 +38,31 @@ export async function getNameRequests(): Promise<NameRequest[]> {
 export async function getNames(userIds: string[]): Promise<Names> {
   const { data } = await createClient().from("profiles").select("user_id, name").in("user_id", userIds);
   return Object.fromEntries((data ?? []).map((row) => [row.user_id, row.name]));
+}
+
+// PUT my picture (already cropped and small): a new file in my own folder, my profile pointed at it, then
+// the picture it replaces erased.
+export async function setAvatar(userId: string, picture: Blob, replaces: string | null): Promise<void> {
+  const supabase = createClient();
+  const bucket = supabase.storage.from(AVATAR_BUCKET);
+  const path = `${userId}/${crypto.randomUUID()}.jpg`;
+
+  const { error: uploadError } = await bucket.upload(path, picture, { contentType: "image/jpeg" });
+  if (uploadError) throw new Error(uploadError.message);
+
+  const { error } = await supabase.rpc("set_my_avatar", { path });
+  if (error) throw new Error(error.message);
+
+  if (replaces) await bucket.remove([replaces]); // best-effort: a file left behind is on no screen
+}
+
+// DELETE my picture: my profile goes back to the default figure, then the file is erased.
+export async function removeAvatar(path: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.rpc("set_my_avatar", { path: null });
+  if (error) throw new Error(error.message);
+
+  await supabase.storage.from(AVATAR_BUCKET).remove([path]); // best-effort, as above
 }
 
 async function post(url: string, body: Record<string, string>) {

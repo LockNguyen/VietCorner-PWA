@@ -6,32 +6,34 @@ import Field from "@/components/ui/Field";
 import TextArea from "@/components/ui/TextArea";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { usePending } from "@/lib/usePending";
+import { useRequestWriting } from "../hooks/useRequestWriting";
 import { STRINGS } from "../strings";
-import { MAX_BODY_LENGTH } from "../types";
+import { MAX_BODY_LENGTH, type PrayerRequest } from "../types";
 
-type Props = { body: string; saving: boolean; onSave: (body: string) => void; onCancel: () => void };
+type Props = { request: PrayerRequest };
 
-// Changing the words of a request. Only the words: the group and "Hide my name" stay as they were posted.
-export default function RequestEditor({ body, saving, onSave, onCancel }: Props) {
+// Changing the words of my request, on its own screen (see PrayerComposer for why not a sheet). Only the
+// words: "Hide my name" stays as it was posted. The top bar's back arrow cancels.
+export default function RequestEditor({ request }: Props) {
   const { t } = useLanguage(); // I18N
-  const [draft, setDraft] = useState(body);
-  const unchanged = draft.trim() === body;
+  const writing = useRequestWriting();
+  const [draft, setDraft] = useState(request.body);
+  const { pending, run } = usePending<"save">();
+  const unchanged = draft.trim() === request.body;
 
-  function handleSubmit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
-    onSave(draft.trim());
+    run("save", () => writing.edit(request.id, draft.trim()));
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form onSubmit={submit} className="flex flex-col gap-3 p-3">
       <Field label={t(STRINGS.yourWords)}>
-        <TextArea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={MAX_BODY_LENGTH} rows={5} autoFocus />
+        <TextArea value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={MAX_BODY_LENGTH} rows={5} />
       </Field>
-      <Button pending={saving} pendingLabel={t(COMMON.saving)} disabled={draft.trim() === "" || unchanged}>
+      <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)} disabled={draft.trim() === "" || unchanged}>
         {t(COMMON.save)}
-      </Button>
-      <Button type="button" variant="text" onClick={onCancel}>
-        {t(STRINGS.cancel)}
       </Button>
     </form>
   );

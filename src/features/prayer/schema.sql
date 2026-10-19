@@ -162,10 +162,11 @@ $$;
 revoke execute on function public.pray_for_request (uuid) from public, anon;
 grant execute on function public.pray_for_request (uuid) to authenticated;
 
--- 5b. The author sees how many prayed (2026-10-14) ------------------------------
--- This section can be run again by itself. The same view as section 4 with one column added at the end
+-- 5b. The author sees how many prayed (2026-10-14), and their picture (2026-10-19) ----
+-- This section can be run again by itself. The same view as section 4 with columns added at the end
 -- (`create or replace view` allows that): the count, for the request's author only. Everyone else gets null,
--- so nobody can compare requests by how many prayed for them.
+-- so nobody can compare requests by how many prayed for them. Then the author's picture, null when the
+-- request is anonymous, exactly as the name. Needs features/profiles/schema.sql section 6 first.
 create or replace view public.prayer_feed with (security_invoker = false) as
 select
   r.id,
@@ -174,7 +175,8 @@ select
   r.created_at,
   r.author_id = auth.uid() as is_mine,
   case when r.is_anonymous then null else p.name end as author_name,
-  case when r.author_id = auth.uid() then r.prayer_count end as prayer_count
+  case when r.author_id = auth.uid() then r.prayer_count end as prayer_count,
+  case when r.is_anonymous then null else p.avatar_path end as author_avatar
 from public.prayer_requests r
 join public.profiles p on p.user_id = r.author_id
 where r.deleted_at is null

@@ -69,7 +69,7 @@ grant execute on function public.approve_account (uuid) to authenticated;
 -- Left out on purpose, because a waiting person needs them and each shows only their own rows:
 --   profiles, name_requests (their name) · user_settings (their language) · push_subscriptions (their
 --   device, so "you are in" can reach them).
--- `login_handoffs` (auth) needs no line: no browser has any grant on it.
+-- `sign_in_links` (auth) needs no line: no browser has any grant on it.
 -- The picture files in Storage are not a table of ours: their policies ask for "app.use" themselves
 -- (features/group-info/schema.sql section 5).
 -- `prayer_feed` and `pray_for_request` skip row rules, so they ask for "app.use" themselves

@@ -41,3 +41,7 @@ Also run section 3f of `features/events/schema.sql`, or removing someone who cre
 ## Remove
 Delete this folder, `src/app/admin/people/`, and the `PEOPLE` lines in `src/app/admin/page.tsx`. Run the Undo
 block at the bottom of `schema.sql`.
+
+## Pictures in the list (2026-10-19)
+`people_list()` also returns `avatar_path` (section 3, run again after `profiles/schema.sql` section 6); each
+row shows the person's picture, or the default figure.

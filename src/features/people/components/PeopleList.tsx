@@ -5,6 +5,8 @@ import EmptyState from "@/components/ui/EmptyState";
 import ListRow from "@/components/ui/ListRow";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import { AVATAR_BUCKET } from "@/features/profiles/types"; // PROFILES
+import { publicFileUrl } from "@/lib/publicFileUrl";
 import { useFresh } from "@/lib/useFresh";
 import { getPeople } from "../api";
 import { groupCount, STRINGS } from "../strings";
@@ -32,7 +34,7 @@ export default function PeopleList({ people: loaded }: { people: PersonSummary[]
           <ListRow
             key={person.user_id}
             href={`/admin/people/${person.user_id}`}
-            leading={<Avatar />}
+            leading={<Avatar src={person.avatar_path ? publicFileUrl(AVATAR_BUCKET, person.avatar_path) : undefined} />}
             title={person.name}
             subtitle={`${standing(person)} · ${t(groupCount(person.group_ids.length))}`}
           />

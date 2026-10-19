@@ -7,7 +7,8 @@ name. No passwords (since 2026-10-17). What a new account may then do is the `ap
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
 
 ## Setup
-1. Run `schema.sql` in Supabase → SQL Editor (one server-only table, `account_exists`).
+1. Run `schema.sql` in Supabase → SQL Editor (one server-only table, `sign_in_links`, and `account_exists`).
+   Running it again on 2026-10-19 or later drops the old `login_handoffs` table.
 2. Supabase → Authentication → **SMTP Settings**: enable custom SMTP (required before templates can be edited).
    MVP option: Gmail SMTP (`smtp.gmail.com`, port 587, app password). Credentials live in Supabase, never here.
 3. Supabase → Authentication → **URL Configuration**:
@@ -19,8 +20,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
    sign-up email from the Funnel address pointed at `localhost:3000`), and then it does nothing.
 4. Supabase → Authentication → **Providers → Email**: Email provider on, **Confirm email on**.
 5. Supabase → Authentication → **Email Templates**: **"Magic Link"** (signing in) and **"Confirm signup"**
-   (a new account's first link) both get our link, `{{ .RedirectTo }}` = `/login/confirm?attempt=…`, plus the
-   token. The link needs words between `<a>` and `</a>`: a link with nothing inside it is an email that looks
+   (a new account's first link) both get our link, `{{ .RedirectTo }}` = `/login/confirm?attempt=…&key=…`.
+   Since 2026-10-19 the `token_hash` the template adds is ignored (it is cancelled by the next email); it may
+   stay, or be removed, which changes nothing. The link needs words between `<a>` and `</a>`: a link with nothing inside it is an email that looks
    empty (found 2026-10-12). "Reset Password" is no longer sent.
    ```html
    <h2>Viet Corners</h2>
@@ -36,18 +38,19 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 ## Files
 | Layer | File | Job |
 |---|---|---|
-| Data | `schema.sql` | `login_handoffs`: server-only (RLS on, no grants, no policies). `account_exists(address)`: yes or no, callable signed out |
+| Data | `schema.sql` | `sign_in_links`: server-only (RLS on, no grants, no policies). `account_exists(address)`: yes or no, callable signed out |
 | Text | `strings.ts` | Every word the user reads in this feature |
-| Pure logic | `handoff.ts` | `newClaimKey`, `attemptOf` (its SHA-256), `isHex64`. Used by the browser and the server |
+| Pure logic | `handoff.ts` | `newSecret`, `hashOf` (its SHA-256), `isHex64`: the device's claim key and the server's link key. Used by the browser and the server |
 | Pure logic | `errors.ts` | Why a step failed, by cause (offline, too many tries, bad address, bad link, no account) |
-| Device | `storage.ts` | The sign-in this device waits on (secret key, address, when), kept across a reload for an hour |
-| Browser API | `api.ts` | `accountExists`, `sendSignInLink` (with a name: may create the account), `signInWithLink`, `leaveSignIn`, `collectSignIn`, `signOut` |
+| Device | `storage.ts` | The sign-in this device waits on (key, address, when), kept across a reload until the church day ends; `todaysClaimKey`, one key per device per church day |
+| Browser API | `api.ts` | `accountExists`, `sendSignInLink` (POST `/api/auth/link`; with a name: may create the account), `signInWithLink`, `leaveSignIn`, `collectSignIn`, `signOut` |
 | State | `hooks/useEmailLink.ts` | The asking device: send the link, then check every 3 s (and on return to the app) for the sign-in handed back |
 | State | `hooks/useConfirmLink.ts` | The opened link: sign in here if this browser asked, or offer to hand it over (one tap) |
 | Server reads | `server/queries.ts` | `getCurrentUser(supabase)`: id and email from the login token, checked locally (no trip to Supabase). Routes that write call `auth.getUser()` instead. |
-| Server logic | `server/handoff.ts` | **Admin** client: `leaveSignIn`, `collectSignIn` |
+| Server logic | `server/sendLink.ts` | **Admin** client: `sendSignInLink`: Supabase emails the link, with our own key in it; the key's hash is kept until the end of the church day |
+| Server logic | `server/handoff.ts` | **Admin** client: `leaveSignIn` (marks a link tapped), `collectSignIn` (spends the device's links, returns a fresh token from `generateLink`) |
 | Server logic | `server/refreshSession.ts` | Called by `src/proxy.ts` on every non-static request: refreshes the session cookie and redirects (logged out → `/login`; logged in on `/login` → `HOME_PATH`) |
-| Routes | `src/app/api/auth/handoff/route.ts`, `claim/route.ts` | Validate (400) → the step → 204 / `{ tokenHash }` |
+| Routes | `src/app/api/auth/link/route.ts`, `handoff/route.ts`, `claim/route.ts` | Validate (400) → the step → 204 / 410 (a link not of today) / `{ tokenHash }`; `link` answers Supabase's own status and `code` |
 | UI | `components/Welcome.tsx` | Signed out: sign in, or the sign-up steps (the page's first step, the text size; then name and email), then "check your email". Each step slides in (`lib/slide.ts` `slide`), each has a back arrow to the one before. Says what went wrong in the app's banner |
 | UI | `components/SignedOutFrame.tsx` | Every signed-out screen, in the app or in the browser a link opens: bar (setup steps only), language link top right, logo |
 | UI | `components/SignInForm.tsx` | The email, one blue "Sign in", and "Create new account?" small under it |
@@ -58,7 +61,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Shell | `src/app/login/page.tsx`, `login/confirm/page.tsx`, `settings/page.tsx` | Render the components (lines marked `AUTH`) |
 | Shell | `src/proxy.ts` | Exists only for this feature |
 
-**Data:** Supabase's built-in `auth.users`, and `login_handoffs`. The session lives in `sb-*` cookies
+**Data:** Supabase's built-in `auth.users`, and `sign_in_links`. The session lives in `sb-*` cookies
 (400-day max age, renewed on each visit).
 
 ## Flow
@@ -67,7 +70,8 @@ Redesigned on 2026-10-17 on the user's word: no passwords, so nothing to forget 
    email, "Đăng nhập", and "Tạo tài khoản mới?" under it.
    - An address with no account (`account_exists`) → no email; the banner "Account not created yet.
      **Create new account?**", whose link opens sign-up with the email kept.
-   - Otherwise → Supabase emails the sign-in link (`signInWithOtp`, never creating an account here) →
+   - Otherwise → our server has Supabase email the sign-in link (`/api/auth/link` → `signInWithOtp`, never
+     creating an account here) →
      "Check your email" while the app waits (step 3).
 2. **Create an account**, each step sliding in from the right with a back arrow to the one before: the text
    size ("Step 1 / 7", the `text-size` feature, brought by the page), then name and email ("Step 2 / 7"), Next → the same link (`signInWithOtp` with the name
@@ -83,18 +87,29 @@ On an iPhone an email link opens in Safari, and Safari shares no login with the 
 can open the installed app either. So the link does not sign in the browser it opens in; it hands the
 sign-in to the device that asked.
 
-1. **The app asks.** It makes a secret `claimKey` (32 random bytes), keeps it in `localStorage`, and sends
-   only its SHA-256, the `attempt`, inside the link: `/login/confirm?attempt=<hash>`.
-2. **Supabase emails the link**, adding its one-time token: `…&token_hash=<token>`.
+1. **The app asks.** It holds a secret `claimKey` (32 random bytes, **one per device per church day**, kept in
+   `localStorage`) and sends only its SHA-256, the `attempt`, to `POST /api/auth/link`.
+2. **Our server has Supabase email the link** (`server/sendLink.ts`): `/login/confirm?attempt=<hash>&key=<linkKey>`.
+   The `linkKey` is made by the server for this one email; the browser that asked never sees it, and the table
+   keeps only its hash, with the address and the end of the church day.
 3. **The link opens** `/login/confirm`. Opening it changes nothing.
-   - *Same browser as the one that asked* (it holds a key whose hash is the `attempt`; Android, a computer):
-     it uses the link on the spot and opens Home.
-   - *Any other browser* (every iPhone): one question and one button. The tap posts the token to
-     `POST /api/auth/handoff`, which stores it under the `attempt`. Then: "Now go back to the app."
+   - *Same browser as the one that asked* (it holds today's key; Android, a computer): it marks the link
+     tapped, collects at once and opens Home.
+   - *Any other browser* (every iPhone): one question and one button. The tap posts `attempt` and `key` to
+     `POST /api/auth/handoff`, which marks that row tapped if it is one of today's links for that attempt.
+     Then: "Now go back to the app."
 4. **The app collects.** While it waits it posts its `claimKey` to `POST /api/auth/claim` every 3 seconds
-   (only while on screen). The server hashes the key, finds the row, deletes it and returns the token; the
-   app trades it for a session (`verifyOtp`, type `email`) and opens Home with a full page load.
+   (only while on screen). The server hashes the key, deletes the tapped row (and the device's other links of
+   the day), makes a fresh one-time token for that address (`generateLink`, which sends nothing) and returns
+   it; the app trades it for a session (`verifyOtp`, type `email`) and opens Home with a full page load.
    If the stored wait disappears meanwhile, the link was used in this same browser: the app reloads.
+
+**Why every link of the day works (2026-10-19, the user).** Members ask twice; Gmail folds the two emails
+into one thread and hides one of them, and the older link used to leave the app waiting forever, for two
+reasons: each request made a new device key (so the older link named an attempt nobody waited on), and each
+new Supabase email cancels the token of the one before. Now the device key is the same all day and the proof
+in the link is our own key, which no newer email cancels. Bound, as the user set it: a link from this
+mailbox, sent the same church day.
 
 ## Decisions worth knowing
 - **Email link only, no passwords** (2026-10-17, the user, replacing the password sign-in of 2026-10-14):
@@ -111,13 +126,16 @@ sign-in to the device that asked.
   at once instead of waiting for an email that never comes. Trade-off: anyone can learn whether an address
   has an account.
 - **The key never leaves the device; only its hash travels.** Reading the email, or the table, gives the
-  `attempt` and not the key, so nobody else can collect. (The email also holds the token itself: whoever can
-  read a person's mailbox can get in as them, as with any email sign-in.)
-- **The two routes verify no user**: their caller is not signed in yet. `handoff` stores one short value
-  under a key of a fixed shape; `claim` needs the secret. Both check the shape of what they are sent.
-  Nothing limits how often they are called (backlog B3).
-- **A row lives at most an hour** (the link's own life) and is deleted when collected. Rows nobody collected
-  are deleted by the next hand-off; there is no scheduler for it.
+  `attempt` and not the key, so nobody else can collect. (Whoever can read a person's mailbox and taps the
+  button can still sign in the device that asked, as with any email sign-in.)
+- **The link's own key is made by the server and seen only by the email** (2026-10-19). So whoever asked for
+  a link cannot approve it themselves: only a tap with the key from the mailbox can.
+- **The three routes verify no user**: their caller is not signed in yet. `link` does what the public key
+  already allows (ask Supabase for a link to an address); `handoff` needs a key only the email holds; `claim`
+  needs the device's secret. All check the shape of what they are sent. Only Supabase limits how often they
+  are called (backlog B3).
+- **A row lives until the end of the church day it was sent on** (`churchTime.endOfChurchDay`), and is deleted
+  when its device collects. Rows of past days are deleted by the next link sent; there is no scheduler.
 - **The wait survives a reload** (`storage.ts`): an iPhone often restarts the app when the person comes back
   from their mailbox, and the key must still be there.
 - **Signed in for as long as possible:** the session cookie lasts 400 days (the browser maximum) and is
@@ -142,14 +160,21 @@ sign-in to the device that asked.
 - `POST /api/auth/claim` and `/handoff` answer 400 to anything not shaped like a key, an attempt or a token.
 - Reloading or closing the app keeps you signed in. Signing out returns to `/login` with a full page load,
   which empties the pages kept in memory.
+- **Not exercised (2026-10-19):** the day-long links end to end (a real email, an older link tapped after a
+  newer one, `generateLink` for a brand-new account). Tested: `endOfChurchDay`, the key helpers, the build.
 - **Not exercised (2026-10-17):** a real email (the templates in Setup 5 must be changed first), the tap in
   Safari on an iPhone, a new account end to end.
 
 ## Edge cases
-- Links expire after 1 hour (Supabase setting) and work once. Supabase allows one link per address per minute
-  ("Too many tries").
+- A link works until midnight at church on the day it was sent, even after newer ones, and signs in once:
+  collecting spends every link of that device for the day. Supabase allows one link per address per minute
+  ("Too many tries"). Its own "Email OTP expiration" setting no longer matters: the token is made at
+  collection and used within seconds.
 - Members who had a password: it is kept by Supabase and never asked for; they sign in by link like everyone.
-- "Start again" while waiting forgets the wait; asking again sends a new link (the old one still works once).
+- "Start again" while waiting forgets the wait but keeps today's key; asking again sends a new link, and the
+  older one still works.
+- A sign-in waiting when the 2026-10-19 SQL is run is lost (its table is replaced): the person asks again.
+- A link sent at 11:58 PM church time works for two minutes. Accepted: "the same day" is the user's rule.
 - The link opened on a computer while the phone asked: the computer shows the button; after the tap the phone
   moves on. The computer is not signed in.
 - Supabase's built-in email sender is rate-limited to a few per hour; real users need custom SMTP.

@@ -1,29 +1,41 @@
 -- AUTH feature schema. Run once in Supabase → SQL Editor. Safe to run again.
 --
--- Accounts themselves are Supabase's (`auth.users`). This is the one table of our own: where a sign-in
--- waits between the browser that opened the email link and the app that asked for it (the README, "Hand-off").
+-- Accounts themselves are Supabase's (`auth.users`). This is the one table of our own: every sign-in link
+-- emailed today, until one of them is tapped and the app that asked collects it (the README, "Hand-off").
 --
 -- Security in one sentence: no browser can read or write this table; only our server does, with the
--- service role, and a row is useless without the secret key that never left the asking device.
+-- service role, and a row is useless without both the key in the email and the key on the asking device.
 
 -- 1. Table ----------------------------------------------------------------
+-- Replaced `login_handoffs` on 2026-10-19 so that an older email's link still works the same day (the
+-- user: members ask twice, and the mail app hides one of the two). Running this file drops the old table;
+-- a sign-in waiting at that moment is asked for again.
 
-create table if not exists public.login_handoffs (
-  -- SHA-256 of the asking device's secret key. It travels in the email link; the key itself never does,
-  -- so reading this table, or the email, is not enough to collect the sign-in.
-  attempt text primary key check (attempt ~ '^[0-9a-f]{64}$'),
-  -- The one-time token from the email link, left here by the confirm page. It signs in whoever presents
-  -- it, once, for as long as Supabase honours it (an hour); the row is deleted when it is collected.
-  token_hash text not null check (length(token_hash) between 1 and 200),
-  created_at timestamptz not null default now()
+create table if not exists public.sign_in_links (
+  -- SHA-256 of the key our server put in this one email, and nowhere else. A tap on the link presents the
+  -- key: the proof that whoever tapped can read that mailbox.
+  key_hash text primary key check (key_hash ~ '^[0-9a-f]{64}$'),
+  -- SHA-256 of the asking device's secret key. Every link a device asks for in one church day carries the
+  -- same one, so whichever is tapped, that device collects it. The key itself never leaves the device.
+  attempt text not null check (attempt ~ '^[0-9a-f]{64}$'),
+  -- Whom the link signs in. Read only by our server, when the device collects.
+  email text not null check (char_length(email) between 3 and 320),
+  -- The end of the church day the email was sent on: "a link from today" (the user, 2026-10-19).
+  expires_at timestamptz not null,
+  -- When the link's button was tapped. Null until then: opening the link alone changes nothing.
+  approved_at timestamptz
 );
+
+create index if not exists sign_in_links_attempt on public.sign_in_links (attempt);
+
+drop table if exists public.login_handoffs;
 
 -- 2. Server-only ----------------------------------------------------------
 -- RLS on, no grants, no policies: unreachable with the public key, signed in or not.
 
-revoke all on public.login_handoffs from anon, authenticated;
-grant all on public.login_handoffs to service_role;
-alter table public.login_handoffs enable row level security;
+revoke all on public.sign_in_links from anon, authenticated;
+grant all on public.sign_in_links to service_role;
+alter table public.sign_in_links enable row level security;
 
 -- 3. Does an account exist? ------------------------------------------------
 -- This section can be run again by itself.
@@ -42,4 +54,4 @@ grant execute on function public.account_exists (text) to anon, authenticated;
 
 -- 4. Undo (removing the feature) ------------------------------------------
 -- drop function if exists public.account_exists (text);
--- drop table if exists public.login_handoffs;
+-- drop table if exists public.sign_in_links;

@@ -446,16 +446,16 @@ describe("document_chunks (server-only table)", () => {
   });
 });
 
-describe("login_handoffs (server-only table)", () => {
-  it("cannot be read or written with the public key, signed in or not: it holds live sign-in tokens", async () => {
+describe("sign_in_links (server-only table)", () => {
+  it("cannot be read or written with the public key, signed in or not: it says whom a tapped link signs in", async () => {
     const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
     });
-    const row = { attempt: "a".repeat(64), token_hash: "stolen" };
+    const row = { key_hash: "b".repeat(64), attempt: "a".repeat(64), email: "x@example.com", expires_at: new Date().toISOString(), approved_at: new Date().toISOString() };
 
     for (const client of [anonymous, alice.client]) {
-      const { data, error: readError } = await client.from("login_handoffs").select("token_hash").limit(1);
-      const { error: writeError } = await client.from("login_handoffs").insert(row);
+      const { data, error: readError } = await client.from("sign_in_links").select("email").limit(1);
+      const { error: writeError } = await client.from("sign_in_links").insert(row);
 
       expect(readError).not.toBeNull();
       expect(data).toBeNull();

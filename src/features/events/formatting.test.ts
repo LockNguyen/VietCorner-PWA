@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLongDate, formatTime } from "./formatting";
+import { formatLongDate, formatTime, formatWeekday } from "./formatting";
 
 // Sunday 18 October 2026, 7 PM at church (New York, summer time = UTC-4): 23:00 UTC.
 const SUNDAY_EVENING = new Date("2026-10-18T23:00:00Z");
@@ -13,5 +13,10 @@ describe("an event's date and time, in church time", () => {
   it("calls Sunday Chúa Nhật in Vietnamese", () => {
     expect(formatLongDate(SUNDAY_EVENING, "vi")).toMatch(/^Chúa Nhật/);
     expect(formatLongDate(SUNDAY_EVENING, "en")).toMatch(/^Sunday/);
+  });
+
+  it("names the church's day for a card, in church time", () => {
+    expect(formatWeekday(SUNDAY_EVENING, "vi")).toBe("Chúa Nhật");
+    expect(formatWeekday(SUNDAY_EVENING, "en")).toBe("Sunday");
   });
 });
