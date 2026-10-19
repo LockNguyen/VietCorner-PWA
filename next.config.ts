@@ -13,10 +13,9 @@ const nextConfig: NextConfig = {
     // themselves (Settings; Admin's events, reminders and group names) can be out of date. Who is waiting
     // to join or to be renamed DOES refresh itself. Sign-out is a full page load, which empties this memory.
     //
-    // `static`: how long the grey placeholder fetched ahead for each tab is kept (5 minutes by default).
-    // It never changes, so a day: in practice once per opening of the app. Any save still empties this
-    // memory, and the placeholders are then fetched once more.
-    staleTimes: { dynamic: 600, static: 86_400 },
+    // `static`: how long a tab loaded ahead by the tab bar (`prefetch={true}`, whole page and data) is kept.
+    // The same ten minutes, for the same reason: a tab tapped later than that is asked for again.
+    staleTimes: { dynamic: 600, static: 600 },
   },
 };
 

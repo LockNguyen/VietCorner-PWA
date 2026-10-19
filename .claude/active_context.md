@@ -436,13 +436,18 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Save (`GroupInfoForm`), `GroupDetailsForm` deleted. Seen on a local production build with a throwaway admin
       (deleted after). No other screen has two forms. Committed, NOT pushed.
 
+- [x] **Saved Home at launch (B29, Home part)** (2026-10-17, NOT committed). `sw.js` `HOME` (`home-v1`),
+      `RefreshSavedPage`, `lib/savedHome.ts`, tab bar `prefetch={true}`, `staleTimes.static` 10 min. Checked in the
+      preview signed in (saved Home 3 ms, fresh request 78 ms, Prayer tab 46 ms with no request, `/login` deletes).
+      Production build on port 3000 behind Funnel 8443 (the other session's server there was stopped for the build).
+
 - [x] **Group pictures up to 1 MB (2026-10-17, the user: 300 KB looked ugly).** `shrinkUnder` at 2560 px, best
       quality under 1,000,000 bytes; bucket limit unchanged (no SQL). NOT tried with a real phone photo.
       Committed, NOT pushed.
 
 - [x] **Events rows like the people rows; "7:00 Tối"; "Chúa Nhật" (2026-10-17, the user's words).** `i18n/clock.ts`
-      (tested), `EventRow` = picture · title · "time · place"; `RowLabel` deleted. 121 tests. NOT seen on screen
-      (another session's production server holds `.next`). Group cards still say 19:30 in Vietnamese.
+      (tested), `EventRow` = picture · title · "time · place"; `RowLabel` deleted. 121 tests. Seen on a local production
+      build at 375 px: "Chúa Nhật, 25 tháng 10", "10:30 Sáng", "11:30 Trưa", "Đã hủy · 2:00 Chiều". Group cards still say 19:30 in Vietnamese.
 
 - [x] **"7:00 Tối" everywhere (2026-10-17, the user's word).** Group cards and sheets, prayer reminders list, chat
       time lines now use `clockTime` too. Phone time pickers are the phone's own. 122 tests.
@@ -462,6 +467,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 - [x] **Group pictures swipe left and right in the large view (2026-10-17, the user).** `ui/hooks/useSwipe` in
       `Lightbox`; arrows kept. NOT tried with a finger on a phone.
 
+- [x] **B42 launch-info** (2026-10-17, NOT committed): admins' "i" on Home → "For developers: this launch".
+      `src/features/launch-info/`, line `LAUNCH-INFO` in `src/app/page.tsx`. Seen in the preview at phone width.
+
 - [x] **The picture swipe drags, iPhone-Photos style (2026-10-17, the user).** Follows the thumb, slides off and
       in, springs back, rubber band at the ends. NOT tried with a finger on a phone.
 
@@ -473,8 +481,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 
 - [x] **Events: "Lịch sinh hoạt", one date per event, an event page (2026-10-17, the user).** Tap → `/events/<id>`
       slides in: big picture, time / place / contact with icons, description, Edit for admins. Editor at
-      `/events/<id>/edit`. **WAITS ON THE USER: `docs/sql-to-run-2026-10-17c.sql`, then `npm run test:rls`; before
-      pushing** (the editor's Save writes `contact_phone`; the schedule's read returns it).
+      `/events/<id>/edit`. SQL run by the user; `npm run test:rls` 97/97. Seen on a local production build as a
+      throwaway member: the page slides in; picture; "Chúa Nhật, 18 tháng 10 / 10:30 Sáng – 11:30 Trưa · Hằng
+      tuần", the place, a test number (removed after) with Gọi / Nhắn tin / Sao chép. Debt: the number sits a few
+      px below its phone icon (the button is 48 px tall). NOT seen: the Edit button (no admin signed in).
 
 - [x] **Sign-in by email link, no passwords (2026-10-17, the user).** Email → link → one tap in Safari → the app
       signs itself in (hand-off). Sign-up = name + email, same link. "Create new account?" replaces "Forgot
@@ -509,6 +519,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Debt: a wrong account signed in in Safari has no way out on the guide (the user's choice).
 
 ## ➡️ Next 3 Micro-Steps
+1. User: on the iPhone (8443), delete the app and add it again (iOS reads launch pictures at install), open it twice, leave it a few
+   hours, open it: logo or black? time black/white; does Home appear at once? Then tap the "i" and screenshot it. If no logo, remove `public/launch`,
+   `launchScreens.json`, the script, the layout lines and `launch/` in proxy.ts again.
 1. Pushed 2026-10-15 (`744998f`). On the iPhone: open the app twice (the new `sw.js` installs on the first).
 2. User: on the live site as an admin, from an iPhone: Events + and an editor, a group's editor (people,
    picture), Prayer bell, Admin → a person (a role switch, a group switch, back and in again).

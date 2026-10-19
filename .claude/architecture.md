@@ -141,7 +141,11 @@ The empty installable app every feature plugs into.
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
 | `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
-| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first; pages are never saved. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. Activating deletes any other cache. |
+| `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. The `HOME` part saves `/` (cache `home-v1`) at every launch and shows the saved copy at the next one while the fresh page is fetched and saved; a redirect from the server (signed out) or any page load of `/login` (Sign out, an ended session) deletes it; a reload while the fresh Home is still on its way (Next.js does one after a deploy) waits for it. No other page is saved. Activating deletes any cache but these two. |
+| `src/components/RefreshSavedPage.tsx` | In the root layout with `renderedAt` (when the server made the page). On the saved Home (`isSavedCopy`) it asks for the current one at once (`router.refresh`). |
+| `public/launch/*.png`, `src/lib/launchScreens.json` | iPhone launch pictures (the icon centred on white), one per screen size in the JSON list; `layout.tsx` links each as `apple-touch-startup-image` and adds Apple's `apple-mobile-web-app-capable` tag. Remade by `node scripts/make-launch-images.mjs`. `proxy.ts` skips `launch/` so they load signed out. |
+| `src/lib/savedHome.ts` | `isSavedCopy(renderedAt)`: a page made over a minute ago is the saved Home (used by `RefreshSavedPage` and launch-info). `forgetSavedHome()`: deletes the saved Home. Called by the language toggle (`LanguageProvider`), so the next launch is not in the old language. |
+| `src/components/ui/TabBar.tsx` (`prefetch={true}`) | Each tab's whole page (data included) is loaded as soon as the bar shows, kept 10 min (`staleTimes.static`). |
 
 **Expected behavior:** `/` is Home (or redirects to `/login`); signing in lands on Home; the tab bar is
 absent until signed in; the assistant and Settings open from the top-right icons and have a back arrow to
@@ -153,8 +157,8 @@ The second load after a new `sw.js` answers all code files from the `static-v1` 
 still cached; a second launch 1.3 s with 7 of 10. After (same phone, restarted, app not re-added): 10 of 10
 from the saved copy, page 1.1 s, files read 6.6 s, tappable 6.85 s. The new `sw.js` arrived without a reinstall.
 Not explained yet: 5.5 s between the page arriving and its files being read, with every file saved.
-The black, then white, screen while iOS starts the app stays: launch pictures (`apple-touch-startup-image`)
-were tried and never showed on this iPhone, even after re-adding the app, so they were removed.
+Launch pictures (`apple-touch-startup-image`) did not show on 2026-10-14, even after re-adding the app. Second try
+2026-10-17 with Apple's own `apple-mobile-web-app-capable` tag added (Next.js writes only the newer one): not yet seen on the phone.
 
 **Shared UI:** `src/components/ui/` is the component library of the UI revamp, built slice by slice from
 `docs/design-system.md` under the `frontend` skill. Its README lists what exists; `/ui` shows every
@@ -210,6 +214,14 @@ Routes: `POST /api/auth/handoff`, `/claim` (neither has a user to verify; the RE
 Install dialog behind one button where it offers one, otherwise numbered steps for iPhone (Share → Add to
 Home Screen), Android (⋮ menu) or a chat app's browser (open in a real browser first). Only a computer may
 "Continue in this browser". No data, no server code; `device.ts` reads the user agent (tested).
+
+### 6.15 launch-info → [README](../src/features/launch-info/README.md)
+An "i" on Home for whoever manages something (the same check as the Admin tile), where "+" sits on the other
+tabs. It opens "For developers: this launch": whether Home came from the saved copy or the server, when the
+page arrived, when the code files were read, when Home was ready to tap, when everything loaded, and how many
+code files came from the saved copy versus the network. Read from the browser's own timing records
+(`launchTimes.ts`, tested). No data, no server code. The black screen before the page starts is iOS and is
+not counted. Seen in the preview at phone width, signed in (2026-10-17); not yet on the iPhone.
 
 ### 6.14 people → [README](../src/features/people/README.md)
 The Admin tab's list of everyone, and a screen per person: a switch per role (one small role per permission,
@@ -361,8 +373,10 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 
 **How an update reaches installed phones (nothing for members to do):**
 - A deploy is a push to `main`. That is the whole workflow; nobody reinstalls.
-- Pages are never saved on the phone, so the next launch (or the next screen opened) gets the new page,
-  and it names the new code files. Their names are new, so the phone downloads and saves them.
+- Only Home is saved on the phone, and it is refreshed from the server the moment the app opens; every
+  other screen comes from the server. The fresh page names the new code files, which are downloaded and saved.
+- The first launch after a deploy shows the old saved Home, then Next.js notices the new deploy and reloads
+  once: the reload waits for the new Home (`sw.js`). So a member sees the new version within seconds.
 - `sw.js` is checked on every launch (Netlify sends it with `must-revalidate`). A changed one takes over at
   once (`skipWaiting` + `clients.claim`), so a fix to it reaches every phone on its next launch.
 - An app left open across a deploy keeps its old code until it loads a page again; its old files stay saved,
@@ -471,6 +485,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Load bge-m3's official `.bin` weights, not a converted `.safetensors` | The conversion is an unmerged bot PR; measured identical vectors and no faster load | Relies on torch ≥ 2.6, which the image has |
 | No RAG framework | Every stage is visible, testable code | We hand-write what frameworks provide |
 | **The service worker saves only `/_next/static/*`, cache-first, by hand (no Workbox)** | Measured: after a restart iOS had dropped 9 of 10 code files and refetching them was 21 of 22.5 s. Their names change with their content, so a saved copy is never stale | Pages still wait on the server (about 1 s, 3–5 s when Netlify is cold); old files are only trimmed past 150, not per deploy |
+| **The service worker also saves Home and shows it at launch, then replaces it with the fresh page (2026-10-17)** | After a few hours away the server's answer took ~10 s (network waking, sign-in renewed, database read), all of it on a blank screen | For about a second the saved Home can be out of date (Admin tile, a setup step); the server checks every action anyway. One saved copy per phone: sign-out and an ended session delete it, and the language toggle does too |
+| **Tabs are loaded whole in the background (`prefetch={true}`), kept 10 minutes** | A tap on a tab shows its content at once instead of the grey placeholder | About 15 extra server requests per launch (each tab, Settings); a tab tapped after 10 minutes is asked for again |
 
 ## 10. Change Log
 - 2026-09-14: Harness files; app shell; auth (email code, proxy redirects); chat (schema + RLS, Realtime, push, service worker); first Netlify deploy.
@@ -568,13 +584,17 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-14: fast launch (B28). Measured on an iPhone with a temporary on-screen timer: after a restart the code files took 21 of 22.5 s (iOS had dropped 9 of 10 from its cache; they were 260 KB compressed, not 900 KB as noted earlier). `sw.js` now keeps them (`CACHE`, `static-v1`); only files marked `immutable` are saved and a storage error falls back to the network. After: 10/10 saved, tappable 6.85 s (was 22.54 s), the new `sw.js` arrived without a reinstall. iPhone launch pictures tried and removed: none showed, even after re-adding the app. The Funnel test address serves port 3000.
 - 2026-10-15: review before the production push. Fixed: the person and group editors reload on arrival (`components/RefreshOnArrival.tsx`; a kept copy showed old switches, and a second tap undid a change); the "Chưa vào nhóm" card refreshes itself (`useFresh`); saving a picture says when it failed (banner); the security test now expects the prayer count for the author only (5b). Removed: unused strings, `MAX_MEMBER_COUNT_DIGITS` in group-info, the old sheet's `rise`/`fade` keyframes. `npm test` 116/116, `npm run test:rls` 94/94, build clean.
 - 2026-10-17: fixed, found by the user: a group's new name did not stay. The group editor had two forms and two Saves; the blue one saved only when / where / notes. Now one form (`group-info/GroupInfoForm`: name, size, when, where, notes) and one Save; `saveGroupInfo` writes `groups` (name, member_count) then `group_info`. Removed `groups/GroupDetailsForm`, `saveGroup`, `memberCountField`. No other screen has two forms. Seen on a local production build as a throwaway admin.
+- 2026-10-17: saved Home at launch (B29, Home only). `sw.js` `HOME` part (`home-v1`), `RefreshSavedPage` in the root layout, `lib/savedHome.ts` (language toggle), tab bar `prefetch={true}`, `staleTimes.static` 1 day → 10 min. Checked in the preview, signed in: the saved Home on screen in 3 ms, the fresh request at 78 ms; all tabs loaded behind it; Prayer opened in 46 ms with no request; a page load of `/login` deleted the saved Home. Not yet measured on the iPhone.
 - 2026-10-17: group pictures are kept at up to 1 MB instead of about 300 KB (the user: it looked ugly). `lib/shrinkImage.ts` `shrinkUnder` tries quality 0.92 → 0.65 at 2560 pixels and keeps the first under `FULL_MAX_BYTES` (1,000,000), inside the bucket's unchanged 1 MB limit, so no SQL. Cost: the free gigabyte holds about 1,000 pictures, not 3,000, and each opens more slowly on a weak connection. Thumbnails (30 KB) unchanged.
+- 2026-10-17: launch pictures back for a second try, with Apple's `apple-mobile-web-app-capable` tag (`metadata.other`) next to Next's `mobile-web-app-capable`: `public/launch` (13 PNGs, 1.4 MB), `src/lib/launchScreens.json`, `scripts/make-launch-images.mjs`, `proxy.ts` skips `launch/`. Served over the Funnel; not yet seen on the phone. If they still do not show, remove them again.
 - 2026-10-17: the Events tab's rows look like the Admin tab's people rows: the picture (calendar icon without one), the title, and "time · place" under it; `ui/RowLabel` deleted. Times are "7:00 PM" / "7:00 Tối" and Sunday is "Chúa Nhật" (the user's words), from `i18n/clock.ts`, in events (rows, details, editor dates, notifications), group meeting days and prayer reminder days. Group cards still write the time as 19:30 in Vietnamese.
+- 2026-10-17: `ui/Card`: the picture area is always 16:9 (the picture is absolute, `object-cover`, centred), because a tall picture stretched its box. Card heights still follow their text (subtitle, member circles): the user's choice. Seen on the Groups tab with portrait and landscape pictures: every picture area 255 × 454 at that width.
 - 2026-10-17: every time on screen now goes through `i18n/clock.ts` `clockTime("HH:MM", language)`: group cards and sheets ("Thứ Ba @ 7:30 Tối"), the prayer reminders list, chat's time lines (chat is off), alongside events. The time fields themselves (`<input type="time">`) stay in the phone's own picker. 122 tests.
 - 2026-10-17: cancelled dates are hidden on the Events tab (the user: cluttered), behind a new switch `SWITCHES.canceledEvents` (false), filtered in `EventSchedule`. The editor still lists them with Undo; a weekly event cancelled for good disappears from the tab at once instead of lingering struck through for a week.
 - 2026-10-17: a group's name and place in English too (the user: like events). `groups.name_en` (groups 2e) and `group_info.location_en` (group-info 8), returned by `group_directory()`; the editor shows each as one bilingual box (Vietnamese over English), cards and the sheet show the reader's language, the other while one is missing (`group-info/bilingual.ts`). SQL: `docs/sql-to-run-2026-10-17.sql`, needed BEFORE this code goes live (Save writes the new columns). Admin screens (people, person's groups, editor title) still show the Vietnamese name.
 - 2026-10-17: the Groups page is "Nhóm nhỏ" in Vietnamese (was "Nhóm", which members read as a worship service): `SHELL_STRINGS.groupsTab` (tab, Home tile, page title) and the groups feature's `adminHeading` (a person's groups on the Admin tab).
 - 2026-10-17: a group's pictures swipe in the large view (the user): `ui/Lightbox` + `ui/hooks/useSwipe` (left = next, right = before; at least 50 px and more sideways than vertical). The arrows stay for anyone who taps.
+- 2026-10-17: new feature `launch-info` (B42): the admins' "i" on Home with this launch's times and where its code files came from. `isSavedCopy` moved into `lib/savedHome.ts`, shared with `RefreshSavedPage`. Seen in the preview at phone width; `npm test` 126/126.
 - 2026-10-17: the picture swipe now drags (the user: a native iOS feel): `ui/hooks/useSwipe` returns an `offset` that follows the thumb; let go past 60 px or in a quick flick and the picture slides off (250 ms) while the next slides in from the other side, otherwise it springs back; at the first or last picture it moves a third as far (rubber band). `Lightbox` applies it as a transform; `touch-pan-y` leaves vertical moves to the browser.
 - 2026-10-17: group cards show only when the group meets and its members; the member's sheet shows when, a contact number (tap: Call / Text / Copy, `ContactLine`, `phone.ts`), notes and pictures. `group_info.contact_phone` (group-info 9, digits and + ( ) - . only, so nothing but a number reaches the `tel:`/`sms:` links). Where a group meets is kept but hidden everywhere by `SWITCHES.groupLocation` (false). SQL: `docs/sql-to-run-2026-10-17b.sql`, needed before this code goes live.
 - 2026-10-17: `ui/Button` variant `inline` (no side padding) for the group sheet's phone number, which sat 16 px right of its label; the side padding moved from `BASE` into each variant so two padding classes never meet on one button.
