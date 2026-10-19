@@ -5,10 +5,10 @@ import type { DraftProblem } from "./draft";
 // admin writes, and they live in `event_texts`.
 export const STRINGS = {
   // The event's picture (admin editor)
-  pictureHeading: { en: "Picture", vi: "Hình" } satisfies Text,
-  choosePicture: { en: "Choose picture", vi: "Chọn hình" } satisfies Text,
+  pictureHeading: { en: "Picture", vi: "Hình ảnh" } satisfies Text,
+  choosePicture: { en: "Choose picture", vi: "Chọn hình ảnh" } satisfies Text,
   changePicture: { en: "Change picture", vi: "Chọn hình khác" } satisfies Text,
-  removePicture: { en: "Remove picture", vi: "Xóa hình" } satisfies Text,
+  removePicture: { en: "Remove picture", vi: "Xóa hình ảnh" } satisfies Text,
 
   emptyState: {
     en: "No events in the next weeks.",
@@ -20,16 +20,16 @@ export const STRINGS = {
   everyWeek: { en: "Every week", vi: "Hằng tuần" } satisfies Text,
   location: { en: "Location", vi: "Địa điểm" } satisfies Text,
   time: { en: "Time", vi: "Thời gian" } satisfies Text, // what a screen reader calls the clock on an event's page
-  contact: { en: "Contact", vi: "Liên lạc" } satisfies Text,
-  contactField: { en: "Contact phone number", vi: "Số điện thoại liên lạc" } satisfies Text,
+  contact: { en: "Contact", vi: "Liên hệ" } satisfies Text,
+  contactField: { en: "Contact phone number", vi: "Số điện thoại liên hệ" } satisfies Text,
 
   // The editor (for whoever manages events)
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
-  editEvent: { en: "Edit event", vi: "Sửa sự kiện" } satisfies Text,
+  editEvent: { en: "Edit event", vi: "Chỉnh sửa sự kiện" } satisfies Text,
   nextDates: { en: "Next dates", vi: "Các buổi sắp tới" } satisfies Text,
   cancelThisDate: { en: "Cancel", vi: "Hủy" } satisfies Text,
   undoCancel: { en: "Undo", vi: "Hoàn tác" } satisfies Text,
-  cancelForGood: { en: "Cancel all event dates", vi: "Hủy tất cả các buổi" } satisfies Text,
+  cancelForGood: { en: "Cancel all event dates", vi: "Hủy toàn bộ các buổi" } satisfies Text,
 
   // The form
   titleField: { en: "Title", vi: "Tên sự kiện" } satisfies Text,
@@ -47,8 +47,8 @@ export const STRINGS = {
 
 // Why the form cannot be saved yet, keyed by cause (draft.ts decides which applies).
 export const PROBLEMS: Record<DraftProblem, Text> = {
-  noTitle: { en: "Add a title in at least one language.", vi: "Xin nhập tên sự kiện bằng ít nhất một ngôn ngữ." },
-  noStart: { en: "Choose when it starts.", vi: "Xin chọn thời điểm bắt đầu." },
+  noTitle: { en: "Add a title in at least one language.", vi: "Vui lòng nhập tên sự kiện." },
+  noStart: { en: "Choose when it starts.", vi: "Vui lòng chọn thời điểm bắt đầu." },
   endsBeforeItStarts: { en: "The end must be after the start.", vi: "Giờ kết thúc phải sau giờ bắt đầu." },
 };
 

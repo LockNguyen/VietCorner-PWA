@@ -6,7 +6,7 @@ export const COMMON = {
   save: { en: "Save", vi: "Lưu" } satisfies Text,
   saving: { en: "Saving…", vi: "Đang lưu…" } satisfies Text,
   saved: { en: "Saved", vi: "Đã lưu" } satisfies Text,
-  removed: { en: "Removed", vi: "Đã gỡ bỏ" } satisfies Text,
+  removed: { en: "Removed", vi: "Đã xóa" } satisfies Text,
   tapAgain: { en: "Tap again to confirm", vi: "Bấm lần nữa để xác nhận" } satisfies Text, // useConfirmTap
   close: { en: "Close", vi: "Đóng" } satisfies Text,
   // A phone number's choices (src/components/PhoneNumber.tsx), on a group's sheet and an event's page

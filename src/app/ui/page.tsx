@@ -143,14 +143,14 @@ export default async function ShowcasePage() {
         <Text as="h2" variant="small" tone="subtle">Rows as the admin screens compose them: a request, a reminder, a date on and off; then a group's name</Text>
         <ul>
           <ListRow title="Nguyễn Văn An" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
-          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Gỡ bỏ</Button>} />
+          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Xóa</Button>} />
           <ListRow title="Thứ Tư, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
           <ListRow title="Thứ Tư, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
         </ul>
         <div className="flex gap-2 px-3 pt-3">
           <TextInput defaultValue="Nhóm Học Kinh Thánh" aria-label="Tên nhóm" />
           <Button variant="quiet">Lưu</Button>
-          <Button variant="danger">Gỡ bỏ</Button>
+          <Button variant="danger">Xóa</Button>
         </div>
       </section>
 
@@ -226,7 +226,7 @@ export default async function ShowcasePage() {
 
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">PhotoCard: an event, then one with a long title and no contact</Text>
-        <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist", "Liên lạc: (336) 555-0101"]} />
+        <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist", "Liên hệ: (336) 555-0101"]} />
         <PhotoCard href="/ui#15" src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
       </section>
 

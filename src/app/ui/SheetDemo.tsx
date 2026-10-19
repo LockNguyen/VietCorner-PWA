@@ -14,7 +14,7 @@ export default function SheetDemo() {
         Open a sheet
       </Button>
       {open && (
-        <Sheet title="Tùy chọn cho lời xin này" closeLabel="Close" onClose={() => setOpen(false)}>
+        <Sheet title="Tùy chọn cho ý cầu nguyện này" closeLabel="Close" onClose={() => setOpen(false)}>
           <Button onClick={() => setOpen(false)}>Đã được nhậm lời</Button>
           <Button variant="quiet" onClick={() => setOpen(false)}>Sửa</Button>
           <Button variant="danger" onClick={() => setOpen(false)}>Xóa</Button>

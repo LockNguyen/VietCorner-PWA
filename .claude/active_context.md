@@ -533,6 +533,7 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Debt: chat avatars (B43); a rate limit on our link route (B44); an event's own 400 px picture is soft on a card.
 
 ## ➡️ Next 3 Micro-Steps
+00. User: in Vietnamese, glance over the new wording (sign-in errors, waiting screen, install guide, Prayer, assistant): strings pass done 2026-10-19, typechecked, not seen on a phone.
 1. User: run `docs/sql-to-run-2026-10-19.sql` in Supabase (auth links, avatars bucket, prayer view, people list),
    then `npm run test:rls`. Run it minutes before the deploy: the live code needs `login_handoffs`, this code
    `sign_in_links` (sign-in fails in between), and this code's Prayer tab is empty until the view has `author_avatar`.

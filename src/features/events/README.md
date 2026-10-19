@@ -216,7 +216,7 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
 ## Each event a card (2026-10-19, the user)
 - **What:** under each day's heading, an event is a card the width of the screen (`ui/PhotoCard`): a picture
   darkened from the bottom, and over it in white the title (20, bold), "Chúa Nhật · 10:30 Sáng" (17, semibold:
-  the weekday, since the date is the heading), the place, and "Liên lạc: <number>" (17). A tap opens the
+  the weekday, since the date is the heading), the place, and "Liên hệ: <number>" (17). A tap opens the
   event's page, where the number can be called (a link cannot hold another button).
 - **Which picture:** the event's own if an admin set one, else the church's (`public/images/home/events.png`,
   `CHURCH_PICTURE` in `EventCard.tsx`). An event's own picture is 400 px, a little soft at full width.

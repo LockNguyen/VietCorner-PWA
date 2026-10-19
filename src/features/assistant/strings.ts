@@ -5,12 +5,12 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   emptyState: {
     en: "Ask me about the church documents.",
-    vi: "Hỏi tôi về tài liệu của hội thánh.",
+    vi: "Hãy hỏi tôi bất cứ điều gì về tài liệu của hội thánh.",
   } satisfies Text,
-  questionPlaceholder: { en: "Type a question", vi: "Nhập câu hỏi" } satisfies Text,
+  questionPlaceholder: { en: "Type a question", vi: "Nhập câu hỏi của bạn..." } satisfies Text,
   sendButton: { en: "Send", vi: "Gửi" } satisfies Text,
   newChat: { en: "New chat", vi: "Cuộc trò chuyện mới" } satisfies Text,
-  readAloud: { en: "🔊 Read aloud", vi: "🔊 Đọc lại" } satisfies Text,
+  readAloud: { en: "🔊 Read aloud", vi: "🔊 Nghe đọc" } satisfies Text,
   tryAgain: { en: "Try again", vi: "Thử lại" } satisfies Text,
   retryingIn: { en: "Retrying in", vi: "Thử lại sau" } satisfies Text,
   seconds: { en: "s", vi: "giây" } satisfies Text,
@@ -19,14 +19,14 @@ export const STRINGS = {
   sendQuestion: { en: "Send question", vi: "Gửi câu hỏi" } satisfies Text,
   notHeard: {
     en: "I didn't catch that, please try again.",
-    vi: "Tôi chưa nghe rõ. Xin thử lại.",
+    vi: "Tôi chưa nghe rõ. Vui lòng thử lại.",
   } satisfies Text,
   cannotRecord: {
     en: "This browser cannot record audio.",
-    vi: "Trình duyệt này không ghi âm được.",
+    vi: "Trình duyệt này không hỗ trợ ghi âm.",
   } satisfies Text,
   microphoneBlocked: {
     en: "The microphone is blocked. Allow it, then reload.",
-    vi: "Micro đang bị chặn. Xin cho phép rồi tải lại.",
+    vi: "Microphone đang bị chặn. Vui lòng cấp quyền và tải lại trang.",
   } satisfies Text,
 };

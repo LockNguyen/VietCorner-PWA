@@ -6,7 +6,7 @@ export const STRINGS = {
   onThisDevice: { en: "On this device", vi: "Trên thiết bị này" } satisfies Text,
   notificationsBlocked: {
     en: "Notifications are blocked. Turn them on in your phone settings.",
-    vi: "Thông báo đang bị chặn. Xin bật lại trong cài đặt điện thoại.",
+    vi: "Thông báo đang bị tắt. Vui lòng bật lại trong phần cài đặt của điện thoại.",
   } satisfies Text,
   notificationsUnsupported: {
     en: "To get notifications, add this app to your Home Screen (Share → Add to Home Screen) and open it from there.",
