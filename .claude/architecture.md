@@ -324,9 +324,13 @@ towards it, asks "Bạn có muốn cầu nguyện bây giờ?" until the music i
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
 
 ### 6.15 staff → [README](../src/features/staff/README.md)
-Who the church's staff are: a page (`/staff`) opened from a tile on Home, not a tab. Each person is a contact
-card: photo, name in bold, role in grey under it, then the number (tap: a menu to call, text or copy, `components/PhoneNumber` on `ui/ActionMenu`).
-A fixed list in `directory.ts`; photos in `public/images/staff`. No data, no server code.
+Who the church's staff are: a page (`/staff`) opened from a tile on Home, not a tab. Big bold headings
+("Ban điều hành"), each with a contact card per person: photo, name in bold, role in grey under it, then the
+number (tap: a menu to call, text or copy, `components/PhoneNumber` on `ui/ActionMenu`).
+Tables `staff_sections`, `staff_people` (typed once), `staff_placements` (person under heading), read by the page (`server/queries.ts`). Members only read; the user
+edits rows in the SQL Editor with `edit-staff.sql` (why: no deploy, no editor screen to build).
+Photos: public bucket `staff-photos`, uploaded in the dashboard, its URL pasted into `photo`. Empty page
+until `staff/schema.sql` has run.
 
 ### 6.7 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
@@ -344,6 +348,9 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `group_members` | groups | Users see only their own rows, and only in active groups: this is what silences a removed group everywhere. No member can insert or delete; `groups.manage` adds, removes and sees everyone's. |
 | `group_join_requests` | groups | Someone asked to join. Users insert and see their own; `groups.manage` sees all, declines (delete) and approves (function). |
 | `group_info` | group-info | One row per group: when and where it meets (`location` Vietnamese, `location_en` English; not shown while `groupLocation` is off), notes, `contact_phone` (a number only), as free text. Every approved member reads; only `groups.manage` inserts and updates. |
+| `staff_sections` | staff | A heading on the staff page, `_en`/`_vi`, `position`. Approved members read; nobody writes from the app (SQL Editor only). |
+| `staff_people` | staff | One person, typed once: name (`name_vi` unique: scripts find people by it) and role `_en`/`_vi`, phone, photo URL. Same rules as `staff_sections`. |
+| `staff_placements` | staff | A person under a heading (a card), with its `position`; once per heading. Same rules. |
 | `group_photos` | group-info | One row per picture of a group: optional date and caption, who added it. Every approved member reads; that group's members and `groups.manage` insert; only `groups.manage` deletes; nobody updates. |
 | `storage.objects`, buckets `event-thumbnails`, `group-thumbnails` | events, groups | The picture that starts a row. **Public** to read by address; JPEG only, 200 KB at most; written, listed and erased only with `events.manage` / `groups.manage`. |
 | `storage.objects`, bucket `group-photos` | group-info | The pictures' files, private: JPEG only, 1 MB at most. Read (to sign an address) by approved members; uploaded and erased under the same rules as the rows (the group is read from the file's folder name). |
@@ -354,6 +361,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `push_cooldowns` | push | When each user was last notified per topic. **Server-only:** no grants, no policies; written by `claim_push_turns`. |
 | `document_chunks` | assistant | **Server-only:** RLS on, no grants, no policies. `vector(1024)` + HNSW index. |
 | `profiles` | profiles | One row per account: the name others see, and `avatar_path` (their picture, or null). Made by a trigger on `auth.users`. Read by the owner, by people sharing a group (`shares_a_group_with`) and with `groups.manage`; no direct write: `set_my_name`, `approve_name_request` and `set_my_avatar` change it; nobody inserts or deletes. |
+| `storage.objects`, bucket `staff-photos` | staff | Staff photos. **Public** to read by address; JPEG/PNG/WebP, 1 MB at most; no write policies: only the dashboard uploads. |
 | `storage.objects`, bucket `avatars` | profiles | People's pictures. **Public** to read by address; JPEG only, 200 KB at most; each person writes, lists and erases only the folder named after their own id. |
 | `name_requests` | profiles | A name someone in a group asked for. The owner reads their own; `groups.manage` reads all, declines (delete) and approves (function). Written only by `set_my_name`. |
 | `user_settings` | i18n | One row per user: their language. Owner-only read and write. |
@@ -435,7 +443,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Every sign-in link of the same church day works (2026-10-19, the user) | Members ask twice, Gmail folds the emails together and hides one; a tapped older link left the app waiting forever. One device key per day, and our own key per email, so a newer email no longer cancels an older one | A link lives until midnight at church instead of an hour; the server sends the email (a route) and makes the token at collection (`generateLink`, service role) |
 | Pictures of people in a public bucket (`avatars`, 2026-10-19) | A face beside each request: a public address the phone keeps, no signing per person per screen | Anyone holding a file's address can open it (it is two random ids); group photos stay private |
 | Cropping on `react-easy-crop` (2026-10-19) | Dragging and pinching a picture by hand, on every phone, is easy to get subtly wrong | One more library (no dependencies but one tiny one) |
-| Staff are a fixed list in code (2026-10-19, the user) | A few people who change rarely: a line of code beats a table, rules and an editor | A code change and a deploy to change staff |
+| Staff are rows in Supabase, edited in the SQL Editor (2026-10-19, the user; replaces "a list in code" from the same day) | The user changes people and headings without a deploy | Three tables (people apart from headings, so a person is typed once), RLS and a test; no editor screen, so changes need SQL (`edit-staff.sql`) |
 | Worship music is one file the church supplies (`public/audio/worship.mp3`) | Only a track the church has the rights to may be played | Until it is added, Play says the music could not play |
 | The author sees how many prayed ("3 🙏", `prayer_feed.prayer_count` for the author only) (2026-10-14) | The user wants people to see the prayers their request received | Reverses the 2026-10-06 choice; still nobody else sees a count |
 | Group cards show members' initials, not names (`group_member_initials`) | The circles need someone's presence, not who they are; a member may not read another group's members | Two people with the same initials look alike |
@@ -657,3 +665,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-19: Supabase refresh-token reuse detection switched off (members signed out after a missed renewal); auth README Setup 6 and Decisions; backlog B45 (server-held tokens).
 - 2026-10-19: auth Edge cases: deploys sign nobody out but made a missed renewal likelier; members already signed out sign in once more; how to check detection is off. Section 6.1 names the setting.
 - 2026-10-19: Supabase access token expiry set to 15 minutes (the user), so permission changes arrive within 15 minutes instead of an hour; auth README Setup 6 and every "within the hour" in approval, people, permissions and `auth/server/queries.ts`.
+- 2026-10-19: staff moved from `directory.ts` to Supabase (`staff_sections`, `staff_members`, `staff/schema.sql`, `server/queries.ts`, page loads them); headings back above the cards, Pastor Khai under "Ban điều hành"; `edit-staff.sql` (placeholder scripts); approval door lines; 2 RLS cases. Typechecked; SQL and RLS tests NOT run.
+- 2026-10-19: staff photos: public bucket `staff-photos` (1 MB, JPEG/PNG/WebP, dashboard uploads only) in `staff/schema.sql` 3b; `edit-staff.sql` block 1b. SQL NOT run.
+- 2026-10-19: Home: Staff tile and page renamed "Danh bạ" in Vietnamese; Staff and Admin tiles get photos (`public/images/home/staff.webp`, `admin.webp`). Seen on Home in the dev preview: both photos load, "Danh bạ" shows.
+- 2026-10-19: staff people apart from headings (the user): `staff_members` → `staff_people` + `staff_placements`; `edit-staff.sql` rewritten (add a person once, place by name, headings match ignoring case); approval door lines and RLS cases follow. SQL NOT run.

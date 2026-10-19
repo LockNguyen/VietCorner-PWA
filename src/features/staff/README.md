@@ -6,34 +6,45 @@ rarely needed). Each person is a contact card: photo, name in bold, role in grey
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
 
 ## Setup
-Nothing to run. To fill in a person: their line in `directory.ts` (name in both languages, phone as people
-write it), and their photo, a square JPEG of about 400 pixels, in `public/images/staff/`.
-**Waiting on the user (2026-10-19):** Pastor Khai's number, photo, and the Vietnamese spelling of his name and
-title ("Mục sư điều hành", "Mục sư Khai" are placeholders).
+1. Supabase → SQL Editor: run `schema.sql` (seeds "Ban điều hành" with Pastor Khai), then the two staff lines of
+   `features/approval/schema.sql` section 3. Safe to re-run.
+2. To change people or headings: `edit-staff.sql`, one block at a time, placeholders filled in. No deploy.
+   A photo: upload it in Storage → `staff-photos` (public bucket, made by `schema.sql`), copy its URL, run
+   `edit-staff.sql` block 3b. A path under `public/` also works but needs a deploy.
+**Waiting on the user (2026-10-19):** Pastor Khai's number, photo, and the Vietnamese spelling of his name and title.
 
 ## Files
 | Layer | File | Job |
 |---|---|---|
-| Types | `types.ts` | `StaffMember`: role, name, phone, photo |
-| Data | `directory.ts` | `STAFF`, the list, in page order |
+| Data | `schema.sql` | `staff_sections` (headings), `staff_people` (typed once), `staff_placements` (who is under which heading), read-only RLS, the photo bucket, the seed |
+| Data | `edit-staff.sql` | The user's copy-paste scripts: see, edit, add, move, remove |
+| Types | `types.ts` | `StaffSection` (heading + cards), `StaffMember`: role, name, phone, photo |
+| Server | `server/queries.ts` | `getStaffSections`: every heading with its cards, in order, one trip |
 | Text | `strings.ts` | The page's title, also the Home tile's |
-| UI | `components/StaffDirectory.tsx` | Per person: `ui/PersonCard` (name, role as `subtitle`) with `ui/Avatar` `large` and `PhoneNumber` |
-| Shell | `src/app/staff/page.tsx`, `src/components/HomeTiles.tsx` | The page; the tile (line marked `STAFF`) |
+| UI | `components/StaffDirectory.tsx` | Per heading: `ui/SectionHeading` `large`; per person: `ui/PersonCard` with `ui/Avatar` `large` and `PhoneNumber` |
+| Shell | `src/app/staff/page.tsx`, `src/components/HomeTiles.tsx` | The page (loads the rows); the tile (line marked `STAFF`) |
 
 ## Decisions worth knowing
-- **A list in code, not a table** (the user, 2026-10-19): a few people who change a few times a decade. A line
-  of code needs no rules, no editor screen and no tests of who may write it. The cost: a deploy to change it.
-- **The tile sits above Admin** and has no photo yet (its icon on grey, like Admin's).
+- **Rows in Supabase, edited by SQL** (the user, 2026-10-19, replacing "a list in code" from earlier that day):
+  changes without a deploy. Nobody writes from the app, so there are no write rules to get wrong and no editor
+  screen. The cost: changes need the SQL Editor.
+- **Photos in a public bucket** (`staff-photos`, 1 MB, JPEG/PNG/WebP): a staff photo is website material,
+  and a public address needs no signing code. Uploads only from the dashboard: no write policies.
+- **People apart from headings** (the user, 2026-10-19): a person is typed once, then placed under a heading by
+  name alone; the same person can sit under several headings, and one edit shows everywhere. The cost: adding
+  someone new is two scripts (person, then placement). People are found by their exact `name_vi` (unique).
+- **Order is a `position` number**, on headings and on placements, smaller first.
+- **The tile sits above Admin**, with a phone-book photo (`public/images/home/staff.webp`, the user, 2026-10-19).
 - **The number** is the shared `PhoneNumber`: a tap shows Call, Text and Copy (as on an event's page).
 
 ## Expected behavior
-- Home: a "Ban mục vụ" / "Staff" tile after Groups, before Admin. It slides in `/staff` with a back arrow.
-- `/staff`: "Mục sư điều hành" big and bold, then a card: a large round photo (the default figure until one is
-  set), "Mục sư Khai" in bold, and the number in blue; a tap on it shows Gọi / Nhắn tin / Sao chép.
-- A person with no number yet shows no number line.
-- Seen on `/ui` at 375 px: the card with and without a photo; a tap on the number opens the call / text / copy menu.
-  **NOT seen** on `/staff` signed in.
+- Home: a "Danh bạ" / "Staff" tile (the page title too) after Groups, before Admin. It slides in `/staff` with a back arrow.
+- `/staff`: "Ban điều hành" big and bold, then a card: a large round photo (the default figure until one is
+  set), "Mục sư Khai" in bold, "Mục sư điều hành" in grey, and the number in blue; a tap on it shows Gọi / Nhắn tin / Sao chép.
+- A person with no number shows no number line. Before `schema.sql` has run, the page is empty (no error).
+- An edit in the SQL Editor shows on the next open of `/staff`.
+- **NOT seen** on `/staff` with the tables in place (SQL not run yet).
 
 ## Remove
 Delete this folder, `src/app/staff/`, the `STAFF` lines in `src/components/HomeTiles.tsx`, and
-`public/images/staff/` once it exists.
+`public/images/staff/` once it exists; empty Storage → `staff-photos`; run the Undo lines at the bottom of `schema.sql`.

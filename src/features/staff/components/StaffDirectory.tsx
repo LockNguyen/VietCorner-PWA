@@ -3,25 +3,33 @@
 import PhoneNumber from "@/components/PhoneNumber";
 import Avatar from "@/components/ui/Avatar";
 import PersonCard from "@/components/ui/PersonCard";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import { STAFF } from "../directory";
+import type { StaffSection } from "../types";
 
-// The staff page: a contact card per person: their photo, their name in bold, their role, and their number
-// (a tap opens the call / text / copy menu). The role moved from a heading into the card (the user, 2026-10-19).
-export default function StaffDirectory() {
+// The staff page: for each heading ("Ban điều hành"), a contact card per person under it: their photo, their
+// name in bold, their role, and their number (a tap opens the call / text / copy menu).
+export default function StaffDirectory({ sections }: { sections: StaffSection[] }) {
   const { t } = useLanguage(); // I18N
 
   return (
-    <div className="flex flex-col gap-3 px-3 pt-4 pb-6">
-      {STAFF.map((member) => (
-        <PersonCard
-          key={member.name.en}
-          picture={<Avatar size="large" src={member.photo ?? undefined} />}
-          name={t(member.name)}
-          subtitle={t(member.role)}
-        >
-          {member.phone && <PhoneNumber phone={member.phone} />}
-        </PersonCard>
+    <div className="flex flex-col pb-6">
+      {sections.map((section) => (
+        <section key={section.id}>
+          <SectionHeading variant="large">{t(section.heading)}</SectionHeading>
+          <div className="flex flex-col gap-3 px-3">
+            {section.members.map((member) => (
+              <PersonCard
+                key={member.id}
+                picture={<Avatar size="large" src={member.photo ?? undefined} />}
+                name={t(member.name)}
+                subtitle={t(member.role)}
+              >
+                {member.phone && <PhoneNumber phone={member.phone} />}
+              </PersonCard>
+            ))}
+          </div>
+        </section>
       ))}
     </div>
   );

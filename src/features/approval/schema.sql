@@ -123,6 +123,18 @@ drop policy if exists "Approved accounts only" on public.group_photos;
 create policy "Approved accounts only" on public.group_photos
   as restrictive for all to authenticated using ((select public.has_permission('app.use')));
 
+drop policy if exists "Approved accounts only" on public.staff_sections;
+create policy "Approved accounts only" on public.staff_sections
+  as restrictive for all to authenticated using ((select public.has_permission('app.use')));
+
+drop policy if exists "Approved accounts only" on public.staff_people;
+create policy "Approved accounts only" on public.staff_people
+  as restrictive for all to authenticated using ((select public.has_permission('app.use')));
+
+drop policy if exists "Approved accounts only" on public.staff_placements;
+create policy "Approved accounts only" on public.staff_placements
+  as restrictive for all to authenticated using ((select public.has_permission('app.use')));
+
 -- 4. The people already here (run ONCE, when this feature is first installed) -
 -- Everyone who had an account before approval existed is let in. Running this again later would let in
 -- everyone who is waiting at that moment.

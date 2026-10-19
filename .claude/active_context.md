@@ -542,8 +542,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
 1. User: run `docs/sql-to-run-2026-10-19.sql` in Supabase (auth links, avatars bucket, prayer view, people list),
    then `npm run test:rls`. Run it minutes before the deploy: the live code needs `login_handoffs`, this code
    `sign_in_links` (sign-in fails in between), and this code's Prayer tab is empty until the view has `author_avatar`.
-2. User: add `public/audio/worship.mp3` (a track the church may play), Pastor Khai's number, photo
-   (`public/images/staff/`) and the Vietnamese spelling of his name/title (`features/staff/directory.ts`).
+2. User: run `docs/sql-to-run-2026-10-19b.sql` Part A (staff people apart from headings; copies the live
+   `staff_members` rows), then `npm run test:rls`; once the Staff page shows the cards, Part B (drops `staff_members`).
+   Add `public/audio/worship.mp3` (a track the church may play).
 3. User + Claude on an iPhone: write and edit a prayer request (keyboard), play music, choose a picture, and
    sign in by tapping an OLDER of two same-day emails.
 

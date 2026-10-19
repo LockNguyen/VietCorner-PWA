@@ -1415,3 +1415,39 @@ describe("approval: an account nobody has let in yet", () => {
     expect(stillWaiting?.map((account: { user_id: string }) => account.user_id)).not.toContain(carol.id);
   });
 });
+
+describe("staff: the staff page's headings, people and placements (staff/schema.sql)", () => {
+  // The page's own read (server/queries.ts), with placements and people embedded.
+  const read = (client: SupabaseClient) =>
+    client.from("staff_sections").select("id, staff_placements (staff_people (id))");
+
+  it("are read by an approved member, and by nobody waiting or signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+
+    const { data: forMember } = await read(bob.client);
+    const { data: forWaiting } = await read(carol.client);
+    const { data: signedOut } = await read(anonymous);
+
+    expect(forMember?.length).toBeGreaterThan(0); // the seed in schema.sql
+    expect(forMember?.some((section) => section.staff_placements.length > 0)).toBe(true);
+    expect(forWaiting ?? []).toEqual([]);
+    expect(signedOut ?? []).toEqual([]);
+  });
+
+  it("cannot be written by a member: the user edits them in the SQL Editor", async () => {
+    const { data: section } = await admin.from("staff_sections").select("id").limit(1).single();
+    const { error: newHeading } = await bob.client.from("staff_sections").insert({ heading_en: "x", heading_vi: "x" });
+    const { error: newPerson } = await bob.client
+      .from("staff_people")
+      .insert({ name_en: "x", name_vi: `x-${Date.now()}`, role_en: "x", role_vi: "x" });
+    const { data: changed } = await bob.client.from("staff_people").update({ phone: "000" }).not("id", "is", null).select("id");
+    const { data: moved } = await bob.client.from("staff_placements").delete().eq("section_id", section?.id).select();
+
+    expect(newHeading).not.toBeNull();
+    expect(newPerson).not.toBeNull();
+    expect(changed ?? []).toEqual([]);
+    expect(moved ?? []).toEqual([]);
+  });
+});
