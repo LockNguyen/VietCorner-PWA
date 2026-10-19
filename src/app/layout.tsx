@@ -21,14 +21,29 @@ import { NOTIFICATIONS_ASKED_COOKIE } from "@/features/push/types"; // PUSH
 import { TEXT_SIZE_COOKIE, textSizeOf } from "@/features/text-size/types"; // TEXT-SIZE
 import PageSlide from "@/components/PageSlide";
 import { BannerProvider } from "@/lib/useBanner";
+import RefreshSavedPage from "@/components/RefreshSavedPage";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { APP_NAME } from "@/lib/appName";
+import launchScreens from "@/lib/launchScreens.json";
 
 export const metadata: Metadata = {
   title: APP_NAME,
   // iOS reads these instead of manifest.ts when the app is added to the Home Screen.
   // "black-translucent" lets the blue top bar run up behind the status bar, with white clock and battery.
-  appleWebApp: { capable: true, title: APP_NAME, statusBarStyle: "black-translucent" },
+  // `startupImage`: the picture iOS shows while the app starts (made by scripts/make-launch-images.mjs).
+  // iOS picks the one whose size matches the screen exactly; with none it shows black, then white.
+  appleWebApp: {
+    capable: true,
+    title: APP_NAME,
+    statusBarStyle: "black-translucent",
+    startupImage: launchScreens.map(({ width, height, ratio }) => ({
+      url: `/launch/${width * ratio}x${height * ratio}.png`,
+      media: `(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${ratio}) and (orientation: portrait)`,
+    })),
+  },
+  // Next.js writes only the newer `mobile-web-app-capable` for `capable`. Older guides say iOS shows launch
+  // pictures only with Apple's own tag; without it (2026-10-14) none showed, even after re-adding the app.
+  other: { "apple-mobile-web-app-capable": "yes" },
   icons: { apple: "/icons/icon-192.png" },
 };
 
@@ -82,6 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {user && <KeepSubscribed />} {/* PUSH */}
         </LanguageProvider>
         <ServiceWorkerRegister />
+        <RefreshSavedPage renderedAt={Date.now()} />
       </body>
     </html>
   );
