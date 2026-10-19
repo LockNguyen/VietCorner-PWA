@@ -19,7 +19,6 @@ export const STRINGS = {
   tomorrow: { en: "Tomorrow", vi: "Ngày mai" } satisfies Text,
   everyWeek: { en: "Every week", vi: "Hằng tuần" } satisfies Text,
   location: { en: "Location", vi: "Địa điểm" } satisfies Text,
-  time: { en: "Time", vi: "Thời gian" } satisfies Text, // what a screen reader calls the clock on an event's page
   contact: { en: "Contact", vi: "Liên hệ" } satisfies Text,
   contactField: { en: "Contact phone number", vi: "Số điện thoại liên hệ" } satisfies Text,
 

@@ -4,6 +4,8 @@
 @theme {
   --color-action: #1976d2;
   --color-on-action: #ffffff;
+  /* A lighter blue for a link over a dark photo (an event card): `action` was too dim there (the user, 2026-10-19). */
+  --color-action-on-dark: #90caf9;
   --color-surface: #ffffff;
   --color-fill: #f0f0f0;
   --color-ink: #1a1a1a;
@@ -12,6 +14,7 @@
   --color-danger: #c62828;
   --color-success: #2e7d32;
   --color-success-soft: #e8f5e9;
+  --color-caution: #f9a825; /* yellow: the Copy icon in a phone number's menu (the user, 2026-10-19) */
   --color-pray: #7b1fa2;
   --color-pray-soft: #f3e5f5;
 
@@ -30,6 +33,7 @@
   --spacing-touch: 48px;
   --spacing-row: 72px;
   --spacing-bar: 48px;
+  --spacing-toolbar: 64px; /* a 48px button and 8px above and below; room for a two-line nudge bubble */
   --spacing-tabs: 56px;
   --spacing-column: 480px;
   /* The tallest a sheet gets (decided by the user 2026-10-14): its X stays within reach of a thumb, and what
@@ -96,7 +100,7 @@
       transform: translateX(0);
     }
     50% {
-      transform: translateX(-8px);
+      transform: translateX(6px);
     }
   }
 }

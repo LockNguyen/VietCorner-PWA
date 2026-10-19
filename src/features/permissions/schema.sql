@@ -89,7 +89,7 @@ on conflict do nothing;
 -- 5. Making someone an admin (by hand, with their email) --------------------
 -- insert into public.user_roles (user_id, role)
 -- select id, 'admin' from auth.users where email = 'someone@example.com';
--- It takes effect the next time their token is refreshed: within the hour, or at once if they sign out and in.
+-- It takes effect the next time their token is refreshed: within 15 minutes, or at once if they sign out and in.
 
 -- 6. Undo (removing the feature) ------------------------------------------
 -- First switch the hook off in the dashboard, or nobody can sign in. Then:

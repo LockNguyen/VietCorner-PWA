@@ -1,28 +1,24 @@
 "use client";
 
-import { ALargeSmall } from "lucide-react";
 import ListRow from "@/components/ui/ListRow";
-import SectionHeading from "@/components/ui/SectionHeading";
 import Text from "@/components/ui/Text";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { useTextSize } from "../hooks/useTextSize";
 import { SIZES, STRINGS } from "../strings";
 
-// The text size choice: one row per size, a tick on the current one, like the language choice beside it.
-// In Settings under a small heading; as sign-up's first step (`asStep`) under a big bold title, like the
-// other setup screens' ("Check your email").
+// The text size choice: one row per size, a tick on the current one, like the language choice.
+// Its own screen in Settings (the title is the screen's); as sign-up's first step (`asStep`) under a big bold
+// title, like the other setup screens' ("Check your email").
 export default function TextSizeChoice({ asStep = false }: { asStep?: boolean }) {
   const { t } = useLanguage(); // I18N
   const { size, choose } = useTextSize();
 
   return (
     <section>
-      {asStep ? (
+      {asStep && (
         <div className="pb-2 text-center">
           <Text as="h1" variant="tile">{t(STRINGS.stepTitle)}</Text>
         </div>
-      ) : (
-        <SectionHeading variant="large" icon={<ALargeSmall />}>{t(STRINGS.heading)}</SectionHeading>
       )}
       <ul>
         {SIZES.map((option) => (

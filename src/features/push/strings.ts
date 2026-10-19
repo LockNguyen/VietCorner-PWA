@@ -4,6 +4,8 @@ import type { Text } from "@/features/i18n/types"; // I18N
 export const STRINGS = {
   heading: { en: "Notifications", vi: "Thông báo" } satisfies Text,
   onThisDevice: { en: "On this device", vi: "Trên thiết bị này" } satisfies Text,
+  on: { en: "On", vi: "Bật" } satisfies Text, // its Settings row
+  off: { en: "Off", vi: "Tắt" } satisfies Text, // its Settings row, also when the phone blocks them
   notificationsBlocked: {
     en: "Notifications are blocked. Turn them on in your phone settings.",
     vi: "Thông báo đang bị tắt. Vui lòng bật lại trong phần cài đặt của điện thoại.",

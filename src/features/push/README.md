@@ -20,7 +20,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Server logic | `server/saveSubscription.ts` | **Admin** client: stores the device under the verified user, taking it over from whoever had it |
 | Routes | `src/app/api/push/subscribe/route.ts` | Verify (401) → validate (400) → `saveSubscription` → 204 |
 | State | `hooks/usePushNotifications.ts` | Status (`unsupported/blocked/off/on/error`), re-saves the subscription on every open, `enable()` |
-| UI | `components/NotificationSection.tsx` | The Settings block: one switch, on or off for this device, and a line when the phone stands in the way |
+| UI | `components/NotificationSwitch.tsx` | `/settings/notifications`: one switch, on or off for this device, and a line when the phone stands in the way |
+| UI | `components/NotificationSection.tsx` | The switch under a heading (the waiting-for-approval screen) |
+| UI | `components/NotificationRow.tsx` | The Settings row: Bật / Tắt, opening `/settings/notifications` |
 | UI | `components/NotificationStep.tsx` + `hooks/useNotificationStep.ts` | The setup screen "Turn on notifications": shown by the layout after the name until they are on or the person taps "No, not for now". The answer is the cookie `NOTIFICATIONS_ASKED_COOKIE` (`types.ts`, 400 days). Already on, or impossible here (unsupported) → it records that and moves on by itself |
 | UI | `components/KeepSubscribed.tsx` | Draws nothing: saves the device's subscription again on every opening of the app (root layout) |
 | Text | `strings.ts` | The toggle's labels |

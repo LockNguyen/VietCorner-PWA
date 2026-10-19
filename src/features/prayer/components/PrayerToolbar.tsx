@@ -28,12 +28,11 @@ export default function PrayerToolbar({ canManageReminders, playing, nudging, on
           <Bell />
         </IconButton>
       )}
-      <div className="relative">
-        <IconButton label={t(playing ? STRINGS.pauseMusic : STRINGS.playMusic)} onClick={onToggleMusic}>
-          {playing ? <Pause /> : <Play />}
-        </IconButton>
-        {nudging && <NudgeBubble>{t(STRINGS.prayNow)}</NudgeBubble>}
-      </div>
+      {/* Right before play, so its tail points at it (the user, 2026-10-19). */}
+      {nudging && <NudgeBubble>{t(STRINGS.prayNow)}</NudgeBubble>}
+      <IconButton label={t(playing ? STRINGS.pauseMusic : STRINGS.playMusic)} onClick={onToggleMusic}>
+        {playing ? <Pause /> : <Play />}
+      </IconButton>
       <IconButton tone="filled" label={t(STRINGS.addRequest)} onClick={onAdd}>
         <Plus />
       </IconButton>

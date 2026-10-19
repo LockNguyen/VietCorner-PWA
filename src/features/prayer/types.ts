@@ -30,8 +30,8 @@ export const MAX_BODY_LENGTH = 1000;
 // added by hand (the prayer README). Looped, so a long prayer never ends in silence.
 export const WORSHIP_MUSIC_URL = "/audio/worship.mp3";
 
-// why: long enough to read the first requests, soon enough to still be on the tab (the user, 2026-10-19).
-export const MUSIC_NUDGE_AFTER_MS = 4000;
+// why: soon enough to still be on the tab; 4 s felt slow (the user, 2026-10-19).
+export const MUSIC_NUDGE_AFTER_MS = 2000;
 
 // --- Reminders (admin configuration) ---------------------------------------------------------------------
 

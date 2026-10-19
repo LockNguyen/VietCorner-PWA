@@ -27,7 +27,7 @@ Also run section 3f of `features/events/schema.sql`, or removing someone who cre
   "member" (may use the app) and "admin" (everything). Rights stay roles, as everywhere else in the app;
   these small ones let an admin hand out one task at a time.
 - **No route, no service key:** each change is a database function that checks "users.manage" itself, as
-  `approve_account` does. A changed role reaches the person at their next token refresh (within the hour).
+  `approve_account` does. A changed role reaches the person at their next token refresh (within 15 minutes).
 - **Nobody locks the church out:** an admin cannot switch off their own "admin" or remove themselves (the
   switch is disabled and the line hidden; the database refuses it too).
 - **Removing deletes the account** and everything only theirs (cascades); events they made stay (3f). It

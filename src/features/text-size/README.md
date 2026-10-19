@@ -12,7 +12,8 @@ System docs: `.claude/architecture.md`.
 | Types | `types.ts` | `TextSize`, `TEXT_SIZE_COOKIE`, `textSizeOf` (reads the cookie's value) |
 | Text | `strings.ts` | The heading and the two choices |
 | State | `hooks/useTextSize.ts` | The current size; `choose` sets the cookie and `<html data-text-size>`, then refreshes |
-| UI | `components/TextSizeChoice.tsx` | Two rows with a tick, like the language choice |
+| UI | `components/TextSizeChoice.tsx` | Two rows with a tick, like the language choice (`/settings/text-size`, and sign-up's first step) |
+| UI | `components/TextSizeRow.tsx` | The Settings row: the size in use, opening `/settings/text-size` |
 | Shell | `src/app/layout.tsx` (`TEXT-SIZE` lines) | Reads the cookie: `data-text-size` on `<html>`, and `bigText` for `AppTabs` |
 | Shell | `src/app/settings/page.tsx`, `src/app/login/page.tsx` (`TEXT-SIZE` lines) | Show the choice |
 | Style | `src/app/globals.css` | `html[data-text-size="big"]` sets `--text-scale: 1.2` |

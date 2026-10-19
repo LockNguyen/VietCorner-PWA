@@ -1,11 +1,9 @@
 "use client";
 
-import { Camera } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
 import ImageCropper from "@/components/ui/ImageCropper";
-import SectionHeading from "@/components/ui/SectionHeading";
 import Text from "@/components/ui/Text";
 import TextInput from "@/components/ui/TextInput";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -16,7 +14,7 @@ import { AVATAR_BUCKET } from "../types";
 
 type Props = { userId: string; avatarPath: string | null };
 
-// Settings block: my picture as others see it, and a way to choose one. A chosen picture is framed in a
+// The picture screen of Settings: my picture as others see it, and a way to choose one. A chosen picture is framed in a
 // circle first (drag, pinch), and only "Use this picture" saves it.
 export default function AvatarSection({ userId, avatarPath }: Props) {
   const { t } = useLanguage(); // I18N
@@ -24,11 +22,8 @@ export default function AvatarSection({ userId, avatarPath }: Props) {
 
   return (
     <section>
-      <SectionHeading variant="large" icon={<Camera />}>
-        {t(STRINGS.pictureHeading)}
-      </SectionHeading>
       {change.chosenUrl ? (
-        <div className="flex flex-col gap-3 px-3">
+        <div className="flex flex-col gap-3 px-3 pt-4">
           <ImageCropper
             src={change.chosenUrl}
             position={change.position}
@@ -46,7 +41,7 @@ export default function AvatarSection({ userId, avatarPath }: Props) {
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3 px-3">
+        <div className="flex flex-col gap-3 px-3 pt-4">
           <Avatar size="large" src={avatarPath ? publicFileUrl(AVATAR_BUCKET, avatarPath) : undefined} />
           <Field label={t(avatarPath ? STRINGS.changePicture : STRINGS.choosePicture)}>
             <TextInput

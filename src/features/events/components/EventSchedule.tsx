@@ -20,11 +20,11 @@ import EventCard from "./EventCard";
 
 type Props = {
   events: ScheduledEvent[]; // as the page loaded them
-  canManage: boolean; // an admin: a + for a new event
+  canManage: boolean; // an admin: a + for a new event, and a tap on a card opens its editor
 };
 
 // The schedule: each event once, at its next date (a weekly one never shows a second week), grouped by day,
-// soonest first. Tapping one opens its own page. It shows what the page loaded at once, then keeps itself
+// soonest first. An admin's tap opens its editor. It shows what the page loaded at once, then keeps itself
 // fresh (`useFresh`).
 export default function EventSchedule({ events: loaded, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
@@ -59,7 +59,7 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
           <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
           <div className="flex flex-col gap-4 px-3">
             {ofThatDay.map((occurrence) => (
-              <EventCard key={occurrence.event.id} occurrence={occurrence} />
+              <EventCard key={occurrence.event.id} occurrence={occurrence} canManage={canManage} />
             ))}
           </div>
         </section>

@@ -7,7 +7,8 @@ import { MANAGE_EVENTS } from "@/features/events/types";
 import { getMyPermissions } from "@/features/permissions/server/queries";
 import { createClient } from "@/lib/supabase/server";
 
-// The editor for one event, opened from the Edit button on the event's page by an admin. Saving leads back
+// The editor for one event, opened by an admin tapping its card on the schedule (there is no page per event:
+// the card says it all, the user 2026-10-19). Saving leads back
 // to the schedule. Courtesy, not security: the database refuses every save without the permission.
 export default async function EventEditorPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
@@ -21,7 +22,7 @@ export default async function EventEditorPage({ params }: { params: Promise<{ ev
 
   return (
     <>
-      <PageHeader title={STRINGS.editEvent} backHref={`/events/${eventId}`} />
+      <PageHeader title={STRINGS.editEvent} backHref="/events" />
       <EventEditor event={event} listHref="/events" />
     </>
   );

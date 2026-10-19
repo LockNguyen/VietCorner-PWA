@@ -8,6 +8,7 @@ type Props = {
   subtitle?: string;
   leading?: ReactNode;
   trailing?: ReactNode;
+  value?: string; // grey, just before the chevron: what a setting is now ("Tiếng Việt")
   tone?: keyof typeof TONES;
   current?: boolean;
   href?: string;
@@ -21,7 +22,7 @@ const TONES = { normal: "text-ink", off: "text-subtle line-through" } as const;
 // One line of any list: a picture, a title over a subtitle, and something at its right end.
 // With `href` it is a link that opens a deeper screen, sliding it in from the right; with `onClick` a button. Both end in a chevron unless `trailing` is passed;
 // the `current` one of a set of choices ends in a tick instead.
-export default function ListRow({ title, subtitle, leading, trailing, tone = "normal", current, href, onClick }: Props) {
+export default function ListRow({ title, subtitle, leading, trailing, value, tone = "normal", current, href, onClick }: Props) {
   const opens = Boolean(href || onClick);
   const content = (
     <>
@@ -30,6 +31,7 @@ export default function ListRow({ title, subtitle, leading, trailing, tone = "no
         <span className={`text-body ${TONES[tone]}`}>{title}</span>
         {subtitle && <span className="text-small text-subtle">{subtitle}</span>}
       </span>
+      {value && <span className="max-w-1/2 shrink-0 truncate text-body text-subtle">{value}</span>}
       {current ? (
         <Check aria-hidden className="shrink-0 text-action" />
       ) : trailing !== undefined ? (

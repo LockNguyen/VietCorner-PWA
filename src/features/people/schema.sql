@@ -46,7 +46,7 @@ grant execute on function public.people_list () to authenticated;
 -- 4. Giving and taking a role ----------------------------------------------------
 -- Only the roles the app offers (people/types.ts). An admin cannot take "admin" from themselves: the church
 -- must never end up with nobody able to open this screen. It takes effect at the person's next token
--- refresh (within the hour), like every permission.
+-- refresh (within 15 minutes), like every permission.
 create or replace function public.set_person_role(user_id uuid, role text, given boolean) returns void
 language plpgsql security definer set search_path = '' as $$
 begin

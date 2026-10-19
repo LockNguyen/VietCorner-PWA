@@ -11,7 +11,7 @@ export async function getPeople(): Promise<PersonSummary[]> {
   return data;
 }
 
-// Give or take one role. It takes effect at the person's next token refresh, within the hour.
+// Give or take one role. It takes effect at the person's next token refresh, within 15 minutes.
 export async function setRole(userId: string, role: string, given: boolean): Promise<void> {
   const { error } = await createClient().rpc("set_person_role", { user_id: userId, role, given });
   if (error) throw new Error(error.message);

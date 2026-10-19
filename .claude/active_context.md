@@ -533,8 +533,12 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       Debt: chat avatars (B43); a rate limit on our link route (B44); an event's own 400 px picture is soft on a card.
 
 ## ➡️ Next 3 Micro-Steps
+000. User: sign-outs fix (2026-10-19): reuse detection is OFF in Supabase (done by the user). Check: open the app, wait over 15 minutes, deploy, open it: still signed in, and no `refresh_token_already_used` in Supabase → Logs → Auth by tomorrow. Members already signed out sign in once more. Debt: B45 (server-held tokens, detection back on).
 00. User: in Vietnamese, glance over the new wording (sign-in errors, waiting screen, install guide, Prayer, assistant): strings pass done 2026-10-19, typechecked, not seen on a phone.
+0. User: on the iPhone, Prayer tab: does the toolbar stay under the blue bar while scrolling, and the bubble sit left of play? (now `fixed`, not `sticky`)
+0b. User: on the iPhone, Events tab: tap a card's blue number: dark screen, number lit, Call/Text/Copy menu under it; tap outside closes it. Same menu now on the event page, the group page and the staff contact cards; the card number is a lighter blue.
 0d. User: signed in, open a group page: as a member, a + square first in the photo strip opens the add form; as an admin, a round blue pencil under the top bar opens the editor (2026-10-19, typechecked only).
+0c. User: on the iPhone, Settings: rows, icons, each row slides in its screen and back; Sign out asks for a second tap.
 1. User: run `docs/sql-to-run-2026-10-19.sql` in Supabase (auth links, avatars bucket, prayer view, people list),
    then `npm run test:rls`. Run it minutes before the deploy: the live code needs `login_handoffs`, this code
    `sign_in_links` (sign-in fails in between), and this code's Prayer tab is empty until the view has `author_avatar`.

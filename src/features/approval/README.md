@@ -10,7 +10,7 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 2. Run this `schema.sql`, sections 1 to 3, **after every other feature's schema**: section 3 names their tables.
 3. Run section 4 **once** (it is commented out): everyone who already has an account is let in.
 4. Deploy the code straight after. Between the SQL and the deploy, people already signed in see empty lists
-   until their login token renews (an hour at most); the new code renews it at once.
+   until their login token renews (15 minutes at most); the new code renews it at once.
 
 ## Files
 | Layer | File | Job |
@@ -61,8 +61,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 - **Not exercised (2026-10-12): any of it signed in.** The SQL is not run yet, so `npm run test:rls` was not run.
 
 ## Edge cases
-- An approval takes effect on the token's next renewal: at once on the waiting screen, within the hour anywhere else.
-- Taking approval away is deleting the row in `user_roles` by hand; it bites within the hour.
+- An approval takes effect on the token's next renewal: at once on the waiting screen, within 15 minutes anywhere else.
+- Taking approval away is deleting the row in `user_roles` by hand; it bites within 15 minutes.
 - A waiting person who never turns notifications on is not told; they find out on opening the app.
 - Sign-up is still open, so the waiting list can collect strangers (backlog B38).
 

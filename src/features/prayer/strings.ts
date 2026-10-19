@@ -37,7 +37,8 @@ export const STRINGS = {
   playMusic: { en: "Play worship music", vi: "Phát nhạc thờ phượng" } satisfies Text,
   pauseMusic: { en: "Pause the music", vi: "Tạm dừng nhạc" } satisfies Text,
   musicFailed: { en: "The music could not play.", vi: "Không thể phát nhạc." } satisfies Text,
-  prayNow: { en: "Would you like to pray now?", vi: "Bạn có muốn cầu nguyện bây giờ?" } satisfies Text,
+  // The "\n" is where the bubble breaks it: always two lines, the bubble as wide as the longer one (the user, 2026-10-19).
+  prayNow: { en: "Would you like\nto pray now?", vi: "Bạn có muốn\ncầu nguyện bây giờ?" } satisfies Text,
 
   // Admin section: when the church is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,

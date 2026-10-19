@@ -9,8 +9,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 1. Run `schema.sql` in Supabase → SQL Editor, **before** any feature with admin actions.
 2. Switch the hook on: Dashboard → Authentication → Hooks → **Custom Access Token** → Postgres function
    `public.custom_access_token_hook`. Sign in once straight away to prove sign-in still works.
-3. Make someone an admin (bottom of `schema.sql`). It takes effect when their token refreshes: within the
-   hour, or at once if they sign out and in.
+3. Make someone an admin (bottom of `schema.sql`). It takes effect when their token refreshes: within 15
+   minutes, or at once if they sign out and in.
 
 ## Files
 | Layer | File | Job |
@@ -36,8 +36,9 @@ every page  ──► getMyPermissions() ──► reads the same token ──�
   `types.ts`. Removing a feature removes its permission with it.
 - **Permissions travel in the login token** (chosen 2026-10-06 over a table lookup per query). A check costs
   nothing, at any size. The price:
-  - A change takes effect only when the token refreshes, **up to an hour**. Taking a role away is not
-    instant; for an emergency, delete the user's sessions in the dashboard.
+  - A change takes effect only when the token refreshes, **up to 15 minutes** (the access token's
+    life, set to 15 minutes on 2026-10-19 by the user: members open the app rarely, so that is soon enough).
+    Taking a role away is not instant; for an emergency, delete the user's sessions in the dashboard.
   - Part of the setup lives in the dashboard (the hook switch), not in this repository.
   - A hook that fails stops **everyone** from signing in. It is one `select` with no way to raise, and
     switching the hook off in the dashboard is the instant undo.

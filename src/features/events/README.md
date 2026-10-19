@@ -37,7 +37,6 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
 | Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
-| Shell | `src/app/events/[eventId]/page.tsx` | One event's page, for everyone (`EventPage`); 404 once it is off the schedule |
 | Shell | `src/app/events/[eventId]/edit/page.tsx`, `src/app/events/new/page.tsx` | The editor for one event, or a new one; 404 without `events.manage` |
 
 ## Four tables, on purpose
@@ -113,7 +112,7 @@ every case the list has to handle (see **Seed data** below).
   outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
 - **Events tab, for someone with `events.manage`** (since 2026-10-14; it was the Admin tab): a round blue + at
-  the top right opens a new event; tapping an event opens its own screen (`/events/<id>`) with a back arrow:
+  the top right opens a new event; tapping an event's card opens its editor (`/events/<id>/edit`) with a back arrow:
   the picture, then the fields (title, location and description, each one grey box with Vietnamese on top
   and English below), then "Remind members", the next
   four dates, and a small red "Cancel this event permanently" that asks once ("Tap again to confirm"). Save with something missing says what, in red under
@@ -206,18 +205,17 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
 ## One date per event, and an event's own page (2026-10-17, the user)
 - The tab is "Lịch sinh hoạt" in Vietnamese. Each event shows **once**, at its next date: a weekly event never
   shows a second week ahead (`nextOfEach`, tested). A cancelled week is hidden, so the week after shows instead.
-- **A tap opens the event's page** (`/events/<id>`, `EventPage`) for everyone, sliding in from the right with
-  a back arrow: a big picture (a calendar icon without one), then three lines with icons (`ui/IconLine`): the
-  clock (date, time, "every week"), the map pin (place) and the phone (`events.contact_phone`, tap: Call / Text /
-  Copy, shared `src/components/PhoneNumber.tsx`); then the description. Admins see Edit at the bottom, which opens
-  `/events/<id>/edit`; the + opens `/events/new`. The `EventDetails` sheet is gone.
+- **No page per event since 2026-10-19 (the user):** the card shows everything a member needs. For a member the
+  card is not a button (only its number is); for an admin a tap opens `/events/<id>/edit`; the + opens
+  `/events/new`. `/events/<id>` answers 404. Trade-off: members no longer see an event's description or end time.
 - **SQL:** section 3g (`docs/sql-to-run-2026-10-17c.sql`). Until it is run, Save in the editor fails.
 
 ## Each event a card (2026-10-19, the user)
 - **What:** under each day's heading, an event is a card the width of the screen (`ui/PhotoCard`): a picture
   darkened from the bottom, and over it in white the title (20, bold), "Chúa Nhật · 10:30 Sáng" (17, semibold:
-  the weekday, since the date is the heading), the place, and "Liên hệ: <number>" (17). A tap opens the
-  event's page, where the number can be called (a link cannot hold another button).
+  the weekday, since the date is the heading), the place, and "Liên hệ: <number>" (17), the number blue. An admin's tap opens the editor; a tap on the number
+  opens its menu instead (call green, text blue, copy yellow; `PhoneNumber`). The card's link is a layer under
+  the words, not around them, because a link cannot hold a button. 208 px tall (`min-h-52`, was 176).
 - **Which picture:** the event's own if an admin set one, else the church's (`public/images/home/events.png`,
   `CHURCH_PICTURE` in `EventCard.tsx`). An event's own picture is 400 px, a little soft at full width.
 - **Contrast:** the veil runs from 90% of `ink` at the bottom to 35% at the top, so the words, which sit at the

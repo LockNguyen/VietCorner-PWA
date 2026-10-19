@@ -150,7 +150,9 @@ The empty installable app every feature plugs into.
 
 **Expected behavior:** `/` is Home (or redirects to `/login`); signing in lands on Home; the tab bar is
 absent until signed in; the assistant and Settings open from the top-right icons and have a back arrow to
-Home; tabs switch without a reload; `sw.js`, the manifest
+Home; Settings is a list (Messenger's layout: picture and name, rounded groups of rows showing each value,
+each row sliding in its own `/settings/<name>` screen, a red Sign out far below that asks for a second tap);
+tabs switch without a reload; `sw.js`, the manifest
 and icons return 200 even when logged out; iOS installs via Share → Add to Home Screen (no prompt).
 The second load after a new `sw.js` answers all code files from the `static-v1` cache (checked in Chrome,
 2026-10-14: 10/10 on `/login`, cache `static-v1` only). Launch measured on an iPhone (XR/11 screen) before the cache
@@ -208,7 +210,9 @@ the app keeps a secret key (one per church day) and puts only its hash in the li
 own that only the email carries. One tap ("Sign in") on the link's page marks it tapped; the app collects with
 its key and gets a fresh one-time token (`generateLink`). Every link of the same church day works, even after
 newer ones were sent (2026-10-19). Sessions live in `sb-*` cookies for up to 400 days, renewed on every visit;
-`src/proxy.ts` refreshes them and redirects logged-out visitors. Table: `sign_in_links` (server-only).
+`src/proxy.ts` refreshes them and redirects logged-out visitors. Supabase's refresh-token reuse detection is
+off (README Setup 6): a phone that missed a renewal's reply would otherwise be signed out at its next launch,
+most often right after a deploy. Table: `sign_in_links` (server-only).
 Routes: `POST /api/auth/link`, `/handoff`, `/claim` (none has a user to verify; the README says what guards them).
 
 ### 6.13 install → [README](../src/features/install/README.md)
@@ -286,7 +290,8 @@ through for a week. Cancelling goes through a route; its push to the church, and
 switched off for now (`eventChangePush`, `eventReminders`). Every date and time is church time (`America/New_York`), computed in
 one file, `churchTime.ts`. The schedule shows each event as a card (`ui/PhotoCard`, 2026-10-19): its own
 picture, or the church's (`public/images/home/events.png`), darkened, with the title, "weekday · time", the
-place and the contact number in white.
+place in white, and "Liên lạc:" with the number in blue: tapping the number opens its call / text / copy menu
+(`ui/ActionMenu`) instead of the event.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
 The church's groups and who is in which: `groups` and `group_members`. Since 2026-10-12 only chat shares
@@ -313,13 +318,14 @@ Authors edit, delete, or mark a request answered; an answered one leaves the lis
 Writing and editing a request are screens of their own (`/prayer/new`, `/prayer/<id>/edit`; 2026-10-19: the
 iPhone keyboard pushed a sheet with a text field off the top). Above the list, held under the top bar, a
 toolbar: the admin's bell, play/pause for worship music (`public/audio/worship.mp3`, looped, stopped on leaving
-the tab), and the +. After 4 seconds on the tab a bubble under play asks "Bạn có muốn cầu nguyện bây giờ?" until
-the music is first played.
+the tab), and the +. The toolbar is `fixed` with a spacer, not `sticky` (2026-10-19: sticky scrolled away with the
+list on the user's iPhone). After 2 seconds on the tab a short bubble left of play, white space on its left, swaying
+towards it, asks "Bạn có muốn cầu nguyện bây giờ?" until the music is first played.
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
 
 ### 6.15 staff → [README](../src/features/staff/README.md)
-Who the church's staff are: a page (`/staff`) opened from a tile on Home, not a tab. Each person is their role
-as a heading, then a card with their photo, name and number (tap: call, text or copy, `components/PhoneNumber`).
+Who the church's staff are: a page (`/staff`) opened from a tile on Home, not a tab. Each person is a contact
+card: photo, name in bold, role in grey under it, then the number (tap: a menu to call, text or copy, `components/PhoneNumber` on `ui/ActionMenu`).
 A fixed list in `directory.ts`; photos in `public/images/staff`. No data, no server code.
 
 ### 6.7 assistant → [README](../src/features/assistant/README.md) · [AI service](../services/ai/README.md)
@@ -416,6 +422,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 ### Key Decisions
 | Decision | Why | Trade-off |
 |---|---|---|
+| Phone menu drawn in a portal, with the number drawn again on top | A card (`overflow-hidden`) or a sheet would cut it off or cover it | Pinned to where the number was, so a scroll closes it |
+| Supabase refresh-token reuse detection off | A renewal whose reply a phone misses left it a used token, and the next launch ended the session | A copied old token still gets in; B45 is the fix that keeps detection on |
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
 | Sign-in by email link only, no passwords; sign-up sends the same link (2026-10-17, the user; replaces password sign-in of 2026-10-14) | Someone signed out types only their address: nothing to remember or reset; one flow for signing in and signing up | A trip to the mailbox each time someone is signed out (rare: sessions last until sign-out); the email sender must be reliable |
@@ -458,7 +466,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Events and prayer are church-wide; old group-only rows show to everyone | The pastor's review: one church, one schedule, one prayer list. The data so far is from testing | `group_id` columns stay, unused; going back to per-group sharing is SQL and code, not a switch |
 | An email link that hands the sign-in to the device that asked (replaces the typed code, 2026-10-12) | One tap is simpler than copying a code, and an iPhone opens links in Safari, not in the installed app. The asking device keeps a secret and only its hash travels, so nobody else can collect | One more table and two routes that verify no user; tapping the link AND the button on an email you did not ask for signs a stranger in as you |
 | The link's page hands over only on a tap, never on load | Mail services open links to scan them; a page that acted on load would let a scanner confirm a stranger's request | One more tap on iPhone |
-| Permissions ride in the login token, and policies name a permission, not a role | A check reads the token: no lookup per query, at any size. New roles are rows, not policy rewrites. | A role change waits for the token to refresh (up to an hour); the hook is switched on in the dashboard, and a broken hook blocks every sign-in |
+| Permissions ride in the login token, and policies name a permission, not a role | A check reads the token: no lookup per query, at any size. New roles are rows, not policy rewrites. | A role change waits for the token to refresh (up to 15 minutes, the access token's life since 2026-10-19); the hook is switched on in the dashboard, and a broken hook blocks every sign-in |
 | Authorization in RLS, not TypeScript `if`s | Browsers query Supabase directly, so the database is the only check that covers every path | Blocked reads look empty rather than failing; needs the RLS tests |
 | Web Push instead of a native app | No app store, one codebase | iOS needs Add to Home Screen and iOS 16.4+ |
 | Send messages through a route, not straight to Supabase | Sending must also push, which needs secrets | One extra hop per message |
@@ -468,7 +476,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A device's push subscription is saved through a route with the service role | The endpoint outlives a sign-out; only the server may move it to the next user of that phone | Anyone who knew an endpoint (a long random address) could claim it; one more route |
 | A visited page is kept in the phone's memory for ten minutes (`staleTimes`, an experimental Next.js setting) | Going back to a tab shows it at once, with no request; the lists refresh themselves behind it | Settings does not refresh itself and can be up to ten minutes old when returned to (the Admin lists use `useFresh`; the person and group editors reload on arrival, `RefreshOnArrival`, which also empties the other kept tabs); the setting may change in a future Next.js; sign-out must be a full page load so the next person on that phone starts empty |
 | A page's data comes from one database function, called by the page and again by the list itself (`useFresh`) | One trip instead of several; a kept copy of a page can show at once and still become current; `router.refresh()` cannot do this because it discards every kept page | SQL per page; the list holds a copy of the page's data; one extra small read just after a first visit |
-| Pages read who is signed in from the login token, checked locally; only routes that write ask Supabase | Most of the app is reading, and the round trip bought nothing the database's own check does not | A session ended elsewhere keeps reading for up to an hour |
+| Pages read who is signed in from the login token, checked locally; only routes that write ask Supabase | Most of the app is reading, and the round trip bought nothing the database's own check does not | A session ended elsewhere keeps reading for up to 15 minutes |
 | Names are readable within a shared group and by group managers, not by every signed-in user | Decided while "signed in" was anyone with an email; approval (2026-10-12) removes that reason, and the rule is kept until the new Groups page needs otherwise | A former member's old messages lose their name; one function call per row read |
 | Once in a group, a name changes only with a group manager's approval | The manager saw name and email when letting the person in; a later change unseen would undo that check | A wait for an honest correction; one more thing for managers to answer |
 | A join request shows the email beside the name | A name is whatever its owner typed; the email is what the account signed in with | An admin sees addresses |
@@ -477,7 +485,7 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
 | The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
 | The prayer list groups people by name, because its view carries no author id | The id is what would unmask an anonymous request, so it stays out of the feed altogether | Two members with one name share a group in a week (they look the same on screen anyway) |
-| An event's page is a route (`/events/[eventId]`) that slides in from the right, not a sheet (2026-10-17, the user) | A big picture and three facts read better on a whole screen than in 60% of one; the phone's back works | One more page per event; the slide is a CSS animation on arrival only (Back does not slide out) |
+| No page per event (2026-10-19, the user; it replaced the 2026-10-17 `/events/[eventId]` page) | The card already shows when, where and whom to call; one less screen for elderly members | Members no longer see the description or end time; an admin's tap opens the editor |
 | The event editor is a route (`/events/[eventId]/edit`, new at `/events/new`; it was `/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
 | One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
 | Reminders are sent by one 15-minute tick that asks "what is due?", each send claimed once by key | Nothing to keep in step when events change, dates are cancelled or the clocks move; overlapping or late runs cannot double-send | A reminder arrives up to 15 minutes late; a send that fails after its claim is lost; the job and its secret are set up by hand in Supabase |
@@ -637,6 +645,15 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-17: the tab bar slides only to and from Home (the user): from Home a tab slides in, to Home it slides away, an inner screen (an event's page) to its own tab slides away, and between two tabs nothing moves (`AppTabs` `direction`).
 - 2026-10-17: the install guide in the clean look (the user): full screen (no tab bar, no sign-out), logo and bold heading, steps as the button to look for in a grey circle (`ui/RoundIcon`, `InstallStep`), no numbers; iOS 26 Safari gets a first "•••" step (`device.ts` `hasGlassToolbar`, tested). `SignOutButton` lost its `variant`. Trade-off: the 2026-10-14 way out for a wrong account in Safari is gone.
 - 2026-10-19: launch-day feedback (the user). Events are cards (`ui/PhotoCard`: the event's picture or the church's, darkened, white title / "weekday · time" / place / contact; `EventRow` → `EventCard`, `formatWeekday`). Staff page (`features/staff`, `/staff`, a Home tile above Admin; `ui/PersonCard`, `ui/Avatar` `large` + `src`). Prayer: no "(bạn)" after my own name; a sticky toolbar (`ui/Toolbar`, utility `top-under-bar`) with the bell, play/pause worship music (`useWorshipMusic`) and +; after 4 s a swaying bubble under play (`ui/NudgeBubble`, `useShowAfter`); writing and editing a request moved from sheets to `/prayer/new` and `/prayer/<id>/edit` (`useRequestWriting`; `post`/`edit` left `usePrayerFeed`) because the iPhone keyboard pushed the sheet off the screen. Settings headings big and bold with an icon (`ui/SectionHeading` `variant="large"`, `icon`). My picture in Settings: choose, frame, crop, save (`profiles` `AvatarSection`, `useAvatarChange`, `setAvatar`/`removeAvatar`, `ui/ImageCropper` on `react-easy-crop`, `lib/cropImage.ts`), shown on prayer requests and in the people list. Sign-in: every link of the same church day works (`sign_in_links` replaces `login_handoffs`; `POST /api/auth/link`; `storage.todaysClaimKey`; `handoff.ts` `newSecret`/`hashOf`; `churchTime.endOfChurchDay`). `npm test` 130/130, build clean; new components seen on `/ui` at 375 px. NOT run: any of the SQL, the sign-in end to end, an iPhone. Needs SQL: `auth/schema.sql` 1-2, `profiles/schema.sql` 6, then `prayer/schema.sql` 5b and `people/schema.sql` 3.
+- 2026-10-19: prayer toolbar `fixed` under the top bar with a spacer (`--spacing-toolbar` 64 px), because `sticky` scrolled away on the user's iPhone; the nudge bubble moved from under play to its left, fills the row, tail pointing right, sways right (the user). Seen on `/ui` at 375 px in Chrome; NOT yet on the iPhone.
+- 2026-10-19: the nudge bubble shows after 2 s (was 4) and is as wide as its words, always 2 lines (a "\n" in `prayNow`) with white space on its left (the user).
+- 2026-10-19: every phone number opens an iOS 26 style menu under it (`ui/ActionMenu`: screen darkened except the number and the menu; Call green, Nhắn tin blue, Sao chép yellow `--color-caution`; a tap outside closes it), replacing the three buttons. Event cards are taller (`min-h-52`) with the number as a blue, tappable last line (`PhotoCard` `extra`; its link is now a layer under the words). Seen on `/ui` at 375 px in Chrome; NOT on an iPhone.
+- 2026-10-19: staff page as contact cards (role moved from a heading into `PersonCard` `subtitle`); `PhoneNumber` keeps its own width in a column (`self-start`); on dark event cards the number is a lighter blue (`--color-action-on-dark`, `Button` `inlineOnDark`, `PhoneNumber` `onDark`). The group page's number already opens the same menu; group cards show no number (the user). Seen on `/ui` at 375 px; NOT on an iPhone.
+- 2026-10-19: the event's own page is gone (`/events/[eventId]/page.tsx`, `EventPage`, string `time` removed): a member's card is not a button (`PhotoCard` `href` optional), an admin's tap opens `/events/<id>/edit` (its back arrow leads to `/events`). Seen as a member in the pane; the admin tap NOT seen (that account lacks `events.manage`).
 - 2026-10-19: Vietnamese wording pass (the user): approval, assistant ("Nghe đọc" for read aloud), sign-in problems, events ("Liên hệ", "Hình ảnh"), groups, install ("Nhấn" not "Bấm"), prayer ("ý cầu nguyện" not "lời xin"), push. Strings only; English unchanged. Typechecked; NOT seen in the preview.
 - 2026-10-19: "Gỡ"/"Gỡ bỏ" → "Xóa" everywhere (groups, prayer reminders, "Đã xóa", `/ui` demo) (the user).
+- 2026-10-19: Settings in Messenger's layout (the user): my picture (camera → `/settings/photo`) and name at the top; rounded groups (`ui/ListGroup`) of rows with a coloured icon (`ui/RoundIcon` tones), the value in grey (`ListRow` `value`) and a chevron: Tên, Email (read only), Thông báo | Cỡ chữ, Ngôn ngữ; each opens its own screen (`/settings/name`, `notifications`, `text-size`, `language`). No Account section: Sign out is a red button far below, tapped twice. `AccountSection` removed; `NotificationSwitch` split from `NotificationSection` (kept for the waiting screen). Seen in the pane at 375 px; NOT on an iPhone.
 - 2026-10-19: a group's page (the user): adding a picture is a + square first in the photo strip (`ui/PhotoAddTile`), shown to the group's people even before any picture; admins' "Edit group" is a round filled pencil held under the top bar (`ui/Toolbar` + `IconButton`, like prayer's +). Typechecked; NOT seen signed in (the preview needs an emailed code), NOT on an iPhone.
+- 2026-10-19: Supabase refresh-token reuse detection switched off (members signed out after a missed renewal); auth README Setup 6 and Decisions; backlog B45 (server-held tokens).
+- 2026-10-19: auth Edge cases: deploys sign nobody out but made a missed renewal likelier; members already signed out sign in once more; how to check detection is off. Section 6.1 names the setting.
+- 2026-10-19: Supabase access token expiry set to 15 minutes (the user), so permission changes arrive within 15 minutes instead of an hour; auth README Setup 6 and every "within the hour" in approval, people, permissions and `auth/server/queries.ts`.

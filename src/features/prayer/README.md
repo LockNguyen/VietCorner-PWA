@@ -33,7 +33,7 @@ instrumental, a few minutes; it loops). Without it, Play says "The music could n
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
 | State | `hooks/useWorshipMusic.ts` | The looping worship track: play, pause, stopped on leaving; `started` once played |
-| State | `hooks/useShowAfter.ts` | True once the screen has been open a while: the music bubble after 4 s |
+| State | `hooks/useShowAfter.ts` | True once the screen has been open a while: the music bubble after 2 s |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
 | State | `src/lib/useWhenVisible.ts` | "Call this when the element scrolls into view" (shared with the group photos) |
 | UI | `components/PrayerBoard.tsx` | Connects the hooks to the components below |
@@ -91,7 +91,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - **No "(you)" after my own name** (2026-10-19): elderly members read "(bạn)" as a mistake in their name. My
   requests still come first in each week.
 - **The worship music plays only on the Prayer tab** and stops on leaving it: it is for praying over the list.
-  It starts only on a tap (phones refuse sound otherwise). The bubble under Play appears after 4 seconds on the
+  It starts only on a tap (phones refuse sound otherwise). The bubble left of Play appears after 2 seconds on the
   tab, sways gently, never takes a tap, and goes once the music has played on that visit.
 - **The author's delete is permanent and asks no confirmation** (decided: the dialog is already the second
   tap). An admin's delete will be soft (`deleted_at`, hidden by the view).
@@ -114,7 +114,7 @@ And a small group can guess from timing or wording — no software fixes that.
 - The + opens "Lời xin cầu nguyện mới" as its own screen, the box at the top; Share slides back to the list
   with the request at the top, under the author's name. With "Hide my name", everyone sees "Anonymous".
 - Above the list, held under the blue bar while scrolling: (the bell, for admins) Play, and the round +. Play
-  starts the looping music and becomes Pause. After 4 seconds on the tab, a blue bubble under Play asks "Bạn
+  starts the looping music and becomes Pause. After 2 seconds on the tab, a blue bubble left of Play asks "Bạn
   có muốn cầu nguyện bây giờ?" and sways sideways until the music is played.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under

@@ -27,7 +27,8 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | Server reads | `server/queries.ts` | `getLanguage(supabase)` → the user's language or `null`; `getLanguagesOf(admin, userIds)` for text the server writes to others |
 | State | `components/LanguageProvider.tsx` | Holds the language for the whole app; writes the device copy and the database; deletes the Home saved for the next launch (`lib/savedHome.ts`), which is in the old language |
 | State | `hooks/useLanguage.ts` | `{ language, setLanguage, t }` for client components |
-| UI | `components/LanguageToggle.tsx` | One row per language, each written in its own language (Settings) |
+| UI | `components/LanguageToggle.tsx` | One row per language, each written in its own language (`/settings/language`) |
+| UI | `components/LanguageRow.tsx` | The Settings row: the language in use, opening `/settings/language` |
 | UI | `components/LanguageLink.tsx` | The other language as one quiet link, at the top right (sign-in, the install guide) |
 | UI | `components/AdoptDeviceLanguage.tsx` | Renders nothing: copies the pre-sign-in choice into a new account once |
 | Shell | `src/app/layout.tsx` | Reads the language once per page load and wraps the app in the provider (`// I18N` lines) |

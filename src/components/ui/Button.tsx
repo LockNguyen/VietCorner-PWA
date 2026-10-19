@@ -21,6 +21,7 @@ const VARIANTS = {
   // A tappable value lined up with the words around it (a phone number): no side padding, and the 48 px tap
   // area reaches above and below the line (`-my-3`) instead of pushing it down, so it sits level with an icon.
   inline: "-my-3 text-action",
+  inlineOnDark: "-my-3 text-action-on-dark", // the same, over a dark photo (an event card)
 } as const;
 
 // A button. While `pending` it takes no taps and shows the circle, with `pendingLabel` beside it if given.

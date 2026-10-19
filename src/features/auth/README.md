@@ -32,7 +32,12 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
    <p>Nếu bạn không yêu cầu, xin bỏ qua email này.<br>If you did not ask for this, ignore this email.</p>
    ```
 6. Supabase → Authentication → **Sessions**: leave "Time-box user sessions" and "Inactivity timeout" off
-   (the default). Either would sign members out on a timer.
+   (the default). Either would sign members out on a timer. Turn **"Detect and revoke potentially compromised
+   refresh tokens" off** (2026-10-19): with it on, a phone that missed the reply of a token renewal shows the
+   used token again and Supabase ends its whole session (Decisions, "Reuse detection off").
+   **Access token expiry** (Authentication → Sessions, or JWT Keys): **900 seconds** (2026-10-19, the user). A
+   permission change reaches a member when their token is renewed, so 15 minutes instead of an hour. Safe
+   only with reuse detection off: four times the renewals would be four times the chances of a lost reply.
 7. `.env.local`: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
 
 ## Files
@@ -57,7 +62,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | UI | `components/SignUpForm.tsx` | Title, name and email with their words inside, Next (off until both are filled). Back is the frame's arrow |
 | UI | `components/CheckEmail.tsx` | "Check your email" and the address, in bold; "Tap the link in it, then come back here." Back is the frame's arrow |
 | UI | `components/ConfirmLink.tsx` | What the link opens: a spinner, "Sign in?" with "Only if you just asked to." and one button, "Done, go back to the app", or "This link has expired" |
-| UI | `components/AccountSection.tsx` | Settings: the address and `SignOutButton` |
+| UI | `components/EmailRow.tsx` | The Settings row showing the signed-in email (read only) |
+| UI | `components/SignOutButton.tsx` | The red button at the foot of Settings, tapped twice (`useConfirmTap`) |
 | Shell | `src/app/login/page.tsx`, `login/confirm/page.tsx`, `settings/page.tsx` | Render the components (lines marked `AUTH`) |
 | Shell | `src/proxy.ts` | Exists only for this feature |
 
@@ -141,6 +147,12 @@ mailbox, sent the same church day.
 - **Signed in for as long as possible:** the session cookie lasts 400 days (the browser maximum) and is
   renewed on every visit; Supabase refresh tokens never expire unless a time-box is set (Setup 6). An iPhone
   does not apply its 7-day storage limit to a Home Screen app, and our cookies are set by the server.
+- **Reuse detection off** (the user, 2026-10-19; Setup 6): a refresh token works once. When the proxy renews
+  it but the reply never reaches the phone (iOS paused the app, a prefetch was cancelled), the phone keeps
+  the used one. With detection on, its next launch ended the whole session (`refresh_token_already_used` in
+  the auth logs, several members on the first day). Off, the old token is simply renewed. Trade-off: a copy
+  of an old token still gets in, which needs the unlocked phone or malware on it. Backlog B45 keeps
+  detection on by holding the token on the server.
 - **The proxy redirect is convenience, not security.** Routes and RLS do the real checking.
 - **`server.ts` ignores cookie writes from Server Components** on purpose: the proxy is what writes cookies.
 
@@ -180,6 +192,13 @@ mailbox, sent the same church day.
 - Supabase's built-in email sender is rate-limited to a few per hour; real users need custom SMTP.
 - QA with a fresh account: use a Gmail `+` alias, or delete the user in Supabase → Authentication → Users.
 - A user who stays away for more than 400 days signs in again, by link.
+- A deploy does not sign anyone out: the cookies live on the phone, not on Netlify. It made the lost renewal
+  (Decisions, "Reuse detection off") likelier: Next.js reloads an open app when a new version is out, which
+  cancels requests on their way, and the first answers after a deploy are slow. With detection off, harmless.
+- Members signed out before 2026-10-19 (their session was already ended) sign in once more; turning
+  detection off does not bring an ended session back.
+- To check detection is off: open the app, wait over 15 minutes, deploy, open it again. Still signed in, and no
+  `refresh_token_already_used` in Supabase → Logs → Auth.
 - Private browsing, or storage switched off: the wait does not survive a reload; the person asks again.
 
 ## Remove

@@ -226,29 +226,25 @@ export default async function ShowcasePage() {
 
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">PhotoCard: an event, then one with a long title and no contact</Text>
-        <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist", "Liên hệ: (336) 555-0101"]} />
-        <PhotoCard href="/ui#15" src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
+        <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist"]} extra={<>Liên hệ: <PhoneNumber phone="(336) 555-0101" onDark /></>} />
+        <PhotoCard src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
       </section>
 
       <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">Toolbar with a NudgeBubble under its play button</Text>
-        <div className="h-28">
-          <Toolbar>
-            <IconButton label="Reminders"><Bell /></IconButton>
-            <div className="relative">
-              <IconButton label="Play"><Play /></IconButton>
-              <NudgeBubble>Bạn có muốn cầu nguyện bây giờ?</NudgeBubble>
-            </div>
-            <IconButton tone="filled" label="New"><Plus /></IconButton>
-          </Toolbar>
-        </div>
+        <Text as="h2" variant="small" tone="subtle">Toolbar (fixed under the top bar) with a NudgeBubble left of its play button</Text>
+        <Toolbar>
+          <IconButton label="Reminders"><Bell /></IconButton>
+          <NudgeBubble>{"Bạn có muốn\ncầu nguyện bây giờ?"}</NudgeBubble>
+          <IconButton label="Play"><Play /></IconButton>
+          <IconButton tone="filled" label="New"><Plus /></IconButton>
+        </Toolbar>
       </section>
 
       <section className="flex flex-col gap-2">
         <Text as="h2" variant="small" tone="subtle">SectionHeading large, with an icon; PersonCard with a large Avatar (default, then a picture)</Text>
         <SectionHeading variant="large" icon={<Languages />}>Ngôn ngữ</SectionHeading>
         <SectionHeading variant="large">Mục sư điều hành</SectionHeading>
-        <PersonCard picture={<Avatar size="large" />} name="Mục sư Khai">
+        <PersonCard picture={<Avatar size="large" />} name="Mục sư Khai" subtitle="Mục sư điều hành">
           <PhoneNumber phone="(336) 555-0101" />
         </PersonCard>
         <PersonCard picture={<Avatar size="large" src="/images/home/groups.png" />} name="Nguyễn Văn An" />

@@ -23,9 +23,10 @@ name), which can each be run again by themselves: that is how they are changed.
 | State | `hooks/useAvatarChange.ts` | Choosing my picture: the chosen file, its framing, crop + save, Cancel, Remove |
 | State | `hooks/useNames.ts` | The names on a screen that keeps receiving people (a chat): fetches whoever is new, once |
 | UI | `components/NameStep.tsx` | The question, shown by the layout in place of every screen until answered |
-| UI | `components/NameSection.tsx` | The Settings block: my name, Save, and the name I asked for while it waits |
+| UI | `components/NameSection.tsx` | `/settings/name`: my name, Save, and the name I asked for while it waits |
+| UI | `components/NameRow.tsx`, `ProfileHeader.tsx` | The Settings row for my name; the top of Settings (my picture with a camera, my name in bold) |
 | UI | `components/NameRequestAdmin.tsx`, `NameRequestRow.tsx` | The admin section "Names waiting for approval"; one request with Approve and Decline |
-| UI | `components/AvatarSection.tsx` | The Settings block: my picture, choose a file, frame it in a circle (`ui/ImageCropper`), Use / Cancel, Remove |
+| UI | `components/AvatarSection.tsx` | `/settings/photo`: my picture, choose a file, frame it in a circle (`ui/ImageCropper`), Use / Cancel, Remove |
 | UI | `components/NameForm.tsx` | The field and its button, used by both |
 | Shell | `src/app/layout.tsx`, `src/app/settings/page.tsx`, `src/app/admin/page.tsx` | Lines marked `PROFILES` |
 
