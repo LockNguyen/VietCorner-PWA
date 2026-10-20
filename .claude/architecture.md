@@ -140,7 +140,9 @@ The empty installable app every feature plugs into.
 | `src/app/page.tsx` | Home: where the app opens. Three tiles into Events, Prayer and Groups (`HomeTiles`), each a photo from `public/images/home` under a dark veil |
 | `src/app/loading.tsx` | Grey placeholder rows at once while a dynamic page renders, so a tap gives feedback and the screen does not jump |
 | `src/components/AppTabs.tsx` | Which tabs exist (`TABS`: Home, Events, Prayer, Groups; Admin for those with a permission) and which is current. Draws them with `ui/TabBar`. |
-| `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant and Settings icons. Draws it with `ui/TopBar`. |
+| `src/components/PageHeader.tsx` | The top bar as this app fills it: title, a back arrow on sub-screens (`backHref`), the assistant icon and Settings, drawn as the person's own picture (2026-10-20). Draws it with `ui/TopBar`. |
+| `src/components/MyPicture.tsx` | The signed-in person's picture address, put in context by `layout.tsx` (from `getMyProfile`, read once per page load) for `PageHeader` |
+| `src/components/PhoneNumber.tsx`, `Place.tsx` | A number to tap (call / text / copy) and a place to tap (its address over Google Maps / Apple Maps / copy, logos in `ui/MapLogos`), both on `ui/ActionMenu` |
 | `src/components/ServiceWorkerRegister.tsx` | Registers `/sw.js` |
 | `public/sw.js` | Service worker. Activates immediately. The push handlers are marked `PUSH`. The `CACHE` part keeps a copy of every `/_next/static/*` file (cache `static-v1`, newest 150) and answers from it first. Only responses marked `immutable` are saved (production's hashed files; `next dev` reuses names, so it never fills the cache). If storage fails it falls back to the network. The `HOME` part saves `/` (cache `home-v1`) at every launch and shows the saved copy at the next one while the fresh page is fetched and saved; a redirect from the server (signed out) or any page load of `/login` (Sign out, an ended session) deletes it; a reload while the fresh Home is still on its way (Next.js does one after a deploy) waits for it. No other page is saved. Activating deletes any cache but these two. |
 | `src/components/RefreshSavedPage.tsx` | In the root layout with `renderedAt` (when the server made the page). On the saved Home (`isSavedCopy`) it asks for the current one at once (`router.refresh`). |
@@ -184,8 +186,8 @@ sign-in so the library can be looked at without an account). The design tokens l
   button. `useSave` (`src/lib/useSave.ts`) is the whole sequence in one call: ignore a second tap, make the
   change, reload, raise the banner. A form's own hints ("add a title") stay beside the field.
 - Left as plain buttons on purpose: ones that only open or close something, and four that already cannot
-  repeat (chat Send empties its box at once, the assistant's Send is disabled while answering, Pray starts
-  its hour on the first tap, the language toggle is instant and repeating it changes nothing).
+  repeat (chat Send empties its box at once, the assistant's Send is disabled while answering, Pray is spent
+  for the day on the first tap, the language toggle is instant and repeating it changes nothing).
 
 ## 6. Features
 Each feature's README holds its files, flows, expected behavior, edge cases and removal steps.
@@ -208,7 +210,8 @@ and sends the same link (the name goes in as metadata, saved by the profiles tri
 Safari, which shares no login with the Home Screen app, so the link hands the sign-in to the device that asked:
 the app keeps a secret key (one per church day) and puts only its hash in the link; our server adds a key of its
 own that only the email carries. One tap ("Sign in") on the link's page marks it tapped; the app collects with
-its key and gets a fresh one-time token (`generateLink`). Every link of the same church day works, even after
+its key and gets a fresh one-time token (`generateLink`). On a phone, signing in starts only in the installed app
+(the install guide covers `/login` in a browser, 2026-10-20). Every link of the same church day works, even after
 newer ones were sent (2026-10-19). Sessions live in `sb-*` cookies for up to 400 days, renewed on every visit;
 `src/proxy.ts` refreshes them and redirects logged-out visitors. Supabase's refresh-token reuse detection is
 off (README Setup 6): a phone that missed a renewal's reply would otherwise be signed out at its next launch,
@@ -216,10 +219,13 @@ most often right after a deploy. Table: `sign_in_links` (server-only).
 Routes: `POST /api/auth/link`, `/handoff`, `/claim` (none has a user to verify; the README says what guards them).
 
 ### 6.13 install → [README](../src/features/install/README.md)
-`/login` in a browser tab shows how to put the app on the Home Screen before the setup: Chrome's own
-Install dialog behind one button where it offers one, otherwise numbered steps for iPhone (Share → Add to
-Home Screen), Android (⋮ menu) or a chat app's browser (open in a real browser first). Only a computer may
-"Continue in this browser". No data, no server code; `device.ts` reads the user agent (tested).
+`/login` in a browser tab (the website) first asks the language (i18n's `LanguageChoice`, both languages at
+once), then shows how to put the app on the Home Screen, **before** any sign-in or sign-up (2026-10-20): Chrome's
+own Install dialog behind one button where it offers one, otherwise steps for iPhone Safari (Share → Add to Home
+Screen), Chrome on an iPhone (Share at the top right), Android (⋮ menu) or a chat app's browser (open in a real
+browser first), with a big bouncing arrow at the edge pointing at the browser's first button. Only a computer may
+"Continue in this browser". The installed app opens straight on sign-in. No data, no server code; `device.ts`
+reads the user agent and where the button is (tested).
 
 ### 6.15 launch-info → [README](../src/features/launch-info/README.md)
 An "i" on Home for whoever manages something (the same check as the Admin tile), where "+" sits on the other
@@ -273,9 +279,10 @@ null when anonymous) and in the Admin people list (`people_list().avatar_path`).
 
 ### 6.3 i18n → [README](../src/features/i18n/README.md)
 Every fixed label lives in a feature's `strings.ts` as `{ en, vi }` and is read through `useLanguage().t`.
-The language is stored per user in `user_settings`, chosen on the login screen before the account exists
-(kept on the device, then adopted on first sign-in), and read once per page load in `layout.tsx` so the first
-paint is already right. Admin-written content (events) will be translated with `_en` / `_vi` columns instead.
+The language is stored per user in `user_settings`, chosen on the website's first screen before the account
+exists (kept on the device in localStorage and the `language` cookie, which iOS copies from Safari into the
+installed app; adopted on first sign-in), and read once per page load in `layout.tsx` (the account's, else the
+cookie) so the first paint is already right. The language link wears a globe. Admin-written content (events) will be translated with `_en` / `_vi` columns instead.
 Table: `user_settings`.
 
 ### 6.4 events → [README](../src/features/events/README.md)
@@ -291,14 +298,19 @@ switched off for now (`eventChangePush`, `eventReminders`). Every date and time 
 one file, `churchTime.ts`. The schedule shows each event as a card (`ui/PhotoCard`, 2026-10-19): its own
 picture, or the church's (`public/images/home/events.png`), darkened, with the title, "weekday · time", the
 place in white, and "Liên lạc:" with the number in blue: tapping the number opens its call / text / copy menu
-(`ui/ActionMenu`) instead of the event.
+(`ui/ActionMenu`) instead of the event. An event may have an address (`events.address`, one for both languages,
+2026-10-20): then the place is blue too, and a tap opens a wider menu with the full address, Google Maps, Apple
+Maps and Copy (`components/Place`); the address itself is not on the card. A day's events at one place (same
+location, address and contact) share one card (`cardsOf`, 2026-10-20): the place as title, a line per event
+with its time (an admin's link to its editor), the address in blue, the contact.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
 The church's groups and who is in which: `groups` and `group_members`. Since 2026-10-12 only chat shares
 "with my group" (a membership check inside an RLS policy); events and prayer are church-wide. Asking to
 join and the old list page are switched off (`joining`, `oldGroupsPage`). Whoever holds `groups.manage`
 puts people into groups from the Admin tab (a sheet per group: name, a typed number of members, add and
-remove people), reading everyone approved through `group_people()`.
+remove people), reading everyone approved through `group_people()`. The Groups tab's last card, "Has no group",
+is the church admin's only (`users.manage`), not a group manager's (2026-10-20).
 
 ### 6.12 group-info → [README](../src/features/group-info/README.md)
 The Groups tab: a card per group. A member opens a sheet with its number of members, when and where it meets,
@@ -310,10 +322,12 @@ shrunk on the phone before upload, shown through addresses signed for an hour, s
 Depends on `groups` in SQL only. Tables: `group_info`, `group_photos`. Bucket: `group-photos`.
 
 ### 6.6 prayer → [README](../src/features/prayer/README.md)
-Requests shared with the whole church (since 2026-10-12), with or without the author's name. Members cannot read the table: they read
+Requests shared with the whole church (since 2026-10-12), under the author's name (no "Hide my name" since
+2026-10-20; older anonymous ones stay anonymous). Members cannot read the table: they read
 the `prayer_feed` view, which leaves out who wrote an anonymous request. Praying goes through a route: the
 `pray_for_request` function adds exactly one, then the author would be told by push ("N people prayed for you", switched off:
-`prayedForPush`); the count is shown nowhere. The one-hour pause between prayers is a timestamp on the device, not a timer.
+`prayedForPush`); the count is shown nowhere. "Pray" works once per request per day, reset at the phone's
+midnight (2026-10-20): a timestamp on the device, not a timer.
 Authors edit, delete, or mark a request answered; an answered one leaves the list but stays in the table.
 Writing and editing a request are screens of their own (`/prayer/new`, `/prayer/<id>/edit`; 2026-10-19: the
 iPhone keyboard pushed a sheet with a text field off the top). Above the list, held under the top bar, a
@@ -435,7 +449,9 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | One Next.js codebase, no separate backend | Least to learn, deploy and keep in sync | No Python libraries, no long jobs; mitigated by thin routes |
 | Supabase instead of our own auth/DB | Login, Postgres, RLS and vectors for free | Vendor lock-in on user ids; free projects pause after ~7 idle days |
 | Sign-in by email link only, no passwords; sign-up sends the same link (2026-10-17, the user; replaces password sign-in of 2026-10-14) | Someone signed out types only their address: nothing to remember or reset; one flow for signing in and signing up | A trip to the mailbox each time someone is signed out (rare: sessions last until sign-out); the email sender must be reliable |
-| Safari first: sign in or sign up in the browser, then install (2026-10-14) | iOS copies Safari's sign-in into the app when it is added (the order began for saved passwords, gone since 2026-10-17) | The install guide moved from before sign-in to after it; signing in inside the installed app works too, through the hand-off |
+| Install first, sign in inside the app (2026-10-20, the user; replaces "Safari first" of 2026-10-14) | iOS copies only regular Safari's cookies into an app added to the Home Screen: someone who signed up in Chrome on an iPhone (or a Private tab) installed an app that was signed out (first report, iOS < 26). The hand-off signs the installed app in from any browser | On a phone's browser `/login` is only the language page and the install guide; an iPhone user always taps "Sign in?" on the email's page; a computer may still "Continue in this browser" |
+| Searchable through `/login`, with vietcorners.org as canonical, both domains still serving (2026-10-20) | Signed out, `/login` is the only page anyone can read; installed apps live on the address they were added from, so a redirect between domains would sign them out | Google may show `vietcorners.org/login`; the Netlify address stays live |
+| One "Pray" per request per day, reset at the phone's midnight (2026-10-20, the user; replaces a one-hour pause) | Members use the green tick to track what they prayed for today | Still kept on the device only: another phone, or cleared storage, can pray again |
 | Admin tools on their own tabs; the Admin tab = waiting lists + everyone (2026-10-14) | Each thing is managed where it lives; a person's rights and groups in one place | Events with no coming date can no longer be reached to edit |
 | Sheets on `vaul`, at most 60% tall, closing by sliding away (swipe down too) | Feels like the phone's own sheets; the X never leaves a thumb's reach | One more library; the slide-out is timed by us (500 ms), since vaul reports it only for closes it starts |
 | Big editors are screens, sheets only for short things | A long editor in 60% of the screen scrolls forever | More screens and routes |
@@ -669,3 +685,15 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-19: staff photos: public bucket `staff-photos` (1 MB, JPEG/PNG/WebP, dashboard uploads only) in `staff/schema.sql` 3b; `edit-staff.sql` block 1b. SQL NOT run.
 - 2026-10-19: Home: Staff tile and page renamed "Danh bạ" in Vietnamese; Staff and Admin tiles get photos (`public/images/home/staff.webp`, `admin.webp`). Seen on Home in the dev preview: both photos load, "Danh bạ" shows.
 - 2026-10-19: staff people apart from headings (the user): `staff_members` → `staff_people` + `staff_placements`; `edit-staff.sql` rewritten (add a person once, place by name, headings match ignoring case); approval door lines and RLS cases follow. SQL NOT run.
+- 2026-10-20: launch feedback round 2 (the user). Install first: on a phone's browser `/login` is the language page (`i18n/LanguageChoice`, new `language` cookie read by `layout.tsx`) then the install guide, before sign-in, because iOS copies only regular Safari's cookies into an installed app (root cause of a signed-out install, iOS < 26). Install guide: Chrome-on-iPhone steps (`iphoneChrome`), a bouncing arrow at the browser's first button (`firstButtonAt`, `ShareArrow`). Globe on the language link. Prayer: no "Hide my name"; Pray once per request per day (`cooldown.ts`). Events: `address` column (schema 3g, re-run), editor field, tap the place for address + Google/Apple Maps + Copy (`components/Place`, `ui/MapLogos`, `ActionMenu` `heading`/`wide`). Groups: "Has no group" for `users.manage` only. Top bar: Settings is my picture (`MyPicture`). Seen in the pane: language page then guide (Android and computer), cookie set, server paints the chosen language, Continue in browser then sign-in. Tests 138/138. NOT seen: iPhone steps and arrow on a real iPhone, anything signed in (avatar, groups, address menu, prayer). SQL 3g NOT run.
+- 2026-10-20: Events, one picture for Sunday morning (the user): `cardsOf` merges a day's events at the same place into one card; `EventCard` takes `occurrences`. Tests: 3 new cases. NOT seen signed in.
+- 2026-10-20: event editor follows the card (the user): field order = card order, a hint per field (`ui/Field` `hint`), description box removed (shown nowhere), end time on the card, weekly "first date" hint. Seen signed in in the pane.
+- 2026-10-20: stale editor fix: `/events/<id>/edit` gets `RefreshOnArrival`, and `EventForm` and `GroupInfoForm` are keyed by their stored values (a kept page's form showed old values and Save wrote them back). Rule: an editor that copies props into state is keyed by them. Seen in the pane for events; the group editor NOT exercised.
+- 2026-10-20: event cards taller (`ui/PhotoCard` min-h-80), a gap under the title, a shared card in two blocks (when / where and contact). Seen in the pane.
+- 2026-10-20: bottom tab bar uses `prayerTabShort` ("Cảm tạ") so the label fits; page title and Home tile keep `prayerTab`.
+- 2026-10-20: search (the user: "Hội Thánh Việt Nam ở Winston-Salem" → vietcorners.org): `src/lib/church.ts` (the church's facts, once); `/login` gets a title and description with those words, `canonical` vietcorners.org, and schema.org `Church` JSON-LD; `src/app/robots.ts`, `sitemap.ts` (both skipped by the proxy); `components/ChurchIntro` on the language page (InstallGate `languageIntro`). Checked with curl signed out: robots, sitemap, title, description, canonical, JSON-LD. NOT seen: the intro on screen (the pane is signed in). Off-site steps (Search Console, Google Business Profile) are the user's; do NOT make netlify.app redirect to vietcorners.org: installed apps live on their origin and would lose their sign-in.
+
+- 2026-10-20: Sign out is a red outline button (new `ui/Button` variant `dangerOutline`), not solid red, which read as an error banner.
+- 2026-10-20: the church's own map pin (36.082306, -80.351056; the street address points to the building next door): `CHURCH.pin` in `src/lib/church.ts`, used by `components/Place` (through `src/lib/mapLinks.ts` since the review below), and as `geo` in the `/login` JSON-LD. Copy still copies the address. Typechecked, 143 tests; the menu NOT tapped in the pane (the user was signing in there). The user's off-site steps: Google Business Profile and Apple Business Connect, pin moved onto the building.
+- 2026-10-20: code review fixes (the user: "fix all", recommendations accepted). JSON-LD `<` escape really escapes now (`"\\u003c"`; before it replaced `<` with `<`). "Address copied" for an address (`COMMON.addressCopied`; `copied` → `numberCopied`). `getMyAvatar` deleted: `getMyProfile` returns `avatarPath`, one read per page instead of two. `EventRow.address` required and in `EVENT_COLUMNS`. `// PEOPLE` marker on the Groups page. Service times in `CHURCH.serviceTimes`. `ActionMenu` loses `wide` (wide with a heading; no heading when the name is the address). Map links move to `src/lib/mapLinks.ts` (tested): the church's address opens its Google Business Profile (`CHURCH.googleCid`) and its Apple pin; matched at the start of the address, so "1134 …" is not it. Brand first (the user): the language page shows "Viet Corners" and the searched words under the logo, the title is "Viet Corners · …"; `CHURCH.name` = the listing's name "Hội Thánh Báp-Tít Việt Nam - Winston-Salem"; JSON-LD `sameAs` the listing. Seen: address menu on the Sunday card (no repeated heading; Google button → the listing's cid URL), `/login` title, description, JSON-LD by curl. Typecheck, 143 tests. NOT seen: the language page's new lines (the pane is signed in).
+- 2026-10-20: language page (the user): "Viet Corners" under the logo (`Text` tile, in `LanguageChoice` itself), the searched-words subtitle removed, a wider gap before "Chọn ngôn ngữ" (`mt-6`). `components/ChurchIntro.tsx` deleted with the `intro` / `languageIntro` props that carried it: the searched words stay in the page title, description and JSON-LD only. Typechecked; NOT seen (the pane is signed in, and the page shows only signed out).

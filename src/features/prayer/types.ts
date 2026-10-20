@@ -13,7 +13,6 @@ export type PrayerRequest = {
 // What the composer sends. Who wrote it comes from the login token, never from here.
 export type NewPrayerRequest = {
   body: string;
-  isAnonymous: boolean;
 };
 
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.

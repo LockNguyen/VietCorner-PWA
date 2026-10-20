@@ -2,6 +2,7 @@
 export type Profile = {
   name: string;
   named: boolean; // false = `name` is still the stand-in made from their email, and they are yet to be asked
+  avatarPath: string | null; // their picture in AVATAR_BUCKET; null = the default figure
 };
 
 // Other people's names by user id: what a screen that shows people is handed. Someone may be missing:

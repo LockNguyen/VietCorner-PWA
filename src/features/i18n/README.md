@@ -29,7 +29,8 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | State | `hooks/useLanguage.ts` | `{ language, setLanguage, t }` for client components |
 | UI | `components/LanguageToggle.tsx` | One row per language, each written in its own language (`/settings/language`) |
 | UI | `components/LanguageRow.tsx` | The Settings row: the language in use, opening `/settings/language` |
-| UI | `components/LanguageLink.tsx` | The other language as one quiet link, at the top right (sign-in, the install guide) |
+| UI | `components/LanguageLink.tsx` | The other language as one quiet link with a globe, at the top right (sign-in, the install guide) |
+| UI | `components/LanguageChoice.tsx` | The website's first screen: "Chọn ngôn ngữ / Choose your language", two big buttons (shown by the install feature) |
 | UI | `components/AdoptDeviceLanguage.tsx` | Renders nothing: copies the pre-sign-in choice into a new account once |
 | Shell | `src/app/layout.tsx` | Reads the language once per page load and wraps the app in the provider (`// I18N` lines) |
 
@@ -41,6 +42,9 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
   different: that is data and gets `_en` / `_vi` columns.
 - **The language is read on the server** in `layout.tsx`, so the first paint is already correct: no flash of
   English before Vietnamese.
+- **The device's choice is also a cookie, `language`** (2026-10-20): the server draws the first screen in it, and
+  iOS copies Safari's cookies (not localStorage) into the app as it is added, so the website's choice is the
+  installed app's. `layout.tsx` reads the account's language, else this cookie, else Vietnamese.
 - **The choice is made on the login screen**, before an account exists. It is kept on the device, and
   `AdoptDeviceLanguage` writes it to the account on the first signed-in page load. That keeps auth and i18n
   from importing each other.

@@ -90,3 +90,16 @@ export function nextOfEach(occurrences: Occurrence[]): Occurrence[] {
   const seen = new Set<string>();
   return occurrences.filter((occurrence) => !seen.has(occurrence.event.id) && seen.add(occurrence.event.id));
 }
+
+// One day's events as cards: those at the same place (same location, address and contact) share one card, in
+// the order given; any other stays alone. Two services on one Sunday morning at the church were two identical
+// pictures repeating the same place and number (the user, 2026-10-20). An event with no location is never merged.
+export function cardsOf(dayOccurrences: Occurrence[]): Occurrence[][] {
+  const cards = new Map<string, Occurrence[]>();
+  for (const occurrence of dayOccurrences) {
+    const { event } = occurrence;
+    const place = event.text.location ? JSON.stringify([event.text.location, event.address, event.contact_phone]) : event.id;
+    cards.set(place, [...(cards.get(place) ?? []), occurrence]);
+  }
+  return [...cards.values()];
+}

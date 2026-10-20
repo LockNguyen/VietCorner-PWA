@@ -1,39 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { canPray, COOLDOWN_MS, withoutExpired } from "./cooldown";
+import { canPray, withoutExpired } from "./cooldown";
 
-const NOW = 1_800_000_000_000;
+// Times on the phone's own clock (local time), as the app reads them.
+const MORNING = new Date(2026, 9, 20, 8, 0).getTime();
+const LATE_EVENING = new Date(2026, 9, 20, 23, 59).getTime();
+const NEXT_MIDNIGHT = new Date(2026, 9, 21, 0, 0).getTime();
+const HOUR = 60 * 60 * 1000;
 
-describe("the pause between two prayers for the same request", () => {
+describe("praying once a day for the same request", () => {
   it("does not apply to a request never prayed for", () => {
-    expect(canPray({}, "a", NOW)).toBe(true);
+    expect(canPray({}, "a", MORNING)).toBe(true);
   });
 
-  it("holds right after praying", () => {
-    expect(canPray({ a: NOW }, "a", NOW + 1)).toBe(false);
+  it("holds for the rest of the day, however many hours pass", () => {
+    expect(canPray({ a: MORNING }, "a", MORNING + 1)).toBe(false);
+    expect(canPray({ a: MORNING }, "a", LATE_EVENING)).toBe(false);
   });
 
-  it("holds until the very last millisecond, then ends", () => {
-    expect(canPray({ a: NOW }, "a", NOW + COOLDOWN_MS - 1)).toBe(false);
-    expect(canPray({ a: NOW }, "a", NOW + COOLDOWN_MS)).toBe(true);
+  it("ends at the phone's midnight", () => {
+    expect(canPray({ a: LATE_EVENING }, "a", NEXT_MIDNIGHT)).toBe(true);
   });
 
   it("is per request: praying for one does not pause another", () => {
-    expect(canPray({ a: NOW }, "b", NOW + 1)).toBe(true);
-  });
-
-  it("ends when the app was closed for hours, with no timer to resume", () => {
-    expect(canPray({ a: NOW }, "a", NOW + 5 * COOLDOWN_MS)).toBe(true);
+    expect(canPray({ a: MORNING }, "b", MORNING + 1)).toBe(true);
   });
 
   it("cannot get stuck when the device's clock is moved back", () => {
-    expect(canPray({ a: NOW + 10 * COOLDOWN_MS }, "a", NOW)).toBe(true);
+    expect(canPray({ a: MORNING + HOUR }, "a", MORNING)).toBe(true);
   });
 });
 
 describe("cleaning up", () => {
-  it("keeps running pauses and drops finished ones", () => {
-    const prayedAt = { running: NOW - 1000, finished: NOW - COOLDOWN_MS, fromTheFuture: NOW + COOLDOWN_MS };
+  it("keeps today's prayers and drops earlier days'", () => {
+    const prayedAt = { today: MORNING, yesterday: MORNING - 24 * HOUR, fromTheFuture: MORNING + HOUR };
 
-    expect(withoutExpired(prayedAt, NOW)).toEqual({ running: NOW - 1000 });
+    expect(withoutExpired(prayedAt, MORNING + 1)).toEqual({ today: MORNING });
   });
 });

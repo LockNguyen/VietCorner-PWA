@@ -21,7 +21,7 @@ instrumental, a few minutes; it loops). Without it, Play says "The music could n
 | Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH` |
 | Pure logic | `reminders.ts` | `isDue`: whether a weekly reminder should go out now (church time) |
 | Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
-| Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`, `COOLDOWN_MS`: the one-hour pause, worked out from timestamps |
+| Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`: once per request per day (the phone's midnight), worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
 | Browser API | `api.ts` | `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
@@ -75,9 +75,10 @@ And a small group can guess from timing or wording — no software fixes that.
   keys. The author gets a push, "N people prayed for you", at most once a minute. Nothing about it is
   shown on screen, and nobody can read the count — not even the author.
 - **The count is a number of prayers, not a list of people.** Who prayed is never stored. The same person
-  praying again after an hour counts again; the notification still says "people" (decided, for simplicity).
-- **The one-hour pause lives on the device only** (decided). It stops accidental double taps, not a
-  determined caller: clearing storage or calling the route directly adds more (backlog B22, only if abused).
+  praying again the next day counts again; the notification still says "people" (decided, for simplicity).
+- **Once a day per request, on the device only** (the user, 2026-10-20, replacing a one-hour pause): members
+  use the green tick to keep track of what they prayed for today; it resets at the phone's midnight. It stops
+  repeat taps, not a determined caller: clearing storage or calling the route directly adds more (backlog B22, only if abused).
 - **The pause is a timestamp, not a timer.** Nothing counts down, so nothing is lost when the app closes.
   One 30-second clock tick plus `visibilitychange` re-reads the time; finished entries are dropped on load.
 - **An answered request leaves the list but stays in the database** (`answered_at`), for an end-of-year look
@@ -112,7 +113,8 @@ And a small group can guess from timing or wording — no software fixes that.
 
 ## Expected behavior
 - The + opens "Lời xin cầu nguyện mới" as its own screen, the box at the top; Share slides back to the list
-  with the request at the top, under the author's name. With "Hide my name", everyone sees "Anonymous".
+  with the request at the top, under the author's name. There is no "Hide my name" since 2026-10-20 (the
+  user); requests posted anonymously before then still show "Anonymous".
 - Above the list, held under the blue bar while scrolling: (the bell, for admins) Play, and the round +. Play
   starts the looping music and becomes Pause. After 2 seconds on the tab, a blue bubble left of Play asks "Bạn
   có muốn cầu nguyện bây giờ?" and sways sideways until the music is played.
@@ -124,10 +126,10 @@ And a small group can guess from timing or wording — no software fixes that.
   default figure (always for anonymous requests).
   (This layout has not been looked at on any screen yet, 2026-10-08.)
 - A request shows in full, as a grey bubble. No date and no group name on the list: the week label is the time.
-- Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled for an hour on
-  that device, for that user, for that request — including after closing and reopening the app. The author
+- Someone else's request has a Pray button. After a tap it reads "Prayed" and is disabled until the phone's
+  midnight on that device, for that user, for that request — including after closing and reopening the app. The author
   gets a notification on their devices with notifications turned on.
-- Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, for an hour. Your own has a small round grey pencil button in the same place (32 across, two thirds of the Pray chip), which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
+- Someone else's request has a round purple Pray chip beside it, a small gap to its right and level with its middle; after a tap it is a green tick that takes no taps, until midnight. Your own has a small round grey pencil button in the same place (32 across, two thirds of the Pray chip), which opens Answered / Edit / Delete / Cancel as a two-by-two grid.
   Answered and Delete both take it off the list at once; Edit slides in the edit screen, Save slides back.
 - Admin tab → Prayer reminders (with `prayer.reminders`): one line per reminder (weekday · time)
   with Remove, and a row to add one, which starts on today's weekday (church time). There can be several reminders on one day at different times, but

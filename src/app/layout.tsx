@@ -8,23 +8,26 @@ import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
 import LanguageProvider from "@/features/i18n/components/LanguageProvider"; // I18N
 import { getLanguage } from "@/features/i18n/server/queries"; // I18N
-import { DEFAULT_LANGUAGE } from "@/features/i18n/types"; // I18N
+import { DEFAULT_LANGUAGE, isLanguage, LANGUAGE_COOKIE } from "@/features/i18n/types"; // I18N
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { managesSomething, USE_THE_APP } from "@/features/permissions/types"; // PERMISSIONS
 import NameStep from "@/features/profiles/components/NameStep"; // PROFILES
 import { getMyProfile } from "@/features/profiles/server/queries"; // PROFILES
+import { AVATAR_BUCKET } from "@/features/profiles/types"; // PROFILES
 import { createClient } from "@/lib/supabase/server";
 import KeepSubscribed from "@/features/push/components/KeepSubscribed"; // PUSH
 import InstallGate from "@/features/install/components/InstallGate"; // INSTALL
 import NotificationStep from "@/features/push/components/NotificationStep"; // PUSH
 import { NOTIFICATIONS_ASKED_COOKIE } from "@/features/push/types"; // PUSH
 import { TEXT_SIZE_COOKIE, textSizeOf } from "@/features/text-size/types"; // TEXT-SIZE
+import { MyPictureProvider } from "@/components/MyPicture";
 import PageSlide from "@/components/PageSlide";
 import { BannerProvider } from "@/lib/useBanner";
 import RefreshSavedPage from "@/components/RefreshSavedPage";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { APP_NAME } from "@/lib/appName";
 import launchScreens from "@/lib/launchScreens.json";
+import { publicFileUrl } from "@/lib/publicFileUrl";
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -57,10 +60,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const supabase = await createClient();
   const user = await getCurrentUser(supabase); // AUTH
   // Read together, once per page load:
-  // I18N the stored language · PERMISSIONS who may manage something gets the Admin tab · PROFILES the name.
+  // I18N the stored language · PERMISSIONS who may manage something gets the Admin tab · PROFILES the name,
+  // and the picture on the top bar's Settings button.
   const [storedLanguage, permissions, profile] = user
     ? await Promise.all([getLanguage(supabase), getMyPermissions(supabase), getMyProfile(supabase, user.id)])
     : [null, [], null];
+  const avatarPath = profile?.avatarPath; // PROFILES
   // PROFILES: someone who has not given their name yet is asked before they see anything else.
   const askName = profile !== null && !profile.named;
   // APPROVAL: someone no admin has let in yet waits. The database shows them nothing either way.
@@ -69,29 +74,34 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // sign in again are not asked; the switch in Settings is theirs.
   const askNotifications = notLetIn && !(await cookies()).has(NOTIFICATIONS_ASKED_COOKIE);
   const textSize = textSizeOf((await cookies()).get(TEXT_SIZE_COOKIE)?.value); // TEXT-SIZE: this phone's choice
+  // I18N: the account's language, else this device's choice (the website's language page), else Vietnamese.
+  const deviceLanguage = (await cookies()).get(LANGUAGE_COOKIE)?.value;
+  const language = storedLanguage ?? (isLanguage(deviceLanguage) ? deviceLanguage : DEFAULT_LANGUAGE);
   const waiting = notLetIn && !askNotifications;
   const step = askName ? <NameStep /> : askNotifications ? <NotificationStep /> : waiting ? <WaitingStep /> : null;
 
   return (
-    <html lang={storedLanguage ?? DEFAULT_LANGUAGE} data-text-size={textSize}>
+    <html lang={language} data-text-size={textSize}>
       <body className="bg-surface text-ink">
-        <LanguageProvider language={storedLanguage ?? DEFAULT_LANGUAGE} signedIn={Boolean(user)}>
-          <BannerProvider>
-            <main className="mx-auto max-w-column">
-              {/* The screen slides on forward and back (src/lib/slide.ts); the tab bar outside it stays. */}
-              <PageSlide>
-              {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}
-              {user ? (
-                <InstallGate step={notLetIn ? "install" : undefined}>
-                  {step ?? children}
-                </InstallGate>
-              ) : (
-                (step ?? children)
-              )}
-              </PageSlide>
-            </main>
-            <BannerHost />
-          </BannerProvider>
+        <LanguageProvider language={language} signedIn={Boolean(user)}>
+          <MyPictureProvider src={avatarPath ? publicFileUrl(AVATAR_BUCKET, avatarPath) : undefined}>
+            <BannerProvider>
+              <main className="mx-auto max-w-column">
+                {/* The screen slides on forward and back (src/lib/slide.ts); the tab bar outside it stays. */}
+                <PageSlide>
+                {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}
+                {user ? (
+                  <InstallGate step={notLetIn ? "install" : undefined}>
+                    {step ?? children}
+                  </InstallGate>
+                ) : (
+                  (step ?? children)
+                )}
+                </PageSlide>
+              </main>
+              <BannerHost />
+            </BannerProvider>
+          </MyPictureProvider>
           {user && !step && <AppTabs showAdmin={managesSomething(permissions)} bigText={textSize === "big"} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
           {user && <KeepSubscribed />} {/* PUSH */}

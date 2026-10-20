@@ -62,6 +62,7 @@ describe("a stored event → what the form shows", () => {
       canceled_at: null,
       thumbnail_path: null,
       contact_phone: null,
+      address: "164 Whitfield Dr, Dallas, TX 75755",
       texts: { vi: { title: "Học Kinh Thánh", description: null, location: "Phòng 2" } },
       upcoming: [],
       reminderMinutes: [],
@@ -79,6 +80,7 @@ describe("a stored event → what the form shows", () => {
       repeats_weekly: true,
       repeat_until: "2026-12-31",
       contact_phone: null,
+      address: "164 Whitfield Dr, Dallas, TX 75755",
     });
   });
 });

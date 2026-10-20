@@ -16,7 +16,7 @@ every case the list has to handle (see **Seed data** below).
 |---|---|---|
 | Data | `schema.sql` | Four tables, grants, RLS (members read, managers write), seeds, and the DROP statements |
 | Types | `types.ts` | `EventRow`, `EventText`, `ChurchEvent`, `Occurrence`; for the admin section `ManagedEvent`, `EventDraft`, `MANAGE_EVENTS` |
-| Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule |
+| Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule; `cardsOf`: a day's events at one place share a card |
 | Pure logic | `reminders.ts` | `dueReminders`: which reminders of an event should go out now |
 | Pure logic | `formatting.ts` | Dates, weekdays and times in the reader's language, always in church time |
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
@@ -28,7 +28,7 @@ every case the list has to handle (see **Seed data** below).
 | Server logic | `server/notifyScheduleChange.ts` | **Admin** client: every approved member → one push per language (`// PUSH`, `// I18N`, `// PERMISSIONS`). Switched off (`eventChangePush`) |
 | Routes | `src/app/api/events/cancel/route.ts` | POST cancels, DELETE undoes. Verify (401) → validate (400) → change (403 when refused) → 204 |
 | UI | `components/EventThumbnail.tsx` | The editor's picture section: the picture, choose or replace, remove |
-| UI | `components/EventSchedule.tsx`, `EventCard.tsx` | The members' schedule: days, one card per event (`ui/PhotoCard`) |
+| UI | `components/EventSchedule.tsx`, `EventCard.tsx` | The members' schedule: days, one card per place per day (`ui/PhotoCard`); with an address, the place (or, on a shared card, the address) is tapped for maps (`components/Place`) |
 | State | `hooks/useEventChanges.ts` | Every change the editor makes: the call, then reload or go back to the list, then a banner |
 | UI | `components/EventAdmin.tsx` | The admin section: "New event", then the list; each row opens the editor's screen |
 | UI | `components/EventAdminRow.tsx` | One event in the list: a row that opens its editor |
@@ -222,3 +222,49 @@ Delete this folder, `src/app/events/`, the Events tab in `AppTabs.tsx` and `even
   bottom, read on any photo. Seen on `/ui` at 375 px with the church picture.
 - The time is written the app's way ("10:30 Sáng"), not "10h30": one format on every screen.
 - **NOT seen signed in** on the Events tab (no database in the preview).
+
+## Address (2026-10-20, the user)
+- `events.address` (schema.sql 3g, **run 3g again** before deploying: saving an event sends the column). One per
+  event, not per language: an address reads the same for everyone and maps take it as typed. 200 characters.
+- The editor has "Address (shown when the location is tapped)" under the times.
+- The card shows the place's name only ("Gotham building"). With an address the name is blue and opens a menu like
+  the phone number's, wider: the full address on top (no icon), then Google Maps, Apple Maps (each with its logo)
+  and Copy. Without an address the place stays plain white text.
+- The map links open in a new tab: in the installed app that hands the address to the maps app or Safari.
+- NOT seen: signed in (the preview needs an emailed link), on a phone. Typechecked; `draft.test.ts` covers the round trip.
+
+## One card per place per day (2026-10-20, the user: "Chỉnh lại 1 hình thôi")
+- Events on the same church day with the same location, address and contact share one card and one picture
+  (`cardsOf`, tested). They stay separate events: each is edited, cancelled and reminded on its own.
+- A shared card: the location as the title ("Hội Thánh Báp-Tít Winston-Salem"), the weekday under it, one line
+  per event in time order ("**Trường Chúa Nhật** · 9:15 Sáng", "**Thờ Phượng** · 10:30 Sáng"), the address in
+  blue (tap: address, Google Maps, Apple Maps, Copy), then "Liên hệ:" and the number. An admin taps an event's
+  line to open its editor; the card itself is not a link. The picture is the first event's own, else the church's.
+- An event with no location is never merged. A day with one event keeps the single card above.
+- For Sunday morning, type in both events: Location "Hội Thánh Báp-Tít Winston-Salem", Address "134 S Peace Haven
+  Rd (SeChrist Building)", Contact "336-997-8012" (the same in both, or they stay two cards).
+- NOT seen: signed in (the preview is signed out). `cardsOf` tested (3 cases), typechecked.
+
+## The editor follows the card (2026-10-20, the user: "Admin page is not matching up with the values being displayed")
+Found in the preview, signed in as the user: "Địa điểm" became the shared card's title but held the street
+address; "Địa chỉ" sat last, saying it showed only on a tap; "Mô tả" and the end time showed nowhere; "Bắt đầu" of
+a weekly event read 18/10 while the card read 25/10. Now:
+- The form runs in the card's order: picture, Tên sự kiện, times, Địa điểm, Địa chỉ, Số điện thoại; under each a
+  grey line saying where it shows (`Field` `hint`, `STRINGS.*Hint`).
+- No description box: no screen shows one. Saved descriptions stay in `event_texts`.
+- The card shows the end time when there is one ("10:30 Sáng – 11:30 Trưa").
+- A weekly event's "Bắt đầu" says it is the first date; the card shows the next, and "Các buổi sắp tới" lists them.
+Seen in the pane (2026-10-20): the editor in that order with the hints; the shared card with "– 11:30 Trưa".
+- **Reopened after a save, the editor showed the old values, and Save wrote them back** (found by the user,
+  2026-10-20). Cause: the router keeps a visited page for 10 minutes (`staleTimes`), and the form copies its
+  values once (`useState(initial)`). Fix: the editor page has `RefreshOnArrival` (reloads its data on arrival),
+  and `EventForm` is keyed by the stored values, so fresh values start the form again. Seen in the pane: Thờ Phượng
+  saved with the church's name and address, reopened through the card's link → the new values.
+- **Card spacing (2026-10-20, the user):** cards are taller (`PhotoCard` `min-h-80`) so the top of the photo shows;
+  a gap under the title; on a shared card the weekday and services are one block and the address and number
+  another, with a gap between. Seen in the pane at phone width.
+- **The church's pin (2026-10-20):** the street address "134 S Peace Haven Rd" leads maps to the building next
+  door. An address starting with it opens the church's own place instead (`src/lib/mapLinks.ts`, tested): Google
+  Maps opens the Google Business Profile, Apple Maps the pin labelled with the church's name. Other addresses are
+  searched as typed.
+

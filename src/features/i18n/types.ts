@@ -20,6 +20,11 @@ export const LOCALES: Record<Language, string> = { en: "en-US", vi: "vi-VN" };
 // Each language's own name, written in that language, so it is readable to the person who needs it.
 export const LANGUAGE_NAMES: Record<Language, string> = { en: "English", vi: "Tiếng Việt" };
 
+// The device's choice before an account exists, also kept as a cookie (2026-10-20): the server then draws the
+// first screen in it, and iOS copies Safari's cookies (not its localStorage) into the app when it is added to
+// the Home Screen, so the language chosen on the website is the installed app's too.
+export const LANGUAGE_COOKIE = "language";
+
 export function isLanguage(value: unknown): value is Language {
   return value === "en" || value === "vi";
 }

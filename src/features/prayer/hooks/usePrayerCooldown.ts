@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { canPray, withoutExpired, type PrayedAt } from "../cooldown";
 import { loadPrayedAt, savePrayedAt } from "../storage";
 
-// why: a button whose hour is over comes back within half a minute, and one clock serves every request
-// on screen. A timer per request would be many timers to start, resume and cancel for the same result.
+// why: a button spent yesterday comes back within half a minute of midnight, and one clock serves every
+// request on screen. A timer per request would be many timers to start, resume and cancel for the same result.
 const CLOCK_TICK_MS = 30_000;
 
 // Which requests this device may pray for right now. Nothing counts down: the device remembers WHEN it
@@ -19,7 +19,7 @@ export function usePrayerCooldown(userId: string) {
   useEffect(() => {
     const readClock = () => setNow(Date.now());
 
-    // Finished pauses are dropped on the way in, so the stored map never grows past an hour of taps.
+    // Earlier days are dropped on the way in, so the stored map never grows past one day of taps.
     const remembered = withoutExpired(loadPrayedAt(userId), Date.now());
     savePrayedAt(userId, remembered);
     setPrayedAt(remembered);

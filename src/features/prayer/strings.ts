@@ -11,7 +11,6 @@ export const STRINGS = {
   // Composer
   addRequest: { en: "New prayer request", vi: "Gửi ý cầu nguyện mới" } satisfies Text,
   bodyPlaceholder: { en: "What can we pray for?", vi: "Bạn cần cầu nguyện cho điều gì?" } satisfies Text,
-  postAnonymously: { en: "Hide my name", vi: "Ẩn tên tôi" } satisfies Text,
   postButton: { en: "Share", vi: "Chia sẻ" } satisfies Text,
 
   // The weeks the list is divided into

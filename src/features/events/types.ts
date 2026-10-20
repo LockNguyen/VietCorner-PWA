@@ -15,6 +15,7 @@ export type EventRow = {
   canceled_at: string | null;
   thumbnail_path: string | null; // its picture's file in THUMBNAIL_BUCKET; null = none
   contact_phone: string | null; // whom to call about it, as typed: "(336) 555-0101" (schema.sql 3g)
+  address: string | null; // the street address behind `location`, one for every language (schema.sql 3g)
 };
 
 // What the event SAYS, in one language.
@@ -43,7 +44,8 @@ export type ScheduledEvent = EventRow & {
 };
 
 // The `events` columns the reminder scheduler asks for (server/sendDueReminders.ts), named once.
-export const EVENT_COLUMNS = "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path, contact_phone";
+export const EVENT_COLUMNS =
+  "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path, contact_phone, address";
 
 // The public storage bucket the events' pictures live in (schema.sql section 3e makes it).
 export const THUMBNAIL_BUCKET = "event-thumbnails";
@@ -53,8 +55,9 @@ export const THUMBNAIL_BUCKET = "event-thumbnails";
 // box: nothing to mistype, and the scheduler's 15-minute run is fine enough for the shortest of them.
 export const REMINDER_CHOICES = [1440, 120, 30];
 
-// why: the database refuses a longer number (schema.sql 3g); the box stops the typing at the same length.
+// why: the database refuses a longer number or address (schema.sql 3g); the box stops the typing there.
 export const MAX_PHONE_LENGTH = 30;
+export const MAX_ADDRESS_LENGTH = 200;
 
 // --- What the admin section works with ---------------------------------------------------------------
 
@@ -80,5 +83,6 @@ export type EventDraft = {
   repeatsWeekly: boolean;
   repeatUntil: string; // YYYY-MM-DD, "" = no end
   contactPhone: string; // "" = none
+  address: string; // "" = none
   texts: Record<Language, { title: string; description: string; location: string }>;
 };

@@ -13,6 +13,9 @@ export const STRINGS = {
   iphoneConfirm: { en: "Tap “Add”", vi: "Nhấn “Thêm”" } satisfies Text,
   addWord: { en: "Add", vi: "Thêm" } satisfies Text, // inside the last circle, as the phone writes it
 
+  // Chrome on an iPhone: the same sheet as Safari's, but Share sits in the address bar at the top.
+  chromeShare: { en: "Tap Share at the top right", vi: "Nhấn “Chia sẻ” ở góc trên bên phải" } satisfies Text,
+
   // Android: Chrome's own dialog when it offers one, otherwise its menu.
   installButton: { en: "Install the app", vi: "Cài đặt ứng dụng" } satisfies Text,
   androidMenu: { en: "Tap ⋮ at the top", vi: "Nhấn vào biểu tượng ⋮ ở góc trên" } satisfies Text,

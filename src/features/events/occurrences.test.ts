@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isoDate, wallTime } from "@/lib/churchTime";
-import { nextOfEach, occurrencesOf, scheduleOf, scheduleWindow, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
+import { cardsOf, nextOfEach, occurrencesOf, scheduleOf, scheduleWindow, upcomingOccurrences, WEEKS_AHEAD } from "./occurrences";
 import type { ChurchEvent, ScheduledEvent } from "./types";
 
 const MONDAY = new Date("2026-10-05T18:00:00Z");
@@ -15,6 +15,7 @@ function makeEvent(overrides: Partial<ChurchEvent> = {}): ChurchEvent {
     canceled_at: null,
     thumbnail_path: null,
     contact_phone: null,
+    address: null,
     text: { title: "Prayer evening", description: null, location: null },
     ...overrides,
   };
@@ -167,5 +168,30 @@ describe("one date per event on the Events tab", () => {
       ["weekly", MONDAY.toISOString()],
       ["one-off", "2026-10-07T18:00:00.000Z"],
     ]);
+  });
+});
+
+describe("one card per place on a day", () => {
+  const at = (id: string, location: string | null, hour: string, contact_phone: string | null = "3369978012") => ({
+    event: makeEvent({ id, contact_phone, address: "134 S Peace Haven Rd", text: { title: id, description: null, location } }),
+    startsAt: new Date(`2026-10-25T${hour}:00Z`),
+    endsAt: null,
+    canceled: false,
+  });
+
+  it("puts events at the same place, address and contact on one card, in time order", () => {
+    const cards = cardsOf([at("school", "Church", "13"), at("worship", "Church", "14")]);
+
+    expect(cards.map((card) => card.map((date) => date.event.id))).toEqual([["school", "worship"]]);
+  });
+
+  it("keeps events at another place, or with another contact, on cards of their own", () => {
+    const cards = cardsOf([at("a", "Church", "13"), at("b", "Park", "14"), at("c", "Church", "15", null)]);
+
+    expect(cards).toHaveLength(3);
+  });
+
+  it("never merges events that say no place", () => {
+    expect(cardsOf([at("a", null, "13"), at("b", null, "14")])).toHaveLength(2);
   });
 });

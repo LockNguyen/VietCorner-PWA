@@ -16,7 +16,7 @@ name), which can each be run again by themselves: that is how they are changed.
 | Types | `types.ts` | `Profile` (my own), `Names` (others', by user id), `NameOutcome`, `NameRequest`, `MAX_NAME_LENGTH`, `AVATAR_BUCKET`, `AVATAR_SIDE` |
 | Text | `strings.ts` | The question, the field's label, the buttons |
 | Browser API | `api.ts` | `saveName` (POST `/api/names/request`), `approveNameRequest` (POST `/api/names/approve`), `declineNameRequest`, `getNames`, `setAvatar`, `removeAvatar` |
-| Server reads | `server/queries.ts` | `getMyProfile`, `getNames`, `getMyRequestedName` and `getMyAvatar` (Settings), `getNameRequests` (Admin) |
+| Server reads | `server/queries.ts` | `getMyProfile` (name and picture, one read, every page), `getNames`, `getMyRequestedName` (Settings), `getNameRequests` (Admin) |
 | Server logic | `server/nameRequests.ts` | `setMyName`, `approveNameRequest`: the database function as the **user**, then the notification |
 | Server logic | `server/notifyName.ts` | **Admin** client: managers hear of a request, the person hears of an approval (`// PUSH`, `// I18N`, `// GROUPS`) |
 | Routes | `src/app/api/names/request/route.ts`, `approve/route.ts` | Verify (401) → validate (400) → the server function (403 when refused) |

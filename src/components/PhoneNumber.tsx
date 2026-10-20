@@ -23,7 +23,7 @@ export default function PhoneNumber({ phone, onDark = false }: { phone: string; 
     close();
     try {
       await navigator.clipboard.writeText(phone);
-      showBanner({ kind: "success", message: t(COMMON.copied) });
+      showBanner({ kind: "success", message: t(COMMON.numberCopied) });
     } catch {
       // Clipboard refused (an old browser): the number is on screen to read and type.
     }
@@ -50,7 +50,7 @@ export default function PhoneNumber({ phone, onDark = false }: { phone: string; 
           items={[
             { icon: <Phone className="text-success" />, label: t(COMMON.call), onSelect: () => (window.location.href = `tel:${number}`) },
             { icon: <MessageCircle className="text-action" />, label: t(COMMON.sendText), onSelect: () => (window.location.href = `sms:${number}`) },
-            { icon: <Copy className="text-caution" />, label: t(COMMON.copyNumber), onSelect: copy },
+            { icon: <Copy className="text-caution" />, label: t(COMMON.copy), onSelect: copy },
           ]}
         />
       )}

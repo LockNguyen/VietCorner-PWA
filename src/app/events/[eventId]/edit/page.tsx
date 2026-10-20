@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import RefreshOnArrival from "@/components/RefreshOnArrival";
 import EventEditor from "@/features/events/components/EventEditor";
 import { getManagedEvents } from "@/features/events/server/queries";
 import { STRINGS } from "@/features/events/strings";
@@ -23,6 +24,9 @@ export default async function EventEditorPage({ params }: { params: Promise<{ ev
   return (
     <>
       <PageHeader title={STRINGS.editEvent} backHref="/events" />
+      {/* The router keeps a visited page for 10 minutes (staleTimes): reopened after a save, the editor showed the
+          old values, and Save wrote them back (the user, 2026-10-20). */}
+      <RefreshOnArrival />
       <EventEditor event={event} listHref="/events" />
     </>
   );

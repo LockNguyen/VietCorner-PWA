@@ -152,6 +152,9 @@ export default async function ShowcasePage() {
           <Button variant="quiet">Lưu</Button>
           <Button variant="danger">Xóa</Button>
         </div>
+        <div className="px-3 pt-3">
+          <Button variant="dangerOutline">Đăng xuất</Button>
+        </div>
       </section>
 
       <section className="flex flex-col gap-2">

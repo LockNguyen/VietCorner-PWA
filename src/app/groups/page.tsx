@@ -6,6 +6,7 @@ import { MANAGE_GROUPS } from "@/features/group-info/types"; // GROUP-INFO
 import GroupList from "@/features/groups/components/GroupList";
 import UnassignedCard from "@/features/groups/components/UnassignedCard";
 import { getGroupPeople, getGroups } from "@/features/groups/server/queries";
+import { MANAGE_USERS } from "@/features/people/types"; // PEOPLE
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import { SWITCHES } from "@/lib/switches";
@@ -25,10 +26,13 @@ export default async function GroupsPage() {
   }
 
   // Read together. The permission decides what is drawn (a +, cards that open an editor, and last the people
-  // in no group); the database decides what saves. Only an admin's page reads the people.
+  // in no group); the database decides what saves.
   const [groups, permissions] = await Promise.all([getGroupDirectory(supabase), getMyPermissions(supabase)]);
   const canManage = permissions.includes(MANAGE_GROUPS);
-  const people = canManage ? await getGroupPeople(supabase) : [];
+  // why: "Has no group" is about people, not groups: the church admin's list (users.manage), not a group
+  // manager's (the user, 2026-10-20). Only that page reads the people.
+  const seesUnassigned = permissions.includes(MANAGE_USERS); // PEOPLE
+  const people = seesUnassigned ? await getGroupPeople(supabase) : [];
 
   return (
     <>
@@ -36,7 +40,7 @@ export default async function GroupsPage() {
       <GroupDirectory
         groups={groups}
         canManage={canManage}
-        last={canManage && <UnassignedCard people={people} />}
+        last={seesUnassigned && <UnassignedCard people={people} />}
       />
     </>
   );

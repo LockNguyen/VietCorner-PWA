@@ -49,7 +49,8 @@ export default async function GroupEditorPage({ params }: { params: Promise<{ gr
       <RefreshOnArrival />
       <div className="flex flex-col gap-6 px-3 pt-4 pb-6">
         <GroupThumbnail group={group} />
-        {info && <GroupInfoForm group={info} />} {/* GROUP-INFO */}
+        {/* Keyed by what is stored, so the fresh values from RefreshOnArrival replace the form's first copy. */}
+        {info && <GroupInfoForm key={JSON.stringify(info)} group={info} />} {/* GROUP-INFO */}
         <GroupPeople
           groupId={group.id}
           members={people.filter((person) => person.group_ids.includes(group.id))}

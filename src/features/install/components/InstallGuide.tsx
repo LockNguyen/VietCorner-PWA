@@ -7,14 +7,16 @@ import LogoMark from "@/components/ui/LogoMark";
 import Text from "@/components/ui/Text";
 import LanguageLink from "@/features/i18n/components/LanguageLink"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
-import type { Device } from "../device";
+import type { ButtonCorner, Device } from "../device";
 import { STRINGS } from "../strings";
 import InstallStep from "./InstallStep";
+import ShareArrow from "./ShareArrow";
 
 type Props = {
   step?: SetupStep; // a new member's setup: show the bar
   device: Exclude<Device, "installed">;
   glass: boolean; // iOS 26 Safari: Share is behind •••, one more step
+  arrowAt: ButtonCorner | null; // where the browser's first button is, for the arrow beside the steps; null: none
   canInstall: boolean; // Chrome offered its own dialog
   installed: boolean; // just installed from this tab
   onInstall: () => void;
@@ -25,13 +27,14 @@ type Props = {
 // bar, the language at the top right, then in the middle the logo, a bold title and a few short lines, each
 // with the button to look for in a grey circle. It covers the whole screen (no tab bar, no sign-out): on a
 // phone the app is the way in, so there is nothing else to do here (the user, 2026-10-17).
-export default function InstallGuide({ step, device, glass, canInstall, installed, onInstall, onContinueInBrowser }: Props) {
+export default function InstallGuide({ step, device, glass, arrowAt, canInstall, installed, onInstall, onContinueInBrowser }: Props) {
   const { t } = useLanguage(); // I18N
 
   return (
     <div className="fixed inset-0 z-20 flex flex-col overflow-y-auto bg-surface pb-safe">
       {step ? <SetupProgress step={step} /> : <div className="pt-safe" />}
-      <div className="flex min-h-touch w-full items-center justify-end px-3 pt-2">
+      {/* Left when the arrow takes the top right corner (Chrome's Share or ⋮ is up there). */}
+      <div className={`flex min-h-touch w-full items-center px-3 pt-2 ${arrowAt === "topRight" ? "justify-start" : "justify-end"}`}>
         <LanguageLink />
       </div>
       <div className="mx-auto flex w-full max-w-column flex-1 flex-col items-center justify-center gap-6 px-5 pb-16">
@@ -58,6 +61,13 @@ export default function InstallGuide({ step, device, glass, canInstall, installe
                   <InstallStep icon={t(STRINGS.addWord)}>{t(STRINGS.iphoneConfirm)}</InstallStep>
                 </>
               )}
+              {device === "iphoneChrome" && (
+                <>
+                  <InstallStep icon={<Share />}>{t(STRINGS.chromeShare)}</InstallStep>
+                  <InstallStep icon={<SquarePlus />}>{t(STRINGS.iphoneAdd)}</InstallStep>
+                  <InstallStep icon={t(STRINGS.addWord)}>{t(STRINGS.iphoneConfirm)}</InstallStep>
+                </>
+              )}
               {device === "android" && (
                 <>
                   <InstallStep icon={<EllipsisVertical />}>{t(STRINGS.androidMenu)}</InstallStep>
@@ -71,6 +81,7 @@ export default function InstallGuide({ step, device, glass, canInstall, installe
                 </>
               )}
             </ol>
+            {arrowAt && <ShareArrow corner={arrowAt} />}
             {device === "other" ? (
               <Text tone="subtle">{t(STRINGS.onYourPhone)}</Text>
             ) : (

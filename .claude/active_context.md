@@ -532,7 +532,30 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       to end, any iPhone (keyboard, music, cropper pinch).
       Debt: chat avatars (B43); a rate limit on our link route (B44); an event's own 400 px picture is soft on a card.
 
+- [x] **Launch feedback round 2 (2026-10-20, the user's 10 points), then follow-ups, a code review and its fixes.**
+      Committed and pushed to `main` on the user's go (2026-10-20).
+      1. Website-only language page (`i18n/LanguageChoice`: logo, "Viet Corners", the question; `language` cookie).
+      2. Globe on the language link. 3. No "Hide my name". 4. Event address (`events.address`, schema 3g, RUN by the
+      user) + tap → address, Google Maps (the church: its Business Profile), Apple Maps (the church: its pin), Copy
+      (`components/Place`, `lib/mapLinks.ts`). 5. Pray once per request per day. 6. "Has no group" for
+      `users.manage` only. 7. Bouncing arrow at the browser's Share/⋮. 8. Settings icon = my picture.
+      9. Signed-out install, ROOT CAUSE: iOS copies only regular Safari's cookies into an added app; FIX: install
+      first, sign in inside the app. 10. Chrome-on-iPhone steps. Follow-ups: one card per place per day
+      (`cardsOf`), taller cards with gaps, the editor in the card's order with hints (no description box), the
+      stale-editor fix (`RefreshOnArrival` + keyed forms), search (`lib/church.ts`, title/description/JSON-LD,
+      robots, sitemap, canonical vietcorners.org). Evidence: 143/143 tests, `npm run build` clean; seen in the pane:
+      language page → guide, events card and editor signed in, address menu → the listing's cid URL; curl:
+      robots, sitemap, title, description, JSON-LD. NOT seen: any iPhone, the final language page (signed in).
+      Debt: the setup bar does not count language/install (they come before sign-in, unbarred).
+
 ## ➡️ Next 3 Micro-Steps
+000a. User + Claude on two iPhones, on the LIVE site: open vietcorners.org in Safari AND in Chrome (never visited):
+   language page → guide (arrow at the bottom in Safari < 26, bottom right in iOS 26, top right in Chrome) →
+   install → sign up inside the app → email → "Sign in?" → back to the app signed in, in the chosen language.
+000b. User, signed in on the phone: the picture on the top bar, Events (one Sunday card; the address → Google opens
+   the listing, Apple the pin), the Groups tab as a group manager (no "Has no group"), a prayer stays green till midnight.
+000c. User, off-site: Google Search Console (verify vietcorners.org, submit /sitemap.xml, request indexing of /login);
+   Apple Business Connect with the pin on the building. Do NOT make netlify.app redirect to vietcorners.org.
 000. User: sign-outs fix (2026-10-19): reuse detection is OFF in Supabase (done by the user). Check: open the app, wait over 15 minutes, deploy, open it: still signed in, and no `refresh_token_already_used` in Supabase → Logs → Auth by tomorrow. Members already signed out sign in once more. Debt: B45 (server-held tokens, detection back on).
 00. User: in Vietnamese, glance over the new wording (sign-in errors, waiting screen, install guide, Prayer, assistant): strings pass done 2026-10-19, typechecked, not seen on a phone.
 0. User: on the iPhone, Prayer tab: does the toolbar stay under the blue bar while scrolling, and the bubble sit left of play? (now `fixed`, not `sticky`)

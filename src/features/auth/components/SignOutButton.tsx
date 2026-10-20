@@ -23,7 +23,7 @@ export default function SignOutButton() {
   }
 
   return (
-    <Button variant="danger" pending={pending === "signOut"} onClick={tap}>
+    <Button variant="dangerOutline" pending={pending === "signOut"} onClick={tap}>
       {armed ? t(COMMON.tapAgain) : t(STRINGS.signOutButton)}
     </Button>
   );

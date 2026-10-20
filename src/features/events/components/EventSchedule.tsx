@@ -13,7 +13,7 @@ import { SWITCHES } from "@/lib/switches";
 import { useFresh } from "@/lib/useFresh";
 import { getSchedule } from "../api";
 import { formatLongDate } from "../formatting";
-import { nextOfEach, scheduleOf } from "../occurrences";
+import { cardsOf, nextOfEach, scheduleOf } from "../occurrences";
 import { STRINGS } from "../strings";
 import type { Occurrence, ScheduledEvent } from "../types";
 import EventCard from "./EventCard";
@@ -24,7 +24,7 @@ type Props = {
 };
 
 // The schedule: each event once, at its next date (a weekly one never shows a second week), grouped by day,
-// soonest first. An admin's tap opens its editor. It shows what the page loaded at once, then keeps itself
+// soonest first; a day's events at one place share a card (`cardsOf`). An admin's tap opens its editor. It shows what the page loaded at once, then keeps itself
 // fresh (`useFresh`).
 export default function EventSchedule({ events: loaded, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
@@ -58,8 +58,8 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
         <section key={day}>
           <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
           <div className="flex flex-col gap-4 px-3">
-            {ofThatDay.map((occurrence) => (
-              <EventCard key={occurrence.event.id} occurrence={occurrence} canManage={canManage} />
+            {cardsOf(ofThatDay).map((card) => (
+              <EventCard key={card[0].event.id} occurrences={card} canManage={canManage} />
             ))}
           </div>
         </section>

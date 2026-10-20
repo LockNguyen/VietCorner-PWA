@@ -1,5 +1,6 @@
 "use client";
 
+import { Globe } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useLanguage } from "../hooks/useLanguage";
 import { LANGUAGE_NAMES } from "../types";
@@ -11,7 +12,11 @@ export default function LanguageLink() {
 
   return (
     <Button variant="text" onClick={() => setLanguage(other)}>
-      {LANGUAGE_NAMES[other]}
+      <span className="inline-flex items-center gap-1.5">
+        {/* why: the globe is the sign for "language" that people recognise even in a language they cannot read */}
+        <Globe className="size-5" aria-hidden />
+        {LANGUAGE_NAMES[other]}
+      </span>
     </Button>
   );
 }

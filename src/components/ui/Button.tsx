@@ -16,6 +16,8 @@ const VARIANTS = {
   primary: "bg-action text-on-action px-4",
   quiet: "border border-line bg-surface text-ink px-4",
   danger: "bg-danger text-on-action px-4",
+  // Red but not alarming, for a plain choice like Sign out: solid red reads as an error banner.
+  dangerOutline: "border border-danger bg-surface text-danger px-4",
   text: "text-action px-4",
   dangerText: "text-danger px-4", // the small red line under a sheet's button: remove, delete, call off
   // A tappable value lined up with the words around it (a phone number): no side padding, and the 48 px tap

@@ -12,7 +12,7 @@ import { SHELL_STRINGS } from "./strings";
 const TABS = [
   { href: "/", label: SHELL_STRINGS.homeTab, Icon: House },
   { href: "/events", label: SHELL_STRINGS.eventsTab, Icon: CalendarDays },
-  { href: "/prayer", label: SHELL_STRINGS.prayerTab, Icon: HandHeart },
+  { href: "/prayer", label: SHELL_STRINGS.prayerTabShort, Icon: HandHeart },
   { href: "/groups", label: SHELL_STRINGS.groupsTab, Icon: Users },
 ];
 

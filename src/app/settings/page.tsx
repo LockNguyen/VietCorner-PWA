@@ -7,7 +7,7 @@ import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import LanguageRow from "@/features/i18n/components/LanguageRow"; // I18N
 import NameRow from "@/features/profiles/components/NameRow"; // PROFILES
 import ProfileHeader from "@/features/profiles/components/ProfileHeader"; // PROFILES
-import { getMyAvatar, getMyProfile } from "@/features/profiles/server/queries"; // PROFILES
+import { getMyProfile } from "@/features/profiles/server/queries"; // PROFILES
 import NotificationRow from "@/features/push/components/NotificationRow"; // PUSH
 import TextSizeRow from "@/features/text-size/components/TextSizeRow"; // TEXT-SIZE
 import { createClient } from "@/lib/supabase/server";
@@ -17,15 +17,13 @@ import { createClient } from "@/lib/supabase/server";
 export default async function SettingsPage() {
   const supabase = await createClient();
   const user = await getCurrentUser(supabase); // AUTH
-  const [profile, avatarPath] = user
-    ? await Promise.all([getMyProfile(supabase, user.id), getMyAvatar(supabase, user.id)]) // PROFILES
-    : [null, null];
+  const profile = user ? await getMyProfile(supabase, user.id) : null; // PROFILES
 
   return (
     <>
       <PageHeader title={SHELL_STRINGS.settingsTab} backHref="/" />
       <div className="flex flex-col gap-6 px-3 pt-4">
-        {profile && <ProfileHeader name={profile.name} avatarPath={avatarPath} />} {/* PROFILES */}
+        {profile && <ProfileHeader name={profile.name} avatarPath={profile.avatarPath} />} {/* PROFILES */}
         <ListGroup>
           {profile && <NameRow name={profile.name} />} {/* PROFILES */}
           {user?.email && <EmailRow email={user.email} />} {/* AUTH */}

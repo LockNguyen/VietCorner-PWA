@@ -13,22 +13,21 @@ import { LANGUAGE_NAMES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
 import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
-import { MAX_PHONE_LENGTH, type EventDraft } from "../types";
+import { MAX_ADDRESS_LENGTH, MAX_PHONE_LENGTH, type EventDraft } from "../types";
 
 type Props = {
   initial: EventDraft;
   onSave: (draft: EventDraft) => Promise<void>;
 };
 
-type TextField = "title" | "location" | "description";
-const TEXT_FIELDS = [
-  { field: "title", label: STRINGS.titleField },
-  { field: "location", label: STRINGS.location },
-  { field: "description", label: STRINGS.descriptionField },
-] as const;
+// The two texts written in both languages. The description is no longer asked: since the event's own page went
+// (2026-10-19) no screen shows it; saved ones stay in `event_texts`.
+type TextField = "title" | "location";
 
-// Adding or changing an event. Each text is one grey box, Vietnamese on top and English under it, so a
-// translation is written right under its original. Times are church time whatever device the admin holds (draft.ts converts).
+// Adding or changing an event, in the order the card shows it (the user, 2026-10-20: the editor did not match
+// what was displayed): title, time, place, address, contact, each with a grey line saying where it appears.
+// Each text is one grey box, Vietnamese on top and English under it, so a translation is written right under its
+// original. Times are church time whatever device the admin holds (draft.ts converts).
 export default function EventForm({ initial, onSave }: Props) {
   const { t } = useLanguage(); // I18N
   const [draft, setDraft] = useState(initial);
@@ -48,26 +47,30 @@ export default function EventForm({ initial, onSave }: Props) {
     if (!problem) run("save", () => onSave(draft));
   }
 
+  // One text in both languages: its name, the box, where it shows, and what is wrong with it.
+  function bilingual(field: TextField, label: string, hint: string, problem?: string) {
+    const part = (language: Language) => ({
+      value: draft.texts[language][field],
+      onChange: (value: string) => setText(language, field, value),
+      placeholder: LANGUAGE_NAMES[language],
+      label: `${label} · ${LANGUAGE_NAMES[language]}`,
+    });
+    return (
+      <div className="flex flex-col gap-1">
+        <Text variant="small" tone="subtle">{label}</Text>
+        <BilingualInput top={part("vi")} bottom={part("en")} />
+        <Text variant="small" tone="subtle">{hint}</Text>
+        {problem && <Text variant="small" tone="danger">{problem}</Text>}
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-3 pt-4">
-      {TEXT_FIELDS.map(({ field, label }) => {
-        const part = (language: Language) => ({
-          value: draft.texts[language][field],
-          onChange: (value: string) => setText(language, field, value),
-          placeholder: LANGUAGE_NAMES[language],
-          label: `${t(label)} · ${LANGUAGE_NAMES[language]}`,
-        });
-        const problem = field === "title" ? said("noTitle") : undefined;
-        return (
-          <div key={field} className="flex flex-col gap-1">
-            <Text variant="small" tone="subtle">{t(label)}</Text>
-            <BilingualInput top={part("vi")} bottom={part("en")} rows={field === "description" ? 3 : undefined} />
-            {problem && <Text variant="small" tone="danger">{problem}</Text>}
-          </div>
-        );
-      })}
+      {bilingual("title", t(STRINGS.titleField), t(STRINGS.titleHint), said("noTitle"))}
 
-      <Field label={t(STRINGS.startsField)} problem={said("noStart")}>
+      {/* A weekly event keeps its first date here, while the card shows the next one: say so. */}
+      <Field label={t(STRINGS.startsField)} hint={draft.repeatsWeekly ? t(STRINGS.firstDateHint) : undefined} problem={said("noStart")}>
         <TextInput
           type="datetime-local"
           value={draft.startsAt}
@@ -97,7 +100,19 @@ export default function EventForm({ initial, onSave }: Props) {
         </Field>
       )}
 
-      <Field label={t(STRINGS.contactField)}>
+      {bilingual("location", t(STRINGS.location), t(STRINGS.locationHint))}
+
+      <Field label={t(STRINGS.addressField)} hint={t(STRINGS.addressHint)}>
+        <TextInput
+          autoComplete="off"
+          placeholder="134 S Peace Haven Rd (SeChrist Building)"
+          maxLength={MAX_ADDRESS_LENGTH}
+          value={draft.address}
+          onChange={(event) => setDraft({ ...draft, address: event.target.value })}
+        />
+      </Field>
+
+      <Field label={t(STRINGS.contactField)} hint={t(STRINGS.contactHint)}>
         <TextInput
           type="tel"
           inputMode="tel"

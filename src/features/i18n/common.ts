@@ -9,10 +9,14 @@ export const COMMON = {
   removed: { en: "Removed", vi: "Đã xóa" } satisfies Text,
   tapAgain: { en: "Tap again to confirm", vi: "Bấm lần nữa để xác nhận" } satisfies Text, // useConfirmTap
   close: { en: "Close", vi: "Đóng" } satisfies Text,
-  // A phone number's choices (src/components/PhoneNumber.tsx), on a group's sheet and an event's page
+  // A phone number's and an address's choices (src/components/PhoneNumber.tsx, Place.tsx)
   call: { en: "Call", vi: "Gọi" } satisfies Text,
   sendText: { en: "Text", vi: "Nhắn tin" } satisfies Text,
-  copyNumber: { en: "Copy", vi: "Sao chép" } satisfies Text,
-  copied: { en: "Number copied", vi: "Đã chép số điện thoại" } satisfies Text, // the X of every sheet, read by screen readers
+  copy: { en: "Copy", vi: "Sao chép" } satisfies Text,
+  // Names of the map apps, the same in both languages: the phone shows them under these names.
+  googleMaps: { en: "Google Maps", vi: "Google Maps" } satisfies Text,
+  appleMaps: { en: "Apple Maps", vi: "Apple Maps" } satisfies Text,
+  numberCopied: { en: "Number copied", vi: "Đã chép số điện thoại" } satisfies Text,
+  addressCopied: { en: "Address copied", vi: "Đã chép địa chỉ" } satisfies Text,
   couldNotSave: { en: "Could not save. Please try again.", vi: "Không lưu được. Xin thử lại." } satisfies Text,
 };

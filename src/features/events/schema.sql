@@ -263,7 +263,7 @@ alter table public.events drop constraint if exists events_created_by_fkey;
 alter table public.events add constraint events_created_by_fkey
   foreign key (created_by) references auth.users (id) on delete set null;
 
--- 3g. A contact phone number (2026-10-17) -----------------------------------
+-- 3g. A contact phone number (2026-10-17) and an address (2026-10-20) ----------
 -- This section can be run again by itself. Run it after 3b, 3c and 3e: it replaces both functions.
 -- Whom to call about an event, shown on its page, where a member can call, text or copy it. A number only
 -- (digits, spaces and + ( ) - .), so nothing else can sit behind the call and text links. Written with
@@ -272,17 +272,23 @@ alter table public.events add column if not exists contact_phone text
   check (length(contact_phone) <= 30 and contact_phone ~ '^[0-9 +().-]+$');
 grant insert (contact_phone), update (contact_phone) on public.events to authenticated;
 
--- The schedule's one read (3b), now with the number.
+-- The street address (2026-10-20), apart from the place's name in `event_texts.location`: the card shows the
+-- name ("Gotham building"), a tap on it shows the address with Google Maps, Apple Maps and Copy. One column, not
+-- one per language: an address is written the same way for everyone, and maps read it as typed.
+alter table public.events add column if not exists address text check (length(address) <= 200);
+grant insert (address), update (address) on public.events to authenticated;
+
+-- The schedule's one read (3b), now with the number and the address.
 drop function if exists public.upcoming_events (timestamptz, timestamptz);
 create function public.upcoming_events(until timestamptz, cancelled_since timestamptz)
 returns table (
   id uuid, group_id uuid, starts_at timestamptz, ends_at timestamptz, repeats_weekly boolean, repeat_until date,
-  canceled_at timestamptz, thumbnail_path text, contact_phone text, texts jsonb, canceled_dates date[]
+  canceled_at timestamptz, thumbnail_path text, contact_phone text, address text, texts jsonb, canceled_dates date[]
 )
 language sql stable set search_path = '' as $$
   select
     e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at, e.thumbnail_path,
-    e.contact_phone,
+    e.contact_phone, e.address,
     coalesce(
       (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
        from public.event_texts t where t.event_id = e.id),
@@ -298,18 +304,18 @@ $$;
 revoke execute on function public.upcoming_events (timestamptz, timestamptz) from public, anon;
 grant execute on function public.upcoming_events (timestamptz, timestamptz) to authenticated;
 
--- The editor's one read (3c), now with the number.
+-- The editor's one read (3c), now with the number and the address.
 drop function if exists public.managed_events ();
 create function public.managed_events()
 returns table (
   id uuid, group_id uuid, starts_at timestamptz, ends_at timestamptz, repeats_weekly boolean, repeat_until date,
-  canceled_at timestamptz, thumbnail_path text, contact_phone text, texts jsonb, canceled_dates date[],
+  canceled_at timestamptz, thumbnail_path text, contact_phone text, address text, texts jsonb, canceled_dates date[],
   reminder_minutes int[]
 )
 language sql stable set search_path = '' as $$
   select
     e.id, e.group_id, e.starts_at, e.ends_at, e.repeats_weekly, e.repeat_until, e.canceled_at, e.thumbnail_path,
-    e.contact_phone,
+    e.contact_phone, e.address,
     coalesce(
       (select jsonb_object_agg(t.language, jsonb_build_object('title', t.title, 'description', t.description, 'location', t.location))
        from public.event_texts t where t.event_id = e.id),

@@ -25,7 +25,7 @@ export async function getRequests(olderThan?: string): Promise<PrayerRequest[]> 
 export async function createRequest(request: NewPrayerRequest): Promise<void> {
   const { error } = await createClient()
     .from("prayer_requests")
-    .insert({ body: request.body, is_anonymous: request.isAnonymous });
+    .insert({ body: request.body }); // is_anonymous keeps its default, false
   if (error) throw new Error(error.message);
 }
 

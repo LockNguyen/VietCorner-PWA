@@ -20,6 +20,7 @@ export const STRINGS = {
   everyWeek: { en: "Every week", vi: "Hằng tuần" } satisfies Text,
   location: { en: "Location", vi: "Địa điểm" } satisfies Text,
   contact: { en: "Contact", vi: "Liên hệ" } satisfies Text,
+  addressField: { en: "Address", vi: "Địa chỉ" } satisfies Text,
   contactField: { en: "Contact phone number", vi: "Số điện thoại liên hệ" } satisfies Text,
 
   // The editor (for whoever manages events)
@@ -32,7 +33,18 @@ export const STRINGS = {
 
   // The form
   titleField: { en: "Title", vi: "Tên sự kiện" } satisfies Text,
-  descriptionField: { en: "Description", vi: "Mô tả" } satisfies Text,
+  // Under each field of the editor: where it shows on the card (the user, 2026-10-20).
+  titleHint: { en: "The bold line: “Worship”, “Sunday School”.", vi: "Dòng chữ đậm: “Thờ Phượng”, “Trường Chúa Nhật”." } satisfies Text,
+  locationHint: {
+    en: "The place's name. Same day, same place, address and number: one card, with this as its title.",
+    vi: "Tên nơi họp. Cùng ngày, cùng địa điểm, địa chỉ và số điện thoại: chung một thẻ, tên này làm tựa.",
+  } satisfies Text,
+  firstDateHint: {
+    en: "Every week: the first date. The card shows the next one; the coming dates are at the bottom.",
+    vi: "Hằng tuần: ngày của buổi đầu tiên. Thẻ hiện buổi kế tiếp; các buổi sắp tới ở cuối trang.",
+  } satisfies Text,
+  addressHint: { en: "Tapping it opens Google Maps or Apple Maps.", vi: "Bấm vào để mở Google Maps hoặc Apple Maps." } satisfies Text,
+  contactHint: { en: "Tapping it calls, texts or copies.", vi: "Bấm vào để gọi, nhắn tin hoặc sao chép." } satisfies Text,
   startsField: { en: "Starts", vi: "Bắt đầu" } satisfies Text,
   endsField: { en: "Ends (optional)", vi: "Kết thúc (nếu có)" } satisfies Text,
   repeatUntilField: { en: "Repeat until (optional)", vi: "Lặp lại đến ngày (nếu có)" } satisfies Text,

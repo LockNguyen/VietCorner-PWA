@@ -3,18 +3,16 @@ import type { NameRequest, Names, Profile } from "../types";
 
 // Server-side reads for this foundation. The page (or the root layout) creates the client and passes it in.
 
-// The signed-in person's own profile. Null when it cannot be read (schema.sql not run yet): the caller
-// then asks nothing, rather than locking everyone behind a question that cannot be saved.
+// The signed-in person's own profile: name and picture, in one read (the root layout, every page). Null when it
+// cannot be read (schema.sql not run yet): the caller then asks nothing, rather than locking everyone behind a
+// question that cannot be saved.
 export async function getMyProfile(supabase: SupabaseClient, userId: string): Promise<Profile | null> {
-  const { data } = await supabase.from("profiles").select("name, named_at").eq("user_id", userId).maybeSingle();
-  return data ? { name: data.name, named: data.named_at !== null } : null;
-}
-
-// The path of my picture, or null for none. Read by Settings only, and apart from `getMyProfile`, which
-// every page reads: a missing column (schema.sql section 6 not run yet) then costs only the picture.
-export async function getMyAvatar(supabase: SupabaseClient, userId: string): Promise<string | null> {
-  const { data } = await supabase.from("profiles").select("avatar_path").eq("user_id", userId).maybeSingle();
-  return data?.avatar_path ?? null;
+  const { data } = await supabase
+    .from("profiles")
+    .select("name, named_at, avatar_path")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return data ? { name: data.name, named: data.named_at !== null, avatarPath: data.avatar_path } : null;
 }
 
 // The names of these people, in one read. Works with the user's client (any signed-in user may read names)

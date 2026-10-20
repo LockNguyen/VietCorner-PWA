@@ -3,11 +3,13 @@
 import { createContext, useEffect, useState } from "react";
 import { forgetSavedHome } from "@/lib/savedHome";
 import { saveLanguage } from "../api";
-import { DEFAULT_LANGUAGE, isLanguage, type Language } from "../types";
+import { DEFAULT_LANGUAGE, isLanguage, LANGUAGE_COOKIE, type Language } from "../types";
 
 // why: a visitor picks a language on the login screen, before an account exists to store it against.
 // The device remembers it until the first sign-in writes it to the database.
 const DEVICE_KEY = "vietcorner.language";
+// why: the longest a browser keeps a cookie (400 days); choosing again renews it.
+const KEEP_SECONDS = 400 * 24 * 60 * 60;
 
 export type LanguageContextValue = {
   language: Language;
@@ -50,6 +52,7 @@ export default function LanguageProvider({ language, signedIn, children }: Props
 }
 
 function rememberOnDevice(language: Language) {
+  document.cookie = `${LANGUAGE_COOKIE}=${language}; path=/; max-age=${KEEP_SECONDS}; samesite=lax`;
   try {
     window.localStorage.setItem(DEVICE_KEY, language);
   } catch {
@@ -57,13 +60,16 @@ function rememberOnDevice(language: Language) {
   }
 }
 
-// What this device chose before signing in. Used by the root layout for signed-out visitors, and once more
-// after the first sign-in to carry the choice into the account.
+// What this device chose before signing in. Used above for signed-out visitors, and by AdoptDeviceLanguage
+// after the first sign-in to carry the choice into the account. The cookie as well: an app installed from
+// Safari starts with Safari's cookies but an empty localStorage.
 export function languageOnDevice(): Language | null {
+  const fromCookie = new RegExp(`(?:^|; )${LANGUAGE_COOKIE}=([a-z]+)`).exec(document.cookie)?.[1];
   try {
     const stored = window.localStorage.getItem(DEVICE_KEY);
-    return isLanguage(stored) ? stored : null;
+    if (isLanguage(stored)) return stored;
   } catch {
-    return null;
+    // Blocked storage: the cookie may still say.
   }
+  return isLanguage(fromCookie) ? fromCookie : null;
 }

@@ -17,6 +17,7 @@ export function emptyDraft(): EventDraft {
     repeatsWeekly: false,
     repeatUntil: "",
     contactPhone: "",
+    address: "",
     texts: { en: { ...NO_TEXT }, vi: { ...NO_TEXT } },
   };
 }
@@ -34,6 +35,7 @@ export function draftOf(event: ManagedEvent): EventDraft {
     repeatsWeekly: event.repeats_weekly,
     repeatUntil: event.repeat_until ?? "",
     contactPhone: event.contact_phone ?? "",
+    address: event.address ?? "",
     texts: { en: textIn("en"), vi: textIn("vi") },
   };
 }
@@ -57,6 +59,7 @@ export function rowOf(draft: EventDraft) {
     repeats_weekly: draft.repeatsWeekly,
     repeat_until: draft.repeatsWeekly && draft.repeatUntil ? draft.repeatUntil : null,
     contact_phone: draft.contactPhone.trim() || null,
+    address: draft.address.trim() || null,
   };
 }
 

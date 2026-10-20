@@ -28,11 +28,14 @@ export default function EventEditor({ event, listHref }: Props) {
   const changes = useEventChanges(event?.id, listHref);
   const { pending, run } = usePending<"cancelForGood">();
   const { armed, tap } = useConfirmTap(() => run("cancelForGood", changes.cancelForGood));
+  const initial = event ? draftOf(event) : emptyDraft();
 
   return (
     <div className="flex flex-col gap-6 pb-6">
       {event && <EventThumbnail event={event} onSet={changes.setThumbnail} onRemove={changes.removeThumbnail} />}
-      <EventForm initial={event ? draftOf(event) : emptyDraft()} onSave={changes.save} />
+      {/* Keyed by what is stored: when fresher values arrive (RefreshOnArrival), the form starts again from them
+          instead of keeping the copy it was opened with. */}
+      <EventForm key={JSON.stringify(initial)} initial={initial} onSave={changes.save} />
 
       {event && (
         <>

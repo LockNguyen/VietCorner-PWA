@@ -2,8 +2,8 @@
 // stays right when a step is removed: delete its name here. Signing in is not a step (it is the whole of it
 // for someone with an account): choosing the text size is step 1, then name and email (the user, 2026-10-17).
 // "done" is never shown: it is there so that the last screen, waiting for an admin, reads as not finished yet.
-// "install" comes after signing in (in Safari, whose sign-in iOS copies into the app as it is added) and
-// before notifications (which only work in the installed app).
+// "install" is shown here only to someone already signed in in a browser (a computer, Android). Since
+// 2026-10-20 a phone's browser shows the install guide on `/login`, before any of these steps, with no bar.
 export const SETUP_STEPS = ["textSize", "name", "email", "install", "notifications", "waiting", "done"] as const;
 
 export type SetupStep = (typeof SETUP_STEPS)[number];

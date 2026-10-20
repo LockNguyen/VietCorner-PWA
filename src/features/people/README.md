@@ -39,7 +39,8 @@ Also run section 3f of `features/events/schema.sql`, or removing someone who cre
 - **NOT seen (2026-10-14):** any of it signed in; the SQL is not run yet.
 
 ## Remove
-Delete this folder, `src/app/admin/people/`, and the `PEOPLE` lines in `src/app/admin/page.tsx`. Run the Undo
+Delete this folder, `src/app/admin/people/`, and the `PEOPLE` lines in `src/app/admin/page.tsx` and
+`src/app/groups/page.tsx` (there, "Has no group" then shows to nobody: give it another permission). Run the Undo
 block at the bottom of `schema.sql`.
 
 ## Pictures in the list (2026-10-19)

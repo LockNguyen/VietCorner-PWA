@@ -7,7 +7,7 @@ const START = "2026-10-14T23:00:00Z";
 const at = (iso: string) => new Date(iso);
 
 function event(overrides: Partial<EventRow> = {}): EventRow {
-  return { id: "e", starts_at: START, ends_at: null, repeats_weekly: false, repeat_until: null, canceled_at: null, thumbnail_path: null, contact_phone: null, ...overrides };
+  return { id: "e", starts_at: START, ends_at: null, repeats_weekly: false, repeat_until: null, canceled_at: null, thumbnail_path: null, contact_phone: null, address: null, ...overrides };
 }
 
 const minutes = (event_: EventRow, choices: number[], now: string, canceled: string[] = []) =>

@@ -72,6 +72,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 
 ## Flow
 Redesigned on 2026-10-17 on the user's word: no passwords, so nothing to forget and no reset.
+0. **On the website** (a browser tab), the language page and the install guide come first (the install README);
+   on a phone that is all, and what follows happens in the installed app.
 1. **Sign in** is the first screen, in Vietnamese with "English" at the top right, and no progress bar: the
    email, "Đăng nhập", and "Tạo tài khoản mới?" under it.
    - An address with no account (`account_exists`) → no email; the banner "Account not created yet.
@@ -206,7 +208,10 @@ Delete this folder, `src/proxy.ts`, `src/app/login/`, `src/app/api/auth/`, and t
 `src/app/settings/page.tsx`. Run the DROP at the bottom of `schema.sql`. Features that need a user id stop
 working without a replacement.
 
-## Safari first, then install (2026-10-14, proven on the iPhone)
+## Safari first, then install (2026-10-14; REPLACED 2026-10-20 by "install first", the install README)
+Kept for the record. iOS copies only regular Safari's cookies, so this order failed for someone in Chrome on an
+iPhone or a Private tab. A phone's browser now shows only the language page and the install guide on `/login`.
+
 **Signing in in Safari, then adding to the Home Screen, opens the app already signed in**: iOS copies Safari's
 cookies into the app at that moment. So `/login` is not wrapped in the install guide; the root layout wraps
 signed-in pages in `InstallGate` instead (the `install` feature), and the guide is setup step 3 of 6 for a new

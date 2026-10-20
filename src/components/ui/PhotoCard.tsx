@@ -11,7 +11,8 @@ type Props = {
   extra?: ReactNode; // a last line with its own tap, like a phone number: it sits above the card's link
 };
 
-const CARD = "relative flex min-h-52 flex-col justify-end overflow-hidden rounded-control bg-ink text-on-action";
+// Tall enough that the top of the photo shows above the words (the user, 2026-10-20).
+const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink text-on-action";
 // Darkest at the bottom, where the words are, so white text passes contrast on any photo.
 const VEIL = "absolute inset-0 bg-linear-to-t from-ink/90 via-ink/65 to-ink/35";
 // The link covers the whole card but holds no words: a button (the phone number) cannot sit inside a link.
@@ -29,13 +30,16 @@ export default function PhotoCard({ href, src, title, subtitle, details, extra }
       {/* Taps go through the words to the link; only `extra` takes its own. */}
       <span className="pointer-events-none relative flex flex-col gap-1 p-5">
         <span className="text-tile font-bold">{title}</span>
-        <span className="text-body font-semibold">{subtitle}</span>
-        {details.map((detail) => (
-          <span key={detail} className="text-body">
-            {detail}
-          </span>
-        ))}
-        {extra && <span className="pointer-events-auto text-body">{extra}</span>}
+        {/* A gap under the title, so the title reads apart from the lines that follow it. */}
+        <span className="mt-2 flex flex-col gap-1">
+          <span className="text-body font-semibold">{subtitle}</span>
+          {details.map((detail) => (
+            <span key={detail} className="text-body">
+              {detail}
+            </span>
+          ))}
+          {extra && <span className="pointer-events-auto text-body">{extra}</span>}
+        </span>
       </span>
     </div>
   );
