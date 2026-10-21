@@ -10,6 +10,12 @@ export type Group = {
 // The public storage bucket the groups' pictures live in (schema.sql section 2d makes it).
 export const THUMBNAIL_BUCKET = "group-thumbnails";
 
+// why (the user, 2026-10-21: blurry next to the group's own photos): the picture fills a card the width of
+// the phone and the top of the group page, so it gets a phone screen's width (3x a 400-point screen), at the
+// best quality under 400 KB. The bucket refuses more than 500 KB (schema.sql 2f).
+export const PICTURE_SIDE = 1600;
+export const PICTURE_MAX_BYTES = 400_000;
+
 // why: the database rejects anything longer (schema.sql); the inputs stop the typing at the same number.
 // Long enough for "Vietnamese Young Adults Bible Study", short enough to fit one line of a phone.
 export const MAX_GROUP_NAME_LENGTH = 60;

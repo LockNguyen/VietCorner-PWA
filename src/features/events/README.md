@@ -17,12 +17,13 @@ every case the list has to handle (see **Seed data** below).
 | Data | `schema.sql` | Four tables, grants, RLS (members read, managers write), seeds, and the DROP statements |
 | Types | `types.ts` | `EventRow`, `EventText`, `ChurchEvent`, `Occurrence`; for the admin section `ManagedEvent`, `EventDraft`, `MANAGE_EVENTS` |
 | Pure logic | `occurrences.ts` | Expands a weekly event into dates, applies cancellations, sorts the schedule; `cardsOf`: a day's events at one place share a card |
+| Pure logic | `weekly.ts` | The weekly card's lines: `weeklyLineOf` (an event at its weekday and time), `byWeekday` (Sunday first, time order) |
 | Pure logic | `reminders.ts` | `dueReminders`: which reminders of an event should go out now |
 | Pure logic | `formatting.ts` | Dates, weekdays and times in the reader's language, always in church time |
 | Pure logic | `draft.ts` | The event form's contents ⇄ database rows; why a draft cannot be saved yet |
 | Text | `strings.ts` | This feature's labels and the form's `PROBLEMS`. Event titles are data, not labels. |
-| Browser API | `api.ts` | `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
-| Server reads | `server/queries.ts` | `getScheduledEvents` (the schedule, one call to `upcoming_events()`), `getManagedEvents` (the admin section and the editor, one call to `managed_events()`) |
+| Browser API | `api.ts` | `saveWeeklyCard`, `saveEvent`, `setReminder`, `cancelEvent` (POST `/api/events/cancel`), `restoreDate` (DELETE, same route) |
+| Server reads | `server/queries.ts` | `getScheduledEvents` (the schedule, one call to `upcoming_events()`), `getManagedEvents` (the Edit list and the editor, one call to `managed_events()`), `getWeeklyCard` |
 | Server logic | `server/changeSchedule.ts` | `cancelDate`, `restoreDate`, `cancelForGood`: each records the change as the **user**, then notifies |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: sends each due reminder once, per language |
 | Server logic | `server/notifyScheduleChange.ts` | **Admin** client: every approved member → one push per language (`// PUSH`, `// I18N`, `// PERMISSIONS`). Switched off (`eventChangePush`) |
@@ -30,13 +31,15 @@ every case the list has to handle (see **Seed data** below).
 | UI | `components/EventThumbnail.tsx` | The editor's picture section: the picture, choose or replace, remove |
 | UI | `components/EventSchedule.tsx`, `EventCard.tsx` | The members' schedule: days, one card per place per day (`ui/PhotoCard`); with an address, the place (or, on a shared card, the address) is tapped for maps (`components/Place`) |
 | State | `hooks/useEventChanges.ts` | Every change the editor makes: the call, then reload or go back to the list, then a banner |
-| UI | `components/EventAdmin.tsx` | The admin section: "New event", then the list; each row opens the editor's screen |
-| UI | `components/EventAdminRow.tsx` | One event in the list: a row that opens its editor |
+| UI | `components/EventWeeklyCard.tsx` | The schedule's first card: the church's name, address, number, then the weekly lines by weekday |
+| UI | `components/EventManageList.tsx` | The Edit list: +, the weekly card's row, then "Hằng tuần" and "Một lần" rows; each opens its editor |
+| UI | `components/EventWeeklyForm.tsx`, `hooks/useWeeklyCardSave.ts` | The weekly card's editor: title in both languages, address, number; Save and back |
 | UI | `components/EventEditor.tsx` | The editor's screen: the form, the reminders, the next dates, the red button |
 | UI | `components/EventForm.tsx` | The fields; each text in English and then Vietnamese |
 | UI | `components/EventReminders.tsx`, `EventReminderChoice.tsx` | Three switches: 1 day, 2 hours, 30 minutes before; one switch |
 | UI | `components/EventDates.tsx`, `EventDateRow.tsx` | The next four dates; one date, with Cancel or Undo |
-| Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab |
+| Shell | `src/app/events/page.tsx`, `AppTabs.tsx` | The Events tab; the page turns the groups' meetings into weekly lines (`// GROUP-INFO`) |
+| Shell | `src/app/events/manage/page.tsx`, `src/app/events/weekly/edit/page.tsx` | The Edit list; the weekly card's editor; 404 without `events.manage` |
 | Shell | `src/app/events/[eventId]/edit/page.tsx`, `src/app/events/new/page.tsx` | The editor for one event, or a new one; 404 without `events.manage` |
 
 ## Four tables, on purpose
@@ -111,8 +114,9 @@ every case the list has to handle (see **Seed data** below).
 - Tapping a row opens a sheet with the full date, end time, location and description; Close, Escape or a tap
   outside puts it away.
 - With no events (or before `schema.sql` is run), the page shows "No events in the next weeks."
-- **Events tab, for someone with `events.manage`** (since 2026-10-14; it was the Admin tab): a round blue + at
-  the top right opens a new event; tapping an event's card opens its editor (`/events/<id>/edit`) with a back arrow:
+- **Events tab, for someone with `events.manage`** (since 2026-10-14; it was the Admin tab): a round blue pencil at
+  the top right opens the Edit list (2026-10-21, below); its + opens a new event, a row opens its editor
+  (`/events/<id>/edit`) with a back arrow:
   the picture, then the fields (title, location and description, each one grey box with Vietnamese on top
   and English below), then "Remind members", the next
   four dates, and a small red "Cancel this event permanently" that asks once ("Tap again to confirm"). Save with something missing says what, in red under
@@ -267,4 +271,25 @@ Seen in the pane (2026-10-20): the editor in that order with the hints; the shar
   door. An address starting with it opens the church's own place instead (`src/lib/mapLinks.ts`, tested): Google
   Maps opens the Google Business Profile, Apple Maps the pin labelled with the church's name. Other addresses are
   searched as typed.
+
+## The weekly card (2026-10-21, the user)
+- **What:** the Events tab's first card, with no date heading. The church picture, 160 px of it at least above the
+  words; "Hội Thánh Việt Nam Winston-Salem" (bold); the address (blue, tap: maps menu); "Liên hệ:" and the number;
+  then each weekday that has something, Sunday first, in bold, with its lines indented in time order:
+  "Trường Chúa Nhật · 9:15a". The lines are every weekly event (at its next week that is on) and every group with a
+  meeting day and time (its name in the reader's language). A weekly event is never a dated card any more.
+- **One-time events** stay below, under their dates, as before. Every time on the tab is "9:15a" / "7:30p"
+  (`formatShortTime`, the same in both languages).
+- **Data:** `weekly_card`, one row (schema.sql 3h): `title` (Vietnamese), `title_en`, `address`, `contact_phone`.
+  Members read it; `events.manage` updates it; nobody inserts or deletes (no grant), and the `id` check stops a
+  second row. The seed's English title is a guess: correct it in the editor. Until 3h is run the card is not shown.
+- **Editing:** the + at the top right is now a pencil (`events.manage`) → `/events/manage`: a + for a new event,
+  the weekly card's row (→ `/events/weekly/edit`: title in both languages, address, number), then "Hằng tuần"
+  (weekly events) and "Một lần" (one-time) rows, each → `/events/<id>/edit`. Each screen slides in; Save leads
+  back to the list. Cards are not links any more, for anyone.
+- A group's line changes in the group's editor (its name, day and time), not here.
+- `tests/rls.test.ts` "weekly_card": a member reads one row, a waiting account and a signed-out one none; a member's
+  update matches nothing, a manager's saves, a second row is refused.
+- **NOT seen (2026-10-21):** anything signed in (the preview pane has no session), the SQL
+  (`docs/sql-to-run-2026-10-21.sql`) not run, `npm run test:rls` not run. Typechecked, built, unit-tested.
 

@@ -548,7 +548,23 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       robots, sitemap, title, description, JSON-LD. NOT seen: any iPhone, the final language page (signed in).
       Debt: the setup bar does not count language/install (they come before sign-in, unbarred).
 
+- [x] **Feedback round 3 (2026-10-21, the user's 5 points).** 1. Group pictures 1600 px under 400 KB (bucket
+      500 KB, groups schema 2f). 2. Bubble: "Tôi muốn / cầu nguyện bây giờ" / "Let's pray". 3. Worship songs in
+      `public/audio/worship/` (`WORSHIP_SONGS`), shuffled rounds with the last song kept two away (`playlist.ts`).
+      4. The weekly card first on Events (`weekly_card`, events schema 3h; weekly events + group meetings by
+      weekday, "9:15a"); one-time events below under dates. 5. The pencil → Edit list → weekly card / event
+      editors. Evidence: `npm test` 152/152, `npm run build` clean. NOT seen: anything signed in (no session in
+      the pane), the SQL, `test:rls`. Debt: group photos re-download on every visit (new signed URL each time);
+      event pictures still 400 px; the seed's English church title is a guess.
+
 ## ➡️ Next 3 Micro-Steps
+R3a. User: run `docs/sql-to-run-2026-10-21.sql` in Supabase, then `npm run test:rls`; BEFORE the deploy (until
+   then the Events tab shows no weekly card). Correct the card's English title in Events → pencil → first card.
+R3b. User: add the other worship MP3s to `public/audio/worship/` and their paths to `WORSHIP_SONGS`
+   (`src/features/prayer/types.ts`); re-choose each group's picture (old ones stay soft); give each group the name
+   it should show on the weekly card ("Kannapolis: Hãy Đến Xem"), with day and time.
+R3c. User, signed in on a phone: Events (weekly card, one-time cards, times "9:15a"), pencil → list → each editor
+   and back; Prayer: Play, let a song end, the next starts.
 000a. User + Claude on two iPhones, on the LIVE site: open vietcorners.org in Safari AND in Chrome (never visited):
    language page → guide (arrow at the bottom in Safari < 26, bottom right in iOS 26, top right in Chrome) →
    install → sign up inside the app → email → "Sign in?" → back to the app signed in, in the chosen language.

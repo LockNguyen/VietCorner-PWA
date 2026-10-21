@@ -292,7 +292,7 @@ itself (`useFresh`). Four tables, one job each: `events` (when), `event_texts`
 no grant to members at all). A weekly event is stored once and expanded for 8 weeks by `occurrences.ts`.
 Visibility is RLS: every event is church-wide (no group since 2026-10-12), read by every approved member,
 and soft-deleted rows are excluded by the policy. Whoever holds `events.manage` creates, edits (each text in English, then Vietnamese) and
-cancels from the Admin tab, where each event opens its own screen (`/admin/events/<id>`, or `/new`): one date (undoable), or the whole event for good, which members then see struck
+cancels from the Edit list on the Events tab, where each event opens its own screen (`/events/<id>/edit`, or `/events/new`): one date (undoable), or the whole event for good, which members then see struck
 through for a week. Cancelling goes through a route; its push to the church, and the reminders before an event, are
 switched off for now (`eventChangePush`, `eventReminders`). Every date and time is church time (`America/New_York`), computed in
 one file, `churchTime.ts`. The schedule shows each event as a card (`ui/PhotoCard`, 2026-10-19): its own
@@ -302,7 +302,16 @@ place in white, and "Liên lạc:" with the number in blue: tapping the number o
 2026-10-20): then the place is blue too, and a tap opens a wider menu with the full address, Google Maps, Apple
 Maps and Copy (`components/Place`); the address itself is not on the card. A day's events at one place (same
 location, address and contact) share one card (`cardsOf`, 2026-10-20): the place as title, a line per event
-with its time (an admin's link to its editor), the address in blue, the contact.
+with its time, the address in blue, the contact.
+**The weekly card (2026-10-21, the user):** the tab's first card, never under a date. The church picture with at
+least 160 px showing above the words (`PhotoCard` `pt-40`), the title from `weekly_card` (one row, `title` /
+`title_en`, address, number; schema.sql 3h), then each weekday Sunday first, a line per weekly event and per group
+meeting in time order, indented: "Thờ Phượng · 10:30a" (`weekly.ts` `byWeekday`, `formatShortTime`). The page
+(`src/app/events/page.tsx`) turns `group_directory()` rows with a weekday and time into `WeeklyMeeting`s
+(name / name_en), so events imports nothing of group-info. Only one-time events stay under date headings. The
+whole tab writes times "9:15a". **Editing:** the + is now a pencil to `/events/manage` (`EventManageList`): +
+New event, the weekly card's row (→ `/events/weekly/edit`, `EventWeeklyForm`, `useWeeklyCardSave`), then "Hằng
+tuần" and "Một lần" rows, each → `/events/<id>/edit`; every editor leads back to the list. Cards are no longer links.
 
 ### 6.5 groups → [README](../src/features/groups/README.md)
 The church's groups and who is in which: `groups` and `group_members`. Since 2026-10-12 only chat shares
@@ -331,10 +340,10 @@ midnight (2026-10-20): a timestamp on the device, not a timer.
 Authors edit, delete, or mark a request answered; an answered one leaves the list but stays in the table.
 Writing and editing a request are screens of their own (`/prayer/new`, `/prayer/<id>/edit`; 2026-10-19: the
 iPhone keyboard pushed a sheet with a text field off the top). Above the list, held under the top bar, a
-toolbar: the admin's bell, play/pause for worship music (`public/audio/worship.mp3`, looped, stopped on leaving
-the tab), and the +. The toolbar is `fixed` with a spacer, not `sticky` (2026-10-19: sticky scrolled away with the
+toolbar: the admin's bell, play/pause for worship music (`public/audio/worship/`, listed in `WORSHIP_SONGS`;
+every song once per round in a random order, `playlist.ts`; stopped on leaving the tab), and the +. The toolbar is `fixed` with a spacer, not `sticky` (2026-10-19: sticky scrolled away with the
 list on the user's iPhone). After 2 seconds on the tab a short bubble left of play, white space on its left, swaying
-towards it, asks "Bạn có muốn cầu nguyện bây giờ?" until the music is first played.
+towards it, says "Tôi muốn cầu nguyện bây giờ" / "Let's pray" until the music is first played.
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
 
 ### 6.15 staff → [README](../src/features/staff/README.md)
@@ -382,6 +391,7 @@ with a bearer token. The conversation is stored on the device, keyed by user id.
 | `events` | events | When an event happens, and its picture's path (`thumbnail_path`). Always church-wide; `group_id` is unused. Members read; `events.manage` writes. Soft-deleted rows hidden from members by the policy. |
 | `event_texts` | events | One row per language per event. Members read; a missing row falls back to the other language. |
 | `event_cancellations` | events | One skipped week of a recurring event. |
+| `weekly_card` | events | One row (`id` true, checked): the Events tab's first card, its title in both languages, the address and the number. Members read; `events.manage` updates; no insert or delete grant. |
 | `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
 | `prayer_requests` | prayer | Members insert (2 columns; `group_id` is unused), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
 | `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name and picture (`profiles`), without either for an anonymous one, and the count for the author only. |
@@ -460,7 +470,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | Pictures of people in a public bucket (`avatars`, 2026-10-19) | A face beside each request: a public address the phone keeps, no signing per person per screen | Anyone holding a file's address can open it (it is two random ids); group photos stay private |
 | Cropping on `react-easy-crop` (2026-10-19) | Dragging and pinching a picture by hand, on every phone, is easy to get subtly wrong | One more library (no dependencies but one tiny one) |
 | Staff are rows in Supabase, edited in the SQL Editor (2026-10-19, the user; replaces "a list in code" from the same day) | The user changes people and headings without a deploy | Three tables (people apart from headings, so a person is typed once), RLS and a test; no editor screen, so changes need SQL (`edit-staff.sql`) |
-| Worship music is one file the church supplies (`public/audio/worship.mp3`) | Only a track the church has the rights to may be played | Until it is added, Play says the music could not play |
+| Worship music is files the church supplies in `public/audio/worship/`, named in `WORSHIP_SONGS` | Only tracks the church has the rights to may be played; a file downloads only when it plays, so the app is no slower | A new song needs a deploy; the repository grows by each file |
+| Songs play in shuffled rounds, not plain random (`playlist.ts`) | Plain random repeats a song back to back; a round plays each once and keeps the last two songs away | The order is less surprising |
 | The author sees how many prayed ("3 🙏", `prayer_feed.prayer_count` for the author only) (2026-10-14) | The user wants people to see the prayers their request received | Reverses the 2026-10-06 choice; still nobody else sees a count |
 | Group cards show members' initials, not names (`group_member_initials`) | The circles need someone's presence, not who they are; a member may not read another group's members | Two people with the same initials look alike |
 | One role per permission, toggled per person | An admin hands out one task at a time; rights stay roles | Four more roles to understand |
@@ -509,6 +520,8 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | A trigger gives every account a profile, named after its email until asked | No screen meets a nameless person, so no fallback code anywhere | A failing trigger would block sign-up, so it is one insert; the stand-in shows part of an email to other members |
 | The name question is drawn by the layout in place of the page | No redirect, and no address that skips it | One more read on every page load |
 | The prayer list groups people by name, because its view carries no author id | The id is what would unmask an anonymous request, so it stays out of the feed altogether | Two members with one name share a group in a week (they look the same on screen anyway) |
+| The weekly card is one row of its own table, and its lines are computed (2026-10-21) | Its words must be editable by an admin; the lines are the weekly events and group meetings themselves, so nothing is typed twice | A group meeting's line can only be changed in the group's editor |
+| Group meetings reach the weekly card through the page, as `WeeklyMeeting` (2026-10-21) | Features never import each other; the page may read both | Removing group-info: delete the `// GROUP-INFO` lines in `src/app/events/page.tsx` |
 | No page per event (2026-10-19, the user; it replaced the 2026-10-17 `/events/[eventId]` page) | The card already shows when, where and whom to call; one less screen for elderly members | Members no longer see the description or end time; an admin's tap opens the editor |
 | The event editor is a route (`/events/[eventId]/edit`, new at `/events/new`; it was `/admin/events/[eventId]`), not an overlay | The phone's back button works, the page loads the event, and the admin list keeps no "which one is open" state | A second page; an unsaved form is lost on Back with no warning (decided earlier: no confirmations) |
 | One shared busy button (`Button`, first `ActionButton`) and one helper (`usePending`) for every request, one instance per row | A double tap sent things twice in a dozen places; one pattern means one place to get it right and every screen behaves the same | The first shared control before the UI revamp; lists need a small component per row |
@@ -697,3 +710,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-20: the church's own map pin (36.082306, -80.351056; the street address points to the building next door): `CHURCH.pin` in `src/lib/church.ts`, used by `components/Place` (through `src/lib/mapLinks.ts` since the review below), and as `geo` in the `/login` JSON-LD. Copy still copies the address. Typechecked, 143 tests; the menu NOT tapped in the pane (the user was signing in there). The user's off-site steps: Google Business Profile and Apple Business Connect, pin moved onto the building.
 - 2026-10-20: code review fixes (the user: "fix all", recommendations accepted). JSON-LD `<` escape really escapes now (`"\\u003c"`; before it replaced `<` with `<`). "Address copied" for an address (`COMMON.addressCopied`; `copied` → `numberCopied`). `getMyAvatar` deleted: `getMyProfile` returns `avatarPath`, one read per page instead of two. `EventRow.address` required and in `EVENT_COLUMNS`. `// PEOPLE` marker on the Groups page. Service times in `CHURCH.serviceTimes`. `ActionMenu` loses `wide` (wide with a heading; no heading when the name is the address). Map links move to `src/lib/mapLinks.ts` (tested): the church's address opens its Google Business Profile (`CHURCH.googleCid`) and its Apple pin; matched at the start of the address, so "1134 …" is not it. Brand first (the user): the language page shows "Viet Corners" and the searched words under the logo, the title is "Viet Corners · …"; `CHURCH.name` = the listing's name "Hội Thánh Báp-Tít Việt Nam - Winston-Salem"; JSON-LD `sameAs` the listing. Seen: address menu on the Sunday card (no repeated heading; Google button → the listing's cid URL), `/login` title, description, JSON-LD by curl. Typecheck, 143 tests. NOT seen: the language page's new lines (the pane is signed in).
 - 2026-10-20: language page (the user): "Viet Corners" under the logo (`Text` tile, in `LanguageChoice` itself), the searched-words subtitle removed, a wider gap before "Chọn ngôn ngữ" (`mt-6`). `components/ChurchIntro.tsx` deleted with the `intro` / `languageIntro` props that carried it: the searched words stay in the page title, description and JSON-LD only. Typechecked; NOT seen (the pane is signed in, and the page shows only signed out).
+- 2026-10-21: feedback round 3 (the user). Group pictures 1600 px under 400 KB (`groups` `PICTURE_SIDE`, `shrinkUnder`; bucket 500 KB, schema.sql 2f; old pictures stay soft until chosen again). The music bubble says "Tôi muốn / cầu nguyện bây giờ" / "Let's pray". Worship songs: `public/audio/worship/`, `WORSHIP_SONGS`, shuffled rounds (`prayer/playlist.ts`, tested), the next song on `ended`. Events: the weekly card first (`weekly_card` table, events schema.sql 3h; `EventWeeklyCard`, `weekly.ts`, group meetings from the page), one-time events below under their dates, short times ("9:15a"); the pencil opens the Edit list (`/events/manage`), the weekly card's editor (`/events/weekly/edit`). SQL: `docs/sql-to-run-2026-10-21.sql`. `npm test` 152/152, build clean. NOT seen: any of it signed in (the pane has no session), the SQL not run, `test:rls` not run.

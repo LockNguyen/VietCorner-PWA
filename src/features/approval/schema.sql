@@ -107,6 +107,10 @@ drop policy if exists "Approved accounts only" on public.event_reminders;
 create policy "Approved accounts only" on public.event_reminders
   as restrictive for all to authenticated using ((select public.has_permission('app.use')));
 
+drop policy if exists "Approved accounts only" on public.weekly_card;
+create policy "Approved accounts only" on public.weekly_card
+  as restrictive for all to authenticated using ((select public.has_permission('app.use')));
+
 drop policy if exists "Approved accounts only" on public.prayer_requests;
 create policy "Approved accounts only" on public.prayer_requests
   as restrictive for all to authenticated using ((select public.has_permission('app.use')));

@@ -11,8 +11,11 @@ have not been run, then this
 `schema.sql` in Supabase → SQL Editor. Copy it from the editor, not from terminal output. It is **not** safe
 to run twice (plain `create`), except section 4, the view, which is how the view is changed.
 
-**Worship music:** put one MP3 the church has the rights to at `public/audio/worship.mp3` (a soft
-instrumental, a few minutes; it loops). Without it, Play says "The music could not play."
+**Worship music:** put the MP3s the church has the rights to in `public/audio/worship/` and add each one's
+path to `WORSHIP_SONGS` in `types.ts`. Play starts a random one; when a song ends the next starts. Every song
+plays once per round, then a new round in a new order, and the song that ended a round is at least two songs
+away from playing again (`playlist.ts`). A song downloads only when it starts: more songs make the deploy
+bigger, never the app slower. A missing file makes Play say "The music could not play."
 
 ## Files
 | Layer | File | Job |
@@ -32,7 +35,8 @@ instrumental, a few minutes; it loops). Without it, Play says "The music could n
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
-| State | `hooks/useWorshipMusic.ts` | The looping worship track: play, pause, stopped on leaving; `started` once played |
+| State | `hooks/useWorshipMusic.ts` | The worship songs: play, pause, the next song on `ended`, stopped on leaving; `started` once played |
+| Logic | `playlist.ts` | `nextRound`: every song once per round in a random order, the last song kept two away (tested) |
 | State | `hooks/useShowAfter.ts` | True once the screen has been open a while: the music bubble after 2 s |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
 | State | `src/lib/useWhenVisible.ts` | "Call this when the element scrolls into view" (shared with the group photos) |
@@ -116,8 +120,9 @@ And a small group can guess from timing or wording — no software fixes that.
   with the request at the top, under the author's name. There is no "Hide my name" since 2026-10-20 (the
   user); requests posted anonymously before then still show "Anonymous".
 - Above the list, held under the blue bar while scrolling: (the bell, for admins) Play, and the round +. Play
-  starts the looping music and becomes Pause. After 2 seconds on the tab, a blue bubble left of Play asks "Bạn
-  có muốn cầu nguyện bây giờ?" and sways sideways until the music is played.
+  starts a random worship song and becomes Pause; when it ends the next one starts. After 2 seconds on the tab,
+  a blue bubble left of Play says "Tôi muốn / cầu nguyện bây giờ" ("Let's pray") and sways sideways until the
+  music is played.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
   their name: my own named requests first, then people in the order of their newest request; anonymous

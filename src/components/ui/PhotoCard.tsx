@@ -6,13 +6,14 @@ type Props = {
   href?: string; // what a tap opens; without one the card is not a button at all (only `extra` takes taps)
   src: string;
   title: string;
-  subtitle: string; // the line read first after the title: when
-  details: string[]; // the quieter lines under it: where
+  subtitle?: string; // the line read first after the title: when
+  details?: string[]; // the quieter lines under it: where
   extra?: ReactNode; // a last line with its own tap, like a phone number: it sits above the card's link
 };
 
-// Tall enough that the top of the photo shows above the words (the user, 2026-10-20).
-const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink text-on-action";
+// Tall enough that the top of the photo shows above the words (the user, 2026-10-20), and at least 160 px of it
+// however many lines there are (the weekly card, 2026-10-21).
+const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink pt-40 text-on-action";
 // Darkest at the bottom, where the words are, so white text passes contrast on any photo.
 const VEIL = "absolute inset-0 bg-linear-to-t from-ink/90 via-ink/65 to-ink/35";
 // The link covers the whole card but holds no words: a button (the phone number) cannot sit inside a link.
@@ -21,7 +22,7 @@ const LINK =
 
 // A large card that may open one thing: a photo under a dark veil, and over it, in white, a bold title, a
 // semibold line, plainer lines under that, and maybe one line that can be tapped by itself.
-export default function PhotoCard({ href, src, title, subtitle, details, extra }: Props) {
+export default function PhotoCard({ href, src, title, subtitle, details = [], extra }: Props) {
   return (
     <div className={CARD}>
       <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
@@ -32,7 +33,7 @@ export default function PhotoCard({ href, src, title, subtitle, details, extra }
         <span className="text-tile font-bold">{title}</span>
         {/* A gap under the title, so the title reads apart from the lines that follow it. */}
         <span className="mt-2 flex flex-col gap-1">
-          <span className="text-body font-semibold">{subtitle}</span>
+          {subtitle && <span className="text-body font-semibold">{subtitle}</span>}
           {details.map((detail) => (
             <span key={detail} className="text-body">
               {detail}

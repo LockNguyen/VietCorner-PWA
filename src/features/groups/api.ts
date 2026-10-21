@@ -1,6 +1,6 @@
-import { shrinkToThumbnail } from "@/lib/shrinkImage";
+import { shrinkUnder } from "@/lib/shrinkImage";
 import { createClient } from "@/lib/supabase/client";
-import { THUMBNAIL_BUCKET, type GroupWithMembership, type JoinRequest, type Person } from "./types";
+import { PICTURE_MAX_BYTES, PICTURE_SIDE, THUMBNAIL_BUCKET, type GroupWithMembership, type JoinRequest, type Person } from "./types";
 
 // Groups API: every call the browser makes for this feature. RLS in schema.sql decides what is allowed.
 // - Managing groups, putting people into them and declining a request go straight to Supabase.
@@ -48,7 +48,7 @@ export async function setThumbnail(groupId: string, file: Blob, replaces: string
   const bucket = supabase.storage.from(THUMBNAIL_BUCKET);
   const path = `${groupId}/${crypto.randomUUID()}.jpg`;
 
-  const { error: uploadError } = await bucket.upload(path, await shrinkToThumbnail(file), { contentType: "image/jpeg" });
+  const { error: uploadError } = await bucket.upload(path, await shrinkUnder(file, PICTURE_SIDE, PICTURE_MAX_BYTES), { contentType: "image/jpeg" });
   if (uploadError) throw new Error(uploadError.message);
 
   // RLS does not refuse an update it forbids, it matches no row: the row is asked back to tell.

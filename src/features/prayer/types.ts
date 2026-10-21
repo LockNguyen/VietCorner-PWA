@@ -25,9 +25,10 @@ export const PAGE_SIZE = 20;
 // why: the database rejects anything longer (schema.sql); the composer stops the typing at the same number.
 export const MAX_BODY_LENGTH = 1000;
 
-// The soft worship music the Prayer tab can play while members pray: one file the church has the rights to,
-// added by hand (the prayer README). Looped, so a long prayer never ends in silence.
-export const WORSHIP_MUSIC_URL = "/audio/worship.mp3";
+// The worship songs the Prayer tab plays while members pray, in the order playlist.ts picks: files the church
+// has the rights to, added by hand to public/audio/worship/ and named here (the prayer README). A song is
+// downloaded only when it starts, so a longer list costs the app nothing until it plays.
+export const WORSHIP_SONGS = ["/audio/worship/worship.mp3"];
 
 // why: soon enough to still be on the tab; 4 s felt slow (the user, 2026-10-19).
 export const MUSIC_NUDGE_AFTER_MS = 2000;

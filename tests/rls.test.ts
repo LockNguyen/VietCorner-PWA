@@ -1451,3 +1451,36 @@ describe("staff: the staff page's headings, people and placements (staff/schema.
     expect(moved ?? []).toEqual([]);
   });
 });
+
+describe("weekly_card: the Events tab's first card (events/schema.sql 3h)", () => {
+  const read = (client: SupabaseClient) => client.from("weekly_card").select("title, title_en, address, contact_phone");
+
+  it("is read by an approved member, and by nobody waiting or signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+
+    const { data: forMember } = await read(bob.client);
+    const { data: forWaiting } = await read(carol.client);
+    const { data: signedOut } = await read(anonymous);
+
+    expect(forMember).toHaveLength(1); // the seed in schema.sql
+    expect(forWaiting ?? []).toEqual([]);
+    expect(signedOut ?? []).toEqual([]);
+  });
+
+  it("is changed by an event manager only, and never gets a second row", async () => {
+    const { data: before } = await read(admin).single();
+    const { data: byMember } = await bob.client.from("weekly_card").update({ title: "x" }).eq("id", true).select("id");
+    const { data: byManager } = await alice.client // an admin since the "permissions" tests
+      .from("weekly_card")
+      .update({ title: before?.title })
+      .eq("id", true)
+      .select("id");
+    const { error: secondRow } = await alice.client.from("weekly_card").insert({ id: false, title: "x" });
+
+    expect(byMember ?? []).toEqual([]);
+    expect(byManager).toHaveLength(1);
+    expect(secondRow).not.toBeNull();
+  });
+});
