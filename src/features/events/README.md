@@ -290,6 +290,12 @@ Seen in the pane (2026-10-20): the editor in that order with the hints; the shar
 - A group's line changes in the group's editor (its name, day and time), not here.
 - `tests/rls.test.ts` "weekly_card": a member reads one row, a waiting account and a signed-out one none; a member's
   update matches nothing, a manager's saves, a second row is refused.
+- **Spacing (2026-10-22, the user: overwhelming, lines spilling over; same structure kept):** no extra space above
+  the words (the card is as tall as its content, at least 320 px), 16 px inside instead of 20, the title split
+  evenly ("Hội Thánh Việt Nam / Winston-Salem", `text-balance`), days 12 px apart, a day's lines 2 px apart, each
+  line 12 px in; a line too long continues 24 px in, under its name, and its "· 7:30p" never leaves its last word.
+  Seen at 375 px with the card's own classes, compact and big text: no line breaks inside a time, the title in two
+  even lines. The seeded address takes two lines (three in big text): shorten it in the editor if wanted.
 - **NOT seen (2026-10-21):** anything signed in (the preview pane has no session), the SQL
   (`docs/sql-to-run-2026-10-21.sql`) not run, `npm run test:rls` not run. Typechecked, built, unit-tested.
 

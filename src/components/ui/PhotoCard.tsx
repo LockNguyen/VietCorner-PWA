@@ -11,9 +11,8 @@ type Props = {
   extra?: ReactNode; // a last line with its own tap, like a phone number: it sits above the card's link
 };
 
-// Tall enough that the top of the photo shows above the words (the user, 2026-10-20), and at least 160 px of it
-// however many lines there are (the weekly card, 2026-10-21).
-const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink pt-40 text-on-action";
+// Tall enough that the top of the photo shows above the words (the user, 2026-10-20).
+const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink text-on-action";
 // Darkest at the bottom, where the words are, so white text passes contrast on any photo.
 const VEIL = "absolute inset-0 bg-linear-to-t from-ink/90 via-ink/65 to-ink/35";
 // The link covers the whole card but holds no words: a button (the phone number) cannot sit inside a link.
@@ -29,8 +28,10 @@ export default function PhotoCard({ href, src, title, subtitle, details = [], ex
       <span aria-hidden className={VEIL} />
       {href && <Link href={href} transitionTypes={GO_FORWARD} aria-label={title} className={LINK} />}
       {/* Taps go through the words to the link; only `extra` takes its own. */}
-      <span className="pointer-events-none relative flex flex-col gap-1 p-5">
-        <span className="text-tile font-bold">{title}</span>
+      {/* 16 px around the words, and a title split into lines of even length ("Hội Thánh Việt Nam / Winston-Salem",
+          not "… Winston- / Salem"): more room for each line, at either text size (the user, 2026-10-22). */}
+      <span className="pointer-events-none relative flex flex-col gap-1 p-4">
+        <span className="text-tile font-bold text-balance">{title}</span>
         {/* A gap under the title, so the title reads apart from the lines that follow it. */}
         <span className="mt-2 flex flex-col gap-1">
           {subtitle && <span className="text-body font-semibold">{subtitle}</span>}
