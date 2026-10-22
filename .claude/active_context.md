@@ -554,8 +554,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       4. The weekly card first on Events (`weekly_card`, events schema 3h; weekly events + group meetings by
       weekday, "9:15a"); one-time events below under dates. 5. The pencil → Edit list → weekly card / event
       editors. Evidence: `npm test` 152/152, `npm run build` clean. NOT seen: anything signed in (no session in
-      the pane), the SQL, `test:rls`. Debt: group photos re-download on every visit (new signed URL each time);
-      event pictures still 400 px; the seed's English church title is a guess.
+      the pane), the SQL, `test:rls`. Then: group photos kept by the service worker under their path (`photos-v1`), so a
+      return to a group's page downloads nothing it has shown before. Debt: event pictures still 400 px; the seed's English church title is a guess.
 
 ## ➡️ Next 3 Micro-Steps
 R3a. User: run `docs/sql-to-run-2026-10-21.sql` in Supabase, then `npm run test:rls`; BEFORE the deploy (until
@@ -564,7 +564,8 @@ R3b. User: add the other worship MP3s to `public/audio/worship/` and their paths
    (`src/features/prayer/types.ts`); re-choose each group's picture (old ones stay soft); give each group the name
    it should show on the weekly card ("Kannapolis: Hãy Đến Xem"), with day and time.
 R3c. User, signed in on a phone: Events (weekly card, one-time cards, times "9:15a"), pencil → list → each editor
-   and back; Prayer: Play, let a song end, the next starts.
+   and back; Prayer: Play, let a song end, the next starts; a group's page, leave and come back: the pictures
+   appear at once (open the app twice after the deploy: the new `sw.js` takes over on the first).
 000a. User + Claude on two iPhones, on the LIVE site: open vietcorners.org in Safari AND in Chrome (never visited):
    language page → guide (arrow at the bottom in Safari < 26, bottom right in iOS 26, top right in Chrome) →
    install → sign up inside the app → email → "Sign in?" → back to the app signed in, in the chosen language.

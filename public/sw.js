@@ -1,6 +1,7 @@
 // Service worker: a background script the browser runs separately from the page.
 // It keeps working when the app is closed, which is how push notifications arrive,
-// and it keeps a copy of the app's code files and of Home so a launch shows something at once.
+// and it keeps a copy of the app's code files and of Home so a launch shows something at once, and of the groups'
+// pictures so a group's page does not download them again.
 
 // CACHE: the app's code and style files (/_next/static/*). Measured on an iPhone (2026-10-14): after a
 // restart iOS had thrown away 9 of 10 of them, and downloading them again took 21 of the 22.5 s launch.
@@ -20,10 +21,23 @@ const MAX_STATIC_FILES = 150;
 const HOME_CACHE = "home-v1";
 let homeUpdate = null; // the fresh Home on its way, while the saved one is on screen
 
+// PHOTOS: a group's pictures (features/group-info), saved under their file's address without its signature.
+// The bucket is private, so each visit to a group's page signs new addresses (`?token=…`), and the browser's own
+// cache, which goes by the whole address, missed every time: the strip downloaded again on every return
+// (the user, 2026-10-21). Never stale: a picture's file is never replaced, only added or removed under a new id
+// (group-info api.ts), so one path is always one picture. Only asked for once the server has signed it, so a
+// saved copy reaches no one the database would refuse. Deleted when the person signs out, like Home.
+const PHOTO_CACHE = "photos-v1";
+// Where Supabase serves a signed file of the bucket (PHOTO_BUCKET in features/group-info/types.ts).
+const PHOTO_PATH = "/storage/v1/object/sign/group-photos/";
+// why: several groups' strips and the pictures opened from them, small ones about 30 KB, full ones up to 1 MB.
+// A picture trimmed too early is just downloaded again.
+const MAX_PHOTO_FILES = 300;
+
 self.addEventListener("install", () => self.skipWaiting());
 
 self.addEventListener("activate", (event) => {
-  const kept = [STATIC_CACHE, HOME_CACHE];
+  const kept = [STATIC_CACHE, HOME_CACHE, PHOTO_CACHE];
   event.waitUntil(
     caches
       .keys()
@@ -34,13 +48,18 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
-  if (event.request.method !== "GET" || url.origin !== self.location.origin) return;
+  if (event.request.method !== "GET") return;
+  if (url.pathname.startsWith(PHOTO_PATH)) return event.respondWith(savedPhotoOrNetwork(event, url));
+  if (url.origin !== self.location.origin) return;
   const isPageLoad = event.request.mode === "navigate";
   if (isPageLoad && url.pathname === "/") return event.respondWith(savedHomeFirst(event));
-  // HOME: every way out of the account (Sign out, an ended session) lands on /login with a full page load.
-  // Waiting for a save still on its way keeps it from bringing the old Home back after the delete.
+  // HOME, PHOTOS: every way out of the account (Sign out, an ended session) lands on /login with a full page load:
+  // the next person on this phone sees neither. Waiting for a save still on its way keeps it from bringing the old
+  // Home back after the delete.
   if (isPageLoad && url.pathname.startsWith("/login")) {
-    event.waitUntil(Promise.resolve(homeUpdate).then(() => caches.delete(HOME_CACHE)));
+    event.waitUntil(
+      Promise.resolve(homeUpdate).then(() => Promise.all([caches.delete(HOME_CACHE), caches.delete(PHOTO_CACHE)])),
+    );
   }
   // CACHE: answer code files from the saved copy; download and save the ones not saved yet.
   // Safe because Next.js puts a hash of the content in each file's name: the same name is always the same file.
@@ -87,15 +106,35 @@ async function fromCacheOrNetwork(event) {
   // "immutable"; `next dev` serves changing files under the same names and does not, so they are never saved.
   const immutable = (response.headers.get("cache-control") || "").includes("immutable");
   if (response.ok && immutable) {
-    event.waitUntil(cache.put(event.request, response.clone()).then(() => trim(cache)).catch(() => {}));
+    event.waitUntil(cache.put(event.request, response.clone()).then(() => trim(cache, MAX_STATIC_FILES)).catch(() => {}));
   }
   return response;
 }
 
-// Deletes the oldest saved files beyond MAX_STATIC_FILES (keys() lists them oldest first).
-async function trim(cache) {
+// PHOTOS: the saved copy of this file if there is one, else the network, saved for next time.
+async function savedPhotoOrNetwork(event, url) {
+  const key = url.origin + url.pathname; // the file, whatever signature the page holds today
+  let cache;
+  try {
+    cache = await caches.open(PHOTO_CACHE);
+    const saved = await cache.match(key);
+    if (saved) return saved;
+  } catch {
+    return fetch(event.request); // storage failed (full, or cleared by iOS): the network
+  }
+  const response = await fetch(event.request);
+  // Only a readable answer is saved: the pictures ask with `crossOrigin` (ui/PhotoThumb, ui/Lightbox), because an
+  // opaque one counts as megabytes of storage each, and a refusal (an expired signature) is not the picture.
+  if (response.ok && response.type === "cors") {
+    event.waitUntil(cache.put(key, response.clone()).then(() => trim(cache, MAX_PHOTO_FILES)).catch(() => {}));
+  }
+  return response;
+}
+
+// Deletes the oldest saved files beyond `max` (keys() lists them oldest first).
+async function trim(cache, max) {
   const keys = await cache.keys();
-  await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_STATIC_FILES)).map((key) => cache.delete(key)));
+  await Promise.all(keys.slice(0, Math.max(0, keys.length - max)).map((key) => cache.delete(key)));
 }
 
 // PUSH: show a notification when the server sends a push (payload: features/push/types.ts).

@@ -11,8 +11,9 @@ export default function PhotoThumb({ src, alt, ...button }: Props) {
         {...button}
         className="block aspect-square w-full overflow-hidden rounded-thumb bg-fill focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
       >
-        {/* A plain <img>: the address is a short-lived signed one, which an image optimiser could not fetch later. */}
-        <img src={src} alt={alt} loading="lazy" className="size-full object-cover" />
+        {/* A plain <img>: the address is a short-lived signed one, which an image optimiser could not fetch later.
+            `crossOrigin`: a readable answer, which the service worker may keep (public/sw.js, PHOTOS). */}
+        <img src={src} alt={alt} loading="lazy" crossOrigin="anonymous" className="size-full object-cover" />
       </button>
     </li>
   );

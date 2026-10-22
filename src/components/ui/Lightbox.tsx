@@ -52,11 +52,13 @@ export default function Lightbox({ src, alt, caption, labels, onPrevious, onNext
                 <X />
               </IconButton>
             </div>
-            {/* A plain <img>: the address is a short-lived signed one, which an image optimiser could not fetch later. */}
+            {/* A plain <img>: the address is a short-lived signed one, which an image optimiser could not fetch later.
+                `crossOrigin`: a readable answer, which the service worker may keep (public/sw.js, PHOTOS). */}
             {/* The offset changes with every move of the thumb, so it is a style, not a class. */}
             <img
               src={src}
               alt={alt}
+              crossOrigin="anonymous"
               style={{ transform: `translateX(${offset}px)` }}
               className={`max-h-sheet max-w-full rounded-thumb object-contain ${sliding ? SLIDE : ""}`}
             />

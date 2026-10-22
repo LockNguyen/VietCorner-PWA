@@ -68,8 +68,15 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   (optional date, optional caption, who added it).
 - **Private, and why:** these are pictures of church members, children among them. A file is served only
   through an address signed for an approved, signed-in member, good for an hour.
-  The cost: a signed address is new each time, so the phone downloads a picture again on every visit
-  instead of keeping it. The small files are about 30 KB each, six at a time.
+  A signed address is new each time, so the browser's own cache missed on every visit (the user, 2026-10-21:
+  the strip redrew on every return). **Since 2026-10-21 the service worker keeps each file under its path
+  without the signature** (`public/sw.js`, PHOTOS; cache `photos-v1`, newest 300 files; the `<img>`s ask with
+  `crossOrigin` so the answer can be kept): a picture opened once comes from the phone after that.
+  - Never stale: a file is never replaced, only added or removed under a new photo id, so a path is one picture.
+    A removed picture's copy is never asked for again and is trimmed in time.
+  - No wider access: the page asks for a file only after the database has signed it for this person; the list
+    of pictures (rows) and the signature are still checked at every visit.
+  - Signing out (any page load of `/login`) deletes the saved pictures, like the saved Home.
 - **Shrunk on the phone before sending** (`src/lib/shrinkImage.ts`, shared with the row pictures): a camera photo is 3 to 8 MB; what is stored is
   just under 1 MB (2560 pixels, the best quality that fits: `shrinkUnder`; it was 300 KB until 2026-10-17,
   which the user found ugly) plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
