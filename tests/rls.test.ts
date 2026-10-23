@@ -1042,6 +1042,7 @@ describe("prayer requests", () => {
       request_id: id,
       original: "Please pray for my exam.",
       translation: "defaced",
+      language: "en",
     });
     const { data: memberList } = await bob.client.rpc("prayer_translations");
     const { data: reviewerList } = await alice.client.rpc("prayer_translations").is("translation_reviewed_at", null);
@@ -1050,11 +1051,13 @@ describe("prayer requests", () => {
       request_id: id,
       original: "older words",
       translation: "Xin cầu nguyện cho kỳ thi của tôi.",
+      language: "en",
     });
     const { data: review } = await alice.client.rpc("review_prayer_translation", {
       request_id: id,
       original: "Please pray for my exam.",
       translation: "Xin cầu nguyện cho kỳ thi của con.",
+      language: "en",
     });
     const approved = await translationIn(bob);
     // Retry: only a reviewer can put an approved translation back on the waiting list; it keeps its words meanwhile.

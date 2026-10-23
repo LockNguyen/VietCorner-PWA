@@ -1,3 +1,4 @@
+import type { Language } from "@/features/i18n/types"; // I18N
 import { createClient } from "@/lib/supabase/client";
 import {
   getPastTranslations as readPastTranslations,
@@ -86,23 +87,36 @@ export async function prayFor(requestId: string): Promise<void> {
   await send("/api/prayer/pray", { requestId });
 }
 
-// Approve a request's translation as shown, or as the reviewer corrected it. Needs "prayer.translations"; the
-// function checks it. Throws when the request was edited or removed meanwhile: nothing was approved.
-export async function reviewTranslation(request: PrayerTranslation, translation: string): Promise<void> {
+// Approve a request's translation as shown, or as the reviewer corrected it, with the language the request is
+// written in. Needs "prayer.translations"; the function checks it. Throws when the request was edited or removed
+// meanwhile: nothing was approved.
+export async function reviewTranslation(request: PrayerTranslation, translation: string, language: Language): Promise<void> {
   const { data, error } = await createClient().rpc("review_prayer_translation", {
     request_id: request.id,
     original: request.body, // the words the reviewer read, so an edit made meanwhile is not approved unread
     translation,
+    language,
   });
   if (error) throw new Error(error.message);
   if (!data) throw new Error("The request changed or was removed, so nothing was approved.");
 }
 
 // POST a retry: the server puts the translation back on the waiting list and asks the AI service again, then
-// answers. Needs "prayer.translations"; the database checks it. Throws when nothing new could be written.
-export async function retryTranslation(requestId: string): Promise<void> {
-  await send("/api/prayer/retranslate", { requestId });
+// answers. Needs "prayer.translations"; the database checks it. "busy" when the AI service is busy or unreachable
+// (503: try again later); any other refusal throws.
+export async function retryTranslation(requestId: string): Promise<"translated" | "busy"> {
+  const response = await fetch("/api/prayer/retranslate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestId }),
+  });
+  if (response.status === SERVICE_BUSY) return "busy";
+  if (!response.ok) throw new Error((await response.json()).error);
+  return "translated";
 }
+
+// The status our routes answer when the AI service is busy or unreachable: temporary, unlike any other refusal.
+const SERVICE_BUSY = 503;
 
 // GET the reviewers' lists again, as their pages first read them, for each to refresh itself on arrival.
 export function getTranslationsToReview(): Promise<PrayerTranslation[]> {

@@ -357,7 +357,7 @@ pushes the reviewers (`prayer.translations`, admins). Readers see a translation 
 the Admin tab ("Translations": the waiting ones with Approve, the pencil to `/admin/translations/<id>` with Submit
 and Cancel, and the circular arrow, Retry, through `/api/prayer/retranslate`; a row to "Past translations",
 `/admin/translations`, every approved one, open to the same correction), through `review_prayer_translation`;
-until then, and always for their own requests, the words as written (`shownText.ts`). An edit clears the
+until then, the words as written, for their authors too (`shownText.ts`). An edit clears the
 translation in the same update (a trigger) and is translated and reviewed again. A failed translation stays as it
 was and listed, for the reviewer to write or retry.
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
@@ -471,11 +471,16 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 
 **AI service (Docker + Tailscale Funnel, until the Oracle VM exists):**
 1. `docker build -t vietcorner-ai services/ai`, then
-   `docker run -d --restart unless-stopped -p 8000:8000 --env-file services/ai/.env --name vc-ai vietcorner-ai`
-   (leave `SHOW_API_DOCS` unset: the URL is public).
-2. `winget install Tailscale.Tailscale`, sign in (free Personal plan), then `tailscale funnel --bg 8000`.
-3. `tailscale funnel status` gives `https://<pc>.<tailnet>.ts.net`. Put that in Netlify as `AI_SERVICE_URL`.
-4. The PC must stay awake and Docker Desktop must start at login. `tailscale funnel --https=443 off` stops sharing.
+   `docker run -d --restart unless-stopped -p 127.0.0.1:8001:8000 --env-file services/ai/.env --name vc-ai vietcorner-ai`
+   (leave `SHOW_API_DOCS` unset: the URL is public). Port 8001 on this PC, for this PC only: 8000 is taken by
+   another program here, and on 2026-10-23 Funnel reached that one instead (found by `/health` answering wrong).
+   **Before sharing, check `curl http://127.0.0.1:8001/health` answers `{"status":"ok"}`.**
+2. `winget install Tailscale.Tailscale`, sign in (free Personal plan), then `tailscale funnel --bg --https=8443 8001`.
+   Port 8443, because 443 serves the web app for testing on a phone (`tailscale funnel --bg 3000`).
+3. `tailscale funnel status` gives `https://<pc>.<tailnet>.ts.net:8443` (now `https://loc.tail714ada.ts.net:8443`;
+   the PC was renamed from desktop-2bln504). Put it in Netlify and `.env.local` as `AI_SERVICE_URL`.
+4. The PC must stay awake and Docker Desktop must start at login. `tailscale funnel --https=8443 off` stops sharing.
+5. After a change under `services/ai`: build again (step 1's first line), then `docker rm -f vc-ai` and run it again.
 - Hugging Face Spaces would need a paid plan since 2026; `services/ai/deploy/push_to_space.py` is kept for later.
 
 ### Key Decisions
@@ -786,3 +791,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-23: phone fields and weekdays (the user). `ui/PhoneInput` (digits only, "(336) 123-4567" as typed, `lib/phone.ts formatPhone`, tested) in the event editor, the weekly card and a group's page; the two `MAX_PHONE_LENGTH` limits it made unused are gone. Vietnamese weekdays are numbers, "Thứ 2" … "Thứ 7" (Sunday stays "Chúa Nhật"): `i18n/clock.ts` `withChurchSunday` → `withChurchWeekdays`, used by events, group meetings, prayer reminders and chat. 196 tests. NOT seen on a screen yet.
 - 2026-10-23: review fixes and the user's additions. Prayer translations: Retry (circular arrow) and the pencil on both lists; "Past translations" (`/admin/translations`, `PastTranslations`); `prayer_translations()` replaces `prayer_translations_to_review()`, plus `reopen_prayer_translation`; `translateRequest` writes only onto unreviewed words, logs a refused save, answers whether it wrote; `translateForReview`, `retranslateRequest`, `POST /api/prayer/retranslate`; the row on `ListRow` + `CountPill` (no styling of its own). `src/lib/ids.ts` `isId` in the three prayer routes (a malformed id is 400, not 500). One `weekdayName` in `i18n/clock.ts` (events', group-info's and prayer reminders' copies gone; group-info keeps `meetingDay` for "Tuesdays"); `withChurchWeekdays` matches whole words only. `formatPhone` drops a leading 1 (the country code). RLS: the waiting-account door for `weekly_card` and the staff tables added to `docs/sql-to-run-2026-10-23.sql` (the tests found it not in effect); the thumbnails test uses 600 KB (groups' limit is 500 KB since 10-21). The 20 existing requests: a private SQL script, outside the repository. 199 tests.
 - 2026-10-23: back as a trail (the user's bug: Prayer → new request → assistant → back → back went to the assistant). `lib/navigation.ts` `nextTrail`, `resumedTrail`, `backTarget(path, backHref, trail)`, `restoresScroll(step, to, trail)`; `Aside`, `isStepAside`, `sectionOf` gone; `Navigation.tsx` keeps the trail in localStorage, `stepBack` for the back arrow, the swipe and the phone's back. Measured in the pane on a production build: the user's steps end on Prayer (trail `["/prayer"]`); Prayer → new → Settings → Photo → back ×3 lands on Settings, new request, Prayer. Dictation: leaving releases the worship music's player, the assistant's microphone and its voice. NOT seen on an iPhone. 203 tests.
+- 2026-10-23: translations, the user's testing. Authors read their own request in their language too, once approved (`shownText` no longer looks at `is_mine`). `review_prayer_translation` takes the request's language, set on the edit screen ("The request is written in"): a hand-written translation for a request the AI could not translate had no language and was shown to nobody (`docs/sql-to-run-2026-10-23b.sql`). Retry tells busy from an error: `TranslationResult` "translated" | "busy" | "failed"; 503 → "The AI is busy or offline right now", 500 → "an error in the app" (`hooks/useTranslationReview.ts`). The AI service container had stopped on 2026-10-02 and the PC's tailnet name changed (desktop-2bln504 → loc): rebuilt and served on Funnel port 8443. 202 tests.

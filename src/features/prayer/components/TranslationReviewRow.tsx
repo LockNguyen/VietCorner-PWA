@@ -7,12 +7,10 @@ import CountPill from "@/components/ui/CountPill";
 import IconButton from "@/components/ui/IconButton";
 import ListRow from "@/components/ui/ListRow";
 import Spinner from "@/components/ui/Spinner";
-import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LANGUAGE_NAMES } from "@/features/i18n/types"; // I18N
 import { GO_FORWARD } from "@/lib/slide";
-import { useSave } from "@/lib/useSave";
-import { retryTranslation, reviewTranslation } from "../api";
+import { useTranslationReview } from "../hooks/useTranslationReview";
 import { STRINGS } from "../strings";
 import type { PrayerTranslation } from "../types";
 
@@ -25,7 +23,7 @@ type Props = { request: PrayerTranslation };
 export default function TranslationReviewRow({ request }: Props) {
   const { t } = useLanguage(); // I18N
   const router = useRouter();
-  const { pending, save } = useSave<"approve" | "retry">();
+  const { pending, approve, retry } = useTranslationReview();
   const { translation, language } = request;
   const waiting = request.translation_reviewed_at === null;
 
@@ -36,16 +34,13 @@ export default function TranslationReviewRow({ request }: Props) {
       subtitle={translation ?? t(STRINGS.noTranslation)}
       trailing={
         <>
-          {waiting && translation && (
+          {/* Only with a language: the AI service writes both, and a translation written by hand gets its language
+              on the edit screen. */}
+          {waiting && translation && language && (
             <Button
               pending={pending === "approve"}
               disabled={pending !== null}
-              onClick={() =>
-                save("approve", () => reviewTranslation(request, translation), {
-                  done: t(STRINGS.translationApproved),
-                  failed: t(COMMON.couldNotSave),
-                })
-              }
+              onClick={() => approve(request, translation, language)}
             >
               {t(STRINGS.approveTranslation)}
             </Button>
@@ -60,12 +55,7 @@ export default function TranslationReviewRow({ request }: Props) {
           <IconButton
             label={t(STRINGS.retryTranslation)}
             disabled={pending !== null}
-            onClick={() =>
-              save("retry", () => retryTranslation(request.id), {
-                done: t(STRINGS.translatedAgain),
-                failed: t(STRINGS.retryFailed),
-              })
-            }
+            onClick={() => retry(request)}
           >
             {pending === "retry" ? <Spinner /> : <RotateCw aria-hidden />}
           </IconButton>

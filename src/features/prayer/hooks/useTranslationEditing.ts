@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
+import type { Language } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { GO_BACK } from "@/lib/slide";
 import { useGoTo } from "@/lib/useGoTo";
@@ -18,9 +19,9 @@ export function useTranslationEditing(backHref: string) {
   const showBanner = useBanner();
   const { t } = useLanguage(); // I18N
 
-  async function submit(request: PrayerTranslation, translation: string) {
+  async function submit(request: PrayerTranslation, translation: string, language: Language) {
     try {
-      await reviewTranslation(request, translation);
+      await reviewTranslation(request, translation, language);
       showBanner({ kind: "success", message: t(STRINGS.translationApproved) });
       // Awaited last: the button stays busy until the list is drawn, so a second tap cannot send twice.
       await goTo(backHref);

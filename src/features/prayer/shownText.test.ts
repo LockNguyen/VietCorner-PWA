@@ -5,7 +5,6 @@ const vietnamese = {
   body: "Xin cầu nguyện cho mẹ tôi.",
   language: "vi" as const,
   translation: "Please pray for my mother.",
-  is_mine: false,
 };
 
 describe("the words a reader sees", () => {
@@ -19,10 +18,6 @@ describe("the words a reader sees", () => {
 
   it("is the request as written while the translation waits for review (the view sends none)", () => {
     expect(shownText({ ...vietnamese, translation: null }, "en")).toBe("Xin cầu nguyện cho mẹ tôi.");
-  });
-
-  it("is always my own words on my own request", () => {
-    expect(shownText({ ...vietnamese, is_mine: true }, "en")).toBe("Xin cầu nguyện cho mẹ tôi.");
   });
 
   it("is the request as written while its language is not known yet", () => {

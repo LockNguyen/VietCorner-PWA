@@ -28,7 +28,7 @@ phone's audio is the likely reason the iPhone keyboard's dictation key went grey
 |---|---|---|
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
 | Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `PrayerTranslation`, `REVIEW_TRANSLATIONS`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH`, `MAX_TRANSLATION_LENGTH` |
-| Pure logic | `shownText.ts` | The words a reader sees: the approved translation of someone else's request in the other language, else as written (tested) |
+| Pure logic | `shownText.ts` | The words a reader sees: the approved translation of a request written in the other language (the author's own too), else as written (tested) |
 | Pure logic | `reminders.ts` | `isDue`: whether a weekly reminder should go out now (church time) |
 | Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`: once per request per day (the phone's midnight), worked out from timestamps |
@@ -50,6 +50,7 @@ phone's audio is the likely reason the iPhone keyboard's dictation key went grey
 | Routes | `src/app/api/prayer/retranslate/route.ts` | Verify (401) → validate (400) → `retranslateRequest` → 204, 403 (not a reviewer), 503 (no answer from the AI service). Waits for the translation: the reviewer is reading |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
+| State | `hooks/useTranslationReview.ts` | A row's Approve and Retry: pending, the change, the list read again, the banner; Retry's "busy" is its own banner |
 | State | `hooks/useTranslationEditing.ts` | The translation's edit screen: Submit approves the corrected words and goes back to Admin; Cancel goes back |
 | State | `hooks/useWorshipMusic.ts` | The worship songs: play, pause, `next`, `previous`, the next song on `ended`, stopped on leaving; `state` off / loading / playing from the audio's own events (`playing` = sound coming out); tells the board only of a real failure (`error`, or the phone refusing), never of a start cut short by a newer song (skipping fast) |
 | Logic | `playlist.ts` | `shuffledOrder`, `stepped` (wraps both ways), `keptOrNew` (the phone's order while it fits the songs) (tested) |
@@ -214,8 +215,17 @@ real notification arriving on a phone.**
   translation of words the author changed meanwhile is never approved (it answers false: "Could not save").
 - **An edit starts over:** the database clears the translation in the same update (a trigger), so an approved
   translation never shows under new words; the new words are translated and wait for review again.
-- **Who sees what:** someone else's request in the other language, approved → the translation; everything else
-  (my own, my language, not approved, language unknown) → as written (`shownText.ts`).
+- **Who sees what:** a request written in the other language, approved → the translation, for its author too (the
+  user, 2026-10-23: their English request should read in their Vietnamese); everything else (my language, not
+  approved, language unknown) → as written (`shownText.ts`).
+- **The language is the reviewer's to set** on the edit screen ("The request is written in"), starting from what the
+  AI service found, or Vietnamese when it found nothing. Without it a translation is shown to nobody: found
+  2026-10-23, a translation written by hand for a request the AI could not translate had no language. Approve needs
+  a language, so a row without one offers only the pencil and Retry.
+- **Retry says why it did not translate:** "The AI is busy or offline right now. Try again in a minute." when the AI
+  service is busy or unreachable (`AiServiceUnavailable`, answered 503); "Translating failed because of an error in
+  the app" for anything else (our bug, answered 500, logged) (the user, 2026-10-23: a busy AI must not look like a
+  code error). `hooks/useTranslationReview.ts` holds Approve and Retry with their three outcomes.
 - **Requests from before** count as reviewed with no translation, so they show as written and never fill the list.
   The 20 there were on 2026-10-23 were translated by Claude in one SQL script, which approves them all once run;
   it is kept out of the repository because it quotes the requests (the user has it).

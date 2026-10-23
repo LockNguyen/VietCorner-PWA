@@ -67,14 +67,20 @@ export const STRINGS = {
     en: "Translated again. It waits for review on the Admin tab.",
     vi: "Đã dịch lại. Bản dịch đang chờ duyệt ở trang Quản trị.",
   } satisfies Text,
+  // Busy is temporary: the AI service is busy or unreachable. Failed is an error in the app, not the AI's mood.
+  translationBusy: {
+    en: "The AI is busy or offline right now. Try again in a minute.",
+    vi: "AI đang bận hoặc chưa kết nối. Xin thử lại sau một phút.",
+  } satisfies Text,
   retryFailed: {
-    en: "Could not translate. Try again, or correct it with the pencil.",
-    vi: "Không dịch được. Xin thử lại, hoặc sửa bằng cây bút.",
+    en: "Translating failed because of an error in the app. Correct it with the pencil for now.",
+    vi: "Không dịch được do lỗi của ứng dụng. Tạm thời xin sửa bằng cây bút.",
   } satisfies Text,
   translationApproved: { en: "Translation approved", vi: "Đã duyệt bản dịch" } satisfies Text,
   translationTitle: { en: "Edit translation", vi: "Sửa bản dịch" } satisfies Text, // the edit screen's title
   originalWords: { en: "Request", vi: "Ý cầu nguyện" } satisfies Text,
   translationField: { en: "Translation", vi: "Bản dịch" } satisfies Text,
+  writtenIn: { en: "The request is written in", vi: "Ý cầu nguyện được viết bằng" } satisfies Text,
   submitTranslation: { en: "Submit", vi: "Gửi" } satisfies Text,
   // The notification reviewers get (server/notifyReviewers.ts), under `notificationTitle`.
   translationWaiting: {
