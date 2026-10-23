@@ -29,8 +29,9 @@ export function useConfirmLink(attempt: string | undefined, linkKey: string | un
       try {
         await leaveSignIn(attempt, linkKey);
         const tokenHash = await collectSignIn(claimKey);
-        if (!tokenHash) throw new Error("collected meanwhile by the app"); // another tab of this browser won
-        await signInWithLink(tokenHash);
+        // Null: the app's own tab in this browser, waiting on the same sign-in, collected it first (it asks every
+        // few seconds). That tab is now signed in, and so is this browser: go in too, instead of "expired".
+        if (tokenHash) await signInWithLink(tokenHash);
         clearPendingSignIn();
         window.location.assign("/"); // a full page load, so the proxy sees the new login cookie
       } catch {
