@@ -577,8 +577,9 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       redeployed with `/translate` (the web app's `AI_SERVICE_URL` must reach a service that has it).
       Debt: requests from before stay untranslated (counted as reviewed); the two provider pools rest separately.
 
-- [x] **Back without history, a wider swipe (2026-10-23, the user's phone).** Moves replace instead of push, so the
-      phone's own back gesture no longer walks every screen visited; the swipe starts anywhere on the left 60%.
+- [x] **Back without history, a swipe that follows the finger (2026-10-23, the user's phone).** Moves replace instead
+      of push, so the phone's own back gesture no longer walks every screen visited; the swipe starts anywhere on the
+      left 40% and the screen follows the finger (simulated touches in the pane: right screen, 26 ms).
       NOT seen on an iPhone. Debt: Android's back button now leaves the app.
 - [x] **Translations, from the user's testing (2026-10-23).** Authors see their own request translated; the editor
       sets the language (SQL 10-23b); Retry says "busy" apart from an error. AI service rebuilt with /translate,

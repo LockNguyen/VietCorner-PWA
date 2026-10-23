@@ -12,6 +12,7 @@ import { backTarget, directionOf } from "@/lib/navigation";
 import { slideOf } from "@/lib/slide";
 import { useSwipeBack } from "@/lib/useSwipeBack";
 import { useMyPicture } from "./MyPicture";
+import { SCREEN_ID } from "./PageSlide";
 import { useNavigation } from "./Navigation";
 import { SHELL_STRINGS } from "./strings";
 
@@ -24,7 +25,8 @@ type Props = {
 
 // The top bar as this app fills it: the title, a back arrow on every screen but Home, the assistant and
 // Settings, which is the person's own picture (the user, 2026-10-20: "me" is recognised faster than a gear).
-// Back slides this screen away to the right (also by a swipe from the left edge, in the installed app) and lands
+// Back slides this screen away to the right (also by a swipe from the left 40% of the screen, which the screen
+// follows, in the installed app: lib/useSwipeBack) and lands
 // the screen behind where it was left; the two icons slide theirs in. A Client Component so the title follows
 // the language toggle at once.
 export default function PageHeader({ title, backHref, plain = false }: Props) {
@@ -35,12 +37,16 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
   const back = backHref && backTarget(pathname, backHref, trail);
   const backMove = back ? slideOf(directionOf(pathname, back, "back")) : undefined; // Staff to Home switches
   const openMove = (href: string) => slideOf(directionOf(pathname, href, "open"));
-  const goBack = useCallback(() => {
-    if (!back) return;
-    stepBack(back);
-    router.replace(back, { transitionTypes: backMove, scroll: false });
-  }, [back, backMove, stepBack, router]);
-  useSwipeBack(back ? goBack : undefined);
+  // `alreadySlid`: a swipe has already carried this screen off (useSwipeBack), so the change must not slide again.
+  const goBack = useCallback(
+    (alreadySlid: boolean) => {
+      if (!back) return;
+      stepBack(back);
+      router.replace(back, { transitionTypes: alreadySlid ? undefined : backMove, scroll: false });
+    },
+    [back, backMove, stepBack, router],
+  );
+  useSwipeBack(back ? goBack : undefined, SCREEN_ID);
   const myPicture = useMyPicture();
 
   return (
