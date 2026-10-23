@@ -46,7 +46,7 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
     },
     [back, backMove, stepBack, router],
   );
-  useSwipeBack(back ? goBack : undefined, SCREEN_ID);
+  useSwipeBack(back ? goBack : undefined, back || undefined, SCREEN_ID);
   const myPicture = useMyPicture();
 
   return (

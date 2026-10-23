@@ -3,12 +3,14 @@
 import { usePathname } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { nextTrail, pathOf, resumedTrail, type Trail } from "@/lib/navigation";
+import { copyOf, keepPicture, keepPicturesOf, type ScreenPicture } from "@/lib/screenPictures";
 import { SCREEN_ID } from "./PageSlide";
 
 // What the navigation rules (src/lib/navigation.ts) need to remember: the trail of screens opened since the last
 // main one, and where each screen was scrolled to. Once, in the root layout, which stays while screens change under
 // it. The trail is kept on the phone (localStorage, the user, 2026-10-23), so a reload or a reopened app still goes
-// back the way it came; scroll positions are in memory only: after a reload every screen starts at its top.
+// back the way it came; scroll positions are in memory only: after a reload every screen starts at its top. It also
+// keeps a picture of each screen left (src/lib/screenPictures.ts), for the swipe back to show under the screen.
 
 type Navigation = {
   trail: Trail; // the screens opened since the last main one; the last is on show
@@ -47,12 +49,19 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const steppingBack = useRef<string | null>(null); // the screen a back step is on its way to
   const positions = useRef(new Map<string, number>()); // the last scroll position of each screen, by path
   const restoring = useRef<string | null>(null); // the screen a back step is on its way to
+  const lastTap = useRef<ScreenPicture | null>(null); // the screen as it was at the last tap, in case that tap left it
 
   useEffect(() => {
     const screen = document.getElementById(SCREEN_ID)!; // the screen scrolls in its own box (PageSlide)
     const remember = () => positions.current.set(previous.current, screen.scrollTop);
+    // On the way down (capture), before the tap's own link or button changes the screen.
+    const copy = () => (lastTap.current = copyOf(screen));
     screen.addEventListener("scroll", remember, { passive: true });
-    return () => screen.removeEventListener("scroll", remember);
+    document.addEventListener("click", copy, { capture: true });
+    return () => {
+      screen.removeEventListener("scroll", remember);
+      document.removeEventListener("click", copy, { capture: true });
+    };
   }, []);
 
   useEffect(() => {
@@ -61,14 +70,18 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     saveTrail(trail);
+    keepPicturesOf([...trail, "/"]); // Home too: every main screen goes back to it
   }, [trail]);
 
   // A layout effect: the position is back before the screen is painted, so the slide shows it as it was left.
   // The links that restore pass `scroll={false}`, so Next.js does not move it to the top afterwards.
   useLayoutEffect(() => {
     if (previous.current === pathname) return; // the first screen: its trail is read from storage instead
+    const from = previous.current;
     previous.current = pathname;
     const step = steppingBack.current === pathname ? "back" : "open";
+    if (step === "open" && lastTap.current) keepPicture(from, lastTap.current); // the screen this tap left
+    lastTap.current = null;
     steppingBack.current = null;
     setTrail((current) => nextTrail(current, pathname, step));
     if (restoring.current !== pathname) return;
