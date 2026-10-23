@@ -20,7 +20,8 @@ each once) and keeps that order and the place in it in localStorage, which stays
 Play starts the song after the one heard last; a song that ends, or Next, goes to the next; Back to the one
 before; after the last comes the first again (`playlist.ts`, 2026-10-22). Adding or removing a song makes a new
 order. A song downloads only when it starts: more songs make the deploy bigger, never the app slower. A
-missing file makes Play say "The music could not play."
+missing file makes Play say "The music could not play." Leaving the tab releases the player (its song unloaded), not only pauses it: a page still holding the
+phone's audio is the likely reason the iPhone keyboard's dictation key went grey on the next screen (2026-10-23).
 
 ## Files
 | Layer | File | Job |

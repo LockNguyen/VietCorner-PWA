@@ -307,4 +307,4 @@ Seen in the pane (2026-10-20): the editor in that order with the hints; the shar
   (`WeeklyLine.href`, filled by the Events page from the group's id), ending in a round white button with a blue
   arrow, its middle on the line's middle (measured on all six groups, wrapped lines too). Weekly events have no
   page, so their lines are plain. The arrow is 24 px and bold in its 32 px circle (the user: less white). Opened
-  from here, the group page's back arrow returns to Events, where it was left (a step aside, `lib/navigation.ts`).
+  from here, the group page's back arrow returns to Events, where it was left (the trail of opened screens, `lib/navigation.ts`).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { backTarget, detourOf, directionOf, isMain, isStepAside, restoresScroll, sectionOf } from "./navigation";
+import { backTarget, detourOf, directionOf, isMain, nextTrail, restoresScroll, resumedTrail } from "./navigation";
 
 describe("what kind of screen an address is", () => {
   it("knows the main screens, Staff among them", () => {
@@ -57,50 +57,66 @@ describe("how the screen moves", () => {
   });
 });
 
-describe("a step aside", () => {
-  it("knows each screen's section: its detour, or the main screen it sits under", () => {
-    expect(sectionOf("/groups/7/about")).toBe("/groups");
-    expect(sectionOf("/settings/name")).toBe("/settings");
-    expect(sectionOf("/admin/people/1")).toBe("/admin");
-    expect(sectionOf("/")).toBe("/");
+describe("the trail of screens", () => {
+  // Follows a list of moves from a fresh start, as the app does.
+  const walk = (...moves: [string, "open" | "back"][]) => moves.reduce((trail, [path, step]) => nextTrail(trail, path, step), [] as string[]);
+
+  it("starts again at every main screen", () => {
+    expect(walk(["/prayer", "open"], ["/prayer/new", "open"], ["/events", "open"])).toEqual(["/events"]);
   });
 
-  it("is a screen opened from another section, not a main one", () => {
-    expect(isStepAside("/events", "/groups/7/about")).toBe(true); // a group from the Events card
-    expect(isStepAside("/groups/3/about", "/settings")).toBe(true); // Settings from anywhere
-    expect(isStepAside("/groups", "/groups/7/about")).toBe(false); // from its own section
-    expect(isStepAside("/events", "/groups")).toBe(false); // a main screen
-    expect(isStepAside("/settings", "/settings/name")).toBe(false); // deeper in the same detour
+  it("pushes what is opened and pops on the way back: Prayer → new → assistant → back → back (the user's bug)", () => {
+    const atAssistant = walk(["/prayer", "open"], ["/prayer/new", "open"], ["/assistant", "open"]);
+    expect(atAssistant).toEqual(["/prayer", "/prayer/new", "/assistant"]);
+    const backAtNew = nextTrail(atAssistant, "/prayer/new", "back");
+    expect(backTarget("/prayer/new", "/prayer", backAtNew)).toBe("/prayer");
+  });
+
+  it("pops for a move to the screen before, however it was made (a save that returns to the list)", () => {
+    const atEditor = walk(["/admin", "open"], ["/admin/translations", "open"], ["/admin/translations/1", "open"]);
+    expect(nextTrail(atEditor, "/admin/translations", "open")).toEqual(["/admin", "/admin/translations"]);
+  });
+
+  it("replaces the last screen on a back step the trail cannot pop (a screen opened cold)", () => {
+    const cold = walk(["/groups/7/photos", "open"], ["/groups/7/about", "back"]);
+    expect(cold).toEqual(["/groups/7/about"]);
+    expect(backTarget("/groups/7/about", "/groups", cold)).toBe("/groups");
+  });
+
+  it("keeps the same screen once, and at most twenty", () => {
+    expect(walk(["/groups", "open"], ["/groups/7/about", "open"], ["/groups/7/about?x=1", "open"])).toEqual(["/groups", "/groups/7/about"]);
+    const long = Array.from({ length: 30 }, (_, i) => [`/groups/${i}/about`, "open"] as [string, "open"]);
+    expect(walk(...long)).toHaveLength(20);
+  });
+
+  it("resumes the kept trail only on the screen it ended on", () => {
+    expect(resumedTrail(["/events", "/groups/7/about"], "/groups/7/about")).toEqual(["/events", "/groups/7/about"]);
+    expect(resumedTrail(["/events", "/groups/7/about"], "/events/3")).toEqual(["/events/3"]); // from a notification
   });
 });
 
 describe("where the back arrow leads", () => {
-  const fromEvents = { from: "/events", to: "/groups/7/about" };
-
-  it("takes the screen a step aside opened back to where it was opened from", () => {
-    expect(backTarget("/groups/7/about", "/groups", fromEvents)).toBe("/events");
-    expect(backTarget("/settings", "/", { from: "/groups/3/about", to: "/settings" })).toBe("/groups/3/about");
+  it("to the screen it was opened from: a group from the Events card, Settings from a group", () => {
+    expect(backTarget("/groups/7/about", "/groups", ["/events", "/groups/7/about"])).toBe("/events");
+    expect(backTarget("/settings", "/", ["/groups", "/groups/3/about", "/settings"])).toBe("/groups/3/about");
   });
 
-  it("takes every other screen to its own back address, opened cold too", () => {
-    expect(backTarget("/groups/8/about", "/groups", fromEvents)).toBe("/groups"); // another group
-    expect(backTarget("/settings/name", "/settings", { from: "/groups", to: "/settings" })).toBe("/settings");
-    expect(backTarget("/assistant", "/", null)).toBe("/");
+  it("to the screen's own back address when the trail does not know where it came from", () => {
+    expect(backTarget("/assistant", "/", ["/assistant"])).toBe("/");
+    expect(backTarget("/groups/8/about", "/groups", ["/events", "/groups/7/about"])).toBe("/groups"); // not on show
   });
 });
 
 describe("when a screen comes back where it was left", () => {
-  const fromGroups = { from: "/groups", to: "/settings" };
-
   it("always for the back arrow and the swipe", () => {
-    expect(restoresScroll("back", "/groups/7/about", "/groups", null)).toBe(true);
+    expect(restoresScroll("back", "/groups", [])).toBe(true);
   });
 
-  it("for the bottom bar only when leaving a step aside for the screen it started from", () => {
-    expect(restoresScroll("tab", "/settings", "/groups", fromGroups)).toBe(true);
-    expect(restoresScroll("tab", "/settings/name", "/groups", fromGroups)).toBe(true); // deeper, same detour
-    expect(restoresScroll("tab", "/settings", "/events", fromGroups)).toBe(false);
-    expect(restoresScroll("tab", "/events", "/groups", fromGroups)).toBe(false); // not leaving it
-    expect(restoresScroll("open", "/settings", "/groups", fromGroups)).toBe(false);
+  it("for the bottom bar only for the main screen the trail started from, when deeper in it", () => {
+    expect(restoresScroll("tab", "/groups", ["/groups", "/settings"])).toBe(true);
+    expect(restoresScroll("tab", "/groups", ["/groups", "/settings", "/settings/name"])).toBe(true);
+    expect(restoresScroll("tab", "/events", ["/groups", "/settings"])).toBe(false);
+    expect(restoresScroll("tab", "/groups", ["/groups"])).toBe(false); // already there
+    expect(restoresScroll("open", "/groups", ["/groups", "/settings"])).toBe(false);
   });
 });

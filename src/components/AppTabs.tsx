@@ -33,7 +33,7 @@ type Props = {
 export default function AppTabs({ showAdmin, bigText }: Props) {
   const pathname = usePathname();
   const { t } = useLanguage(); // I18N
-  const { aside, restoreOnArrival } = useNavigation();
+  const { trail, restoreOnArrival } = useNavigation();
   const tabs = showAdmin ? [...TABS, ADMIN_TAB] : TABS;
   // Every tab's screen is loaded in the background and kept fresh, so a tap shows it at once (the user, 2026-10-22).
   // Only these: Staff, Settings and the assistant are rarely opened and load when tapped.
@@ -51,9 +51,9 @@ export default function AppTabs({ showAdmin, bigText }: Props) {
         active: isActive(href),
         // How the screen moves, and whether it lands where it was left: src/lib/navigation.ts decides both.
         transitionTypes: slideOf(directionOf(pathname, href, "tab")),
-        keepsScroll: restoresScroll("tab", pathname, href, aside),
+        keepsScroll: restoresScroll("tab", href, trail),
         onSelect: () => {
-          if (restoresScroll("tab", pathname, href, aside)) restoreOnArrival(href);
+          if (restoresScroll("tab", href, trail)) restoreOnArrival(href);
         },
       }))}
     />

@@ -2,8 +2,8 @@
 // screen; `src/components/Navigation.tsx` remembers what these rules need, and the tab bar, the Home tiles, the
 // top bar's links and back arrow, and the swipe ask here instead of each deciding for itself.
 //
-// Three kinds of screen, and a step aside (`isStepAside`): any screen opened from another section, which goes
-// back to where it was opened from.
+// Three kinds of screen, and a trail (`nextTrail`): the screens opened since the last main one, so every back arrow
+// returns to the screen it was opened from, however it got there.
 // Kinds:
 //   main      Home, Events, Prayer, Groups, Admin (the bottom bar) and Staff (a Home tile)
 //   detours   the assistant, Settings: a step aside from the main use, and back to where it started
@@ -15,9 +15,13 @@
 //   back      out of one: it leaves to the right
 
 export type Direction = "forward" | "back" | "switch";
-// A step aside: `to` was opened from `from`, a screen of another section; its back arrow returns there.
-export type Aside = { from: string; to: string };
 export type Step = "open" | "back" | "tab"; // what was tapped: a link on the screen, the back arrow or swipe, the bar
+// The screens opened since the last main one, oldest first, each by its path; the last is the screen on show.
+export type Trail = string[];
+
+// why: a trail only grows by opening screen after screen without ever reaching a main one (group → event → group …);
+// twenty steps back is more than anyone takes, and the bound keeps what is stored small.
+const MAX_TRAIL = 20;
 
 // Must hold the bottom bar's tabs (src/components/AppTabs.tsx) and Staff.
 export const MAIN_SCREENS = ["/", "/events", "/prayer", "/groups", "/admin", "/staff"];
@@ -39,18 +43,27 @@ export function detourOf(path: string): string | null {
   return DETOURS.find((root) => under(pathOf(path), root)) ?? null;
 }
 
-// The part of the app a screen belongs to: its detour, or the main screen it sits under ("/groups/7/about" →
-// "/groups"); anything under no main screen belongs to Home.
-export function sectionOf(path: string): string {
+// The trail once `path` is on show (the user, 2026-10-23: a stack that pushes and pops, reset by the main screens).
+// - A main screen starts a new trail: it is where every way back ends.
+// - The screen before the last one: a step back, whichever way it was taken (the arrow, the phone's back, or a
+//   save that returns to the list), so it is popped.
+// - A back step to a screen the trail does not hold (the screen was opened cold, from a notification or a link):
+//   it takes the place of the last one, so the next back arrow does not return to where this one came from.
+// - Anything else was opened from the last one: pushed.
+export function nextTrail(trail: Trail, path: string, step: "open" | "back"): Trail {
   const p = pathOf(path);
-  return detourOf(p) ?? MAIN_SCREENS.find((root) => root !== "/" && under(p, root)) ?? "/";
+  if (isMain(p)) return [p];
+  if (trail.at(-1) === p) return trail; // the same screen again (a reload, another query)
+  if (trail.at(-2) === p) return trail.slice(0, -1);
+  if (step === "back") return [...trail.slice(0, -1), p];
+  return [...trail, p].slice(-MAX_TRAIL);
 }
 
-// Whether opening `to` from `from` is a step aside: a screen that is not a main one, in another section (a group's
-// page opened from the Events card, Settings opened from anywhere). Its back arrow then returns to `from`
-// (the user, 2026-10-22), not to its own section.
-export function isStepAside(from: string, to: string): boolean {
-  return !isMain(to) && sectionOf(from) !== sectionOf(to);
+// The trail an app launch starts with: the one it kept, when it opens on the screen that trail ended on (a reload,
+// or the app reopened where it was); otherwise a new one from this screen, so a notification that opens an inner
+// screen goes back to that screen's own list, never to wherever the app was last week.
+export function resumedTrail(kept: Trail, path: string): Trail {
+  return kept.at(-1) === pathOf(path) ? kept : nextTrail([], path, "open");
 }
 
 // How the screen moves when `step` goes from `from` to `to`, or null when it should not move at all.
@@ -67,16 +80,16 @@ export function directionOf(from: string, to: string, step: Step): Direction | n
   return toDetour && toDetour !== detourOf(fromPath) ? "forward" : "back";
 }
 
-// Where the back arrow of `path` leads: for the screen a step aside opened, back to where it was opened from;
-// for every other screen its own `backHref` (opened cold, from a notification or a reload, too).
-export function backTarget(path: string, backHref: string, aside: Aside | null): string {
-  return aside !== null && pathOf(path) === aside.to ? aside.from : backHref;
+// Where the back arrow of `path` leads: the screen it was opened from, when the trail knows it; otherwise the
+// screen's own `backHref` (its list, or Home), for a screen opened cold.
+export function backTarget(path: string, backHref: string, trail: Trail): string {
+  return trail.length > 1 && trail.at(-1) === pathOf(path) ? trail.at(-2)! : backHref;
 }
 
 // Whether going to `to` should land where that screen was left, instead of at its top. The back arrow and the
-// swipe always do. The bottom bar does only when it leaves a step aside for the very screen it started from; any
-// other tab opens fresh, at its top (the user, 2026-10-22).
-export function restoresScroll(step: Step, from: string, to: string, aside: Aside | null): boolean {
+// swipe always do. The bottom bar does only for the main screen the trail started from, when deeper in it (the
+// tab it was on, the user, 2026-10-22); any other tab opens fresh, at its top.
+export function restoresScroll(step: Step, to: string, trail: Trail): boolean {
   if (step === "back") return true;
-  return step === "tab" && aside !== null && sectionOf(from) === sectionOf(aside.to) && pathOf(to) === pathOf(aside.from);
+  return step === "tab" && trail.length > 1 && trail[0] === pathOf(to);
 }

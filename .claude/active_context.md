@@ -577,6 +577,10 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       redeployed with `/translate` (the web app's `AI_SERVICE_URL` must reach a service that has it).
       Debt: requests from before stay untranslated (counted as reviewed); the two provider pools rest separately.
 
+- [x] **Back as a trail, dictation (2026-10-23, the user's bugs).** `nextTrail` in localStorage: every back arrow
+      retraces the way in (measured in the pane). Leaving releases the music player, the microphone and the voice,
+      the likely reason the iPhone's dictation key went grey. NOT seen on an iPhone: check dictation on Prayer →
+      + after playing music, and after the assistant.
 - [x] **Review fixes + Past translations and Retry (2026-10-23, the user).** All must, should and nit items from the
       review applied (see the architecture's Change Log); 199 tests. Debt: the Admin lists and Retry not seen as an
       admin; RLS needs the SQL run again.

@@ -27,7 +27,20 @@ export function useWorshipMusic(onCannotPlay: () => void) {
     report.current = onCannotPlay;
   });
 
-  useEffect(() => () => audio.current?.pause(), []);
+  // Leaving the tab releases the player, not only pauses it: a paused player with its song still loaded keeps the
+  // phone's audio taken, and while a page holds it the iPhone keyboard's dictation cannot start (the user,
+  // 2026-10-23: the microphone key went grey on the new-request screen). Emptying `src` and calling `load()` is
+  // how a media element lets go of its audio.
+  useEffect(
+    () => () => {
+      const player = audio.current;
+      if (!player) return;
+      player.pause();
+      player.removeAttribute("src");
+      player.load();
+    },
+    [],
+  );
 
   // Asks the player to play. Only a refusal is a failure; anything else that cuts it short is followed by another
   // request or by the element's own `error`.

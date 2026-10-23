@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Recording } from "../types";
 
 export type RecorderStatus = "idle" | "recording" | "unsupported" | "blocked";
@@ -16,12 +16,15 @@ const FORMATS = [
 // The microphone, and nothing else: this hook knows how to record, not what a recording is for.
 //
 // Pitfalls handled here:
-//  - The microphone light stays on until every track is stopped, which worries users.
+//  - The microphone light stays on until every track is stopped, which worries users. Leaving the screen mid-recording
+//    stops them too: a microphone still held keeps the iPhone keyboard's dictation from starting on other screens.
 //  - stop() is asynchronous: the audio is only complete in the recorder's "stop" event, so stop()
 //    returns a promise that resolves with the finished recording.
 export function useVoiceRecorder() {
   const [status, setStatus] = useState<RecorderStatus>("idle");
   const recorderRef = useRef<MediaRecorder | null>(null);
+
+  useEffect(() => () => recorderRef.current?.stream.getTracks().forEach((track) => track.stop()), []);
 
   // Ask for the microphone and start recording. Must be called from a tap: browsers only show the
   // permission prompt after a user gesture.

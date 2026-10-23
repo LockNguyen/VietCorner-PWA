@@ -18,7 +18,7 @@ import { SHELL_STRINGS } from "./strings";
 type Props = {
   title: Text | string; // a string is data rather than a label, like a group's name
   backHref?: string; // where its back arrow leads: Home for a main tab, the list for a screen opened from one
-  // (a screen opened from another section goes back to where it was opened from: src/lib/navigation.ts `backTarget`)
+  // (when the app knows the screen this one was opened from, it goes back there instead: src/lib/navigation.ts `backTarget`)
   plain?: boolean; // no icons at all: the screen shown before signing in
 };
 
@@ -31,15 +31,15 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
   const { t } = useLanguage(); // I18N
   const pathname = usePathname();
   const router = useRouter();
-  const { aside, restoreOnArrival } = useNavigation();
-  const back = backHref && backTarget(pathname, backHref, aside);
+  const { trail, stepBack } = useNavigation();
+  const back = backHref && backTarget(pathname, backHref, trail);
   const backMove = back ? slideOf(directionOf(pathname, back, "back")) : undefined; // Staff to Home switches
   const openMove = (href: string) => slideOf(directionOf(pathname, href, "open"));
   const goBack = useCallback(() => {
     if (!back) return;
-    restoreOnArrival(back);
+    stepBack(back);
     router.push(back, { transitionTypes: backMove, scroll: false });
-  }, [back, backMove, restoreOnArrival, router]);
+  }, [back, backMove, stepBack, router]);
   useSwipeBack(back ? goBack : undefined);
   const myPicture = useMyPicture();
 
@@ -54,7 +54,7 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
             href={back}
             transitionTypes={backMove}
             scroll={false}
-            onClick={() => restoreOnArrival(back)}
+            onClick={() => stepBack(back)}
             label={t(SHELL_STRINGS.back)}
           >
             <ChevronLeft />
