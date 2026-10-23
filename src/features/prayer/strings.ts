@@ -35,9 +35,12 @@ export const STRINGS = {
   // The worship music above the list, and the bubble that suggests it
   playMusic: { en: "Play worship music", vi: "Phát nhạc thờ phượng" } satisfies Text,
   pauseMusic: { en: "Pause the music", vi: "Tạm dừng nhạc" } satisfies Text,
+  loadingMusic: { en: "Loading the music", vi: "Đang tải nhạc" } satisfies Text,
+  previousSong: { en: "Previous song", vi: "Bài trước" } satisfies Text,
+  nextSong: { en: "Next song", vi: "Bài kế tiếp" } satisfies Text,
   musicFailed: { en: "The music could not play.", vi: "Không thể phát nhạc." } satisfies Text,
   // A "\n" is where the bubble breaks it, the bubble as wide as the longer line (the user, 2026-10-21).
-  prayNow: { en: "Let's pray", vi: "Tôi muốn\ncầu nguyện bây giờ" } satisfies Text,
+  prayNow: { en: "I want to\npray now", vi: "Tôi muốn\ncầu nguyện bây giờ" } satisfies Text, // the same words (2026-10-22)
 
   // Admin section: when the church is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
@@ -59,6 +62,11 @@ export const STRINGS = {
 // The label of a week two or three back. A sentence with a number in it, so it is a function.
 export function weeksAgo(count: number): Text {
   return { en: `${count} weeks ago`, vi: `${count} tuần trước` };
+}
+
+// What a screen reader says for the count on someone else's request ("3 people prayed").
+export function peoplePrayed(count: number): Text {
+  return { en: count === 1 ? "1 person prayed" : `${count} people prayed`, vi: `${count} người đã cầu nguyện` };
 }
 
 // The body of that notification. A sentence with a number in it, so it is a function. English has a

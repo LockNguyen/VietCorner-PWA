@@ -25,7 +25,7 @@ export default function CardDemo() {
   return (
     <div className="flex flex-col gap-4">
       <Card placeholder={<Users className="size-8" />} badge={<LiveDot />} title="Nhóm Thanh Niên" subtitle="Thứ Sáu @ 19:30 · Hội trường">
-        <MemberCircles initials={["AN", "BT", "C"]} total={12} max={8} label="12 thành viên" />
+        <MemberCircles people={[{ initials: "AN", src: "/images/home/prayer.png" }, { initials: "BT" }, { initials: "C" }]} total={12} max={8} label="12 thành viên" />
       </Card>
       <BilingualInput
         top={{ value: vi, onChange: setVi, placeholder: "Tiếng Việt", label: "Tên · Tiếng Việt" }}
@@ -35,13 +35,13 @@ export default function CardDemo() {
         <Bubble tone="theirs">Xin cầu nguyện cho kỳ thi của con trai tôi.</Bubble>
         {prayed ? (
           <Celebrate burst="+1">
-            <Chip tone="done" label="Prayed" disabled>
-              <Check aria-hidden />
+            <Chip tone="done" size="wide" label="Prayed, 4 people prayed" disabled>
+              4 <Check aria-hidden />
             </Chip>
           </Celebrate>
         ) : (
-          <Chip tone="pray" label="Pray" onClick={() => setPrayed(true)}>
-            🙏
+          <Chip tone="pray" size="wide" label="Pray, 3 people prayed" onClick={() => setPrayed(true)}>
+            3 🙏
           </Chip>
         )}
       </div>

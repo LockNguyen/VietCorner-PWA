@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
-import { FEED_COLUMNS, PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "./types";
+import { getPrayerReminders as readPrayerReminders } from "./reads";
+import { FEED_COLUMNS, PAGE_SIZE, type NewPrayerRequest, type PrayerReminder, type PrayerRequest } from "./types";
 
 // Prayer API: every call the browser makes for this feature.
 // - Reads and the author's own writes go straight to Supabase. The grants, policies and view in schema.sql
@@ -79,4 +80,10 @@ export async function prayFor(requestId: string): Promise<void> {
     body: JSON.stringify({ requestId }),
   });
   if (!response.ok) throw new Error((await response.json()).error);
+}
+
+// GET the church's prayer reminders again, as the page first read them, for the screen to refresh itself on
+// arrival (`useFresh`).
+export function getPrayerReminders(): Promise<PrayerReminder[]> {
+  return readPrayerReminders(createClient());
 }

@@ -13,7 +13,8 @@ import { LOCALES } from "@/features/i18n/types"; // I18N
 import { useBanner } from "@/lib/useBanner";
 import { usePending } from "@/lib/usePending";
 import { useRefresh } from "@/lib/useRefresh";
-import { addReminder } from "../api";
+import { useFresh } from "@/lib/useFresh";
+import { addReminder, getPrayerReminders } from "../api";
 import { churchWeekday } from "../reminders";
 import { STRINGS } from "../strings";
 import type { PrayerReminder } from "../types";
@@ -25,7 +26,8 @@ const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6];
 
 // The prayer reminders screen (the bell on the Prayer tab): when the whole church gets "time to pray", every
 // week, in church time. For someone with "prayer.reminders"; the database refuses everyone else.
-export default function PrayerReminderAdmin({ reminders }: Props) {
+export default function PrayerReminderAdmin({ reminders: loaded }: Props) {
+  const reminders = useFresh(loaded, getPrayerReminders); // the kept copy at once, then a fresh read on arrival
   const refresh = useRefresh();
   const { t, language } = useLanguage(); // I18N
   // Starts on today (at church): a reminder is most often set for the day it is thought of, and a list

@@ -1,13 +1,13 @@
-// The order the worship songs play in: every song once per round, in a random order (the user, 2026-10-21).
-// Plain random could play the same song twice in a row; a round cannot, and the song that ended a round is
-// kept away from the start of the next one.
+// The order the worship songs play in (the user, 2026-10-22): their positions in WORSHIP_SONGS, shuffled once on
+// this phone and kept (storage.ts), so every song plays once before any plays again. Next and Back walk the order,
+// from the last song round to the first and back. Pure, so it is tested without a phone.
 
-// why: with six songs, at least two others play before a song comes back across a round's end.
-const MIN_SONGS_BETWEEN = 2;
+// Where this phone is in the order: `position` is the place in `order` of the song playing or last played.
+export type Playlist = { order: number[]; position: number };
 
-// Returns the songs in a random order (Fisher–Yates: every order equally likely).
-function shuffled(songs: string[], random: () => number): string[] {
-  const order = [...songs];
+// 0 … count-1 in a random order (Fisher–Yates: every order equally likely). `random` is a parameter for the tests.
+export function shuffledOrder(count: number, random: () => number = Math.random): number[] {
+  const order = Array.from({ length: count }, (_, index) => index);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
     [order[i], order[j]] = [order[j], order[i]];
@@ -15,17 +15,14 @@ function shuffled(songs: string[], random: () => number): string[] {
   return order;
 }
 
-// The next round of every song. `justPlayed` is the song that ended the last round (null before the first):
-// it goes at a random place no earlier than MIN_SONGS_BETWEEN, or last when there are too few songs.
-// `random` is a parameter so the tests can fix it.
-export function nextRound(songs: string[], justPlayed: string | null, random: () => number = Math.random): string[] {
-  if (justPlayed === null || !songs.includes(justPlayed)) return shuffled(songs, random);
-  const others = shuffled(
-    songs.filter((song) => song !== justPlayed),
-    random,
-  );
-  const earliest = Math.min(MIN_SONGS_BETWEEN, others.length);
-  const at = earliest + Math.floor(random() * (others.length - earliest + 1));
-  others.splice(at, 0, justPlayed);
-  return others;
+// The place `by` steps from `position` (1 = next, -1 = back), wrapping at both ends.
+export function stepped(position: number, by: number, length: number): number {
+  return (((position + by) % length) + length) % length;
+}
+
+// A kept playlist, if it still fits the songs: every position exactly once. A song added or removed since then
+// makes it a stranger, and a new shuffle is made instead.
+export function keptOrNew(kept: Playlist | null, count: number): Playlist {
+  const fits = kept !== null && kept.order.length === count && [...kept.order].sort((a, b) => a - b).every((song, index) => song === index);
+  return fits ? kept : { order: shuffledOrder(count), position: -1 }; // -1: the first step lands on the first song
 }

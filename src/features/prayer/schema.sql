@@ -183,6 +183,26 @@ where r.deleted_at is null
   and r.answered_at is null
   and (select public.has_permission('app.use'));
 
+-- 5c. Everyone sees how many prayed (2026-10-22, the user) --------------------
+-- This section can be run again by itself. The same view as 5b, with the count for every reader instead of the
+-- author only: members asked to see how many prayed for each other's requests too. This undoes 5b's "nobody can
+-- compare requests" on purpose (the architecture's Key Decisions). Still a number only, never who prayed.
+create or replace view public.prayer_feed with (security_invoker = false) as
+select
+  r.id,
+  r.body,
+  r.is_anonymous,
+  r.created_at,
+  r.author_id = auth.uid() as is_mine,
+  case when r.is_anonymous then null else p.name end as author_name,
+  r.prayer_count,
+  case when r.is_anonymous then null else p.avatar_path end as author_avatar
+from public.prayer_requests r
+join public.profiles p on p.user_id = r.author_id
+where r.deleted_at is null
+  and r.answered_at is null
+  and (select public.has_permission('app.use'));
+
 -- 6. Seed data ------------------------------------------------------------
 -- Requests are not seeded: each needs a signed-in author, and the SQL Editor has none. Post them in the app.
 -- Reminders, so the Admin tab has something to show: Wednesday evening and Sunday morning, church time.

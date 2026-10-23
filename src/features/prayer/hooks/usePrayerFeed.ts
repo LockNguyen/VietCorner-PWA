@@ -78,6 +78,13 @@ export function usePrayerFeed(initialRequests: PrayerRequest[]) {
         takeOffScreen(requestId);
       }),
 
-    pray: (requestId: string) => attempt(() => prayFor(requestId)),
+    // The new count shows at once; the next read of the list brings everyone else's prayers too.
+    pray: (requestId: string) =>
+      attempt(async () => {
+        await prayFor(requestId);
+        setRequests((current) =>
+          current.map((request) => (request.id === requestId ? { ...request, prayer_count: request.prayer_count + 1 } : request)),
+        );
+      }),
   };
 }

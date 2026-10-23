@@ -11,11 +11,15 @@ have not been run, then this
 `schema.sql` in Supabase → SQL Editor. Copy it from the editor, not from terminal output. It is **not** safe
 to run twice (plain `create`), except section 4, the view, which is how the view is changed.
 
-**Worship music:** put the MP3s the church has the rights to in `public/audio/worship/` and add each one's
-path to `WORSHIP_SONGS` in `types.ts`. Play starts a random one; when a song ends the next starts. Every song
-plays once per round, then a new round in a new order, and the song that ended a round is at least two songs
-away from playing again (`playlist.ts`). A song downloads only when it starts: more songs make the deploy
-bigger, never the app slower. A missing file makes Play say "The music could not play."
+**Worship music:** put the MP3s the church has the rights to in `public/audio/worship/` and add each file's
+name to `WORSHIP_SONGS` in `types.ts` (spaces are fine). `songs.test.ts` fails while the list and the folder
+disagree, so a commit cannot ship a song list that points at a missing file (2026-10-22: the five new songs
+replaced `worship.mp3`, still listed, and Play said "The music could not play"). The first Play on a phone shuffles the songs' positions once (0 … n-1,
+each once) and keeps that order and the place in it in localStorage, which stays when the app is swiped away.
+Play starts the song after the one heard last; a song that ends, or Next, goes to the next; Back to the one
+before; after the last comes the first again (`playlist.ts`, 2026-10-22). Adding or removing a song makes a new
+order. A song downloads only when it starts: more songs make the deploy bigger, never the app slower. A
+missing file makes Play say "The music could not play."
 
 ## Files
 | Layer | File | Job |
@@ -27,7 +31,8 @@ bigger, never the app slower. A missing file makes Play say "The music could not
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`: once per request per day (the phone's midnight), worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
-| Browser API | `api.ts` | `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
+| Reads | `reads.ts` | `getPrayerReminders(supabase)`: shared by the reminders page and its refresh on arrival (2026-10-22) |
+| Browser API | `api.ts` | `getPrayerReminders` (the reminders screen refreshes itself, `useFresh`), `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
 | Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to every approved member, once, per language |
@@ -35,8 +40,9 @@ bigger, never the app slower. A missing file makes Play say "The music could not
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
-| State | `hooks/useWorshipMusic.ts` | The worship songs: play, pause, the next song on `ended`, stopped on leaving; `started` once played |
-| Logic | `playlist.ts` | `nextRound`: every song once per round in a random order, the last song kept two away (tested) |
+| State | `hooks/useWorshipMusic.ts` | The worship songs: play, pause, `next`, `previous`, the next song on `ended`, stopped on leaving; `state` off / loading / playing from the audio's own events (`playing` = sound coming out); tells the board only of a real failure (`error`, or the phone refusing), never of a start cut short by a newer song (skipping fast) |
+| Logic | `playlist.ts` | `shuffledOrder`, `stepped` (wraps both ways), `keptOrNew` (the phone's order while it fits the songs) (tested) |
+| Device | `storage.ts` | When this device last prayed for each request; the songs' order and place (`loadPlaylist`, `savePlaylist`) |
 | State | `hooks/useShowAfter.ts` | True once the screen has been open a while: the music bubble after 2 s |
 | State | `hooks/usePrayerCooldown.ts` | Which requests this device may pray for now; one clock for all of them |
 | State | `src/lib/useWhenVisible.ts` | "Call this when the element scrolls into view" (shared with the group photos) |
@@ -120,8 +126,11 @@ And a small group can guess from timing or wording — no software fixes that.
   with the request at the top, under the author's name. There is no "Hide my name" since 2026-10-20 (the
   user); requests posted anonymously before then still show "Anonymous".
 - Above the list, held under the blue bar while scrolling: (the bell, for admins) Play, and the round +. Play
-  starts a random worship song and becomes Pause; when it ends the next one starts. After 2 seconds on the tab,
-  a blue bubble left of Play says "Tôi muốn / cầu nguyện bây giờ" ("Let's pray") and sways sideways until the
+  starts the phone's next worship song and becomes Pause, and Back and Next grow out of it on either side
+  inside a light grey pill as tall as the + (one group); Pause turns it back into Play and folds the pill away
+  (0.3 s both ways; measured on `/ui`: 144 × 48 open, 48 and no grey shut, 2026-10-22); when a song ends the
+  next one starts. After 2 seconds on the tab,
+  a blue bubble left of Play says "Tôi muốn / cầu nguyện bây giờ" ("I want to / pray now", 2026-10-22) and sways sideways until the
   music is played.
 - The list is divided by week ("This week", "Last week", "2 weeks ago", "3 weeks ago", then "Week of
   <date>"; a week starts on Sunday, church time). Within a week each person's requests sit together under
@@ -197,9 +206,13 @@ gone. The two sheets are calmer: the new request's words are inside the box; a r
 
 ## How many prayed, and a thank-you (2026-10-14)
 - **My own requests** show "3 🙏" (`ui/CountPill`) between the bubble and the pencil. The count comes from
-  `prayer_feed.prayer_count`, which section 5b of `schema.sql` gives **to the author only** (null for everyone
-  else), so nobody can compare requests by how many prayed. This reverses the 2026-10-06 decision that kept the
-  count off the screen; the notification to the author stays.
+  `prayer_feed.prayer_count`. This reverses the 2026-10-06 decision that kept the count off the screen; the
+  notification to the author stays.
+- **Everyone's requests show it too (2026-10-22, the user):** the Pray button is a pill, "3 🙏", then "4 ✓" once
+  prayed (`ui/Chip` `wide`; seen on `/ui`). Section 5c of `schema.sql` gives the count to every reader (5b gave
+  it to the author only, so nobody could compare requests: given up on purpose). After a prayer the count goes
+  up on screen at once (`usePrayerFeed.pray`). **Run 5c before the deploy** (`docs/sql-to-run-2026-10-22.sql`):
+  until then the view gives others' requests no count, and their button would read "null".
 - **Praying** plays a short reward on the chip that was tapped (`ui/Celebrate`): the tick pops in, a purple
   ring spreads and fades, "+1" floats up and fades; a light buzz on phones that allow it (`navigator.vibrate`,
   Android only). No confetti (the user's word). Only the tap that just happened celebrates, not a reload.
