@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { record } from "@/features/analytics/queue"; // ANALYTICS
 
 export type BannerKind = "success" | "error";
 // A way out offered with the message, drawn as a link ("Create new account?"). Tapping it also puts the banner away.
@@ -30,6 +31,7 @@ export function BannerProvider({ children }: { children: ReactNode }) {
   const show = useCallback(
     ({ kind, message, action, seconds = SECONDS[kind] }: NewBanner) => {
       const id = nextId.current++;
+      if (kind === "error") record("error", { target: message, detail: { source: "banner" } }); // ANALYTICS: what people saw go wrong
       setBanners((current) => [...current, { id, kind, message, action }]);
       timers.current.set(id, setTimeout(() => dismiss(id), seconds * 1000));
     },

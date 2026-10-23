@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import PageHeader from "@/components/PageHeader";
+import AnalyticsLink from "@/features/analytics/components/AnalyticsLink"; // ANALYTICS
+import { VIEW_ANALYTICS } from "@/features/analytics/types"; // ANALYTICS
 import { SHELL_STRINGS } from "@/components/strings";
 import WaitingAccounts from "@/features/approval/components/WaitingAccounts"; // APPROVAL
 import { getWaitingAccounts } from "@/features/approval/server/queries"; // APPROVAL
@@ -49,6 +51,7 @@ export default async function AdminPage() {
       {managesGroups && <NameRequestAdmin requests={nameRequests} names={names} />} {/* PROFILES */}
       {joining && <JoinRequests requests={requests} groups={groups} names={names} />}
       {permissions.includes(MANAGE_USERS) && <PeopleList people={people} />} {/* PEOPLE */}
+      {permissions.includes(VIEW_ANALYTICS) && <AnalyticsLink />} {/* ANALYTICS */}
     </>
   );
 }

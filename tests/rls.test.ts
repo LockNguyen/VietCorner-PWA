@@ -184,14 +184,16 @@ describe("people: the Admin tab's list of everyone (people/schema.sql)", () => {
   });
 });
 
-describe("group cards: members' initials (group-info/schema.sql, section 7)", () => {
+describe("group cards: members' initials and pictures (group-info/schema.sql, section 10)", () => {
   it("are given to an approved member, and to nobody signed out", async () => {
     const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
     });
-    const { data: initials } = await bob.client.rpc("group_member_initials", { group_id: groupId });
-    expect(Array.isArray(initials) && initials.length).toBeGreaterThan(0); // Alice is in it
-    expect((await anonymous.rpc("group_member_initials", { group_id: groupId })).error).not.toBeNull();
+    const { data: faces } = await bob.client.rpc("group_member_faces", { group_id: groupId });
+    expect(Array.isArray(faces) && faces.length).toBeGreaterThan(0); // Alice is in it
+    expect(faces[0]).toHaveProperty("initials");
+    expect(faces[0]).toHaveProperty("avatar"); // a path, or null without a picture
+    expect((await anonymous.rpc("group_member_faces", { group_id: groupId })).error).not.toBeNull();
   });
 });
 
@@ -923,14 +925,14 @@ describe("prayer requests", () => {
     expect(whileWaiting).not.toBeNull();
   });
 
-  it("count a prayer from a fellow member, and show the number to the author only", async () => {
+  it("count a prayer from a fellow member, and show the number to every member", async () => {
     const { data: counted } = await bob.client.rpc("pray_for_request", { request_id: namedId });
 
     expect(counted).toBe(true);
     expect(await prayerCount(namedId)).toBe(1);
-    // Section 5b: the author reads the count; everyone else gets null, so nobody compares requests.
+    // Section 5c (2026-10-22): the author and everyone else read the count.
     expect((await feedOf(alice)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
-    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBeNull();
+    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
   });
 
   it("do not count a prayer from someone still waiting, or from the author", async () => {
@@ -1482,5 +1484,43 @@ describe("weekly_card: the Events tab's first card (events/schema.sql 3h)", () =
     expect(byMember ?? []).toEqual([]);
     expect(byManager).toHaveLength(1);
     expect(secondRow).not.toBeNull();
+  });
+});
+
+describe("analytics_events (analytics/schema.sql)", () => {
+  // The same call the route makes: an insert as the signed-in person, user_id filled from their token.
+  const visitId = crypto.randomUUID();
+  const event = (path: string) => ({ visit_id: visitId, at: new Date().toISOString(), kind: "page", path, target: null, ms: 1000, detail: {} });
+
+  afterAll(async () => {
+    await admin.from("analytics_events").delete().eq("visit_id", visitId);
+  });
+
+  it("are added by anyone signed in, a person still waiting included, and only about themselves", async () => {
+    const { error: byWaiting } = await carol.client.from("analytics_events").insert(event("/waiting"));
+    const { error: byMember } = await bob.client.from("analytics_events").insert(event("/events"));
+    const { error: asSomeoneElse } = await bob.client.from("analytics_events").insert({ ...event("/x"), user_id: alice.id });
+    const { data: stored } = await admin.from("analytics_events").select("user_id, path").eq("visit_id", visitId).order("path");
+
+    expect([byWaiting, byMember]).toEqual([null, null]);
+    expect(asSomeoneElse).not.toBeNull();
+    expect(stored).toEqual([
+      { user_id: bob.id, path: "/events" },
+      { user_id: carol.id, path: "/waiting" },
+    ]);
+  });
+
+  it("are read by an analytics viewer only, and changed or removed by nobody", async () => {
+    const { data: forMember } = await bob.client.from("analytics_events").select("path").eq("visit_id", visitId);
+    const { data: memberReport } = await bob.client.rpc("analytics_pages", { since: "2000-01-01" });
+    const { data: forAdmin } = await alice.client.from("analytics_events").select("path").eq("visit_id", visitId);
+    await bob.client.from("analytics_events").update({ path: "/changed" }).eq("visit_id", visitId);
+    await bob.client.from("analytics_events").delete().eq("visit_id", visitId);
+    const { data: stored } = await admin.from("analytics_events").select("path").eq("visit_id", visitId);
+
+    expect(forMember ?? []).toEqual([]);
+    expect(memberReport ?? []).toEqual([]);
+    expect(forAdmin).toHaveLength(2); // an admin since the "permissions" tests
+    expect(stored?.map((row) => row.path).sort()).toEqual(["/events", "/waiting"]);
   });
 });

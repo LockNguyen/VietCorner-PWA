@@ -12,4 +12,5 @@ export const SWITCHES = {
   eventReminders: false, // the reminders before an event, and the switches that set them
   prayedForPush: false, // "N people prayed for you" to a request's author
   namePush: false, // a name waiting for approval (to managers), a name approved (to the person)
+  analytics: true, // recording what people open, tap and run into (features/analytics), and POST /api/analytics/record
 } as const;
