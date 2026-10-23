@@ -22,6 +22,7 @@ export default function TabBar({ tabs }: Props) {
       <div className="mx-auto flex h-tabs max-w-column">
         {tabs.map((tab) => (
           <Link
+            replace
             key={tab.href}
             href={tab.href}
             // Whoever fills the bar loads the screens ahead and keeps them fresh (AppTabs: `useLoadAhead`).

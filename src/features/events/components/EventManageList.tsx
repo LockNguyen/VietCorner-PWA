@@ -47,7 +47,7 @@ export default function EventManageList({ card, events }: Props) {
   return (
     <div className="flex flex-col pb-6">
       <div className="flex justify-end px-3 pt-2">
-        <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.push("/events/new", { transitionTypes: GO_FORWARD })}>
+        <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.replace("/events/new", { transitionTypes: GO_FORWARD })}>
           <Plus />
         </IconButton>
       </div>

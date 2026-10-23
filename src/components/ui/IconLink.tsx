@@ -7,6 +7,7 @@ type Props = ComponentProps<typeof Link> & { label: string };
 export default function IconLink({ label, ...link }: Props) {
   return (
     <Link
+      replace
       {...link}
       aria-label={label}
       className="inline-flex size-touch items-center justify-center rounded-control text-on-action focus-visible:outline-2 focus-visible:outline-on-action"

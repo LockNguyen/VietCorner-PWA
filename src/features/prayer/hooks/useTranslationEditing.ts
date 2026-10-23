@@ -31,5 +31,5 @@ export function useTranslationEditing(backHref: string) {
     }
   }
 
-  return { submit, cancel: () => router.push(backHref, { transitionTypes: GO_BACK }) };
+  return { submit, cancel: () => router.replace(backHref, { transitionTypes: GO_BACK }) };
 }

@@ -68,7 +68,7 @@ export default function EventWeeklyCard({ card, lines }: Props) {
                   </span>
                 );
                 return line.href ? (
-                  <Link key={index} href={line.href} transitionTypes={GO_FORWARD} className={LINE_LINK}>
+                  <Link replace key={index} href={line.href} transitionTypes={GO_FORWARD} className={LINE_LINK}>
                     {words}
                     <span aria-hidden className={ARROW}>
                       <ChevronRight className="size-6" strokeWidth={3} />

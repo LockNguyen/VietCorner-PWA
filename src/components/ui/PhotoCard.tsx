@@ -28,7 +28,7 @@ export default function PhotoCard({ href, src, title, subtitle, details = [], ex
     <div className={CARD}>
       <Picture src={src} className="absolute inset-0 size-full object-cover" />
       <span aria-hidden className={VEIL} />
-      {href && <Link href={href} transitionTypes={GO_FORWARD} aria-label={title} className={LINK} />}
+      {href && <Link replace href={href} transitionTypes={GO_FORWARD} aria-label={title} className={LINK} />}
       {/* Taps go through the words to the link; only `extra` takes its own. */}
       {/* 16 px at the sides and 24 above and below the words, and a title split into lines of even length ("Hội
           Thánh Việt Nam / Winston-Salem", not "… Winston- / Salem"), at either text size (the user, 2026-10-22). */}

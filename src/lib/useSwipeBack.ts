@@ -2,13 +2,28 @@
 
 import { useEffect } from "react";
 
-// why each number: as on an iPhone, the swipe starts at the screen's left edge (so a swipe on a picture or a
-// list is left alone) and must travel far enough, more sideways than down, to count.
-const EDGE_PX = 30;
+// why each number: the swipe may start anywhere on the left 60% of the screen (the user, 2026-10-23: the 30 px
+// edge was hard to find), and must travel far enough, more sideways than down, to count, so a scroll is never
+// taken for it. The right 40% stays free for whatever is there.
+const START_AREA = 0.6;
 const MIN_SWIPE_PX = 80;
 
-// A swipe from the left edge to the right calls `goBack`, the same step as the screen's back arrow (PageHeader).
-// Only in the installed app: a browser tab has its own swipe back, and the two would both go back.
+// What keeps its own sideways swipe, so a swipe that starts on it is not a step back: a field (moving the caret,
+// selecting words), anything marked `data-own-swipe` (the picture viewer, the picture cropper), and anything that
+// scrolls sideways (a strip of pictures).
+const OWN_SWIPE = "input, textarea, select, [contenteditable], [data-own-swipe]";
+
+function hasItsOwnSwipe(target: EventTarget | null): boolean {
+  for (let element = target instanceof Element ? target : null; element; element = element.parentElement) {
+    if (element.matches(OWN_SWIPE)) return true;
+    const sideways = getComputedStyle(element).overflowX;
+    if ((sideways === "auto" || sideways === "scroll") && element.scrollWidth > element.clientWidth) return true;
+  }
+  return false;
+}
+
+// A swipe to the right from the left part of the screen calls `goBack`, the same step as the screen's back arrow
+// (PageHeader). Only in the installed app: a browser tab has its own swipe back, and the two would both go back.
 // The screen moves once the finger lets go; it does not follow the finger on the way (the README says why).
 export function useSwipeBack(goBack: (() => void) | undefined) {
   useEffect(() => {
@@ -18,7 +33,8 @@ export function useSwipeBack(goBack: (() => void) | undefined) {
 
     function onStart(event: TouchEvent) {
       const touch = event.touches[0];
-      start = touch.clientX <= EDGE_PX ? { x: touch.clientX, y: touch.clientY } : null;
+      const inArea = touch.clientX <= window.innerWidth * START_AREA;
+      start = inArea && !hasItsOwnSwipe(event.target) ? { x: touch.clientX, y: touch.clientY } : null;
     }
     function onEnd(event: TouchEvent) {
       if (!start) return;

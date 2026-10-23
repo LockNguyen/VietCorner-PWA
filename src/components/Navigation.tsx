@@ -12,7 +12,7 @@ import { SCREEN_ID } from "./PageSlide";
 
 type Navigation = {
   trail: Trail; // the screens opened since the last main one; the last is on show
-  stepBack: (href: string) => void; // the next screen, `href`, is a step back: it pops the trail, lands where it was left
+  stepBack: (href: string) => void; // the next screen, `href`, is a step back (the arrow, the swipe): pops the trail, lands where it was left
   restoreOnArrival: (href: string) => void; // the next screen, `href`, lands where it was left
 };
 
@@ -51,14 +51,8 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const screen = document.getElementById(SCREEN_ID)!; // the screen scrolls in its own box (PageSlide)
     const remember = () => positions.current.set(previous.current, screen.scrollTop);
-    // The phone's or browser's own back (Android's back button) is a step back too, landing where it was left.
-    const onHistoryBack = () => (restoring.current = steppingBack.current = pathOf(location.pathname));
     screen.addEventListener("scroll", remember, { passive: true });
-    window.addEventListener("popstate", onHistoryBack);
-    return () => {
-      screen.removeEventListener("scroll", remember);
-      window.removeEventListener("popstate", onHistoryBack);
-    };
+    return () => screen.removeEventListener("scroll", remember);
   }, []);
 
   useEffect(() => {

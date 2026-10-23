@@ -38,7 +38,7 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
   const goBack = useCallback(() => {
     if (!back) return;
     stepBack(back);
-    router.push(back, { transitionTypes: backMove, scroll: false });
+    router.replace(back, { transitionTypes: backMove, scroll: false });
   }, [back, backMove, stepBack, router]);
   useSwipeBack(back ? goBack : undefined);
   const myPicture = useMyPicture();

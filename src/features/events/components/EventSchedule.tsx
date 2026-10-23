@@ -42,7 +42,7 @@ export default function EventSchedule({ events: loaded, weeklyCard, meetings, ca
 
   const edit = canManage && (
     <div className="flex justify-end px-3 pt-2">
-      <IconButton tone="filled" label={t(STRINGS.editSchedule)} onClick={() => router.push("/events/manage", { transitionTypes: GO_FORWARD })}>
+      <IconButton tone="filled" label={t(STRINGS.editSchedule)} onClick={() => router.replace("/events/manage", { transitionTypes: GO_FORWARD })}>
         <Pencil />
       </IconButton>
     </div>

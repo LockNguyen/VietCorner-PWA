@@ -42,7 +42,7 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
     <div className="flex flex-col gap-4 px-3 pt-2 pb-4">
       {canManage && (
         <div className="flex justify-end">
-          <IconButton tone="filled" label={t(STRINGS.addGroup)} onClick={() => router.push("/groups/manage/new", { transitionTypes: GO_FORWARD })}>
+          <IconButton tone="filled" label={t(STRINGS.addGroup)} onClick={() => router.replace("/groups/manage/new", { transitionTypes: GO_FORWARD })}>
             <Plus />
           </IconButton>
         </div>
@@ -66,7 +66,7 @@ export default function GroupDirectory({ groups: loaded, canManage, last }: Prop
             badge={<LiveDot />}
             title={t(nameText(group))}
             subtitle={[when, SWITCHES.groupLocation && t(locationText(group))].filter(Boolean).join(" · ") || undefined}
-            onClick={() => router.push(`/groups/${group.id}/about`, { transitionTypes: GO_FORWARD })}
+            onClick={() => router.replace(`/groups/${group.id}/about`, { transitionTypes: GO_FORWARD })}
           >
             {total > 0 && (
               <MemberCircles people={people} total={total} max={MAX_CIRCLES} label={t(members(total))} />

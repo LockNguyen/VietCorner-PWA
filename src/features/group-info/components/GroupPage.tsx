@@ -46,7 +46,7 @@ export default function GroupPage({ group: loaded, groups, photos, canManage }: 
           <IconButton
             tone="filled"
             label={t(STRINGS.editGroup)}
-            onClick={() => router.push(`/groups/manage/${group.id}`, { transitionTypes: GO_FORWARD })}
+            onClick={() => router.replace(`/groups/manage/${group.id}`, { transitionTypes: GO_FORWARD })}
           >
             <Pencil />
           </IconButton>

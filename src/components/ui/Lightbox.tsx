@@ -39,6 +39,7 @@ export default function Lightbox({ src, alt, caption, labels, onPrevious, onNext
           aria-describedby={undefined}
           onClick={(event) => event.target === event.currentTarget && onClose()} // the dark, not the picture
           {...handlers}
+          data-own-swipe // its sideways swipe changes the picture, never goes back (useSwipeBack)
           className="fixed inset-0 z-30 flex touch-pan-y items-center justify-center p-4"
         >
           <Dialog.Title className="sr-only">{alt}</Dialog.Title>

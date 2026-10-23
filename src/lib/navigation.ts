@@ -9,6 +9,12 @@
 //   detours   the assistant, Settings: a step aside from the main use, and back to where it started
 //   inner     everything else, opened from one of the two (an event's editor, a group's page, Settings → Name)
 //
+// The browser's history is not used: every link and every move replaces the current entry (`<Link replace>`,
+// `router.replace`), so the trail is the only way back (the user, 2026-10-23). A history of every screen visited let
+// the phone's own back gesture walk through them all (Prayer → Settings → Text size → … → Admin) where a main screen
+// should only ever go back to Home, and Home to nothing. Trade-off: Android's back button leaves the app instead of
+// stepping back; the back arrow and the swipe step back everywhere.
+//
 // How the screen moves (src/lib/slide.ts draws each):
 //   switch    from one main screen to another: no move, the new screen simply there, as an iPhone's tab bar
 //   forward   into an inner screen or a detour: it comes in from the right

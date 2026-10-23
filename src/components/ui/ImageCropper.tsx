@@ -15,7 +15,7 @@ const BOX = "relative h-72 w-full overflow-hidden rounded-control bg-ink";
 // dragging and pinching by hand, on every phone, is easy to get subtly wrong. Holds no state: the caller does.
 export default function ImageCropper({ src, position, zoom, onPositionChange, onZoomChange, onCropped }: Props) {
   return (
-    <div className={BOX}>
+    <div className={BOX} data-own-swipe>{/* a drag moves the picture, never goes back (useSwipeBack) */}
       <Cropper
         image={src}
         crop={position}

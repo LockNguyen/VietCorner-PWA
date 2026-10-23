@@ -48,7 +48,7 @@ export default function TranslationReviewRow({ request }: Props) {
           <IconButton
             label={t(STRINGS.editTranslation)}
             disabled={pending !== null}
-            onClick={() => router.push(`/admin/translations/${request.id}`, { transitionTypes: GO_FORWARD })}
+            onClick={() => router.replace(`/admin/translations/${request.id}`, { transitionTypes: GO_FORWARD })}
           >
             <Pencil aria-hidden />
           </IconButton>

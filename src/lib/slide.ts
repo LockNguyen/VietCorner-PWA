@@ -2,7 +2,7 @@ import { addTransitionType, startTransition } from "react";
 import type { Direction } from "./navigation";
 
 // The two directions a screen can move, as React transition types (`<Link transitionTypes>`,
-// `router.push(href, { transitionTypes })`). `src/components/PageSlide.tsx` turns them into the moves in
+// `router.replace(href, { transitionTypes })`; never push: src/lib/navigation.ts says why). `src/components/PageSlide.tsx` turns them into the moves in
 // globals.css. A navigation with neither (a refresh, a save) changes the screen without moving. Back is for
 // going home or out of an inner screen; the tab bar slides only to and from Home, or out of an inner screen
 // to its own tab, never between two tabs (AppTabs).

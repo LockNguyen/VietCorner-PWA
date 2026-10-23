@@ -53,7 +53,7 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
-  const open = (href: string) => router.push(href, { transitionTypes: GO_FORWARD });
+  const open = (href: string) => router.replace(href, { transitionTypes: GO_FORWARD });
 
   return (
     <div className="flex flex-col gap-4">
