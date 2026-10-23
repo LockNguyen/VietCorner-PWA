@@ -12,8 +12,8 @@
 // The browser's history is not used: every link and every move replaces the current entry (`<Link replace>`,
 // `router.replace`), so the trail is the only way back (the user, 2026-10-23). A history of every screen visited let
 // the phone's own back gesture walk through them all (Prayer → Settings → Text size → … → Admin) where a main screen
-// should only ever go back to Home, and Home to nothing. Trade-off: Android's back button leaves the app instead of
-// stepping back; the back arrow and the swipe step back everywhere.
+// should only ever go back to Home, and Home to nothing. The phone's own back (the iPhone's edge swipe, Android's
+// button) takes the app's step through a spare entry kept on top (src/components/Navigation.tsx).
 //
 // How the screen moves (src/lib/slide.ts draws each):
 //   switch    from one main screen to another: no move, the new screen simply there, as an iPhone's tab bar

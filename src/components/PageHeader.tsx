@@ -13,7 +13,7 @@ import { slideOf } from "@/lib/slide";
 import { useSwipeBack } from "@/lib/useSwipeBack";
 import { useMyPicture } from "./MyPicture";
 import { SCREEN_ID } from "./PageSlide";
-import { useNavigation } from "./Navigation";
+import { useBackGesture, useNavigation } from "./Navigation";
 import { SHELL_STRINGS } from "./strings";
 
 type Props = {
@@ -47,6 +47,9 @@ export default function PageHeader({ title, backHref, plain = false }: Props) {
     [back, backMove, stepBack, router],
   );
   useSwipeBack(back ? goBack : undefined, back || undefined, SCREEN_ID);
+  // The phone's own back (the iPhone's edge swipe, Android's button) takes the same step; on Home, none.
+  const phoneBack = useCallback(() => goBack(false), [goBack]);
+  useBackGesture(back ? phoneBack : null);
   const myPicture = useMyPicture();
 
   return (

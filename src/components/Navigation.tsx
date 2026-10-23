@@ -11,14 +11,31 @@ import { SCREEN_ID } from "./PageSlide";
 // it. The trail is kept on the phone (localStorage, the user, 2026-10-23), so a reload or a reopened app still goes
 // back the way it came; scroll positions are in memory only: after a reload every screen starts at its top. It also
 // keeps a picture of each screen left (src/lib/screenPictures.ts), for the swipe back to show under the screen.
+//
+// The phone's own back (the iPhone's swipe from the very edge, Android's back button) is the browser's back button,
+// and it would walk into whatever the browser holds before the app: an older address, a page that cannot load (the
+// user, 2026-10-23, from Home). So one spare history entry always sits on top of the screen. When the phone's back
+// uses it up, the screen's own back step runs instead (`useBackGesture`, registered by PageHeader), the same as the
+// arrow: the trail, Home from a main screen, nothing on Home; then a new spare goes on top.
 
 type Navigation = {
   trail: Trail; // the screens opened since the last main one; the last is on show
+  setBackGesture: (goBack: (() => void) | null) => void; // what the phone's own back does on this screen (PageHeader)
   stepBack: (href: string) => void; // the next screen, `href`, is a step back (the arrow, the swipe): pops the trail, lands where it was left
   restoreOnArrival: (href: string) => void; // the next screen, `href`, lands where it was left
 };
 
-const NavigationContext = createContext<Navigation>({ trail: [], stepBack: () => {}, restoreOnArrival: () => {} });
+const NavigationContext = createContext<Navigation>({
+  trail: [],
+  setBackGesture: () => {},
+  stepBack: () => {},
+  restoreOnArrival: () => {},
+});
+
+// The spare entry: the same address, marked, so the phone's back has something of the app's own to take.
+function addSpareEntry() {
+  history.pushState({ spare: true }, "", location.href);
+}
 
 const TRAIL_KEY = "navigation-trail";
 
@@ -50,6 +67,7 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const positions = useRef(new Map<string, number>()); // the last scroll position of each screen, by path
   const restoring = useRef<string | null>(null); // the screen a back step is on its way to
   const lastTap = useRef<ScreenPicture | null>(null); // the screen as it was at the last tap, in case that tap left it
+  const backGesture = useRef<(() => void) | null>(null); // the screen's own back step; none on Home
 
   useEffect(() => {
     const screen = document.getElementById(SCREEN_ID)!; // the screen scrolls in its own box (PageSlide)
@@ -67,6 +85,21 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setTrail(resumedTrail(loadTrail(), location.pathname));
   }, []);
+
+  // The phone's back took the spare entry: the screen's own back step instead (it brings a new spare with the next
+  // screen, below), or on Home, where there is none, just a new spare. A moment later, not at once: Next.js answers
+  // the same event by restoring the entry it landed on, which would cancel a step started alongside it (measured).
+  useEffect(() => {
+    const onPhoneBack = () => setTimeout(() => (backGesture.current ? backGesture.current() : addSpareEntry()));
+    window.addEventListener("popstate", onPhoneBack);
+    return () => window.removeEventListener("popstate", onPhoneBack);
+  }, []);
+
+  // A spare on top of every screen, the first one included: a move replaces the entry it lands on (the spare), so
+  // each new screen needs its own.
+  useEffect(() => {
+    addSpareEntry();
+  }, [pathname]);
 
   useEffect(() => {
     saveTrail(trail);
@@ -95,11 +128,26 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
   const stepBack = useCallback((href: string) => {
     restoring.current = steppingBack.current = pathOf(href);
   }, []);
-  const navigation = useMemo(() => ({ trail, stepBack, restoreOnArrival }), [trail, stepBack, restoreOnArrival]);
+  const setBackGesture = useCallback((goBack: (() => void) | null) => {
+    backGesture.current = goBack;
+  }, []);
+  const navigation = useMemo(
+    () => ({ trail, setBackGesture, stepBack, restoreOnArrival }),
+    [trail, setBackGesture, stepBack, restoreOnArrival],
+  );
 
   return <NavigationContext value={navigation}>{children}</NavigationContext>;
 }
 
 export function useNavigation(): Navigation {
   return useContext(NavigationContext);
+}
+
+// Makes `goBack` what the phone's own back does while this screen is on show (none: the phone's back does nothing).
+export function useBackGesture(goBack: (() => void) | null) {
+  const { setBackGesture } = useNavigation();
+  useEffect(() => {
+    setBackGesture(goBack);
+    return () => setBackGesture(null);
+  }, [goBack, setBackGesture]);
 }
