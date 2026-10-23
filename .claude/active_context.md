@@ -76,6 +76,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] M6 deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
+- [x] 2026-10-22: `analytics`: usage tracker + `/admin/analytics` dashboard (branch `feature/analytics-dashboard`). Build, 161 tests; SQL not run, not seen signed in.
+
 ## ⚠️ Known Constraints & Debt
 - iOS push requires iOS 16.4+, Add to Home Screen, and a user tap to grant permission.
 - Embeddings: self-hosted; the model is chosen in M3 (e5-base vs bge-m3 vs Vietnamese_Embedding). `EMBEDDING_DIM` and `schema.sql` wait for that result.
@@ -557,7 +559,30 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       the pane), the SQL, `test:rls`. Then: group photos kept by the service worker under their path (`photos-v1`), so a
       return to a group's page downloads nothing it has shown before. Debt: event pictures still 400 px; the seed's English church title is a guess.
 
+- [x] **Feedback round 4 (2026-10-22, the user's 5 points), then the upgrade and back-scroll.** 1. A used sign-in
+      link works again all day (logged as a security trade-off); no "expired" flash in the browser that asked.
+      2. Weekly card: flat dark veil, 24 px top and bottom, "Địa điểm:" / "Liên hệ:" labels, links underlined and
+      wrapping; Google already opened the official listing (same cid), Apple keeps the pin. 3. Back / Pause / Next,
+      one shuffled order per phone (localStorage). 4. Counts on every Pray button (prayer schema 5c). 5. Log flood =
+      a scanner through Tailscale Funnel. Then: Next.js 16.4.2 (audit 0), back lands where the screen was left
+      (`ScrollMemory`), English bubble "I want to / pray now". Evidence: 160/160 tests, build clean, `/ui` at 375 px
+      (weekly card compact + big, toolbar grow-in, Pray pills). NOT committed (the user's word). NOT seen: signed in,
+      SQL 5c, `test:rls`, the sign-in change end to end, the back step.
+
 ## ➡️ Next 3 Micro-Steps
+R4a. User: run `docs/sql-to-run-2026-10-22.sql` (prayer 5c, group-info 10: members' pictures on the group cards)
+   BEFORE deploying, then `npm run test:rls`.
+R4b. User on a phone (iPhone, in the installed app): scroll, open and close a card far down Groups; switch tabs;
+   Admin's own screens slide. The screen now scrolls in its own box (PageSlide): check that scrolling, the
+   keyboard on Prayer → write, and the chat's newest message still behave. Turn Tailscale Funnel off when not testing.
+R4c. User on a phone: sign in twice in a day and tap the FIRST email; Prayer: Play → Back/Next appear, swipe the
+   app away, Play again → the next song in the same order.
+A1. Done 2026-10-22: analytics SQL run, rows arriving (27; a storage 400 + its banner caught). Still: `docs/sql-to-run-2026-10-21.sql`
+   (R3a: no weekly card and group pictures over 200 KB refused until it runs), then
+   `npm run test:rls` (two new cases: anyone signed in adds rows about themselves, only an admin reads).
+A2. User + Claude, signed in as an admin on a local build: open a few screens, tap, wait 30 s, then
+   `/admin/analytics`: totals, Screens, People → a timeline, What opens what, Problems, Resources per visit.
+A3. Tell members the app records how it is used (a line in Settings or the welcome screen), before the deploy.
 R3a. User: run `docs/sql-to-run-2026-10-21.sql` in Supabase, then `npm run test:rls`; BEFORE the deploy (until
    then the Events tab shows no weekly card). Correct the card's English title in Events → pencil → first card.
 R3b. User: add the other worship MP3s to `public/audio/worship/` and their paths to `WORSHIP_SONGS`
