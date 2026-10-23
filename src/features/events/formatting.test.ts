@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLongDate, formatTime, formatWeekday } from "./formatting";
+import { formatLongDate, formatShortTime, formatTime, formatWeekday } from "./formatting";
 
 // Sunday 18 October 2026, 7 PM at church (New York, summer time = UTC-4): 23:00 UTC.
 const SUNDAY_EVENING = new Date("2026-10-18T23:00:00Z");
@@ -19,4 +19,14 @@ describe("an event's date and time, in church time", () => {
     expect(formatWeekday(SUNDAY_EVENING, "vi")).toBe("Chúa Nhật");
     expect(formatWeekday(SUNDAY_EVENING, "en")).toBe("Sunday");
   });
+});
+
+describe("the Events tab's short clock and day names", () => {
+  it("writes 1-12, the minutes, then a or p", () => {
+    expect(formatShortTime("09:15")).toBe("9:15a");
+    expect(formatShortTime("00:05")).toBe("12:05a");
+    expect(formatShortTime("12:00:00")).toBe("12:00p");
+    expect(formatShortTime("19:30:00")).toBe("7:30p");
+  });
+
 });

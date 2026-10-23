@@ -1,3 +1,5 @@
+import type { Language } from "@/features/i18n/types"; // I18N
+
 // One row of the `prayer_feed` view (schema.sql): a request as every approved member sees it.
 export type PrayerRequest = {
   id: string;
@@ -5,10 +7,29 @@ export type PrayerRequest = {
   is_anonymous: boolean;
   created_at: string;
   is_mine: boolean; // decided by the database, so the author's id never reaches the browser
-  prayer_count: number | null; // how many prayed: given to the author only (schema.sql 5b), null for everyone else
+  prayer_count: number; // how many prayed, for every reader since 2026-10-22 (schema.sql 5c; 5b gave it to the author only)
   author_name: string | null; // null when the request is anonymous
   author_avatar: string | null; // their picture's path in the profiles' AVATAR_BUCKET; null when anonymous or none
+  language: Language | null; // the original's, found by the AI service; null until known (schema.sql 5d)
+  translation: string | null; // into the other language, only once an admin approved it; else null
 };
+
+// One request on a reviewer's lists (schema.sql 5d `prayer_translations`): its words and its translation, which
+// is null when the AI service could not translate it. Waiting for review while `translation_reviewed_at` is null.
+export type PrayerTranslation = {
+  id: string;
+  body: string;
+  language: Language | null;
+  translation: string | null;
+  created_at: string;
+  translation_reviewed_at: string | null;
+};
+
+// Who reviews translations before members see them (schema.sql 5d grants it to admins).
+export const REVIEW_TRANSLATIONS = "prayer.translations";
+
+// why: the database rejects a longer translation (schema.sql 5d); a translation can run longer than its original.
+export const MAX_TRANSLATION_LENGTH = 2000;
 
 // What the composer sends. Who wrote it comes from the login token, never from here.
 export type NewPrayerRequest = {
@@ -16,7 +37,8 @@ export type NewPrayerRequest = {
 };
 
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.
-export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count, author_avatar";
+export const FEED_COLUMNS =
+  "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count, author_avatar, language, translation";
 
 // why: enough to fill several screens of a phone, small enough to arrive fast on a slow connection.
 // Older requests load when the reader reaches the bottom.
@@ -25,9 +47,18 @@ export const PAGE_SIZE = 20;
 // why: the database rejects anything longer (schema.sql); the composer stops the typing at the same number.
 export const MAX_BODY_LENGTH = 1000;
 
-// The soft worship music the Prayer tab can play while members pray: one file the church has the rights to,
-// added by hand (the prayer README). Looped, so a long prayer never ends in silence.
-export const WORSHIP_MUSIC_URL = "/audio/worship.mp3";
+// The worship songs the Prayer tab plays while members pray, in the order playlist.ts picks: files the church
+// has the rights to, added by hand to public/audio/worship/ and named here (the prayer README). A song is
+// downloaded only when it starts, so a longer list costs the app nothing until it plays. `songs.test.ts` fails
+// when this list and the folder disagree (2026-10-22: the folder's files were replaced and Play found nothing).
+export const WORSHIP_FOLDER = "/audio/worship/";
+export const WORSHIP_SONGS = [
+  "Be Thou My Vision.mp3",
+  "Count Your Blessings.mp3",
+  "Higher Ground.mp3",
+  "Jesus Loves Me.mp3",
+  "This Is My Fathers World.mp3",
+].map((file) => WORSHIP_FOLDER + file);
 
 // why: soon enough to still be on the tab; 4 s felt slow (the user, 2026-10-19).
 export const MUSIC_NUDGE_AFTER_MS = 2000;

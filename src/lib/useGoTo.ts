@@ -9,5 +9,5 @@ export function useGoTo() {
   const router = useRouter();
   const whenDrawn = useWhenDrawn();
 
-  return (href: string) => whenDrawn(() => router.push(href));
+  return (href: string) => whenDrawn(() => router.replace(href));
 }

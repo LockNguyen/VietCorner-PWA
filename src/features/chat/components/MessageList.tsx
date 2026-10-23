@@ -4,7 +4,7 @@ import Avatar from "@/components/ui/Avatar";
 import Bubble from "@/components/ui/Bubble";
 import BubbleRun from "@/components/ui/BubbleRun";
 import TimeLine from "@/components/ui/TimeLine";
-import { clockTime, withChurchSunday } from "@/features/i18n/clock"; // I18N
+import { clockTime, withChurchWeekdays } from "@/features/i18n/clock"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { LOCALES } from "@/features/i18n/types"; // I18N
 import type { Names } from "@/features/profiles/types"; // PROFILES
@@ -25,7 +25,7 @@ export default function MessageList({ messages, names, myUserId }: Props) {
   const when = (at: string) => {
     const instant = new Date(at);
     const day = instant.toLocaleDateString(LOCALES[language], { weekday: "short", day: "numeric", month: "short", timeZone: CHURCH_TIME_ZONE });
-    return `${withChurchSunday(day)}, ${clockTime(wallTime(instant).slice(11), language)}`;
+    return `${withChurchWeekdays(day)}, ${clockTime(wallTime(instant).slice(11), language)}`;
   };
 
   return (

@@ -78,6 +78,15 @@ class Generation:
     provider: str  # config.CHAT_PROVIDERS name, e.g. "groq" or "openrouter-2"
 
 
+@dataclass(frozen=True)
+class Translation:
+    """A prayer request's language and its translation into the other one (translation/translate.py)."""
+
+    language: str  # the original's: "vi" or "en"
+    text: str  # the translation, in the other language
+    provider: str  # who wrote it, for the log
+
+
 @dataclass
 class Answer:
     """The final result of answer_question(). timings are in milliseconds per stage."""

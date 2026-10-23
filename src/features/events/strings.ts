@@ -23,6 +23,20 @@ export const STRINGS = {
   addressField: { en: "Address", vi: "Địa chỉ" } satisfies Text,
   contactField: { en: "Contact phone number", vi: "Số điện thoại liên hệ" } satisfies Text,
 
+  // The Edit list (for whoever manages events): the weekly card, then the events, weekly and one-time
+  editSchedule: { en: "Edit the schedule", vi: "Chỉnh sửa lịch sinh hoạt" } satisfies Text,
+  firstCard: { en: "The first card: name, address, contact", vi: "Thẻ đầu tiên: tên, địa chỉ, liên hệ" } satisfies Text,
+  oneTime: { en: "One-time", vi: "Một lần" } satisfies Text,
+
+  // The weekly card's editor
+  editFirstCard: { en: "Edit the first card", vi: "Chỉnh sửa thẻ đầu tiên" } satisfies Text,
+  cardTitleField: { en: "Title", vi: "Tiêu đề" } satisfies Text,
+  cardTitleHint: {
+    en: "The bold line at the top: the church's name. The weekly events and group meetings follow it.",
+    vi: "Dòng chữ đậm trên cùng: tên Hội Thánh. Các buổi hằng tuần và giờ họp nhóm theo sau.",
+  } satisfies Text,
+  noCardTitle: { en: "Add the title in Vietnamese.", vi: "Vui lòng nhập tiêu đề tiếng Việt." } satisfies Text,
+
   // The editor (for whoever manages events)
   newEvent: { en: "New event", vi: "Sự kiện mới" } satisfies Text,
   editEvent: { en: "Edit event", vi: "Chỉnh sửa sự kiện" } satisfies Text,

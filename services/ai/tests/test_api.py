@@ -1,13 +1,14 @@
-"""M6: HTTP API, with the pipeline replaced by fakes."""
+"""M6: HTTP API, with the pipeline (and the translation) replaced by fakes."""
 
 import pytest
 from fastapi.testclient import TestClient
 
 import api.main as main
-from config import MAX_HISTORY_TURNS, MAX_QUESTION_CHARS
-from domain import Answer, Source
+from config import MAX_HISTORY_TURNS, MAX_QUESTION_CHARS, MAX_TRANSLATE_CHARS
+from domain import Answer, Source, Translation
 from rag.providers import AllProvidersFailed
 from speech.transcribe import SpeechUnavailable
+from translation.translate import TranslationFailed
 
 AUTH = {"Authorization": "Bearer test-token"}
 
@@ -136,3 +137,31 @@ def test_ask_rejects_more_history_than_we_asked_for(client):
     response = client.post("/ask", json={"question": "hi", "history": history}, headers=AUTH)
 
     assert response.status_code == 422
+
+
+def test_translate_returns_the_language_and_the_translation(client, monkeypatch):
+    monkeypatch.setattr(main, "translate", lambda text: Translation("vi", "Please pray for me.", "fake"))
+
+    response = client.post("/translate", json={"text": "Xin cầu nguyện cho tôi."}, headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.json() == {"language": "vi", "translation": "Please pray for me."}
+
+
+def test_translate_rejects_a_missing_token(client):
+    assert client.post("/translate", json={"text": "hi"}).status_code == 401
+
+
+def test_translate_rejects_blank_or_too_long_text(client):
+    assert client.post("/translate", json={"text": "  "}, headers=AUTH).status_code == 400
+    too_long = "x" * (MAX_TRANSLATE_CHARS + 1)
+    assert client.post("/translate", json={"text": too_long}, headers=AUTH).status_code == 422
+
+
+@pytest.mark.parametrize("error", [AllProvidersFailed("groq: rate limited"), TranslationFailed("no JSON")])
+def test_translate_says_try_again_when_it_cannot_translate(client, monkeypatch, error):
+    def fails(text):
+        raise error
+
+    monkeypatch.setattr(main, "translate", fails)
+    assert client.post("/translate", json={"text": "hi"}, headers=AUTH).status_code == 503

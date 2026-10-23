@@ -21,7 +21,7 @@ Run `schema.sql` in Supabase → SQL Editor (creates `user_settings` with owner-
 | Data | `schema.sql` | `user_settings(user_id, language)`, owner-only RLS |
 | Types | `types.ts` | `Language`, `Text` ( `{ en, vi }` ), `LANGUAGES`, `DEFAULT_LANGUAGE`, `LOCALES` (date formats), `isLanguage` |
 | Pure logic | `translate.ts` | `translate(text, language)`; falls back to the other language rather than showing nothing |
-| Pure logic | `clock.ts` | `clockTime("19:00", language)`: "7:00 PM" / "7:00 Tối"; every time the app shows goes through it (Sáng before 11, Trưa to 13, Chiều to 18, Tối after); `withChurchSunday(text)`: "Chủ Nhật" → "Chúa Nhật". Tested |
+| Pure logic | `clock.ts` | `clockTime("19:00", language)`: "7:00 PM" / "7:00 Tối"; every time the app shows goes through it (Sáng before 11, Trưa to 13, Chiều to 18, Tối after); `withChurchWeekdays(text)`: "Chủ Nhật" → "Chúa Nhật", the other days by number, "Thứ Hai" → "Thứ 2" … "Thứ 7" (the user, 2026-10-23: clearer); every weekday the app shows goes through it (whole words only); `weekdayName(0–6, language)`: a weekday by its number, for every list and card of weekdays (events' weekly card, group meetings, prayer reminders). Tested |
 | Text | `strings.ts` | This feature's own labels |
 | Browser API | `api.ts` | `saveLanguage` (upsert, RLS allows only your own row) |
 | Server reads | `server/queries.ts` | `getLanguage(supabase)` → the user's language or `null`; `getLanguagesOf(admin, userIds)` for text the server writes to others |

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import Picture from "./Picture";
 
 type Props = ComponentProps<typeof Link> & { title: string; src?: string };
 
@@ -9,12 +10,13 @@ type Props = ComponentProps<typeof Link> & { title: string; src?: string };
 export default function PhotoTile({ title, src, children, ...link }: Props) {
   return (
     <Link
+      replace
       {...link}
       className="relative flex h-30 flex-col items-center justify-center gap-2 overflow-hidden rounded-thumb bg-subtle text-on-action focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
     >
       {src && (
         <>
-          <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
+          <Picture src={src} className="absolute inset-0 size-full object-cover" />
           <span aria-hidden className="absolute inset-0 bg-ink/45" />
         </>
       )}

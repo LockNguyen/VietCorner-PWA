@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { GO_FORWARD } from "@/lib/slide";
 import EmptyState from "@/components/ui/EmptyState";
@@ -15,37 +15,43 @@ import { getSchedule } from "../api";
 import { formatLongDate } from "../formatting";
 import { cardsOf, nextOfEach, scheduleOf } from "../occurrences";
 import { STRINGS } from "../strings";
-import type { Occurrence, ScheduledEvent } from "../types";
+import type { Occurrence, ScheduledEvent, WeeklyCard, WeeklyMeeting } from "../types";
+import { weeklyLineOf } from "../weekly";
 import EventCard from "./EventCard";
+import EventWeeklyCard from "./EventWeeklyCard";
 
 type Props = {
   events: ScheduledEvent[]; // as the page loaded them
-  canManage: boolean; // an admin: a + for a new event, and a tap on a card opens its editor
+  weeklyCard: WeeklyCard | null; // null before schema.sql 3h is run: no first card
+  meetings: WeeklyMeeting[]; // the groups' weekly meetings, for the first card
+  canManage: boolean; // an admin: the Edit button, which opens the list of everything to edit
 };
 
-// The schedule: each event once, at its next date (a weekly one never shows a second week), grouped by day,
-// soonest first; a day's events at one place share a card (`cardsOf`). An admin's tap opens its editor. It shows what the page loaded at once, then keeps itself
-// fresh (`useFresh`).
-export default function EventSchedule({ events: loaded, canManage }: Props) {
+// The schedule (the user, 2026-10-21): first the weekly card, every weekly event and group meeting by weekday;
+// then each one-time event under its day, soonest first, a day's events at one place sharing a card (`cardsOf`).
+// It shows what the page loaded at once, then keeps itself fresh (`useFresh`).
+export default function EventSchedule({ events: loaded, weeklyCard, meetings, canManage }: Props) {
   const { t, language } = useLanguage(); // I18N
   const router = useRouter();
   const events = useFresh(loaded, getSchedule);
-  const occurrences = nextOfEach(
-    scheduleOf(events, language, new Date()).filter((date) => SWITCHES.canceledEvents || !date.canceled),
-  );
+  const dates = scheduleOf(events, language, new Date());
+  // A weekly event at its next date that is on: a skipped week shows the week after, on the same weekday.
+  const weekly = nextOfEach(dates.filter((date) => date.event.repeats_weekly && !date.canceled));
+  const oneTime = dates.filter((date) => !date.event.repeats_weekly && (SWITCHES.canceledEvents || !date.canceled));
+  const lines = [...weekly.map(weeklyLineOf), ...meetings.map((meeting) => ({ ...meeting, title: t(meeting.title) }))];
 
-  const add = canManage && (
+  const edit = canManage && (
     <div className="flex justify-end px-3 pt-2">
-      <IconButton tone="filled" label={t(STRINGS.newEvent)} onClick={() => router.push("/events/new", { transitionTypes: GO_FORWARD })}>
-        <Plus />
+      <IconButton tone="filled" label={t(STRINGS.editSchedule)} onClick={() => router.replace("/events/manage", { transitionTypes: GO_FORWARD })}>
+        <Pencil />
       </IconButton>
     </div>
   );
 
-  if (occurrences.length === 0) {
+  if (!weeklyCard && oneTime.length === 0) {
     return (
       <div>
-        {add}
+        {edit}
         <EmptyState message={t(STRINGS.emptyState)} />
       </div>
     );
@@ -53,18 +59,22 @@ export default function EventSchedule({ events: loaded, canManage }: Props) {
 
   return (
     <div>
-      {add}
-      {groupByDay(occurrences).map(([day, ofThatDay]) => (
+      {edit}
+      {weeklyCard && (
+        <div className="px-3 pt-4">
+          <EventWeeklyCard card={weeklyCard} lines={lines} />
+        </div>
+      )}
+      {groupByDay(oneTime).map(([day, ofThatDay]) => (
         <section key={day}>
           <SectionHeading>{dayLabel(day, language, t)}</SectionHeading>
           <div className="flex flex-col gap-4 px-3">
             {cardsOf(ofThatDay).map((card) => (
-              <EventCard key={card[0].event.id} occurrences={card} canManage={canManage} />
+              <EventCard key={card[0].event.id} occurrences={card} />
             ))}
           </div>
         </section>
       ))}
-
     </div>
   );
 }

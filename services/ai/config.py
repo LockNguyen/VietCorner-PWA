@@ -147,6 +147,19 @@ WHISPER_MODEL = "whisper-large-v3"
 # why: same ~10 s budget as /ask; a short voice question transcribes in 1-2 s.
 TRANSCRIBE_TIMEOUT_SECONDS = 8
 
+# --- Translation (prayer requests) -------------------------------------------------------------------
+# why: a request is written in Vietnamese or English and read by both. See translation/translate.py.
+
+# why: the same limit as prayer_requests.body in the web app's schema, so every request fits and nothing else does.
+MAX_TRANSLATE_CHARS = 1000
+# why: a translation has one right answer; randomness only adds mistakes.
+TRANSLATION_TEMPERATURE = 0
+# why: the longest request (1000 English characters) became 936 Vietnamese ones on Groq in 2.7 s (measured
+# 2026-10-23), about 500 tokens with the JSON around them; 1200 leaves room for wordier answers. A translation cut
+# short is unreadable JSON, which counts as a failure, never half a text. Those 2.7 s sit under the 4 s each
+# provider gets (PROVIDER_TIMEOUT_SECONDS): a slower moment moves the request on to the next provider.
+TRANSLATION_MAX_TOKENS = 1200
+
 # --- API (M6) ----------------------------------------------------------------------------------------
 # why: a spoken question is a sentence or two. Anything longer is a bug or abuse, and costs tokens.
 MAX_QUESTION_CHARS = 1000

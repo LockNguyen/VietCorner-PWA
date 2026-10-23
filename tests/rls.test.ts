@@ -184,14 +184,16 @@ describe("people: the Admin tab's list of everyone (people/schema.sql)", () => {
   });
 });
 
-describe("group cards: members' initials (group-info/schema.sql, section 7)", () => {
+describe("group cards: members' initials and pictures (group-info/schema.sql, section 10)", () => {
   it("are given to an approved member, and to nobody signed out", async () => {
     const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
       auth: { persistSession: false },
     });
-    const { data: initials } = await bob.client.rpc("group_member_initials", { group_id: groupId });
-    expect(Array.isArray(initials) && initials.length).toBeGreaterThan(0); // Alice is in it
-    expect((await anonymous.rpc("group_member_initials", { group_id: groupId })).error).not.toBeNull();
+    const { data: faces } = await bob.client.rpc("group_member_faces", { group_id: groupId });
+    expect(Array.isArray(faces) && faces.length).toBeGreaterThan(0); // Alice is in it
+    expect(faces[0]).toHaveProperty("initials");
+    expect(faces[0]).toHaveProperty("avatar"); // a path, or null without a picture
+    expect((await anonymous.rpc("group_member_faces", { group_id: groupId })).error).not.toBeNull();
   });
 });
 
@@ -923,14 +925,14 @@ describe("prayer requests", () => {
     expect(whileWaiting).not.toBeNull();
   });
 
-  it("count a prayer from a fellow member, and show the number to the author only", async () => {
+  it("count a prayer from a fellow member, and show the number to every member", async () => {
     const { data: counted } = await bob.client.rpc("pray_for_request", { request_id: namedId });
 
     expect(counted).toBe(true);
     expect(await prayerCount(namedId)).toBe(1);
-    // Section 5b: the author reads the count; everyone else gets null, so nobody compares requests.
+    // Section 5c (2026-10-22): the author and everyone else read the count.
     expect((await feedOf(alice)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
-    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBeNull();
+    expect((await feedOf(bob)).find((request) => request.id === namedId)?.prayer_count).toBe(1);
   });
 
   it("do not count a prayer from someone still waiting, or from the author", async () => {
@@ -1014,6 +1016,83 @@ describe("prayer requests", () => {
     expect(forAGroup).not.toBeNull();
     expect(stored).toHaveLength(1); // still one reminder, not two
     expect(removed).toHaveLength(1);
+  });
+
+  it("translations reach readers only once a reviewer approved them, and an author can write none (section 5d)", async () => {
+    // Alice holds the admin role by now, and with it "prayer.translations"; Bob is a member and the author here.
+    await bob.client.from("prayer_requests").insert({ body: "Please pray for my exam." });
+    const { data: posted } = await admin
+      .from("prayer_requests")
+      .select("id, translation_reviewed_at")
+      .eq("author_id", bob.id)
+      .single();
+    const id = posted!.id;
+    // What the server does after the post (translateRequest.ts), with the service role.
+    await admin.from("prayer_requests").update({ language: "en", translation: "Xin cầu nguyện cho kỳ thi của tôi." }).eq("id", id);
+    const translationIn = async (reader: TestUser) =>
+      (await reader.client.from("prayer_feed").select("translation").eq("id", id).single()).data?.translation;
+
+    const unreviewed = await translationIn(alice);
+    const { error: authorWrites } = await bob.client.from("prayer_requests").update({ translation: "mine" }).eq("id", id);
+    const { error: authorApproves } = await bob.client
+      .from("prayer_requests")
+      .update({ translation_reviewed_at: new Date().toISOString() })
+      .eq("id", id);
+    const { data: memberReviews } = await bob.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "Please pray for my exam.",
+      translation: "defaced",
+      language: "en",
+    });
+    const { data: memberList } = await bob.client.rpc("prayer_translations");
+    const { data: reviewerList } = await alice.client.rpc("prayer_translations").is("translation_reviewed_at", null);
+    // A reviewer who read other words (the author edited meanwhile) approves nothing.
+    const { data: staleReview } = await alice.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "older words",
+      translation: "Xin cầu nguyện cho kỳ thi của tôi.",
+      language: "en",
+    });
+    const { data: review } = await alice.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "Please pray for my exam.",
+      translation: "Xin cầu nguyện cho kỳ thi của con.",
+      language: "en",
+    });
+    const approved = await translationIn(bob);
+    // Retry: only a reviewer can put an approved translation back on the waiting list; it keeps its words meanwhile.
+    const { data: memberReopens } = await bob.client.rpc("reopen_prayer_translation", { request_id: id });
+    const { data: reviewerReopens } = await alice.client.rpc("reopen_prayer_translation", { request_id: id });
+    const { data: reopened } = await admin
+      .from("prayer_requests")
+      .select("translation, translation_reviewed_at")
+      .eq("id", id)
+      .single();
+    const whileReopened = await translationIn(bob);
+    // The author's edit clears the approved translation in the same update, so it never shows under new words.
+    await bob.client.from("prayer_requests").update({ body: "Please pray for my exams." }).eq("id", id);
+    const { data: afterEdit } = await admin
+      .from("prayer_requests")
+      .select("language, translation, translation_reviewed_at")
+      .eq("id", id)
+      .single();
+    await bob.client.from("prayer_requests").delete().eq("id", id);
+
+    expect(posted!.translation_reviewed_at).toBeNull(); // a new request waits for review
+    expect(unreviewed).toBeNull();
+    expect(authorWrites).not.toBeNull();
+    expect(authorApproves).not.toBeNull();
+    expect(memberReviews).toBe(false);
+    expect(memberList).toEqual([]);
+    expect(reviewerList!.map((row: { id: string }) => row.id)).toContain(id);
+    expect(staleReview).toBe(false);
+    expect(review).toBe(true);
+    expect(approved).toBe("Xin cầu nguyện cho kỳ thi của con.");
+    expect(memberReopens).toBe(false);
+    expect(reviewerReopens).toBe(true);
+    expect(reopened).toEqual({ translation: "Xin cầu nguyện cho kỳ thi của con.", translation_reviewed_at: null });
+    expect(whileReopened).toBeNull(); // waiting for review again, so readers see the original
+    expect(afterEdit).toEqual({ language: null, translation: null, translation_reviewed_at: null });
   });
 });
 
@@ -1289,11 +1368,11 @@ describe("thumbnails: the picture that starts an event's row and a group's row",
     }
   });
 
-  it("refuse a file that is not a JPEG, or is over 200 KB, even from a manager", async () => {
+  it("refuse a file that is not a JPEG, or is over its limit (200 KB events, 500 KB groups), even from a manager", async () => {
     for (const { table, bucket } of kinds) {
       const files = alice.client.storage.from(bucket);
       const { error: notAPicture } = await files.upload(pathFor(table, "script"), new Blob(["<script>"], { type: "text/html" }), { contentType: "text/html" });
-      const { error: tooBig } = await files.upload(pathFor(table, "big"), new Blob([new Uint8Array(250_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
+      const { error: tooBig } = await files.upload(pathFor(table, "big"), new Blob([new Uint8Array(600_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
 
       expect(notAPicture).not.toBeNull();
       expect(tooBig).not.toBeNull();
@@ -1449,5 +1528,76 @@ describe("staff: the staff page's headings, people and placements (staff/schema.
     expect(newPerson).not.toBeNull();
     expect(changed ?? []).toEqual([]);
     expect(moved ?? []).toEqual([]);
+  });
+});
+
+describe("weekly_card: the Events tab's first card (events/schema.sql 3h)", () => {
+  const read = (client: SupabaseClient) => client.from("weekly_card").select("title, title_en, address, contact_phone");
+
+  it("is read by an approved member, and by nobody waiting or signed out", async () => {
+    const anonymous = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY, {
+      auth: { persistSession: false },
+    });
+
+    const { data: forMember } = await read(bob.client);
+    const { data: forWaiting } = await read(carol.client);
+    const { data: signedOut } = await read(anonymous);
+
+    expect(forMember).toHaveLength(1); // the seed in schema.sql
+    expect(forWaiting ?? []).toEqual([]);
+    expect(signedOut ?? []).toEqual([]);
+  });
+
+  it("is changed by an event manager only, and never gets a second row", async () => {
+    const { data: before } = await read(admin).single();
+    const { data: byMember } = await bob.client.from("weekly_card").update({ title: "x" }).eq("id", true).select("id");
+    const { data: byManager } = await alice.client // an admin since the "permissions" tests
+      .from("weekly_card")
+      .update({ title: before?.title })
+      .eq("id", true)
+      .select("id");
+    const { error: secondRow } = await alice.client.from("weekly_card").insert({ id: false, title: "x" });
+
+    expect(byMember ?? []).toEqual([]);
+    expect(byManager).toHaveLength(1);
+    expect(secondRow).not.toBeNull();
+  });
+});
+
+describe("analytics_events (analytics/schema.sql)", () => {
+  // The same call the route makes: an insert as the signed-in person, user_id filled from their token.
+  const visitId = crypto.randomUUID();
+  const event = (path: string) => ({ visit_id: visitId, at: new Date().toISOString(), kind: "page", path, target: null, ms: 1000, detail: {} });
+
+  afterAll(async () => {
+    await admin.from("analytics_events").delete().eq("visit_id", visitId);
+  });
+
+  it("are added by anyone signed in, a person still waiting included, and only about themselves", async () => {
+    const { error: byWaiting } = await carol.client.from("analytics_events").insert(event("/waiting"));
+    const { error: byMember } = await bob.client.from("analytics_events").insert(event("/events"));
+    const { error: asSomeoneElse } = await bob.client.from("analytics_events").insert({ ...event("/x"), user_id: alice.id });
+    const { data: stored } = await admin.from("analytics_events").select("user_id, path").eq("visit_id", visitId).order("path");
+
+    expect([byWaiting, byMember]).toEqual([null, null]);
+    expect(asSomeoneElse).not.toBeNull();
+    expect(stored).toEqual([
+      { user_id: bob.id, path: "/events" },
+      { user_id: carol.id, path: "/waiting" },
+    ]);
+  });
+
+  it("are read by an analytics viewer only, and changed or removed by nobody", async () => {
+    const { data: forMember } = await bob.client.from("analytics_events").select("path").eq("visit_id", visitId);
+    const { data: memberReport } = await bob.client.rpc("analytics_pages", { since: "2000-01-01" });
+    const { data: forAdmin } = await alice.client.from("analytics_events").select("path").eq("visit_id", visitId);
+    await bob.client.from("analytics_events").update({ path: "/changed" }).eq("visit_id", visitId);
+    await bob.client.from("analytics_events").delete().eq("visit_id", visitId);
+    const { data: stored } = await admin.from("analytics_events").select("path").eq("visit_id", visitId);
+
+    expect(forMember ?? []).toEqual([]);
+    expect(memberReport ?? []).toEqual([]);
+    expect(forAdmin).toHaveLength(2); // an admin since the "permissions" tests
+    expect(stored?.map((row) => row.path).sort()).toEqual(["/events", "/waiting"]);
   });
 });

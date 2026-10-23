@@ -1,4 +1,4 @@
-import { clockTime, withChurchSunday } from "@/features/i18n/clock"; // I18N
+import { clockTime, withChurchWeekdays } from "@/features/i18n/clock"; // I18N
 import { LOCALES, type Language } from "@/features/i18n/types"; // I18N
 import { CHURCH_TIME_ZONE, wallTime } from "@/lib/churchTime";
 
@@ -14,12 +14,19 @@ export function formatTime(date: Date, language: Language): string {
 }
 
 export function formatLongDate(date: Date, language: Language): string {
-  return withChurchSunday(
+  return withChurchWeekdays(
     date.toLocaleDateString(LOCALES[language], { weekday: "long", day: "numeric", month: "long", timeZone: CHURCH_TIME_ZONE }),
   );
 }
 
+// "9:15a", "7:30p", from "09:15" or "19:30:00" (a church wall clock): the Events tab's short clock (the user,
+// 2026-10-21), the same in both languages because it is read as numbers.
+export function formatShortTime(wallClock: string): string {
+  const [hours, minutes] = wallClock.split(":").map(Number);
+  return `${hours % 12 === 0 ? 12 : hours % 12}:${String(minutes).padStart(2, "0")}${hours < 12 ? "a" : "p"}`;
+}
+
 // "Chúa Nhật" / "Sunday": the day a card names, its date being in the heading above it.
 export function formatWeekday(date: Date, language: Language): string {
-  return withChurchSunday(date.toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: CHURCH_TIME_ZONE }));
+  return withChurchWeekdays(date.toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: CHURCH_TIME_ZONE }));
 }

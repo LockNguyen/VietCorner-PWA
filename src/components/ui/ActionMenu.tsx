@@ -31,10 +31,10 @@ const HEADING = "px-4 py-3 text-body font-medium";
 export default function ActionMenu({ anchor, raised, items, onClose, heading }: Props) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
-    window.addEventListener("scroll", onClose, { passive: true });
+    window.addEventListener("scroll", onClose, { passive: true, capture: true }); // also the screen's own box
     window.addEventListener("keydown", onKey);
     return () => {
-      window.removeEventListener("scroll", onClose);
+      window.removeEventListener("scroll", onClose, { capture: true });
       window.removeEventListener("keydown", onKey);
     };
   }, [onClose]);

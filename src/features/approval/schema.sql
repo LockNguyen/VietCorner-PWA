@@ -68,7 +68,8 @@ grant execute on function public.approve_account (uuid) to authenticated;
 --
 -- Left out on purpose, because a waiting person needs them and each shows only their own rows:
 --   profiles, name_requests (their name) · user_settings (their language) · push_subscriptions (their
---   device, so "you are in" can reach them).
+--   device, so "you are in" can reach them) · analytics_events (rows about themselves, added and never read
+--   back, so the dashboard shows where people get stuck before they are let in; the user, 2026-10-22).
 -- `sign_in_links` (auth) needs no line: no browser has any grant on it.
 -- The picture files in Storage are not a table of ours: their policies ask for "app.use" themselves
 -- (features/group-info/schema.sql section 5).
@@ -105,6 +106,10 @@ create policy "Approved accounts only" on public.event_cancellations
 
 drop policy if exists "Approved accounts only" on public.event_reminders;
 create policy "Approved accounts only" on public.event_reminders
+  as restrictive for all to authenticated using ((select public.has_permission('app.use')));
+
+drop policy if exists "Approved accounts only" on public.weekly_card;
+create policy "Approved accounts only" on public.weekly_card
   as restrictive for all to authenticated using ((select public.has_permission('app.use')));
 
 drop policy if exists "Approved accounts only" on public.prayer_requests;

@@ -1,6 +1,6 @@
-import type { Language } from "./types";
+import { LOCALES, type Language } from "./types";
 
-// How this congregation says a time and names Sunday, in either language. Pure, so it is tested without a
+// How this congregation says a time and names the weekdays, in either language. Pure, so it is tested without a
 // screen. Here, in the language foundation, because any feature that shows a time or a weekday needs it.
 
 // A time of day, from "19:00" or "19:00:00" (a wall clock, already in church time): "7:00 PM" in English,
@@ -22,8 +22,28 @@ function partOfDay(hours: number): string {
   return "Tối";
 }
 
-// A church says "Chúa Nhật" (the Lord's day) where the phone's calendar says "Chủ Nhật". Applied to any
-// Vietnamese text the phone wrote with a weekday in it.
-export function withChurchSunday(text: string): string {
-  return text.replace(/Chủ nhật/gi, "Chúa Nhật");
+// The weekdays as this church writes them, in place of the phone calendar's names: "Chúa Nhật" (the Lord's day)
+// for "Chủ Nhật", and the other days by number, "Thứ 2" for "Thứ Hai" (the user, 2026-10-23: clearer).
+const CHURCH_WEEKDAYS: Record<string, string> = {
+  "chủ nhật": "Chúa Nhật",
+  "thứ hai": "Thứ 2",
+  "thứ ba": "Thứ 3",
+  "thứ tư": "Thứ 4",
+  "thứ năm": "Thứ 5",
+  "thứ sáu": "Thứ 6",
+  "thứ bảy": "Thứ 7",
+};
+
+// Applied to any Vietnamese text the phone wrote with a weekday in it ("Thứ Hai, 5 tháng 1" → "Thứ 2, 5 tháng 1").
+// English text has none of these words, so it passes through unchanged.
+// The lookahead keeps it to whole words: "thứ bao nhiêu" is not "Thứ 3 o nhiêu".
+export function withChurchWeekdays(text: string): string {
+  return text.replace(/(chủ nhật|thứ (hai|ba|tư|năm|sáu|bảy))(?!\p{L})/giu, (day) => CHURCH_WEEKDAYS[day.toLowerCase()]);
+}
+
+// A weekday by its number, 0 = Sunday, as every list and card of weekdays names it: "Thứ 3" / "Tuesday".
+// why: 4 January 2026 was a Sunday, so day 4 + n is weekday n; read in UTC, so no time zone can move it.
+export function weekdayName(weekday: number, language: Language): string {
+  const day = new Date(Date.UTC(2026, 0, 4 + weekday));
+  return withChurchWeekdays(day.toLocaleDateString(LOCALES[language], { weekday: "long", timeZone: "UTC" }));
 }

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import AppTabs from "@/components/AppTabs";
 import BannerHost from "@/components/BannerHost";
+import ActivityTracker from "@/features/analytics/components/ActivityTracker"; // ANALYTICS
 import WaitingStep from "@/features/approval/components/WaitingStep"; // APPROVAL
 import { getCurrentUser } from "@/features/auth/server/queries"; // AUTH
 import AdoptDeviceLanguage from "@/features/i18n/components/AdoptDeviceLanguage"; // I18N
@@ -21,6 +22,7 @@ import NotificationStep from "@/features/push/components/NotificationStep"; // P
 import { NOTIFICATIONS_ASKED_COOKIE } from "@/features/push/types"; // PUSH
 import { TEXT_SIZE_COOKIE, textSizeOf } from "@/features/text-size/types"; // TEXT-SIZE
 import { MyPictureProvider } from "@/components/MyPicture";
+import { NavigationProvider } from "@/components/Navigation";
 import PageSlide from "@/components/PageSlide";
 import { BannerProvider } from "@/lib/useBanner";
 import RefreshSavedPage from "@/components/RefreshSavedPage";
@@ -28,6 +30,7 @@ import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { APP_NAME } from "@/lib/appName";
 import launchScreens from "@/lib/launchScreens.json";
 import { publicFileUrl } from "@/lib/publicFileUrl";
+import { SWITCHES } from "@/lib/switches";
 
 export const metadata: Metadata = {
   title: APP_NAME,
@@ -84,10 +87,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={language} data-text-size={textSize}>
       <body className="bg-surface text-ink">
         <LanguageProvider language={language} signedIn={Boolean(user)}>
+          {/* Where a detour started and where each screen was left, for the back arrow and the tab bar. */}
+          <NavigationProvider>
           <MyPictureProvider src={avatarPath ? publicFileUrl(AVATAR_BUCKET, avatarPath) : undefined}>
             <BannerProvider>
               <main className="mx-auto max-w-column">
-                {/* The screen slides on forward and back (src/lib/slide.ts); the tab bar outside it stays. */}
+                {/* The screen moves on forward, back and switch (src/lib/navigation.ts); the tab bar outside it stays. */}
                 <PageSlide>
                 {/* INSTALL: signed in on a phone's browser, the install guide comes first (InstallGate). */}
                 {user ? (
@@ -105,6 +110,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {user && !step && <AppTabs showAdmin={managesSomething(permissions)} bigText={textSize === "big"} />}
           {user && <AdoptDeviceLanguage storedLanguage={storedLanguage} />}
           {user && <KeepSubscribed />} {/* PUSH */}
+          {user && SWITCHES.analytics && <ActivityTracker userId={user.id} />} {/* ANALYTICS */}
+          </NavigationProvider>
         </LanguageProvider>
         <ServiceWorkerRegister />
         <RefreshSavedPage renderedAt={Date.now()} />

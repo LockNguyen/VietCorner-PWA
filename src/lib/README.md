@@ -8,6 +8,10 @@ hooks behind every button. The short comment in each file says what it is; the l
 | `supabase/` | The only Supabase clients: `client.ts` (browser), `server.ts` (server), `admin.ts` (service role, server-only) |
 | `switches.ts` | What is switched off for now: one constant per feature or notification, read where it is turned off |
 | `churchTime.ts` | The wall clock in Winston-Salem; every date the app schedules by |
+| `phone.ts` | `dialable` (digits for the call and text links), `formatPhone` ("(336) 123-4567" as typed, for `ui/PhoneInput`) |
+| `screenPictures.ts` | Copies of the screens left behind, shown under the screen during a swipe back (`useSwipeBack`) |
+| `ids.ts` | `isId`: whether a route's input is a database id, so a malformed one is answered 400 |
+| `aiService.ts` | The one client of the AI service (`services/ai`), server-only: the assistant and prayer's translations |
 | `usePending.ts` | Which action of a component is running; ignores a second tap |
 | `useWhenDrawn.ts` | Starts a router change and resolves when its result is on screen |
 | `useRefresh.ts`, `useGoTo.ts` | A reload, a move to another screen, each awaited until drawn |

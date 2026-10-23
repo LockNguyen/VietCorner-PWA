@@ -13,9 +13,11 @@ function request(createdAt: string, author: string | null, isMine = false): Pray
     is_anonymous: author === null,
     created_at: createdAt,
     is_mine: isMine,
-    prayer_count: null,
+    prayer_count: 0,
     author_name: author,
     author_avatar: null,
+    language: null,
+    translation: null,
   };
 }
 

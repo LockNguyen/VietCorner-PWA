@@ -14,7 +14,8 @@ const TONES = {
   done: "border-success bg-success-soft text-success",
   quiet: "border-fill bg-fill text-subtle",
 } as const;
-const SIZES = { regular: "size-touch", small: "size-8" } as const;
+// `wide`: as tall as `regular`, as wide as what it holds ("3 🙏"), for a count beside the icon (the user, 2026-10-22).
+const SIZES = { regular: "size-touch", small: "size-8", wide: "h-touch min-w-touch gap-1 px-3" } as const;
 
 // A round button beside a bubble: `pray` to give a prayer, `done` once given, `quiet` for the author's own.
 // `label` is what a screen reader says in place of the icon.

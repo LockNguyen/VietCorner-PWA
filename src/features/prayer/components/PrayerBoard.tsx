@@ -33,7 +33,8 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
   const feed = usePrayerFeed(initialRequests);
   const cooldown = usePrayerCooldown(userId);
   const showBanner = useBanner();
-  const music = useWorshipMusic();
+  // Said only when the music really cannot play (no file, no connection), not while a song is on its way.
+  const music = useWorshipMusic(() => showBanner({ kind: "error", message: t(STRINGS.musicFailed) }));
   const stayed = useShowAfter(MUSIC_NUDGE_AFTER_MS);
   const [managing, setManaging] = useState<PrayerRequest | null>(null); // whose options are open
 
@@ -52,20 +53,18 @@ export default function PrayerBoard({ initialRequests, userId, canManageReminder
     if (!(await report(feed.pray(requestId)))) cooldown.cancelPause(requestId);
   }
 
-  async function toggleMusic() {
-    if (!(await music.toggle())) showBanner({ kind: "error", message: t(STRINGS.musicFailed) });
-  }
-
-  const open = (href: string) => router.push(href, { transitionTypes: GO_FORWARD });
+  const open = (href: string) => router.replace(href, { transitionTypes: GO_FORWARD });
 
   return (
     <div className="flex flex-col gap-4">
       <PrayerToolbar
         canManageReminders={canManageReminders}
-        playing={music.playing}
+        music={music.state}
         nudging={stayed && !music.started} // once the music has played, the hint has done its job
         onReminders={() => open("/prayer/reminders")}
-        onToggleMusic={toggleMusic}
+        onToggleMusic={music.toggle}
+        onPrevious={music.previous}
+        onNext={music.next}
         onAdd={() => open("/prayer/new")}
       />
 

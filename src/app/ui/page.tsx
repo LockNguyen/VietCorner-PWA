@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Bell, Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Languages, Mic, Pencil, Play, Plus, Settings, Square, Users } from "lucide-react";
+import { Bot, CalendarDays, Check, ChevronLeft, HandHeart, House, Languages, Mic, Pencil, Settings, Square, Users } from "lucide-react";
 import Avatar from "@/components/ui/Avatar";
 import Banner from "@/components/ui/Banner";
 import Bubble from "@/components/ui/Bubble";
@@ -13,7 +13,6 @@ import IconLink from "@/components/ui/IconLink";
 import ListRow from "@/components/ui/ListRow";
 import LogoMark from "@/components/ui/LogoMark";
 import PhoneNumber from "@/components/PhoneNumber";
-import NudgeBubble from "@/components/ui/NudgeBubble";
 import PersonCard from "@/components/ui/PersonCard";
 import PhotoCard from "@/components/ui/PhotoCard";
 import PhotoTile from "@/components/ui/PhotoTile";
@@ -29,17 +28,19 @@ import TextArea from "@/components/ui/TextArea";
 import TextInput from "@/components/ui/TextInput";
 import Thumbnail from "@/components/ui/Thumbnail";
 import TimeLine from "@/components/ui/TimeLine";
-import Toolbar from "@/components/ui/Toolbar";
 import TopBar from "@/components/ui/TopBar";
 import { getMyPermissions } from "@/features/permissions/server/queries"; // PERMISSIONS
+import EventWeeklyCard from "@/features/events/components/EventWeeklyCard"; // EVENTS
 import { managesSomething } from "@/features/permissions/types"; // PERMISSIONS
 import { createClient } from "@/lib/supabase/server";
 import BannerDemo from "./BannerDemo";
 import CardDemo from "./CardDemo";
 import CropperDemo from "./CropperDemo";
+import MusicToolbarDemo from "./MusicToolbarDemo";
 import ComposerDemo from "./ComposerDemo";
 import PhotoDemo from "./PhotoDemo";
 import SheetDemo from "./SheetDemo";
+import PhoneInputDemo from "./PhoneInputDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
 
@@ -84,7 +85,7 @@ export default async function ShowcasePage() {
           }
         />
         <TopBar
-          title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư"
+          title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ 4"
           left={<IconLink href="/ui#3" label="Back"><ChevronLeft /></IconLink>}
           right={
             <>
@@ -126,11 +127,12 @@ export default async function ShowcasePage() {
         <Field label="Dành cho">
           <Select defaultValue="b">
             <option value="a">Cả hội thánh</option>
-            <option value="b">Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư</option>
+            <option value="b">Nhóm Học Kinh Thánh Thanh Niên Tối Thứ 4</option>
           </Select>
         </Field>
         <Field label="Bắt đầu (giờ hội thánh)"><TextInput type="datetime-local" defaultValue="2026-10-14T19:00" /></Field>
         <Field label="Giờ (giờ hội thánh)"><TextInput type="time" defaultValue="19:00" /></Field>
+        <PhoneInputDemo />
         <TextInput placeholder="Email" aria-label="Email" />
         <div className="flex flex-col">
           <Switch label="Hằng tuần" defaultChecked />
@@ -143,9 +145,9 @@ export default async function ShowcasePage() {
         <Text as="h2" variant="small" tone="subtle">Rows as the admin screens compose them: a request, a reminder, a date on and off; then a group's name</Text>
         <ul>
           <ListRow title="Nguyễn Văn An" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
-          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Xóa</Button>} />
-          <ListRow title="Thứ Tư, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
-          <ListRow title="Thứ Tư, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
+          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ 4 · 19:00" trailing={<Button variant="quiet">Xóa</Button>} />
+          <ListRow title="Thứ 4, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
+          <ListRow title="Thứ 4, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
         </ul>
         <div className="flex gap-2 px-3 pt-3">
           <TextInput defaultValue="Nhóm Học Kinh Thánh" aria-label="Tên nhóm" />
@@ -189,11 +191,11 @@ export default async function ShowcasePage() {
         <BubbleRun side="theirs" name="Nguyễn Văn An" avatar={<Avatar />}>
           <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Xin cầu nguyện cho mẹ tôi đang nằm viện sau ca mổ tuần trước.</Bubble>
-            <Chip tone="pray" label="Pray">🙏</Chip>
+            <Chip tone="pray" size="wide" label="Pray, 3 people prayed">3 🙏</Chip>
           </div>
           <div className="flex w-full items-center gap-2">
             <Bubble tone="theirs">Amen</Bubble>
-            <Chip tone="done" label="Prayed" disabled><Check aria-hidden /></Chip>
+            <Chip tone="done" size="wide" label="Prayed, 12 people prayed" disabled>12 <Check aria-hidden /></Chip>
           </div>
         </BubbleRun>
         <BubbleRun side="theirs" name="Trần Thị Bình" avatar={<Avatar />}>
@@ -230,17 +232,31 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">PhotoCard: an event, then one with a long title and no contact</Text>
         <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist"]} extra={<>Liên hệ: <PhoneNumber phone="(336) 555-0101" onDark /></>} />
-        <PhotoCard src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
+        <PhotoCard src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ 4 · 7:00 Tối" details={["Hội trường chính"]} />
+      </section>
+
+      {/* EVENTS: the Events tab's first card with sample lines, to see it without signing in. */}
+      <section className="flex flex-col gap-4">
+        <Text as="h2" variant="small" tone="subtle">EventWeeklyCard: the church, then every week&apos;s lines by weekday</Text>
+        <EventWeeklyCard
+          card={{
+            title: "Hội Thánh Việt Nam Winston-Salem",
+            title_en: "Vietnamese Church of Winston-Salem",
+            address: "134 S Peace Haven Rd (SeChrist Building), Winston-Salem, NC 27104",
+            contact_phone: "(336) 997-8012",
+          }}
+          lines={[
+            { weekday: 0, time: "09:15", title: "Trường Chúa Nhật" },
+            { weekday: 0, time: "10:30", title: "Thờ Phượng" },
+            { weekday: 1, time: "19:30", title: "Kannapolis: Hãy Đến Xem", href: "/ui" },
+            { weekday: 5, time: "19:00", title: "Thanh Niên: Học Kinh Thánh và Cầu Nguyện", href: "/ui" },
+          ]}
+        />
       </section>
 
       <section className="flex flex-col gap-2">
-        <Text as="h2" variant="small" tone="subtle">Toolbar (fixed under the top bar) with a NudgeBubble left of its play button</Text>
-        <Toolbar>
-          <IconButton label="Reminders"><Bell /></IconButton>
-          <NudgeBubble>{"Bạn có muốn\ncầu nguyện bây giờ?"}</NudgeBubble>
-          <IconButton label="Play"><Play /></IconButton>
-          <IconButton tone="filled" label="New"><Plus /></IconButton>
-        </Toolbar>
+        <Text as="h2" variant="small" tone="subtle">Toolbar (fixed under the top bar): the Prayer tab&apos;s, a NudgeBubble left of play; tap play</Text>
+        <MusicToolbarDemo />
       </section>
 
       <section className="flex flex-col gap-2">

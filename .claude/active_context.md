@@ -76,6 +76,8 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
   - [ ] M6 deploy · [ ] M7 voice UI · [ ] M8 docs/release · [ ] M9 LiveKit (optional)
 - [ ] Step 3: `i18n`: en/vi UI strings + `{en, vi}` DB content + toggle
 
+- [x] 2026-10-22: `analytics`: usage tracker + `/admin/analytics` dashboard (branch `feature/analytics-dashboard`). Build, 161 tests; SQL not run, not seen signed in.
+
 ## ⚠️ Known Constraints & Debt
 - iOS push requires iOS 16.4+, Add to Home Screen, and a user tap to grant permission.
 - Embeddings: self-hosted; the model is chosen in M3 (e5-base vs bge-m3 vs Vietnamese_Embedding). `EMBEDDING_DIM` and `schema.sql` wait for that result.
@@ -548,7 +550,82 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       robots, sitemap, title, description, JSON-LD. NOT seen: any iPhone, the final language page (signed in).
       Debt: the setup bar does not count language/install (they come before sign-in, unbarred).
 
+- [x] **Feedback round 3 (2026-10-21, the user's 5 points).** 1. Group pictures 1600 px under 400 KB (bucket
+      500 KB, groups schema 2f). 2. Bubble: "Tôi muốn / cầu nguyện bây giờ" / "Let's pray". 3. Worship songs in
+      `public/audio/worship/` (`WORSHIP_SONGS`), shuffled rounds with the last song kept two away (`playlist.ts`).
+      4. The weekly card first on Events (`weekly_card`, events schema 3h; weekly events + group meetings by
+      weekday, "9:15a"); one-time events below under dates. 5. The pencil → Edit list → weekly card / event
+      editors. Evidence: `npm test` 152/152, `npm run build` clean. NOT seen: anything signed in (no session in
+      the pane), the SQL, `test:rls`. Then: group photos kept by the service worker under their path (`photos-v1`), so a
+      return to a group's page downloads nothing it has shown before. Debt: event pictures still 400 px; the seed's English church title is a guess.
+
+- [x] **Feedback round 4 (2026-10-22, the user's 5 points), then the upgrade and back-scroll.** 1. A used sign-in
+      link works again all day (logged as a security trade-off); no "expired" flash in the browser that asked.
+      2. Weekly card: flat dark veil, 24 px top and bottom, "Địa điểm:" / "Liên hệ:" labels, links underlined and
+      wrapping; Google already opened the official listing (same cid), Apple keeps the pin. 3. Back / Pause / Next,
+      one shuffled order per phone (localStorage). 4. Counts on every Pray button (prayer schema 5c). 5. Log flood =
+      a scanner through Tailscale Funnel. Then: Next.js 16.4.2 (audit 0), back lands where the screen was left
+      (`ScrollMemory`), English bubble "I want to / pray now". Evidence: 160/160 tests, build clean, `/ui` at 375 px
+      (weekly card compact + big, toolbar grow-in, Pray pills). NOT committed (the user's word). NOT seen: signed in,
+      SQL 5c, `test:rls`, the sign-in change end to end, the back step.
+
+- [x] **Prayer translations (2026-10-23, the user).** AI service `POST /translate` (97 tests, tried live with the
+      real providers); prayer schema 5d; posting and editing through routes that translate after the answer
+      (`after()`) and push the reviewers; readers see a translation only once approved; Admin tab "Translations to
+      check" + `/admin/translations/<id>`; `src/lib/aiService.ts` shared. Evidence: 190/190 web tests, types clean.
+      NOT run: SQL 5d, `test:rls` (one new case), any screen signed in, a push to an admin, the AI service
+      redeployed with `/translate` (the web app's `AI_SERVICE_URL` must reach a service that has it).
+      Debt: requests from before stay untranslated (counted as reviewed); the two provider pools rest separately.
+
+- [x] **Back without history, a swipe that follows the finger (2026-10-23, the user's phone).** Moves replace instead
+      of push, so the phone's own back gesture no longer walks every screen visited; the swipe starts anywhere on the
+      left 40% and the screen follows the finger (simulated touches in the pane: right screen, 26 ms).
+      The phone's own back takes the same step (a spare history entry on top). NOT seen on an iPhone.
+- [x] **Translations, from the user's testing (2026-10-23).** Authors see their own request translated; the editor
+      sets the language (SQL 10-23b); Retry says "busy" apart from an error. AI service rebuilt with /translate,
+      on Funnel :8443. The live site's Netlify `AI_SERVICE_URL` must point there too (the user's step).
+- [x] **Back as a trail, dictation (2026-10-23, the user's bugs).** `nextTrail` in localStorage: every back arrow
+      retraces the way in (measured in the pane). Leaving releases the music player, the microphone and the voice,
+      the likely reason the iPhone's dictation key went grey. NOT seen on an iPhone: check dictation on Prayer →
+      + after playing music, and after the assistant.
+- [x] **Review fixes + Past translations and Retry (2026-10-23, the user).** All must, should and nit items from the
+      review applied (see the architecture's Change Log); 199 tests. Debt: the Admin lists and Retry not seen as an
+      admin; RLS needs the SQL run again.
+- [x] **Phone fields and weekday numbers (2026-10-23, the user).** `ui/PhoneInput` + `lib/phone.ts formatPhone`
+      (digits only, "(336) 123-4567" as typed) in the three phone fields; "Thứ 2" … "Thứ 7" from
+      `i18n/clock.ts withChurchWeekdays`. 196 tests. Debt: a number from abroad can no longer be typed.
+      Production test build on port 3001, Tailscale Funnel pointed at 3001 (the user, to test).
+
 ## ➡️ Next 3 Micro-Steps
+T1. User: run `docs/sql-to-run-2026-10-23.sql` AGAIN (it changed: `prayer_translations`, `reopen_prayer_translation`,
+   the waiting-account door for the weekly card and staff), then the private `translate-existing-requests.sql`
+   Claude gave (read the translations first: it approves them), then `npm run test:rls` (expect 104/104); redeploy
+   the AI service (`deploy/push_to_space.py`) so translations arrive.
+T2. User, signed in as an admin: post a Vietnamese request → Admin → Translations lists it with VI and an English
+   translation → Approve → an English reader sees it; Past translations → the pencil corrects one, the arrow
+   retranslates it (it moves to the waiting list); edit a request as its author and see it return to the list.
+T3. After the deploy: post one request on the live site and check it reaches the list WITH a translation (proves
+   `after()` runs on Netlify).
+R4a. Done 2026-10-22 (checked 2026-10-23: `analytics_actions` exists).
+R4b. User on a phone (iPhone, in the installed app): scroll, open and close a card far down Groups; switch tabs;
+   Admin's own screens slide. The screen now scrolls in its own box (PageSlide): check that scrolling, the
+   keyboard on Prayer → write, and the chat's newest message still behave. Turn Tailscale Funnel off when not testing.
+R4c. User on a phone: sign in twice in a day and tap the FIRST email; Prayer: Play → Back/Next appear, swipe the
+   app away, Play again → the next song in the same order.
+A1. Done 2026-10-22: analytics SQL run, rows arriving (27; a storage 400 + its banner caught). Still: `docs/sql-to-run-2026-10-21.sql`
+   (R3a: no weekly card and group pictures over 200 KB refused until it runs), then
+   `npm run test:rls` (two new cases: anyone signed in adds rows about themselves, only an admin reads).
+A2. User + Claude, signed in as an admin on a local build: open a few screens, tap, wait 30 s, then
+   `/admin/analytics`: totals, Screens, People → a timeline, What opens what, Problems, Resources per visit.
+A3. Tell members the app records how it is used (a line in Settings or the welcome screen), before the deploy.
+R3a. User: run `docs/sql-to-run-2026-10-21.sql` in Supabase, then `npm run test:rls`; BEFORE the deploy (until
+   then the Events tab shows no weekly card). Correct the card's English title in Events → pencil → first card.
+R3b. User: add the other worship MP3s to `public/audio/worship/` and their paths to `WORSHIP_SONGS`
+   (`src/features/prayer/types.ts`); re-choose each group's picture (old ones stay soft); give each group the name
+   it should show on the weekly card ("Kannapolis: Hãy Đến Xem"), with day and time.
+R3c. User, signed in on a phone: Events (weekly card, one-time cards, times "9:15a"), pencil → list → each editor
+   and back; Prayer: Play, let a song end, the next starts; a group's page, leave and come back: the pictures
+   appear at once (open the app twice after the deploy: the new `sw.js` takes over on the first).
 000a. User + Claude on two iPhones, on the LIVE site: open vietcorners.org in Safari AND in Chrome (never visited):
    language page → guide (arrow at the bottom in Safari < 26, bottom right in iOS 26, top right in Chrome) →
    install → sign up inside the app → email → "Sign in?" → back to the app signed in, in the chosen language.

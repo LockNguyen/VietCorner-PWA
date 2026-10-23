@@ -9,6 +9,7 @@ export const COMMON = {
   removed: { en: "Removed", vi: "Đã xóa" } satisfies Text,
   tapAgain: { en: "Tap again to confirm", vi: "Bấm lần nữa để xác nhận" } satisfies Text, // useConfirmTap
   close: { en: "Close", vi: "Đóng" } satisfies Text,
+  cancel: { en: "Cancel", vi: "Hủy" } satisfies Text,
   // A phone number's and an address's choices (src/components/PhoneNumber.tsx, Place.tsx)
   call: { en: "Call", vi: "Gọi" } satisfies Text,
   sendText: { en: "Text", vi: "Nhắn tin" } satisfies Text,

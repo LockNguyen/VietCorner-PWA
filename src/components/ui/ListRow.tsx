@@ -45,7 +45,7 @@ export default function ListRow({ title, subtitle, leading, trailing, value, ton
   return (
     <li className={ITEM}>
       {href ? (
-        <Link href={href} transitionTypes={GO_FORWARD} aria-current={current} className={ROW}>{content}</Link>
+        <Link replace href={href} transitionTypes={GO_FORWARD} aria-current={current} className={ROW}>{content}</Link>
       ) : onClick ? (
         <button type="button" onClick={onClick} aria-current={current} className={ROW}>{content}</button>
       ) : (

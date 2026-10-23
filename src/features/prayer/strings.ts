@@ -35,9 +35,12 @@ export const STRINGS = {
   // The worship music above the list, and the bubble that suggests it
   playMusic: { en: "Play worship music", vi: "Phát nhạc thờ phượng" } satisfies Text,
   pauseMusic: { en: "Pause the music", vi: "Tạm dừng nhạc" } satisfies Text,
+  loadingMusic: { en: "Loading the music", vi: "Đang tải nhạc" } satisfies Text,
+  previousSong: { en: "Previous song", vi: "Bài trước" } satisfies Text,
+  nextSong: { en: "Next song", vi: "Bài kế tiếp" } satisfies Text,
   musicFailed: { en: "The music could not play.", vi: "Không thể phát nhạc." } satisfies Text,
-  // The "\n" is where the bubble breaks it: always two lines, the bubble as wide as the longer one (the user, 2026-10-19).
-  prayNow: { en: "Would you like\nto pray now?", vi: "Bạn có muốn\ncầu nguyện bây giờ?" } satisfies Text,
+  // A "\n" is where the bubble breaks it, the bubble as wide as the longer line (the user, 2026-10-21).
+  prayNow: { en: "I want to\npray now", vi: "Tôi muốn\ncầu nguyện bây giờ" } satisfies Text, // the same words (2026-10-22)
 
   // Admin section: when the church is reminded to pray
   remindersHeading: { en: "Prayer reminders", vi: "Nhắc cầu nguyện" } satisfies Text,
@@ -52,13 +55,52 @@ export const STRINGS = {
   // The notification everyone gets at that time (server/sendDueReminders.ts), under `notificationTitle`.
   timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
 
-  // The title of both notifications: the reminder, and the one an author gets (server/notifyAuthor.ts)
+  // Admin section: translations wait for a reviewer before members see them (schema.sql 5d)
+  translationsHeading: { en: "Translations", vi: "Bản dịch" } satisfies Text,
+  pastTranslations: { en: "Past translations", vi: "Bản dịch đã duyệt" } satisfies Text, // and that screen's title
+  noPastTranslations: { en: "No translation has been approved yet.", vi: "Chưa có bản dịch nào được duyệt." } satisfies Text,
+  noTranslation: { en: "No translation yet", vi: "Chưa có bản dịch" } satisfies Text,
+  approveTranslation: { en: "Approve", vi: "Duyệt" } satisfies Text,
+  editTranslation: { en: "Edit the translation", vi: "Sửa bản dịch" } satisfies Text, // the pencil, to a screen reader
+  retryTranslation: { en: "Translate again", vi: "Dịch lại" } satisfies Text, // the circular arrow, to a screen reader
+  translatedAgain: {
+    en: "Translated again. It waits for review on the Admin tab.",
+    vi: "Đã dịch lại. Bản dịch đang chờ duyệt ở trang Quản trị.",
+  } satisfies Text,
+  // Busy is temporary: the AI service is busy or unreachable. Failed is an error in the app, not the AI's mood.
+  translationBusy: {
+    en: "The AI is busy or offline right now. Try again in a minute.",
+    vi: "AI đang bận hoặc chưa kết nối. Xin thử lại sau một phút.",
+  } satisfies Text,
+  retryFailed: {
+    en: "Translating failed because of an error in the app. Correct it with the pencil for now.",
+    vi: "Không dịch được do lỗi của ứng dụng. Tạm thời xin sửa bằng cây bút.",
+  } satisfies Text,
+  translationApproved: { en: "Translation approved", vi: "Đã duyệt bản dịch" } satisfies Text,
+  translationTitle: { en: "Edit translation", vi: "Sửa bản dịch" } satisfies Text, // the edit screen's title
+  originalWords: { en: "Request", vi: "Ý cầu nguyện" } satisfies Text,
+  translationField: { en: "Translation", vi: "Bản dịch" } satisfies Text,
+  writtenIn: { en: "The request is written in", vi: "Ý cầu nguyện được viết bằng" } satisfies Text,
+  submitTranslation: { en: "Submit", vi: "Gửi" } satisfies Text,
+  // The notification reviewers get (server/notifyReviewers.ts), under `notificationTitle`.
+  translationWaiting: {
+    en: "A prayer request's translation is waiting for your review.",
+    vi: "Bản dịch của một ý cầu nguyện đang chờ bạn kiểm tra.",
+  } satisfies Text,
+
+  // The title of all three notifications: the reminder, the one an author gets (server/notifyAuthor.ts), and the
+  // reviewers' one
   notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };
 
 // The label of a week two or three back. A sentence with a number in it, so it is a function.
 export function weeksAgo(count: number): Text {
   return { en: `${count} weeks ago`, vi: `${count} tuần trước` };
+}
+
+// What a screen reader says for the count on someone else's request ("3 people prayed").
+export function peoplePrayed(count: number): Text {
+  return { en: count === 1 ? "1 person prayed" : `${count} people prayed`, vi: `${count} người đã cầu nguyện` };
 }
 
 // The body of that notification. A sentence with a number in it, so it is a function. English has a

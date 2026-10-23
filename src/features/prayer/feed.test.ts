@@ -12,9 +12,11 @@ function request(n: number): PrayerRequest {
     is_anonymous: false,
     created_at: new Date(START + n * 60_000).toISOString(),
     is_mine: false,
-    prayer_count: null,
+    prayer_count: 0,
     author_name: "An",
     author_avatar: null,
+    language: null,
+    translation: null,
   };
 }
 

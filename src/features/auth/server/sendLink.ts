@@ -33,6 +33,11 @@ export async function sendSignInLink({ email, attempt, name, origin }: LinkReque
   // Tidy first: there is no scheduler, so each new link clears the links of days gone by.
   const now = new Date();
   await admin.from("sign_in_links").delete().lt("expires_at", now.toISOString());
+  // Today's links stay usable after a sign-in (handoff.ts), so this device's are cut back to this address: on a
+  // phone two people share, a link of the first person's can never sign in the second one who asks. And a tap
+  // made while nobody was waiting does not count: only a tap after this request signs in.
+  await admin.from("sign_in_links").delete().eq("attempt", attempt).neq("email", email);
+  await admin.from("sign_in_links").update({ approved_at: null }).eq("attempt", attempt);
   const { error: saveError } = await admin.from("sign_in_links").insert({
     key_hash: await hashOf(linkKey),
     attempt,

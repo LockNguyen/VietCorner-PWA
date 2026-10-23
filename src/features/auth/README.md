@@ -107,10 +107,13 @@ sign-in to the device that asked.
      `POST /api/auth/handoff`, which marks that row tapped if it is one of today's links for that attempt.
      Then: "Now go back to the app."
 4. **The app collects.** While it waits it posts its `claimKey` to `POST /api/auth/claim` every 3 seconds
-   (only while on screen). The server hashes the key, deletes the tapped row (and the device's other links of
-   the day), makes a fresh one-time token for that address (`generateLink`, which sends nothing) and returns
+   (only while on screen). The server hashes the key, un-taps the tapped row (it stays, usable again: below),
+   makes a fresh one-time token for that address (`generateLink`, which sends nothing) and returns
    it; the app trades it for a session (`verifyOtp`, type `email`) and opens Home with a full page load.
    If the stored wait disappears meanwhile, the link was used in this same browser: the app reloads.
+   Opened in the browser that asked, the link's page signs in by itself (no button: the key on the device is
+   the proof). When the app's own tab there collects first (it asks every few seconds), the page goes in too
+   instead of saying "expired" (fixed 2026-10-22: it flashed "This link has expired" before Home).
 
 **Why every link of the day works (2026-10-19, the user).** Members ask twice; Gmail folds the two emails
 into one thread and hides one of them, and the older link used to leave the app waiting forever, for two
@@ -118,6 +121,16 @@ reasons: each request made a new device key (so the older link named an attempt 
 new Supabase email cancels the token of the one before. Now the device key is the same all day and the proof
 in the link is our own key, which no newer email cancels. Bound, as the user set it: a link from this
 mailbox, sent the same church day.
+
+**A used link works again, all day (2026-10-22, the user).** Gmail shows a second sign-in email of the day as a
+blank "•••" under the first; members tap the first one, already used, and saw "This link has expired". Now
+collecting only un-taps the link, so any link of the day signs this device in again, used or not.
+- Kept safe: still only the device that asked (its key) collects; a new request cuts the device's links back to
+  the address just typed (a shared phone: one person's old link never signs in the next person) and clears any
+  tap made while nobody was waiting (only a tap after the request counts).
+- **The risk accepted, for an easier sign-in:** until midnight at church, anyone who can open that email and
+  holds the phone that asked can sign that phone back into the account, without a new email. Before, a used
+  link was dead. (Someone who can read the mailbox could already ask for a new link.)
 
 ## Decisions worth knowing
 - **Email link only, no passwords** (2026-10-17, the user, replacing the password sign-in of 2026-10-14):
@@ -142,8 +155,8 @@ mailbox, sent the same church day.
   already allows (ask Supabase for a link to an address); `handoff` needs a key only the email holds; `claim`
   needs the device's secret. All check the shape of what they are sent. Only Supabase limits how often they
   are called (backlog B3).
-- **A row lives until the end of the church day it was sent on** (`churchTime.endOfChurchDay`), and is deleted
-  when its device collects. Rows of past days are deleted by the next link sent; there is no scheduler.
+- **A row lives until the end of the church day it was sent on** (`churchTime.endOfChurchDay`), used or not
+  (2026-10-22). Rows of past days are deleted by the next link sent; there is no scheduler.
 - **The wait survives a reload** (`storage.ts`): an iPhone often restarts the app when the person comes back
   from their mailbox, and the key must still be there.
 - **Signed in for as long as possible:** the session cookie lasts 400 days (the browser maximum) and is
@@ -180,8 +193,8 @@ mailbox, sent the same church day.
   Safari on an iPhone, a new account end to end.
 
 ## Edge cases
-- A link works until midnight at church on the day it was sent, even after newer ones, and signs in once:
-  collecting spends every link of that device for the day. Supabase allows one link per address per minute
+- A link works until midnight at church on the day it was sent, even after newer ones, and as many times as it
+  is tapped (2026-10-22): each tap signs in the waiting device once. Supabase allows one link per address per minute
   ("Too many tries"). Its own "Email OTP expiration" setting no longer matters: the token is made at
   collection and used within seconds.
 - Members who had a password: it is kept by Supabase and never asked for; they sign in by link like everyone.

@@ -6,10 +6,13 @@ import PersonCard from "@/components/ui/PersonCard";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import type { StaffSection } from "../types";
+import { useFresh } from "@/lib/useFresh";
+import { getStaffSections } from "../api";
 
 // The staff page: for each heading ("Ban điều hành"), a contact card per person under it: their photo, their
 // name in bold, their role, and their number (a tap opens the call / text / copy menu).
-export default function StaffDirectory({ sections }: { sections: StaffSection[] }) {
+export default function StaffDirectory({ sections: loaded }: { sections: StaffSection[] }) {
+  const sections = useFresh(loaded, getStaffSections); // the kept copy at once, then a fresh read on arrival
   const { t } = useLanguage(); // I18N
 
   return (

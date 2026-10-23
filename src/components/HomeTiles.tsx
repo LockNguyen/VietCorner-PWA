@@ -4,7 +4,8 @@ import { CalendarDays, Contact, HandHeart, ShieldCheck, Users } from "lucide-rea
 import PhotoTile from "@/components/ui/PhotoTile";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { STRINGS as STAFF_STRINGS } from "@/features/staff/strings"; // STAFF
-import { GO_FORWARD } from "@/lib/slide";
+import { directionOf } from "@/lib/navigation";
+import { slideOf } from "@/lib/slide";
 import { SHELL_STRINGS } from "./strings";
 
 // The photos are files in public/images/home, chosen by the user (2026-10-14; Staff and Admin 2026-10-19).
@@ -22,11 +23,13 @@ const ADMIN_TILE = { href: "/admin", title: SHELL_STRINGS.adminTab, Icon: Shield
 export default function HomeTiles({ showAdmin }: { showAdmin: boolean }) {
   const { t } = useLanguage(); // I18N
   const tiles = showAdmin ? [...TILES, ADMIN_TILE] : TILES;
+  // A main screen switches from Home; Admin, a detour, comes in from the right (src/lib/navigation.ts).
+  const move = (href: string) => slideOf(directionOf("/", href, "open"));
 
   return (
     <div className="flex flex-col gap-6 p-5">
       {tiles.map(({ href, title, Icon, photo }) => (
-        <PhotoTile key={href} href={href} transitionTypes={GO_FORWARD} title={t(title)} src={photo}>
+        <PhotoTile key={href} href={href} transitionTypes={move(href)} title={t(title)} src={photo}>
           <Icon className="size-8" />
         </PhotoTile>
       ))}

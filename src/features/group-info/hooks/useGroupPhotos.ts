@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useOnArrival } from "@/lib/useOnArrival";
 import { addPhoto, getPhotos, removePhoto } from "../api";
 import { PHOTO_PAGE_SIZE, type NewPhoto, type Photo } from "../types";
 
-// A group's pictures, newest first, a page at a time: the first page when the group's sheet opens, the
-// next when the strip is scrolled to its end. Also adding one and removing one.
-// Held here and not loaded by the page: pictures are only wanted once a group is opened.
-export function useGroupPhotos(groupId: string) {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [hasMore, setHasMore] = useState(false);
+// A group's pictures, newest first, a page at a time: the first page as the page brought it (server/queries.ts),
+// read again on arrival and on return to the app like every list (the strip starts over from it), the next when
+// the strip is scrolled to its end. Also adding one and removing one.
+export function useGroupPhotos(groupId: string, firstPage: Photo[]) {
+  const [photos, setPhotos] = useState<Photo[]>(firstPage);
+  const [hasMore, setHasMore] = useState(firstPage.length === PHOTO_PAGE_SIZE);
   const loadingMore = useRef(false); // the end marker can come into view twice before the first answer
 
   // A full page means there may be another; a short one is the last.
@@ -18,15 +19,11 @@ export function useGroupPhotos(groupId: string) {
     setHasMore(firstPage.length === PHOTO_PAGE_SIZE);
   }
 
-  useEffect(() => {
-    let closed = false; // the sheet was closed before the answer came
+  useOnArrival(() => {
     getPhotos(groupId)
-      .then((page) => !closed && show(page))
-      .catch(() => {}); // offline or a hiccup: the sheet shows no pictures, and opening it again retries
-    return () => {
-      closed = true;
-    };
-  }, [groupId]);
+      .then(show)
+      .catch(() => {}); // offline or a hiccup: the pictures on screen stay, and the next arrival tries again
+  });
 
   async function loadMore() {
     const oldest = photos.at(-1);

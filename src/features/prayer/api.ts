@@ -1,10 +1,24 @@
+import type { Language } from "@/features/i18n/types"; // I18N
 import { createClient } from "@/lib/supabase/client";
-import { FEED_COLUMNS, PAGE_SIZE, type NewPrayerRequest, type PrayerRequest } from "./types";
+import {
+  getPastTranslations as readPastTranslations,
+  getPrayerReminders as readPrayerReminders,
+  getTranslationsToReview as readTranslationsToReview,
+} from "./reads";
+import {
+  FEED_COLUMNS,
+  PAGE_SIZE,
+  type NewPrayerRequest,
+  type PrayerReminder,
+  type PrayerRequest,
+  type PrayerTranslation,
+} from "./types";
 
 // Prayer API: every call the browser makes for this feature.
-// - Reads and the author's own writes go straight to Supabase. The grants, policies and view in schema.sql
-//   decide what is allowed.
-// - Praying goes through our API route, because it also notifies the author (needs secrets).
+// - Reads and the author's own simple writes go straight to Supabase. The grants, policies and view in schema.sql
+//   decide what is allowed. So does reviewing a translation: its function checks the permission.
+// - Posting, editing and praying go through our API routes, because they also translate the words or notify
+//   someone (needs secrets).
 
 // GET one page of requests, newest first. Pass the `created_at` of the oldest one on screen to get the
 // page after it; pass nothing for the newest page.
@@ -21,18 +35,15 @@ export async function getRequests(olderThan?: string): Promise<PrayerRequest[]> 
   return data as PrayerRequest[];
 }
 
-// POST a request to the whole church. The author is taken from the login token by the database.
+// POST a request to the whole church. The server posts it as me, then has it translated for review.
 export async function createRequest(request: NewPrayerRequest): Promise<void> {
-  const { error } = await createClient()
-    .from("prayer_requests")
-    .insert({ body: request.body }); // is_anonymous keeps its default, false
-  if (error) throw new Error(error.message);
+  await send("/api/prayer/post", { body: request.body });
 }
 
-// PATCH the words of my own request. RLS ignores the call for anyone else's.
+// POST new words for my own request. The server changes them (RLS ignores anyone else's), then has them
+// translated again for review.
 export async function editRequest(requestId: string, body: string): Promise<void> {
-  const { error } = await createClient().from("prayer_requests").update({ body }).eq("id", requestId);
-  if (error) throw new Error(error.message);
+  await send("/api/prayer/edit", { requestId, body });
 }
 
 // PATCH my own request as answered, which takes it out of everyone's list. RLS ignores the call for anyone else's.
@@ -73,10 +84,61 @@ export async function removeReminder(reminderId: string): Promise<void> {
 
 // POST one prayer for someone else's request. The server counts it and tells the author.
 export async function prayFor(requestId: string): Promise<void> {
-  const response = await fetch("/api/prayer/pray", {
+  await send("/api/prayer/pray", { requestId });
+}
+
+// Approve a request's translation as shown, or as the reviewer corrected it, with the language the request is
+// written in. Needs "prayer.translations"; the function checks it. Throws when the request was edited or removed
+// meanwhile: nothing was approved.
+export async function reviewTranslation(request: PrayerTranslation, translation: string, language: Language): Promise<void> {
+  const { data, error } = await createClient().rpc("review_prayer_translation", {
+    request_id: request.id,
+    original: request.body, // the words the reviewer read, so an edit made meanwhile is not approved unread
+    translation,
+    language,
+  });
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("The request changed or was removed, so nothing was approved.");
+}
+
+// POST a retry: the server puts the translation back on the waiting list and asks the AI service again, then
+// answers. Needs "prayer.translations"; the database checks it. "busy" when the AI service is busy or unreachable
+// (503: try again later); any other refusal throws.
+export async function retryTranslation(requestId: string): Promise<"translated" | "busy"> {
+  const response = await fetch("/api/prayer/retranslate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ requestId }),
   });
+  if (response.status === SERVICE_BUSY) return "busy";
   if (!response.ok) throw new Error((await response.json()).error);
+  return "translated";
+}
+
+// The status our routes answer when the AI service is busy or unreachable: temporary, unlike any other refusal.
+const SERVICE_BUSY = 503;
+
+// GET the reviewers' lists again, as their pages first read them, for each to refresh itself on arrival.
+export function getTranslationsToReview(): Promise<PrayerTranslation[]> {
+  return readTranslationsToReview(createClient());
+}
+
+export function getPastTranslations(): Promise<PrayerTranslation[]> {
+  return readPastTranslations(createClient());
+}
+
+// POST to one of our prayer routes; a refusal throws with the server's reason.
+async function send(path: string, payload: object): Promise<void> {
+  const response = await fetch(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error((await response.json()).error);
+}
+
+// GET the church's prayer reminders again, as the page first read them, for the screen to refresh itself on
+// arrival (`useFresh`).
+export function getPrayerReminders(): Promise<PrayerReminder[]> {
+  return readPrayerReminders(createClient());
 }

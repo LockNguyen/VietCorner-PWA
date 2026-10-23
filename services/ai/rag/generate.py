@@ -55,13 +55,22 @@ def client_for(base_url: str, api_key: str) -> OpenAI:
     )
 
 
-def complete(provider: Provider, messages: list[dict[str, str]]) -> str:
-    """One chat completion against one provider. Raises whatever the SDK raises, or ProviderBusy if it wrote nothing."""
+def complete(
+    provider: Provider,
+    messages: list[dict[str, str]],
+    *,
+    temperature: float = GENERATION_TEMPERATURE,
+    max_tokens: int = MAX_ANSWER_TOKENS,
+) -> str:
+    """One chat completion against one provider. Raises whatever the SDK raises, or ProviderBusy if it wrote nothing.
+
+    The defaults suit a spoken answer; another job (translation/translate.py) passes its own.
+    """
     response = client_for(provider.base_url, provider.api_key).chat.completions.create(
         model=provider.model,
         messages=messages,  # type: ignore[arg-type]
-        temperature=GENERATION_TEMPERATURE,
-        max_tokens=MAX_ANSWER_TOKENS,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     answer = response.choices[0].message.content
     if not answer:
@@ -84,9 +93,18 @@ def classify_error(error: openai.OpenAIError) -> ProviderBusy | ProviderBroken:
     return ProviderBroken(f"{type(error).__name__}: {error}")
 
 
-def call_provider(provider: Provider, messages: list[dict[str, str]], seconds: float) -> str:
+def call_provider(
+    provider: Provider,
+    messages: list[dict[str, str]],
+    seconds: float,
+    *,
+    temperature: float = GENERATION_TEMPERATURE,
+    max_tokens: int = MAX_ANSWER_TOKENS,
+) -> str:
     """Ask one provider, waiting at most `seconds`. Raises ProviderBusy or ProviderBroken, as the pool expects."""
-    future = background_calls.submit(complete, provider, messages)
+    future = background_calls.submit(
+        complete, provider, messages, temperature=temperature, max_tokens=max_tokens
+    )
     try:
         return future.result(timeout=seconds)
     except TimeoutError:

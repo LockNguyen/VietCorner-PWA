@@ -1,4 +1,4 @@
-import type { Language } from "@/features/i18n/types"; // I18N
+import type { Language, Text } from "@/features/i18n/types"; // I18N
 
 // Row shapes from schema.sql, and the shapes the screens actually render.
 
@@ -43,9 +43,32 @@ export type ScheduledEvent = EventRow & {
   canceled_dates: string[]; // church calendar dates, YYYY-MM-DD
 };
 
+// The one row of `weekly_card` (schema.sql 3h): what the Events tab's first card says above the weekly lines.
+export type WeeklyCard = {
+  title: string; // in Vietnamese: "Hội Thánh Việt Nam Winston-Salem"
+  title_en: string | null; // in English; null = not yet (Vietnamese shows instead)
+  address: string | null;
+  contact_phone: string | null;
+};
+
+// One line of the weekly card: something that happens every week ("Thờ Phượng · 10:30a"). A weekly event
+// becomes one; the page adds the groups' meetings in the same shape, so this feature imports nothing of theirs.
+export type WeeklyLine = {
+  weekday: number; // 0 = Sunday … 6 = Saturday
+  time: string; // "HH:MM", church wall clock
+  title: string; // already in the reader's language
+  href?: string; // where its line leads (a group's page), for a line that has more to show
+};
+
+// A weekly line from outside this feature, in both languages (a group's meeting): the page fills it.
+export type WeeklyMeeting = Omit<WeeklyLine, "title"> & { title: Text };
+
 // The `events` columns the reminder scheduler asks for (server/sendDueReminders.ts), named once.
 export const EVENT_COLUMNS =
   "id, starts_at, ends_at, repeats_weekly, repeat_until, canceled_at, thumbnail_path, contact_phone, address";
+
+// why: the church's own picture behind the weekly card and every event that has none of its own (the user, 2026-10-19).
+export const CHURCH_PICTURE = "/images/home/events.png";
 
 // The public storage bucket the events' pictures live in (schema.sql section 3e makes it).
 export const THUMBNAIL_BUCKET = "event-thumbnails";
@@ -55,8 +78,8 @@ export const THUMBNAIL_BUCKET = "event-thumbnails";
 // box: nothing to mistype, and the scheduler's 15-minute run is fine enough for the shortest of them.
 export const REMINDER_CHOICES = [1440, 120, 30];
 
-// why: the database refuses a longer number or address (schema.sql 3g); the box stops the typing there.
-export const MAX_PHONE_LENGTH = 30;
+// why: the database refuses a longer address (schema.sql 3g); the box stops the typing there. A phone number
+// needs no limit here: `ui/PhoneInput` keeps it to ten digits, well under the database's 30 characters.
 export const MAX_ADDRESS_LENGTH = 200;
 
 // --- What the admin section works with ---------------------------------------------------------------

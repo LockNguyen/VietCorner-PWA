@@ -58,6 +58,9 @@ export function useConversation(userId: string) {
 
   // Leaving the screen cancels a pending retry.
   useEffect(() => clearTimers, []);
+  // An answer still being read aloud stops when the assistant is left: it holds the phone's audio, which keeps the
+  // iPhone keyboard's dictation from starting on the next screen.
+  useEffect(() => () => speech.stop(), []);
 
   // Ask the service, then replace the placeholder bubble with the answer or with an error.
   const answer = useCallback(

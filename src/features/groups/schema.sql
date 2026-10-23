@@ -248,6 +248,12 @@ create policy "Group managers manage group pictures" on storage.objects
 alter table public.groups add column if not exists name_en text check (length(trim(name_en)) between 1 and 60);
 grant update (name_en) on public.groups to authenticated; -- only with the manager policy in section 2
 
+-- 2f. A sharper group picture (2026-10-21) -----------------------------------
+-- This section can be run again by itself. The picture fills a card the phone's width, so it is now saved
+-- at 1600 pixels (types.ts PICTURE_SIDE) instead of 400: up to 500 KB instead of 200 KB. Pictures chosen
+-- before stay soft until a manager chooses them again.
+update storage.buckets set file_size_limit = 512000 where id = 'group-thumbnails';
+
 -- 3. Seed data ------------------------------------------------------------
 
 insert into public.groups (name) values ('Test Group'), ('Bible Study');

@@ -17,8 +17,8 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 |---|---|---|
 | Data | `schema.sql` | `group_info`, `group_photos`, `may_add_group_photo()`, `group_directory()`, the bucket and its rules, grants, RLS, the DROPs |
 | Types | `types.ts` | `DirectoryGroup`, `DetailField`, `Photo`, `NewPhoto`, `photoPaths`, and every limit and size, each with its why |
-| Browser API | `api.ts` | `getGroupDirectory`, `saveGroupDetail` (one detail), `saveMemberCount`, `getPhotos` (a page, signed), `addPhoto`, `removePhoto` |
-| Server reads | `server/queries.ts` | `getGroupDirectory` |
+| Browser API | `api.ts` | `getGroupDirectory`, `saveGroupDetail` (one detail), `saveMemberCount`, `getPhotos` (the next page, signed; `photos.ts` does the work for both sides), `addPhoto`, `removePhoto` |
+| Server reads | `server/queries.ts` | `getGroupDirectory`, `getFirstPhotos` |
 | State | `hooks/useGroupPhotos.ts` | A group's pictures: the first page, more at the end, add, remove |
 | UI | `components/GroupDirectory.tsx` | The cards; a tap opens the group's page |
 | UI | `components/GroupPage.tsx` | A group's page (`/groups/<id>/about`), shaped like an event's: big picture, when / contact with icons, notes, pictures; admins get a round pencil held under the top bar (`ui/Toolbar`) |
@@ -68,14 +68,28 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
   (optional date, optional caption, who added it).
 - **Private, and why:** these are pictures of church members, children among them. A file is served only
   through an address signed for an approved, signed-in member, good for an hour.
-  The cost: a signed address is new each time, so the phone downloads a picture again on every visit
-  instead of keeping it. The small files are about 30 KB each, six at a time.
+  A signed address is new each time, so the browser's own cache missed on every visit (the user, 2026-10-21:
+  the strip redrew on every return). **Since 2026-10-21 the service worker keeps each file under its path
+  without the signature** (`public/sw.js`, PHOTOS; cache `photos-v1`, newest 300 files; the `<img>`s ask with
+  `crossOrigin` so the answer can be kept): a picture opened once comes from the phone after that.
+  - Never stale: a file is never replaced, only added or removed under a new photo id, so a path is one picture.
+    A removed picture's copy is never asked for again and is trimmed in time.
+  - No wider access: the page asks for a file only after the database has signed it for this person; the list
+    of pictures (rows) and the signature are still checked at every visit.
+  - Signing out (any page load of `/login`) deletes the saved pictures, like the saved Home.
 - **Shrunk on the phone before sending** (`src/lib/shrinkImage.ts`, shared with the row pictures): a camera photo is 3 to 8 MB; what is stored is
   just under 1 MB (2560 pixels, the best quality that fits: `shrinkUnder`; it was 300 KB until 2026-10-17,
-  which the user found ugly) plus 30 KB. Supabase's own resizing is a paid feature. The bucket itself refuses anything
+  which the user found ugly) plus 30 KB. A photo too detailed to fit at any quality is made a fifth smaller
+  until it does (`shrinkSteps`, 2026-10-22: a busy outdoor photo from an iPhone was refused, "The object exceeded
+  the maximum allowed size"; a 12 MP worst case now fits at 1638 px). Supabase's own resizing is a paid feature. The bucket itself refuses anything
   over 1 MB or not a JPEG, so a caller that skips the shrinking is refused, not trusted.
-- **Six at a time**, newest first, loaded when the sheet opens, not with the page. Scrolling the strip to
-  its end loads the next six (`PhotoStripEnd`, `useWhenVisible`).
+- **Six at a time**, newest first. The first six come with the group's page and its editor (2026-10-22, the user:
+  one request, not two after the page is on screen): the page reads them with the rest, on the server
+  (`server/queries.ts` `getFirstPhotos`), and passes them down (`GroupPage` → `GroupPhotos` → `useGroupPhotos`).
+  On arrival, and on return to the app, the first six are read again and the strip starts over from them
+  (2026-10-22, like every list); a group's page also re-reads its details (`useFresh` on `getGroupDirectory`).
+  Scrolling the strip to its end loads the next six from the browser (`api.ts` `getPhotos`, `PhotoStripEnd`,
+  `useWhenVisible`). Both read and sign through one function, `photos.ts` `photosPage`.
 - **Files first, then the row.** A row without files would draw as a grey square; files without a row are
   only unseen. Removing is the other way round: the row, then the files.
 - **No editing.** A wrong date or caption is fixed by removing the picture and adding it again.
@@ -128,14 +142,17 @@ feature a small form for them (`saveGroup` in its git history, before 2026-10-17
 
 ## Cards, and when a group meets (2026-10-14)
 - **Cards** (`GroupDirectory`): a card per group (`ui/Card`): its picture, a pulsing green dot (always on),
-  the name, "Tuesdays @ 7:30 PM · Hall", and a circle per person (`ui/MemberCircles`): initials of those who
-  have the app (`group_member_initials()`), empty circles up to the typed number, "+N" past eight.
+  the name, "Tuesdays @ 7:30 PM · Hall", and a circle per person (`ui/MemberCircles`): for those who have the
+  app their own picture, or their initials while they have none (`group_member_faces()`, schema.sql 10,
+  2026-10-22; initials only before), empty circles up to the typed number, "+N" past eight. Seen on `/ui`.
+  Every approved member now sees the faces of every group's members (the trade-off in schema.sql 10).
+  **Run section 10 before the deploy** (`docs/sql-to-run-2026-10-22.sql`): the page reads `members`.
 - **Members** tap a card for a read-only sheet (`GroupInfoSheet`): when, where, notes, members, pictures;
   a group's own people may add pictures. The pencils are gone (`GroupDetail`, `GroupDetailForm` removed).
 - **Admins** tap a card for the group's editor (see the groups README); this feature brings `GroupInfoForm`
   (name, number of members, a weekday picker and a time, where, notes, one Save) and `GroupPhotos` to it.
 - **When:** `group_info.meets_weekday` (0 = Sunday) and `meets_time`, written by `meeting.ts` as "Tuesdays @
-  7:30 PM" / "Thứ Ba @ 7:30 Tối" (tested; "19:30" until 2026-10-17). The old free-text `meets_at` is shown until a day and time are saved.
+  7:30 PM" / "Thứ 3 @ 7:30 Tối" (tested; "Thứ Ba" until 2026-10-23; "19:30" until 2026-10-17). The old free-text `meets_at` is shown until a day and time are saved.
 - **Why initials only:** a member may not read who is in another group (group_members shows each person their
   own rows), so the database hands out the least that draws the circles, and only to approved members.
 - **SQL:** section 7 of `schema.sql` (safe to run again). Until it is run the Groups tab is empty.

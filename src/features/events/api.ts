@@ -3,7 +3,7 @@ import { shrinkToThumbnail } from "@/lib/shrinkImage";
 import { createClient } from "@/lib/supabase/client";
 import { rowOf, textOf } from "./draft";
 import { scheduleWindow } from "./occurrences";
-import { THUMBNAIL_BUCKET, type EventDraft, type ScheduledEvent } from "./types";
+import { THUMBNAIL_BUCKET, type EventDraft, type ScheduledEvent, type WeeklyCard } from "./types";
 
 // Events API: every call the browser makes for this feature. Members only read: `getSchedule`. Everything
 // else here is an action of someone with the "events.manage" permission.
@@ -107,4 +107,12 @@ async function changeSchedule(method: "POST" | "DELETE", eventId: string, occurr
     body: JSON.stringify({ eventId, occurrenceDate }),
   });
   if (!response.ok) throw new Error((await response.json()).error);
+}
+
+// PATCH the weekly card's one row. Needs "events.manage": RLS matches no row otherwise, so the row is asked
+// back to tell a refusal from a save.
+export async function saveWeeklyCard(card: WeeklyCard): Promise<void> {
+  const { data, error } = await createClient().from("weekly_card").update(card).eq("id", true).select("id");
+  if (error) throw new Error(error.message);
+  if (data.length === 0) throw new Error("No weekly card, or not allowed");
 }

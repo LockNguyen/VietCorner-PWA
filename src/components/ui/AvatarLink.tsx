@@ -11,7 +11,7 @@ const BADGE = "absolute right-0 bottom-0 flex size-9 items-center justify-center
 // A large picture (an `Avatar`) with a small camera at its corner, opening the screen that changes it.
 export default function AvatarLink({ label, children, ...link }: Props) {
   return (
-    <Link transitionTypes={GO_FORWARD} {...link} aria-label={label} className={BASE}>
+    <Link replace transitionTypes={GO_FORWARD} {...link} aria-label={label} className={BASE}>
       {children}
       <span aria-hidden className={BADGE}>
         <Camera />

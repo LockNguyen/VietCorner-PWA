@@ -1,6 +1,7 @@
 import "server-only";
 
-// The only place that knows where the AI service lives and what its token is. Both are secrets: they have
+// The only place that knows where the AI service (services/ai) lives and what its token is. Here, not in a feature,
+// because two features call it: the assistant (/ask, /transcribe) and prayer (/translate). Both are secrets: they have
 // no NEXT_PUBLIC_ prefix, so Next.js never ships them to the browser. This file imports nothing from
 // Next.js, so it could move to another backend unchanged.
 
@@ -11,7 +12,8 @@ const SERVICE_TOKEN = process.env.AI_SERVICE_TOKEN;
 // instead of the host's generic one. The AI service has a shorter budget of its own (7 s for the LLM).
 const TIMEOUT_MS = 9_000;
 
-// Raised when the service is unreachable or busy: the routes turn it into 503 "try again".
+// Raised when the service is unreachable or busy: the assistant's routes turn it into 503 "try again"; prayer
+// leaves the translation empty. The messages are the assistant's, which shows them.
 export class AiServiceUnavailable extends Error {}
 
 // POST to the AI service and return its JSON.

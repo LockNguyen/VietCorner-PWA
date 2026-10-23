@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isoDate } from "@/lib/churchTime";
 import { isCanceled, scheduleWindow, startsOf } from "../occurrences";
-import type { ManagedEvent, ScheduledEvent } from "../types";
+import type { ManagedEvent, ScheduledEvent, WeeklyCard } from "../types";
 
 // Server-side reads for this feature. The page creates the client and passes it in.
 //
@@ -45,3 +45,9 @@ export async function getManagedEvents(supabase: SupabaseClient, now = new Date(
 
 // One row of `managed_events()`: an event as stored, before its next dates are worked out.
 type ManagedRow = ScheduledEvent & { reminder_minutes: number[] };
+
+// The weekly card's one row (schema.sql 3h): the schedule page and its editor. Null before 3h is run.
+export async function getWeeklyCard(supabase: SupabaseClient): Promise<WeeklyCard | null> {
+  const { data } = await supabase.from("weekly_card").select("title, title_en, address, contact_phone").maybeSingle();
+  return data;
+}

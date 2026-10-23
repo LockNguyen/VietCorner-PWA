@@ -7,6 +7,7 @@ import Field from "@/components/ui/Field";
 import Select from "@/components/ui/Select";
 import Text from "@/components/ui/Text";
 import TextArea from "@/components/ui/TextArea";
+import PhoneInput from "@/components/ui/PhoneInput";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -14,11 +15,10 @@ import { LANGUAGE_NAMES } from "@/features/i18n/types"; // I18N
 import { SWITCHES } from "@/lib/switches";
 import { useSave } from "@/lib/useSave";
 import { saveGroupInfo } from "../api";
-import { weekdayName } from "../meeting";
+import { meetingDay } from "../meeting";
 import { STRINGS } from "../strings";
 import {
   MAX_MEMBER_COUNT_DIGITS,
-  MAX_PHONE_LENGTH,
   MAX_NOTES_LENGTH,
   type DirectoryGroup,
   type GroupInfoDraft,
@@ -77,7 +77,7 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
             <option value="">{t(STRINGS.pickDay)}</option>
             {WEEKDAYS.map((weekday) => (
               <option key={weekday} value={weekday}>
-                {weekdayName(weekday, language)}
+                {meetingDay(weekday, language)}
               </option>
             ))}
           </Select>
@@ -97,15 +97,7 @@ export default function GroupInfoForm({ group }: { group: DirectoryGroup }) {
         </div>
       )}
       <Field label={t(STRINGS.contact)}>
-        <TextInput
-          type="tel"
-          inputMode="tel"
-          autoComplete="off"
-          placeholder="(336) 555-0101"
-          maxLength={MAX_PHONE_LENGTH}
-          value={draft.contactPhone}
-          onChange={(event) => change("contactPhone", event.target.value)}
-        />
+        <PhoneInput value={draft.contactPhone} onChange={(phone) => change("contactPhone", phone)} />
       </Field>
       <TextArea
         rows={3}

@@ -1,5 +1,6 @@
 import { User } from "lucide-react";
 import type { HTMLAttributes } from "react";
+import Picture from "./Picture";
 
 type Props = HTMLAttributes<HTMLSpanElement> & {
   src?: string; // the person's own picture; without one, the default figure
@@ -15,7 +16,7 @@ const FIGURES = { small: "size-5", large: "size-14" } as const;
 export default function Avatar({ src, size = "small", ...avatar }: Props) {
   return (
     <span aria-hidden {...avatar} className={`${BASE} ${SIZES[size]}`}>
-      {src ? <img src={src} alt="" loading="lazy" className="size-full object-cover" /> : <User className={FIGURES[size]} />}
+      {src ? <Picture src={src} className="size-full object-cover" /> : <User className={FIGURES[size]} />}
     </span>
   );
 }

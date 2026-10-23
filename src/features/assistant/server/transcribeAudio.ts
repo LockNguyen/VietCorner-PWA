@@ -1,6 +1,6 @@
 import "server-only";
 
-import { callAiService } from "./aiService";
+import { callAiService } from "@/lib/aiService";
 
 // Turn a recording into text (Whisper, on the AI service). Returns "" when nothing was understood.
 // The file keeps its name, because its extension tells the speech API which format to decode.
