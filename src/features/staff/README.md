@@ -19,7 +19,9 @@ System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-fe
 | Data | `schema.sql` | `staff_sections` (headings), `staff_people` (typed once), `staff_placements` (who is under which heading), read-only RLS, the photo bucket, the seed |
 | Data | `edit-staff.sql` | The user's copy-paste scripts: see, edit, add, move, remove |
 | Types | `types.ts` | `StaffSection` (heading + cards), `StaffMember`: role, name, phone, photo |
-| Server | `server/queries.ts` | `getStaffSections`: every heading with its cards, in order, one trip |
+| Reads | `reads.ts` | `getStaffSections(supabase)`: every heading with its cards, in order, one trip; used by both sides below |
+| Server | `server/queries.ts` | `getStaffSections` for the page (from `reads.ts`) |
+| Browser API | `api.ts` | `getStaffSections()`: the same read again, for the list to refresh itself on arrival (`useFresh`, 2026-10-22) |
 | Text | `strings.ts` | The page's title, also the Home tile's |
 | UI | `components/StaffDirectory.tsx` | Per heading: `ui/SectionHeading` `large`; per person: `ui/PersonCard` with `ui/Avatar` `large` and `PhoneNumber` |
 | Shell | `src/app/staff/page.tsx`, `src/components/HomeTiles.tsx` | The page (loads the rows); the tile (line marked `STAFF`) |
