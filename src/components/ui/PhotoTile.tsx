@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ComponentProps } from "react";
+import Picture from "./Picture";
 
 type Props = ComponentProps<typeof Link> & { title: string; src?: string };
 
@@ -14,7 +15,7 @@ export default function PhotoTile({ title, src, children, ...link }: Props) {
     >
       {src && (
         <>
-          <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
+          <Picture src={src} className="absolute inset-0 size-full object-cover" />
           <span aria-hidden className="absolute inset-0 bg-ink/45" />
         </>
       )}

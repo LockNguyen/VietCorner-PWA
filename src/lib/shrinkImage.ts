@@ -24,14 +24,30 @@ export async function shrinkImage(file: Blob, maxSide: number, quality: number):
 // why: from nearly untouched down to plainly softened; tried in this order, so a picture keeps the best quality
 // that fits. Below 0.65 a JPEG shows blocks in skies and faces.
 const QUALITIES = [0.92, 0.85, 0.75, 0.65];
+// why: a photo full of detail (leaves, brick, a crowd) can stay over the limit at every quality; a little smaller
+// each time keeps it sharp where a lower quality would show blocks. 400 is the smallest any screen draws.
+const SMALLER = 0.8;
+const SMALLEST_SIDE = 400;
 
-// Returns the picture as a JPEG at most `maxSide` pixels long, at the best quality whose file is under
-// `maxBytes`. A picture still over at the lowest quality is returned anyway: the bucket's own limit decides.
+// The sizes and qualities `shrinkUnder` tries, in order: every quality at full size, then the same a fifth smaller,
+// and so on down to SMALLEST_SIDE. Pure, so the order is tested without a canvas.
+export function shrinkSteps(maxSide: number): { side: number; quality: number }[] {
+  const steps = [];
+  for (let side = maxSide; side >= SMALLEST_SIDE; side = Math.round(side * SMALLER)) {
+    for (const quality of QUALITIES) steps.push({ side, quality });
+  }
+  return steps;
+}
+
+// Returns the picture as a JPEG at most `maxSide` pixels long, at the first size and quality whose file is under
+// `maxBytes`. Before 2026-10-22 a picture still over at the lowest quality was sent anyway and the bucket
+// refused it ("The object exceeded the maximum allowed size", the user's upload of a busy outdoor photo).
+// Only a picture over even at SMALLEST_SIDE is still sent as it is: no real photo comes near.
 export async function shrinkUnder(file: Blob, maxSide: number, maxBytes: number): Promise<Blob> {
   let shrunk = file;
-  for (const quality of QUALITIES) {
-    shrunk = await shrinkImage(file, maxSide, quality);
-    if (shrunk.size <= maxBytes) break;
+  for (const { side, quality } of shrinkSteps(maxSide)) {
+    shrunk = await shrinkImage(file, side, quality);
+    if (shrunk.size <= maxBytes) return shrunk;
   }
   return shrunk;
 }

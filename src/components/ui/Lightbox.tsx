@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSwipe } from "./hooks/useSwipe";
 import IconButton from "./IconButton";
+import Picture from "./Picture";
 
 type Props = {
   src: string;
@@ -52,10 +53,10 @@ export default function Lightbox({ src, alt, caption, labels, onPrevious, onNext
                 <X />
               </IconButton>
             </div>
-            {/* A plain <img>: the address is a short-lived signed one, which an image optimiser could not fetch later.
+            {/* Through `Picture`: the address is a short-lived signed one, which an image optimiser could not fetch later.
                 `crossOrigin`: a readable answer, which the service worker may keep (public/sw.js, PHOTOS). */}
             {/* The offset changes with every move of the thumb, so it is a style, not a class. */}
-            <img
+            <Picture
               src={src}
               alt={alt}
               crossOrigin="anonymous"

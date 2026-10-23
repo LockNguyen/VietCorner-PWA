@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+import Picture from "./Picture";
 
 type Props = HTMLAttributes<HTMLSpanElement> & { src?: string };
 
@@ -10,7 +11,7 @@ export default function Thumbnail({ src, children, ...tile }: Props) {
       {...tile}
       className="flex h-15 w-22 shrink-0 items-center justify-center overflow-hidden rounded-thumb bg-fill text-body font-semibold text-subtle"
     >
-      {src ? <img src={src} alt="" loading="lazy" className="size-full object-cover" /> : children}
+      {src ? <Picture src={src} className="size-full object-cover" /> : children}
     </span>
   );
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GO_FORWARD } from "@/lib/slide";
 import type { ReactNode } from "react";
+import Picture from "./Picture";
 
 type Props = {
   href?: string; // what a tap opens; without one the card is not a button at all (only `extra` takes taps)
@@ -13,8 +14,9 @@ type Props = {
 
 // Tall enough that the top of the photo shows above the words (the user, 2026-10-20).
 const CARD = "relative flex min-h-80 flex-col justify-end overflow-hidden rounded-control bg-ink text-on-action";
-// Darkest at the bottom, where the words are, so white text passes contrast on any photo.
-const VEIL = "absolute inset-0 bg-linear-to-t from-ink/90 via-ink/65 to-ink/35";
+// One even darkness over the whole photo, so white text passes contrast on any photo, wherever the words sit
+// (the user, 2026-10-22: darker, no gradient).
+const VEIL = "absolute inset-0 bg-ink/75";
 // The link covers the whole card but holds no words: a button (the phone number) cannot sit inside a link.
 const LINK =
   "absolute inset-0 rounded-control focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-on-action";
@@ -24,13 +26,13 @@ const LINK =
 export default function PhotoCard({ href, src, title, subtitle, details = [], extra }: Props) {
   return (
     <div className={CARD}>
-      <img src={src} alt="" className="absolute inset-0 size-full object-cover" />
+      <Picture src={src} className="absolute inset-0 size-full object-cover" />
       <span aria-hidden className={VEIL} />
       {href && <Link href={href} transitionTypes={GO_FORWARD} aria-label={title} className={LINK} />}
       {/* Taps go through the words to the link; only `extra` takes its own. */}
-      {/* 16 px around the words, and a title split into lines of even length ("Hội Thánh Việt Nam / Winston-Salem",
-          not "… Winston- / Salem"): more room for each line, at either text size (the user, 2026-10-22). */}
-      <span className="pointer-events-none relative flex flex-col gap-1 p-4">
+      {/* 16 px at the sides and 24 above and below the words, and a title split into lines of even length ("Hội
+          Thánh Việt Nam / Winston-Salem", not "… Winston- / Salem"), at either text size (the user, 2026-10-22). */}
+      <span className="pointer-events-none relative flex flex-col gap-1 px-4 py-6">
         <span className="text-tile font-bold text-balance">{title}</span>
         {/* A gap under the title, so the title reads apart from the lines that follow it. */}
         <span className="mt-2 flex flex-col gap-1">
