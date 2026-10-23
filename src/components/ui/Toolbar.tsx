@@ -2,18 +2,15 @@ import type { HTMLAttributes } from "react";
 
 type Props = HTMLAttributes<HTMLDivElement>;
 
-// `fixed`, not `sticky`: on the user's iPhone (2026-10-19) a sticky row under the sticky top bar scrolled away
-// with the list. A fixed row cannot; the spacer keeps the first line of the list from starting under it.
-const SPACER = "h-toolbar shrink-0";
+// `sticky` just under the top bar, inside the screen's scrolling box (PageSlide), like the top bar itself: held
+// there while the list scrolls under it, and pulled down with the top bar when the page bounces at its top
+// (the user, 2026-10-22: a `fixed` row stayed put while the bar and the list bounced away from it). It was
+// `fixed` from 2026-10-19 because, when the whole page scrolled, a sticky row scrolled away on the user's iPhone.
 const ROW =
-  "fixed inset-x-0 top-under-bar z-10 mx-auto flex h-toolbar max-w-column items-center justify-end gap-3 bg-surface px-3";
+  "sticky top-under-bar z-10 flex h-toolbar shrink-0 items-center justify-end gap-3 bg-surface px-3";
 
 // A row of buttons at the right end of the screen, held just under the top bar while the list scrolls under it.
+// It takes the screen's full width: put it outside a padded column, as the first thing under the top bar.
 export default function Toolbar(row: Props) {
-  return (
-    <>
-      <div aria-hidden className={SPACER} />
-      <div {...row} className={ROW} />
-    </>
-  );
+  return <div {...row} className={ROW} />;
 }

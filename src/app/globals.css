@@ -106,9 +106,13 @@
 }
 
 /* Room for the phone's own furniture: the status bar and notch above, the home indicator below. */
-/* Names the tab bar for the screen slides (below), so it stays on top and still while a screen slides. */
+/* Names the tab bar and the top bar for the screen moves (below), so each stays on top and still while a screen
+   moves under it. */
 @utility slide-anchor-tab-bar {
   view-transition-name: tab-bar;
+}
+@utility slide-anchor-top-bar {
+  view-transition-name: top-bar;
 }
 
 @utility pt-safe {
@@ -169,32 +173,46 @@ html[data-text-size="big"] {
   --text-scale: 1.2;
 }
 
-/* Screens sliding (src/components/PageSlide.tsx, src/lib/slide.ts), as an iPhone pushes and pops pages.
+/* Screens moving (src/components/PageSlide.tsx, src/lib/slide.ts), as an iPhone pushes and pops pages.
    Forward: the new screen comes in from the right over the old one. Back: the screen leaves to the right on
    top, uncovering the one under it. The screen underneath stays still (the user, 2026-10-17: two screens
    moving at different speeds looked wrong); only the top one moves.
-   The iPhone's own curve and length. The tab bar is outside the sliding screen, so it stays put. */
+   The iPhone's own curve, at half its length (the user, 2026-10-22: 350 ms kept the screen waiting). The tab bar
+   is outside the sliding screen, so it stays put. */
 :root {
-  --slide: 350ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --slide: 175ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 ::view-transition {
   pointer-events: none; /* taps during a slide reach the page, not the picture of it */
 }
+/* Everything around the screen (the page behind it) never changes, so it does not move either. Without this the
+   browser's own 250 ms cross-fade ran on it, and every move lasted that long, whatever its own length (measured
+   2026-10-22: a 140 ms switch took 270 ms before the screen could be used). */
+::view-transition-group(root),
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
 /* The tab bar is its own layer above the sliding screen and never moves: without this the white screen,
    a screen tall, was drawn over it for the length of the slide (seen 2026-10-17). */
-::view-transition-group(tab-bar) {
+::view-transition-group(tab-bar),
+::view-transition-group(top-bar) {
   animation: none;
   z-index: 2;
 }
-::view-transition-old(tab-bar) {
+::view-transition-old(tab-bar),
+::view-transition-old(top-bar) {
   display: none;
 }
-::view-transition-new(tab-bar) {
+::view-transition-new(tab-bar),
+::view-transition-new(top-bar) {
   animation: none;
 }
+/* The top bar too (the user, 2026-10-22): it never moves or fades; the new screen's title, back arrow and icons
+   are simply there, and only what is under the bar moves. */
 ::view-transition-group(.slide-forward),
 ::view-transition-group(.slide-back) {
-  animation: none; /* the two screens differ in height: no resizing between them, only the slide */
+  animation: none; /* the screen is the same viewport-tall box before and after: only the move itself */
 }
 ::view-transition-old(.slide-forward),
 ::view-transition-new(.slide-forward),
