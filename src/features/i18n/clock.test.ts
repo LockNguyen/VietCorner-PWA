@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clockTime, withChurchSunday } from "./clock";
+import { clockTime, weekdayName, withChurchWeekdays } from "./clock";
 
 describe("a time of day, as the members say it", () => {
   it("is a 12-hour clock with AM/PM in English", () => {
@@ -22,10 +22,31 @@ describe("a time of day, as the members say it", () => {
   });
 });
 
-describe("Sunday, as a church names it", () => {
+describe("the weekdays, as this church names them", () => {
   it("is Chúa Nhật, however the phone wrote Chủ Nhật", () => {
-    expect(withChurchSunday("Chủ Nhật, 19 tháng 10")).toBe("Chúa Nhật, 19 tháng 10");
-    expect(withChurchSunday("chủ nhật")).toBe("Chúa Nhật");
-    expect(withChurchSunday("Thứ Hai")).toBe("Thứ Hai");
+    expect(withChurchWeekdays("Chủ Nhật, 19 tháng 10")).toBe("Chúa Nhật, 19 tháng 10");
+    expect(withChurchWeekdays("chủ nhật")).toBe("Chúa Nhật");
+  });
+
+  it("numbers the other days, Thứ 2 to Thứ 7", () => {
+    const names = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
+    expect(names.map(withChurchWeekdays)).toEqual(["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"]);
+    expect(withChurchWeekdays("Thứ Hai, 20 tháng 10")).toBe("Thứ 2, 20 tháng 10");
+  });
+
+  it("leaves a day already written as a number, English, and words that only start like a weekday", () => {
+    expect(withChurchWeekdays("Thứ 2")).toBe("Thứ 2");
+    expect(withChurchWeekdays("Monday, October 20")).toBe("Monday, October 20");
+    expect(withChurchWeekdays("thứ bao nhiêu")).toBe("thứ bao nhiêu");
+  });
+});
+
+describe("a weekday by its number", () => {
+  it("counts from Sunday, in both languages", () => {
+    expect(weekdayName(0, "vi")).toBe("Chúa Nhật");
+    expect(weekdayName(2, "vi")).toBe("Thứ 3");
+    expect(weekdayName(6, "vi")).toBe("Thứ 7");
+    expect(weekdayName(0, "en")).toBe("Sunday");
+    expect(weekdayName(6, "en")).toBe("Saturday");
   });
 });

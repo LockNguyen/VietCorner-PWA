@@ -7,7 +7,8 @@ import Place from "@/components/Place";
 import PhotoCard from "@/components/ui/PhotoCard";
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { GO_FORWARD } from "@/lib/slide";
-import { formatShortTime, weekdayName } from "../formatting";
+import { weekdayName } from "@/features/i18n/clock"; // I18N
+import { formatShortTime } from "../formatting";
 import { STRINGS } from "../strings";
 import { CHURCH_PICTURE, type WeeklyCard, type WeeklyLine } from "../types";
 import { byWeekday } from "../weekly";

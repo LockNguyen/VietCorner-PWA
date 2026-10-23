@@ -40,6 +40,7 @@ import MusicToolbarDemo from "./MusicToolbarDemo";
 import ComposerDemo from "./ComposerDemo";
 import PhotoDemo from "./PhotoDemo";
 import SheetDemo from "./SheetDemo";
+import PhoneInputDemo from "./PhoneInputDemo";
 
 const BUTTONS = ["primary", "quiet", "danger", "text"] as const;
 
@@ -84,7 +85,7 @@ export default async function ShowcasePage() {
           }
         />
         <TopBar
-          title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư"
+          title="Nhóm Học Kinh Thánh Thanh Niên Tối Thứ 4"
           left={<IconLink href="/ui#3" label="Back"><ChevronLeft /></IconLink>}
           right={
             <>
@@ -126,11 +127,12 @@ export default async function ShowcasePage() {
         <Field label="Dành cho">
           <Select defaultValue="b">
             <option value="a">Cả hội thánh</option>
-            <option value="b">Nhóm Học Kinh Thánh Thanh Niên Tối Thứ Tư</option>
+            <option value="b">Nhóm Học Kinh Thánh Thanh Niên Tối Thứ 4</option>
           </Select>
         </Field>
         <Field label="Bắt đầu (giờ hội thánh)"><TextInput type="datetime-local" defaultValue="2026-10-14T19:00" /></Field>
         <Field label="Giờ (giờ hội thánh)"><TextInput type="time" defaultValue="19:00" /></Field>
+        <PhoneInputDemo />
         <TextInput placeholder="Email" aria-label="Email" />
         <div className="flex flex-col">
           <Switch label="Hằng tuần" defaultChecked />
@@ -143,9 +145,9 @@ export default async function ShowcasePage() {
         <Text as="h2" variant="small" tone="subtle">Rows as the admin screens compose them: a request, a reminder, a date on and off; then a group's name</Text>
         <ul>
           <ListRow title="Nguyễn Văn An" subtitle="Nhóm Thanh Niên" trailing={<><Button>Duyệt</Button><Button variant="quiet">Từ chối</Button></>} />
-          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ Tư · 19:00" trailing={<Button variant="quiet">Xóa</Button>} />
-          <ListRow title="Thứ Tư, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
-          <ListRow title="Thứ Tư, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
+          <ListRow title="Nhóm Thanh Niên" subtitle="Thứ 4 · 19:00" trailing={<Button variant="quiet">Xóa</Button>} />
+          <ListRow title="Thứ 4, 14 tháng 10, 19:00" trailing={<Button variant="quiet">Hủy</Button>} />
+          <ListRow title="Thứ 4, 21 tháng 10, 19:00" tone="off" trailing={<Button variant="quiet">Hoàn tác</Button>} />
         </ul>
         <div className="flex gap-2 px-3 pt-3">
           <TextInput defaultValue="Nhóm Học Kinh Thánh" aria-label="Tên nhóm" />
@@ -230,7 +232,7 @@ export default async function ShowcasePage() {
       <section className="flex flex-col gap-4">
         <Text as="h2" variant="small" tone="subtle">PhotoCard: an event, then one with a long title and no contact</Text>
         <PhotoCard href="/ui#14" src="/images/home/events.png" title="Giờ Thờ Phượng" subtitle="Chúa Nhật · 10:30 Sáng" details={["Phòng nhóm SeChrist"]} extra={<>Liên hệ: <PhoneNumber phone="(336) 555-0101" onDark /></>} />
-        <PhotoCard src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ Tư · 7:00 Tối" details={["Hội trường chính"]} />
+        <PhotoCard src="/images/home/events.png" title="Một buổi họp mặt rất dài để xem tiêu đề xuống hàng" subtitle="Thứ 4 · 7:00 Tối" details={["Hội trường chính"]} />
       </section>
 
       {/* EVENTS: the Events tab's first card with sample lines, to see it without signing in. */}

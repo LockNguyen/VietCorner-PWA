@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prayFor } from "@/features/prayer/server/prayFor";
+import { isId } from "@/lib/ids";
 import { createClient } from "@/lib/supabase/server";
 
 // POST { requestId } → counts one prayer for that request and notifies its author.
@@ -9,7 +10,7 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const { requestId } = await request.json();
-  if (typeof requestId !== "string") {
+  if (!isId(requestId)) {
     return NextResponse.json({ error: "requestId is required" }, { status: 400 });
   }
 

@@ -1,6 +1,6 @@
 import { after, NextResponse } from "next/server";
 import { postRequest } from "@/features/prayer/server/postRequest";
-import { translateRequest } from "@/features/prayer/server/translateRequest";
+import { translateForReview } from "@/features/prayer/server/translateForReview";
 import { createClient } from "@/lib/supabase/server";
 
 // POST { body } → posts a request to the whole church, then translates it once the author has their answer.
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const requestId = await postRequest(supabase, body);
     // After the response: the author sees their request at once, and the translation never delays it.
-    after(() => translateRequest(requestId));
+    after(() => translateForReview(requestId));
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

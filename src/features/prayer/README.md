@@ -26,24 +26,27 @@ missing file makes Play say "The music could not play."
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
-| Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `TranslationToReview`, `REVIEW_TRANSLATIONS`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH`, `MAX_TRANSLATION_LENGTH` |
+| Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `PrayerTranslation`, `REVIEW_TRANSLATIONS`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH`, `MAX_TRANSLATION_LENGTH` |
 | Pure logic | `shownText.ts` | The words a reader sees: the approved translation of someone else's request in the other language, else as written (tested) |
 | Pure logic | `reminders.ts` | `isDue`: whether a weekly reminder should go out now (church time) |
 | Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`: once per request per day (the phone's midnight), worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
-| Reads | `reads.ts` | `getPrayerReminders(supabase)`, `getTranslationsToReview(supabase)`: each shared by its page and its refresh on arrival |
-| Browser API | `api.ts` | `getPrayerReminders`, `getTranslationsToReview` (refreshes, `useFresh`), `getRequests`, `createRequest` (POST `/api/prayer/post`), `editRequest` (POST `/api/prayer/edit`), `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`), `reviewTranslation` (the `review_prayer_translation` function) |
-| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen; `getTranslationsToReview` (re-exported) |
+| Reads | `reads.ts` | `getPrayerReminders`, and the reviewers' `getTranslationsToReview` (oldest first), `getPastTranslations` (newest first), `getTranslation` (one, for the editor), all from `prayer_translations`; each shared by its page and its refresh on arrival |
+| Browser API | `api.ts` | `getPrayerReminders`, `getTranslationsToReview` (refreshes, `useFresh`), `getRequests`, `createRequest` (POST `/api/prayer/post`), `editRequest` (POST `/api/prayer/edit`), `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`), `reviewTranslation` (the `review_prayer_translation` function), `retryTranslation` (POST `/api/prayer/retranslate`), `getPastTranslations` |
+| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen; the reviewers' three reads (re-exported) |
 | Server logic | `server/postRequest.ts`, `server/editRequest.ts` | Post, or change the words of my own, as the **user** (RLS decides); answer the id / whether it changed |
-| Server logic | `server/translateRequest.ts` | **Admin** client: the request's text only → the AI service's `/translate` (`src/lib/aiService.ts`) → `language`, `translation`; then `notifyReviewers`. A failure leaves both empty |
+| Server logic | `server/translateRequest.ts` | **Admin** client: the request's text only → the AI service's `/translate` (`src/lib/aiService.ts`) → `language`, `translation`, written only onto the same words and only while unreviewed; answers whether it wrote. A failure leaves the translation as it was, logged without the text |
+| Server logic | `server/translateForReview.ts` | After a post or an edit: `translateRequest`, then `notifyReviewers` |
+| Server logic | `server/retranslateRequest.ts` | A reviewer's Retry, as the **user**: `reopen_prayer_translation` (the database checks the permission), then `translateRequest` |
 | Server logic | `server/notifyReviewers.ts` | Everyone with `prayer.translations`: "a translation is waiting", per language, one topic |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to every approved member, once, per language |
 | Server logic | `server/notifyAuthor.ts` | **Admin** client: the author and the count → `sendPush`, in the author's language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
-| Routes | `src/app/api/prayer/post/route.ts`, `edit/route.ts` | Verify (401) → validate (400) → `postRequest` / `editRequest` → 204, then `after()`: `translateRequest` |
+| Routes | `src/app/api/prayer/post/route.ts`, `edit/route.ts` | Verify (401) → validate (400; an id with `src/lib/ids.ts`) → `postRequest` / `editRequest` → 204, then `after()`: `translateForReview` |
+| Routes | `src/app/api/prayer/retranslate/route.ts` | Verify (401) → validate (400) → `retranslateRequest` → 204, 403 (not a reviewer), 503 (no answer from the AI service). Waits for the translation: the reviewer is reading |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
 | State | `hooks/useTranslationEditing.ts` | The translation's edit screen: Submit approves the corrected words and goes back to Admin; Cancel goes back |
@@ -62,12 +65,13 @@ missing file makes Play say "The music could not play."
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit (opens the edit screen), Delete |
 | UI | `components/RequestEditor.tsx` | The edit screen's form: the words, Save |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
-| UI | `components/TranslationReviews.tsx`, `TranslationReviewRow.tsx` | The Admin tab's "Translations to check": each request with its VI/EN badge, the translation under it, Approve and Edit |
+| UI | `components/TranslationReviews.tsx`, `TranslationReviewRow.tsx` | The Admin tab's "Translations": a row to the past ones, then each waiting request (`ListRow`: VI/EN in a `CountPill`, the translation under it, Approve, the pencil, the circular arrow) |
+| UI | `components/PastTranslations.tsx` | `/admin/translations`: every approved translation, newest first, each with the pencil and Retry |
 | UI | `components/TranslationEditor.tsx` | The translation's edit screen: the request, the translation to correct, Submit, Cancel |
 | UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: the church's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |
 | Shell | `src/app/prayer/new/page.tsx`, `src/app/prayer/[requestId]/edit/page.tsx` | Writing and editing a request, each its own screen |
-| Shell | `src/app/admin/page.tsx` (`// PRAYER` lines), `src/app/admin/translations/[requestId]/page.tsx` | The review list on the Admin tab; one translation's edit screen |
+| Shell | `src/app/admin/page.tsx` (`// PRAYER` lines), `src/app/admin/translations/page.tsx`, `[requestId]/page.tsx` | The review list on the Admin tab; the past translations; one translation's edit screen, which goes back to the list it was opened from |
 
 ## How anonymity is guaranteed
 RLS hides **rows**, not columns. If members could read `prayer_requests`, any of them could open the browser
@@ -193,10 +197,17 @@ real notification arriving on a phone.**
   both with the service role and pushes "a translation is waiting" to everyone with `prayer.translations`.
 - **Nothing reaches members unreviewed** (the user: free models are not reliable translators). The view sends a
   translation only once `translation_reviewed_at` is set; until then every reader sees the original.
-- **The admin's list** (Admin tab → "Translations to check", oldest first): the request with a VI or EN badge,
-  the translation under it, Approve (shows it as it is) and Edit (a screen to correct it: Submit approves the
-  corrected words, Cancel leaves it waiting). Answered and deleted requests drop off. A request the AI could not
-  translate is listed with "No translation yet" and Edit only, for the admin to write it.
+- **The admin's lists** (Admin tab → "Translations"): first a row, "Past translations", to every approved one
+  (newest first), then the waiting ones (oldest first). Each request shows its VI or EN badge, the translation under
+  it, and: Approve (waiting ones: shows it as it is), the pencil (a screen to correct it: Submit approves the
+  corrected words, Cancel leaves it as it was; both go back to the list it came from), and the circular arrow
+  (Retry: asks the AI service again and waits for it). Answered and deleted requests drop off. A request the AI
+  could not translate is listed with "No translation yet" and no Approve, for the admin to write it or retry.
+- **Retry puts the translation back on the waiting list** (`reopen_prayer_translation`), keeping its words until
+  the new ones arrive: if the AI service fails again ("Could not translate"), the old translation is still there to
+  approve or correct. Readers see the original meanwhile, as for any translation waiting for review.
+- **Past translations stay open to correction** (the user, 2026-10-23: members may say one reads badly): the
+  pencil corrects one in place, Retry sends it back for review.
 - **Only the server and reviewers write a translation.** Members have no grant on the three columns; reviewers
   use `review_prayer_translation`, which checks the permission. It also takes the words the reviewer read, so a
   translation of words the author changed meanwhile is never approved (it answers false: "Could not save").
@@ -205,14 +216,22 @@ real notification arriving on a phone.**
 - **Who sees what:** someone else's request in the other language, approved → the translation; everything else
   (my own, my language, not approved, language unknown) → as written (`shownText.ts`).
 - **Requests from before** count as reviewed with no translation, so they show as written and never fill the list.
+  The 20 there were on 2026-10-23 were translated by Claude in one SQL script, which approves them all once run;
+  it is kept out of the repository because it quotes the requests (the user has it).
+- **A translation is only ever written onto unreviewed words.** An edit that sends the same words clears nothing
+  (the trigger fires on a change), so without that rule its translation would have replaced an approved one
+  unseen (found in review, 2026-10-23).
 - **Edge cases:** the AI service off, busy or unreadable → no translation, still listed for the admin (logged
-  without the text). A translation still on its way when the author edits is dropped: it only lands on the words
+  without the text); a translation the database refuses (over 2000 characters) is logged the same way. A translation still on its way when the author edits is dropped: it only lands on the words
   it was made from. The `after()` work shares the route's time limit on Netlify (~10 s); cut off there, it is the
   same as a failure.
-- **Expected behavior:** not yet seen on a screen or a phone (2026-10-23): `docs/sql-to-run-2026-10-23.sql` has to
-  be run first, and until it is, the Prayer tab shows no requests (the feed asks for the new columns). The AI
-  service's `/translate` was tried with the real providers: a two-line Vietnamese request, an English one and an
-  unaccented Vietnamese one were each recognised and translated in 0.2–1.6 s (line breaks kept).
+- **Expected behavior:** `docs/sql-to-run-2026-10-23.sql` has to be run first; until it is, the Prayer tab shows
+  no requests (the feed asks for the new columns). Seen 2026-10-23: with the first version of 5d run, posting from
+  the app saved the request and answered at once; the AI service was not reachable from the server, so it waited
+  with no translation, as designed. The AI service's `/translate` was tried with the real providers: a two-line
+  Vietnamese request, an English one and an unaccented Vietnamese one were each recognised and translated in
+  0.2–1.6 s (line breaks kept), and a 1000-character English one in 2.7 s. **Not seen:** the Admin tab's lists and
+  Retry as an admin (the test account is not one), a push to a reviewer, `after()` on Netlify.
 
 ## Not built yet
 - **Moderation:** removing someone else's request (`deleted_at` exists; on hold, backlog B24).

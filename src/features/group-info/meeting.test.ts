@@ -4,7 +4,7 @@ import { formatMeeting } from "./meeting";
 describe("when a group meets, in words", () => {
   it("is the weekday, plural in English, and the time in each language's own style", () => {
     expect(formatMeeting(2, "19:30:00", "en")).toBe("Tuesdays @ 7:30 PM");
-    expect(formatMeeting(2, "19:30:00", "vi")).toBe("Thứ Ba @ 7:30 Tối");
+    expect(formatMeeting(2, "19:30:00", "vi")).toBe("Thứ 3 @ 7:30 Tối");
   });
 
   it("covers both ends of the week", () => {

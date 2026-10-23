@@ -5,6 +5,7 @@ import BilingualInput from "@/components/ui/BilingualInput";
 import Button from "@/components/ui/Button";
 import Field from "@/components/ui/Field";
 import Text from "@/components/ui/Text";
+import PhoneInput from "@/components/ui/PhoneInput";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -12,7 +13,7 @@ import { LANGUAGE_NAMES } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
 import { useWeeklyCardSave } from "../hooks/useWeeklyCardSave";
 import { STRINGS } from "../strings";
-import { MAX_ADDRESS_LENGTH, MAX_PHONE_LENGTH, type WeeklyCard } from "../types";
+import { MAX_ADDRESS_LENGTH, type WeeklyCard } from "../types";
 
 type Props = {
   initial: WeeklyCard;
@@ -68,15 +69,7 @@ export default function EventWeeklyForm({ initial, listHref }: Props) {
       </Field>
 
       <Field label={t(STRINGS.contactField)} hint={t(STRINGS.contactHint)}>
-        <TextInput
-          type="tel"
-          inputMode="tel"
-          autoComplete="off"
-          placeholder="(336) 555-0101"
-          maxLength={MAX_PHONE_LENGTH}
-          value={phone}
-          onChange={(event) => setPhone(event.target.value)}
-        />
+        <PhoneInput value={phone} onChange={setPhone} />
       </Field>
 
       <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)}>

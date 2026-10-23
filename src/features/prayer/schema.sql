@@ -239,26 +239,27 @@ create trigger clear_translation_on_edit
   execute function public.prayer_request_text_changed();
 
 -- Members get no grant on the three columns (section 2), so an author cannot write a translation or approve one.
--- Reviewers work through the two functions below, which check the permission themselves (they run as their
+-- Reviewers work through the three functions below, which check the permission themselves (they run as their
 -- owner, past RLS), so the table stays closed to members as section 4 promises.
 insert into public.role_permissions (role, permission) values ('admin', 'prayer.translations')
 on conflict do nothing;
 
--- The review list: every request in the feed whose translation is not approved yet, oldest first. A request
--- whose translation failed is listed too, with none, for the reviewer to write. Answered and deleted ones drop off.
-create or replace function public.prayer_translations_to_review()
-returns table (id uuid, body text, language text, translation text, created_at timestamptz)
+-- Every request in the feed with its translation, for the reviewers' two lists: those waiting for review
+-- (`translation_reviewed_at` null; a failed translation is listed too, with none, for the reviewer to write) and
+-- the past ones, approved, still open to correction when members say a translation reads badly (the user,
+-- 2026-10-23). The app filters and orders the rows (reads.ts). Answered and deleted requests drop off.
+drop function if exists public.prayer_translations_to_review (); -- the first version: the waiting list only
+create or replace function public.prayer_translations()
+returns table (id uuid, body text, language text, translation text, created_at timestamptz, translation_reviewed_at timestamptz)
 language sql stable security definer set search_path = '' as $$
-  select r.id, r.body, r.language, r.translation, r.created_at
+  select r.id, r.body, r.language, r.translation, r.created_at, r.translation_reviewed_at
   from public.prayer_requests r
-  where r.translation_reviewed_at is null
-    and r.deleted_at is null
+  where r.deleted_at is null
     and r.answered_at is null
-    and (select public.has_permission('prayer.translations'))
-  order by r.created_at;
+    and (select public.has_permission('prayer.translations'));
 $$;
-revoke execute on function public.prayer_translations_to_review () from public, anon;
-grant execute on function public.prayer_translations_to_review () to authenticated;
+revoke execute on function public.prayer_translations () from public, anon;
+grant execute on function public.prayer_translations () to authenticated;
 
 -- Approve a translation as it is, or as the reviewer corrected it: Approve and Edit both send the text they show.
 -- `original` is the request's text the reviewer read. If the author edited it meanwhile, nothing changes and the
@@ -279,6 +280,25 @@ language sql security definer set search_path = '' as $$
 $$;
 revoke execute on function public.review_prayer_translation (uuid, text, text) from public, anon;
 grant execute on function public.review_prayer_translation (uuid, text, text) to authenticated;
+
+-- Retry: put a translation back on the waiting list, so the server may translate it again (its write lands only on
+-- an unreviewed translation). The old translation stays until the new one arrives: if the AI service fails, the
+-- reviewer still has it to approve or correct. Readers see the original meanwhile, as for any unreviewed one.
+create or replace function public.reopen_prayer_translation(request_id uuid)
+returns boolean
+language sql security definer set search_path = '' as $$
+  with reopened as (
+    update public.prayer_requests r
+    set translation_reviewed_at = null
+    where r.id = request_id
+      and r.deleted_at is null
+      and (select public.has_permission('prayer.translations'))
+    returning 1
+  )
+  select exists (select 1 from reopened);
+$$;
+revoke execute on function public.reopen_prayer_translation (uuid) from public, anon;
+grant execute on function public.reopen_prayer_translation (uuid) to authenticated;
 
 -- The feed: the same view as 5c with two columns added at the end, the original's language and its translation,
 -- the translation only once approved. The app shows each reader the request in their language when it can.
@@ -307,7 +327,8 @@ insert into public.prayer_reminders (weekday, send_at) values (3, time '19:00'),
 
 -- 7. Undo (removing the feature) ------------------------------------------
 -- drop function if exists public.pray_for_request (uuid);
--- drop function if exists public.prayer_translations_to_review (), public.review_prayer_translation (uuid, text, text);
+-- drop function if exists public.prayer_translations (), public.review_prayer_translation (uuid, text, text),
+--   public.reopen_prayer_translation (uuid);
 -- drop trigger if exists clear_translation_on_edit on public.prayer_requests;
 -- drop function if exists public.prayer_request_text_changed ();
 -- delete from public.role_permissions where permission = 'prayer.translations';

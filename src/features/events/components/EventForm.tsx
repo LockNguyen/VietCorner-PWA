@@ -6,6 +6,7 @@ import Field from "@/components/ui/Field";
 import BilingualInput from "@/components/ui/BilingualInput";
 import Switch from "@/components/ui/Switch";
 import Text from "@/components/ui/Text";
+import PhoneInput from "@/components/ui/PhoneInput";
 import TextInput from "@/components/ui/TextInput";
 import { COMMON } from "@/features/i18n/common"; // I18N
 import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
@@ -13,7 +14,7 @@ import { LANGUAGE_NAMES, type Language } from "@/features/i18n/types"; // I18N
 import { usePending } from "@/lib/usePending";
 import { problemWith, type DraftProblem } from "../draft";
 import { PROBLEMS, STRINGS } from "../strings";
-import { MAX_ADDRESS_LENGTH, MAX_PHONE_LENGTH, type EventDraft } from "../types";
+import { MAX_ADDRESS_LENGTH, type EventDraft } from "../types";
 
 type Props = {
   initial: EventDraft;
@@ -113,15 +114,7 @@ export default function EventForm({ initial, onSave }: Props) {
       </Field>
 
       <Field label={t(STRINGS.contactField)} hint={t(STRINGS.contactHint)}>
-        <TextInput
-          type="tel"
-          inputMode="tel"
-          autoComplete="off"
-          placeholder="(336) 555-0101"
-          maxLength={MAX_PHONE_LENGTH}
-          value={draft.contactPhone}
-          onChange={(event) => setDraft({ ...draft, contactPhone: event.target.value })}
-        />
+        <PhoneInput value={draft.contactPhone} onChange={(contactPhone) => setDraft({ ...draft, contactPhone })} />
       </Field>
 
       <Button pending={pending === "save"} pendingLabel={t(COMMON.saving)}>

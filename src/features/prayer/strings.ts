@@ -56,10 +56,21 @@ export const STRINGS = {
   timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
 
   // Admin section: translations wait for a reviewer before members see them (schema.sql 5d)
-  translationsHeading: { en: "Translations to check", vi: "Bản dịch cần kiểm tra" } satisfies Text,
+  translationsHeading: { en: "Translations", vi: "Bản dịch" } satisfies Text,
+  pastTranslations: { en: "Past translations", vi: "Bản dịch đã duyệt" } satisfies Text, // and that screen's title
+  noPastTranslations: { en: "No translation has been approved yet.", vi: "Chưa có bản dịch nào được duyệt." } satisfies Text,
   noTranslation: { en: "No translation yet", vi: "Chưa có bản dịch" } satisfies Text,
   approveTranslation: { en: "Approve", vi: "Duyệt" } satisfies Text,
-  editTranslation: { en: "Edit", vi: "Sửa" } satisfies Text,
+  editTranslation: { en: "Edit the translation", vi: "Sửa bản dịch" } satisfies Text, // the pencil, to a screen reader
+  retryTranslation: { en: "Translate again", vi: "Dịch lại" } satisfies Text, // the circular arrow, to a screen reader
+  translatedAgain: {
+    en: "Translated again. It waits for review on the Admin tab.",
+    vi: "Đã dịch lại. Bản dịch đang chờ duyệt ở trang Quản trị.",
+  } satisfies Text,
+  retryFailed: {
+    en: "Could not translate. Try again, or correct it with the pencil.",
+    vi: "Không dịch được. Xin thử lại, hoặc sửa bằng cây bút.",
+  } satisfies Text,
   translationApproved: { en: "Translation approved", vi: "Đã duyệt bản dịch" } satisfies Text,
   translationTitle: { en: "Edit translation", vi: "Sửa bản dịch" } satisfies Text, // the edit screen's title
   originalWords: { en: "Request", vi: "Ý cầu nguyện" } satisfies Text,

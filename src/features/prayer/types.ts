@@ -14,14 +14,15 @@ export type PrayerRequest = {
   translation: string | null; // into the other language, only once an admin approved it; else null
 };
 
-// One request on the admin's review list (schema.sql 5d `prayer_translations_to_review`): its words, and the
-// translation waiting for approval, which is null when the AI service could not translate it.
-export type TranslationToReview = {
+// One request on a reviewer's lists (schema.sql 5d `prayer_translations`): its words and its translation, which
+// is null when the AI service could not translate it. Waiting for review while `translation_reviewed_at` is null.
+export type PrayerTranslation = {
   id: string;
   body: string;
   language: Language | null;
   translation: string | null;
   created_at: string;
+  translation_reviewed_at: string | null;
 };
 
 // Who reviews translations before members see them (schema.sql 5d grants it to admins).

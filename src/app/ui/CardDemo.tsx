@@ -24,7 +24,7 @@ export default function CardDemo() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Card placeholder={<Users className="size-8" />} badge={<LiveDot />} title="Nhóm Thanh Niên" subtitle="Thứ Sáu @ 19:30 · Hội trường">
+      <Card placeholder={<Users className="size-8" />} badge={<LiveDot />} title="Nhóm Thanh Niên" subtitle="Thứ 6 @ 19:30 · Hội trường">
         <MemberCircles people={[{ initials: "AN", src: "/images/home/prayer.png" }, { initials: "BT" }, { initials: "C" }]} total={12} max={8} label="12 thành viên" />
       </Card>
       <BilingualInput

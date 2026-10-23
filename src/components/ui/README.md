@@ -27,11 +27,12 @@ Rules and the one file shape: the `frontend` skill. Colours, sizes and the full 
 | `SkeletonRow` | A grey stand-in for a `ListRow` while a list loads | | |
 | `Field` | A label above one control; under it, what is wrong, once the form has been tried | | `label`, `problem` |
 | `TextInput` | One line of typed input. Also a date, a time, or both: set `type` | | |
+| `PhoneInput` | A phone number field: the number pad, digits only, "(336) 123-4567" as it is typed (`lib/phone.ts formatPhone`). Every phone field uses it (an event, the weekly card, a group) | | |
 | `TextArea` | Several lines of typed input | | |
 | `Select` | One choice from a list, in the phone's own picker; children are `<option>`s | | |
 | `Switch` | On or off, with its label; the whole line is the tap target. A checkbox underneath. | | `label` |
 | `Sheet` | A short choice or a few details, rising from the bottom (built on `vaul`). At most 60% of the screen (`max-h-sheet`): the title and X stay put, the rest scrolls. Closes on the X, a swipe down, a tap outside or Escape, always sliding away first; `onClose` runs once it is gone. Children may be a function that receives `close`, for an action that ends by closing (Post). | | `title`, `closeLabel`, `onClose` |
-| `CountPill` | A small grey pill with a number and an icon ("3 🙏"), the height and grey of the small `Chip`, so they sit level. Not a button | | `label` (read by screen readers) |
+| `CountPill` | A small grey pill that only says something short: a number and an icon ("3 🙏"), or a language ("VI" on a translation to review). The height and grey of the small `Chip`, so they sit level. Not a button | | `label` (read by screen readers) |
 | `Celebrate` | A moment of thanks around what it wraps: it pops in, a ring spreads out and fades, `burst` floats up and fades. Plays once when rendered; nothing moves with reduced motion | | `burst` |
 | `Card` | A large tappable card: a picture across the top, always 16:9 (a taller or wider picture is centred and cut, so every card is the same height), then a title with an optional badge before it, a grey line, and children | | `src`, `placeholder`, `title`, `badge`, `subtitle` |
 | `IconLine` | One fact with an icon at its left instead of a word (time, place, contact); the icon is labelled for screen readers | | `icon`, `label` |

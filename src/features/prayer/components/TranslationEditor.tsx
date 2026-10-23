@@ -10,15 +10,15 @@ import { useLanguage } from "@/features/i18n/hooks/useLanguage"; // I18N
 import { usePending } from "@/lib/usePending";
 import { useTranslationEditing } from "../hooks/useTranslationEditing";
 import { STRINGS } from "../strings";
-import { MAX_TRANSLATION_LENGTH, type TranslationToReview } from "../types";
+import { MAX_TRANSLATION_LENGTH, type PrayerTranslation } from "../types";
 
-type Props = { request: TranslationToReview };
+type Props = { request: PrayerTranslation; backHref: string }; // backHref: the list it was opened from
 
 // Correcting a request's translation before members see it: the request as written above, the translation to
 // change below (empty when the AI service could not write one). Submit approves it; Cancel leaves it waiting.
-export default function TranslationEditor({ request }: Props) {
+export default function TranslationEditor({ request, backHref }: Props) {
   const { t } = useLanguage(); // I18N
-  const editing = useTranslationEditing();
+  const editing = useTranslationEditing(backHref);
   const [draft, setDraft] = useState(request.translation ?? "");
   const { pending, run } = usePending<"submit">();
 

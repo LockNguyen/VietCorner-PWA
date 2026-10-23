@@ -23,7 +23,7 @@ export default function EventManageList({ card, events }: Props) {
   const { t, language } = useLanguage(); // I18N
   const router = useRouter();
 
-  // "Chúa Nhật · 10:30a" for a weekly event, "Thứ Bảy, 25 tháng 10 · 9:00a" for a one-time one: its next date.
+  // "Chúa Nhật · 10:30a" for a weekly event, "Thứ 7, 25 tháng 10 · 9:00a" for a one-time one: its next date.
   function when(event: ManagedEvent): string | undefined {
     const next = event.upcoming[0];
     if (!next) return undefined; // a weekly event whose last week is past

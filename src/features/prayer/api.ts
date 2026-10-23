@@ -1,12 +1,16 @@
 import { createClient } from "@/lib/supabase/client";
-import { getPrayerReminders as readPrayerReminders, getTranslationsToReview as readTranslationsToReview } from "./reads";
+import {
+  getPastTranslations as readPastTranslations,
+  getPrayerReminders as readPrayerReminders,
+  getTranslationsToReview as readTranslationsToReview,
+} from "./reads";
 import {
   FEED_COLUMNS,
   PAGE_SIZE,
   type NewPrayerRequest,
   type PrayerReminder,
   type PrayerRequest,
-  type TranslationToReview,
+  type PrayerTranslation,
 } from "./types";
 
 // Prayer API: every call the browser makes for this feature.
@@ -84,7 +88,7 @@ export async function prayFor(requestId: string): Promise<void> {
 
 // Approve a request's translation as shown, or as the reviewer corrected it. Needs "prayer.translations"; the
 // function checks it. Throws when the request was edited or removed meanwhile: nothing was approved.
-export async function reviewTranslation(request: TranslationToReview, translation: string): Promise<void> {
+export async function reviewTranslation(request: PrayerTranslation, translation: string): Promise<void> {
   const { data, error } = await createClient().rpc("review_prayer_translation", {
     request_id: request.id,
     original: request.body, // the words the reviewer read, so an edit made meanwhile is not approved unread
@@ -94,9 +98,19 @@ export async function reviewTranslation(request: TranslationToReview, translatio
   if (!data) throw new Error("The request changed or was removed, so nothing was approved.");
 }
 
-// GET the review list again, as the admin page first read it, for the section to refresh itself on arrival.
-export function getTranslationsToReview(): Promise<TranslationToReview[]> {
+// POST a retry: the server puts the translation back on the waiting list and asks the AI service again, then
+// answers. Needs "prayer.translations"; the database checks it. Throws when nothing new could be written.
+export async function retryTranslation(requestId: string): Promise<void> {
+  await send("/api/prayer/retranslate", { requestId });
+}
+
+// GET the reviewers' lists again, as their pages first read them, for each to refresh itself on arrival.
+export function getTranslationsToReview(): Promise<PrayerTranslation[]> {
   return readTranslationsToReview(createClient());
+}
+
+export function getPastTranslations(): Promise<PrayerTranslation[]> {
+  return readPastTranslations(createClient());
 }
 
 // POST to one of our prayer routes; a refusal throws with the server's reason.

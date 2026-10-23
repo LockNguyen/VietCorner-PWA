@@ -78,8 +78,8 @@ export const THUMBNAIL_BUCKET = "event-thumbnails";
 // box: nothing to mistype, and the scheduler's 15-minute run is fine enough for the shortest of them.
 export const REMINDER_CHOICES = [1440, 120, 30];
 
-// why: the database refuses a longer number or address (schema.sql 3g); the box stops the typing there.
-export const MAX_PHONE_LENGTH = 30;
+// why: the database refuses a longer address (schema.sql 3g); the box stops the typing there. A phone number
+// needs no limit here: `ui/PhoneInput` keeps it to ten digits, well under the database's 30 characters.
 export const MAX_ADDRESS_LENGTH = 200;
 
 // --- What the admin section works with ---------------------------------------------------------------

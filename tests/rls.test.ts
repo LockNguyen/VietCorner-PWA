@@ -1043,8 +1043,8 @@ describe("prayer requests", () => {
       original: "Please pray for my exam.",
       translation: "defaced",
     });
-    const { data: memberList } = await bob.client.rpc("prayer_translations_to_review");
-    const { data: reviewerList } = await alice.client.rpc("prayer_translations_to_review");
+    const { data: memberList } = await bob.client.rpc("prayer_translations");
+    const { data: reviewerList } = await alice.client.rpc("prayer_translations").is("translation_reviewed_at", null);
     // A reviewer who read other words (the author edited meanwhile) approves nothing.
     const { data: staleReview } = await alice.client.rpc("review_prayer_translation", {
       request_id: id,
@@ -1057,6 +1057,15 @@ describe("prayer requests", () => {
       translation: "Xin cầu nguyện cho kỳ thi của con.",
     });
     const approved = await translationIn(bob);
+    // Retry: only a reviewer can put an approved translation back on the waiting list; it keeps its words meanwhile.
+    const { data: memberReopens } = await bob.client.rpc("reopen_prayer_translation", { request_id: id });
+    const { data: reviewerReopens } = await alice.client.rpc("reopen_prayer_translation", { request_id: id });
+    const { data: reopened } = await admin
+      .from("prayer_requests")
+      .select("translation, translation_reviewed_at")
+      .eq("id", id)
+      .single();
+    const whileReopened = await translationIn(bob);
     // The author's edit clears the approved translation in the same update, so it never shows under new words.
     await bob.client.from("prayer_requests").update({ body: "Please pray for my exams." }).eq("id", id);
     const { data: afterEdit } = await admin
@@ -1076,6 +1085,10 @@ describe("prayer requests", () => {
     expect(staleReview).toBe(false);
     expect(review).toBe(true);
     expect(approved).toBe("Xin cầu nguyện cho kỳ thi của con.");
+    expect(memberReopens).toBe(false);
+    expect(reviewerReopens).toBe(true);
+    expect(reopened).toEqual({ translation: "Xin cầu nguyện cho kỳ thi của con.", translation_reviewed_at: null });
+    expect(whileReopened).toBeNull(); // waiting for review again, so readers see the original
     expect(afterEdit).toEqual({ language: null, translation: null, translation_reviewed_at: null });
   });
 });
@@ -1352,11 +1365,11 @@ describe("thumbnails: the picture that starts an event's row and a group's row",
     }
   });
 
-  it("refuse a file that is not a JPEG, or is over 200 KB, even from a manager", async () => {
+  it("refuse a file that is not a JPEG, or is over its limit (200 KB events, 500 KB groups), even from a manager", async () => {
     for (const { table, bucket } of kinds) {
       const files = alice.client.storage.from(bucket);
       const { error: notAPicture } = await files.upload(pathFor(table, "script"), new Blob(["<script>"], { type: "text/html" }), { contentType: "text/html" });
-      const { error: tooBig } = await files.upload(pathFor(table, "big"), new Blob([new Uint8Array(250_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
+      const { error: tooBig } = await files.upload(pathFor(table, "big"), new Blob([new Uint8Array(600_000)], { type: "image/jpeg" }), { contentType: "image/jpeg" });
 
       expect(notAPicture).not.toBeNull();
       expect(tooBig).not.toBeNull();

@@ -577,13 +577,24 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       redeployed with `/translate` (the web app's `AI_SERVICE_URL` must reach a service that has it).
       Debt: requests from before stay untranslated (counted as reviewed); the two provider pools rest separately.
 
+- [x] **Review fixes + Past translations and Retry (2026-10-23, the user).** All must, should and nit items from the
+      review applied (see the architecture's Change Log); 199 tests. Debt: the Admin lists and Retry not seen as an
+      admin; RLS needs the SQL run again.
+- [x] **Phone fields and weekday numbers (2026-10-23, the user).** `ui/PhoneInput` + `lib/phone.ts formatPhone`
+      (digits only, "(336) 123-4567" as typed) in the three phone fields; "Thứ 2" … "Thứ 7" from
+      `i18n/clock.ts withChurchWeekdays`. 196 tests. Debt: a number from abroad can no longer be typed.
+      Production test build on port 3001, Tailscale Funnel pointed at 3001 (the user, to test).
+
 ## ➡️ Next 3 Micro-Steps
-T1. User: run `docs/sql-to-run-2026-10-23.sql` BEFORE deploying (until then the Prayer tab is empty), then
-   `npm run test:rls`; redeploy the AI service (`deploy/push_to_space.py`, or restart the local container).
-T2. User + Claude, signed in as an admin: post a Vietnamese request → it shows as written to everyone → Admin tab
-   lists it with VI and an English translation → Approve → an English reader sees the translation; then Edit on
-   another, Submit; edit a request as its author and see it return to the list.
-T3. Decide whether to translate the requests from before (today they show as written, never listed).
+T1. User: run `docs/sql-to-run-2026-10-23.sql` AGAIN (it changed: `prayer_translations`, `reopen_prayer_translation`,
+   the waiting-account door for the weekly card and staff), then the private `translate-existing-requests.sql`
+   Claude gave (read the translations first: it approves them), then `npm run test:rls` (expect 104/104); redeploy
+   the AI service (`deploy/push_to_space.py`) so translations arrive.
+T2. User, signed in as an admin: post a Vietnamese request → Admin → Translations lists it with VI and an English
+   translation → Approve → an English reader sees it; Past translations → the pencil corrects one, the arrow
+   retranslates it (it moves to the waiting list); edit a request as its author and see it return to the list.
+T3. After the deploy: post one request on the live site and check it reaches the list WITH a translation (proves
+   `after()` runs on Netlify).
 R4a. Done 2026-10-22 (checked 2026-10-23: `analytics_actions` exists).
 R4b. User on a phone (iPhone, in the installed app): scroll, open and close a card far down Groups; switch tabs;
    Admin's own screens slide. The screen now scrolls in its own box (PageSlide): check that scrolling, the

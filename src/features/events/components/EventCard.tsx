@@ -16,7 +16,7 @@ type Props = {
 
 // One card of the schedule, one picture. There is no page per event (the user, 2026-10-19).
 // Not a link, for anyone: an admin edits from the Edit list (2026-10-21).
-// - One event: the title, when ("Thứ Bảy · 10:30a"), where (tapped for maps when it has an address), and
+// - One event: the title, when ("Thứ 7 · 10:30a"), where (tapped for maps when it has an address), and
 //   whom to call.
 // - Several at one place (2026-10-20, "Chỉnh lại 1 hình thôi"): the place is the title ("Hội Thánh Báp-Tít
 //   Winston-Salem"), then two blocks: the weekday and a line per event ("Thờ Phượng · 10:30a"); the address,

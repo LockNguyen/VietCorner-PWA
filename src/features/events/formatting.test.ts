@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatLongDate, formatShortTime, formatTime, formatWeekday, weekdayName } from "./formatting";
+import { formatLongDate, formatShortTime, formatTime, formatWeekday } from "./formatting";
 
 // Sunday 18 October 2026, 7 PM at church (New York, summer time = UTC-4): 23:00 UTC.
 const SUNDAY_EVENING = new Date("2026-10-18T23:00:00Z");
@@ -29,9 +29,4 @@ describe("the Events tab's short clock and day names", () => {
     expect(formatShortTime("19:30:00")).toBe("7:30p");
   });
 
-  it("names a weekday by its number, Sunday the church's way", () => {
-    expect(weekdayName(0, "vi")).toBe("Chúa Nhật");
-    expect(weekdayName(0, "en")).toBe("Sunday");
-    expect(weekdayName(6, "en")).toBe("Saturday");
-  });
 });

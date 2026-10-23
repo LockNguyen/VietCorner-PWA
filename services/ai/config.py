@@ -154,9 +154,10 @@ TRANSCRIBE_TIMEOUT_SECONDS = 8
 MAX_TRANSLATE_CHARS = 1000
 # why: a translation has one right answer; randomness only adds mistakes.
 TRANSLATION_TEMPERATURE = 0
-# why: the longest request (1000 English characters) becomes ~1100 Vietnamese ones, and Vietnamese costs about
-# 2 characters per token on these models, so ~600 tokens plus the JSON around them. Estimated, not measured:
-# 1200 leaves room. A translation cut short is unreadable JSON, which counts as a failure, never half a text.
+# why: the longest request (1000 English characters) became 936 Vietnamese ones on Groq in 2.7 s (measured
+# 2026-10-23), about 500 tokens with the JSON around them; 1200 leaves room for wordier answers. A translation cut
+# short is unreadable JSON, which counts as a failure, never half a text. Those 2.7 s sit under the 4 s each
+# provider gets (PROVIDER_TIMEOUT_SECONDS): a slower moment moves the request on to the next provider.
 TRANSLATION_MAX_TOKENS = 1200
 
 # --- API (M6) ----------------------------------------------------------------------------------------
