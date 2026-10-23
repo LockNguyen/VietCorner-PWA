@@ -296,6 +296,15 @@ Seen in the pane (2026-10-20): the editor in that order with the hints; the shar
   line 12 px in; a line too long continues 24 px in, under its name, and its "· 7:30p" never leaves its last word.
   Seen at 375 px with the card's own classes, compact and big text: no line breaks inside a time, the title in two
   even lines. The seeded address takes two lines (three in big text): shorten it in the editor if wanted.
+- **Round 4 (2026-10-22, the user):** the photo under one even dark veil (75% `ink`, no gradient: the same on
+  every `PhotoCard`), 24 px above and below the words, "Địa điểm:" before the address and "Liên hệ:" before the
+  number in a label column of their own, both values underlined (tappable) and wrapping under themselves. Seen on
+  `/ui` (the real `EventWeeklyCard` with sample lines) at 375 px, compact and big text: labels level with the
+  first line, nothing runs off the card.
 - **NOT seen (2026-10-21):** anything signed in (the preview pane has no session), the SQL
   (`docs/sql-to-run-2026-10-21.sql`) not run, `npm run test:rls` not run. Typechecked, built, unit-tested.
-
+- **A group's line opens its page (2026-10-22, the user):** the whole line is a link to `/groups/<id>/about`
+  (`WeeklyLine.href`, filled by the Events page from the group's id), ending in a round white button with a blue
+  arrow, its middle on the line's middle (measured on all six groups, wrapped lines too). Weekly events have no
+  page, so their lines are plain. The arrow is 24 px and bold in its 32 px circle (the user: less white). Opened
+  from here, the group page's back arrow returns to Events, where it was left (a step aside, `lib/navigation.ts`).

@@ -57,6 +57,7 @@ export type WeeklyLine = {
   weekday: number; // 0 = Sunday … 6 = Saturday
   time: string; // "HH:MM", church wall clock
   title: string; // already in the reader's language
+  href?: string; // where its line leads (a group's page), for a line that has more to show
 };
 
 // A weekly line from outside this feature, in both languages (a group's meeting): the page fills it.

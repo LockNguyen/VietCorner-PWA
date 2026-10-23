@@ -34,8 +34,16 @@ export default async function EventsPage() {
 }
 
 // GROUP-INFO: a group that meets on a set day and time is a line of the weekly card, under its name in each
-// language (the English name falls back to the Vietnamese one). A group without both is left out.
+// language (the English name falls back to the Vietnamese one), leading to the group's page. A group without
+// both is left out.
 function meetingOf(group: DirectoryGroup): WeeklyMeeting[] {
   if (group.meets_weekday === null || group.meets_time === null) return [];
-  return [{ weekday: group.meets_weekday, time: group.meets_time.slice(0, 5), title: { vi: group.name, en: group.name_en ?? "" } }];
+  return [
+    {
+      weekday: group.meets_weekday,
+      time: group.meets_time.slice(0, 5),
+      title: { vi: group.name, en: group.name_en ?? "" },
+      href: `/groups/${group.id}/about`,
+    },
+  ];
 }
