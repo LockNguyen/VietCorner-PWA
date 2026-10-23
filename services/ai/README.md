@@ -35,6 +35,7 @@ The Next.js app calls this service from its server (never from the browser) with
 | `ingest/` | Offline: PDFs → chunks in the database |
 | `rag/` | Online: question → answer |
 | `speech/` | Voice → text |
+| `translation/` | A prayer request → its language and its translation (written by Claude at the user's request, not a course chapter) |
 | `api/` | HTTP endpoints for the web app |
 | `evaluation/` | Measure which embedding model works best on your documents. `questions.jsonl` and `answers/` are private: gitignored, on your PC only |
 | `deploy/` | `push_to_space.py`: uploads only the files the Docker image needs to the Hugging Face Space |
@@ -147,7 +148,8 @@ concept → why this design → inputs/outputs → common pitfalls*.
 | `rag/generate.py` | One OpenAI-compatible client for every provider; translates SDK errors; enforces the per-call cutoff on a background thread |
 | `rag/answer.py` | The recipe: embed → search → refuse or prompt → generate, with dependency injection and timings |
 | `speech/transcribe.py` | Whisper on Groq: one cached client, a timeout, `SpeechUnavailable` for temporary trouble |
-| `api/main.py` | FastAPI `/health`, `/ask`, `/transcribe`: bearer token, input limits, error mapping, startup warm-up |
+| `translation/translate.py` | Prayer requests, vi ↔ en: one JSON-shaped chat call through its own provider pool (longer answers, temperature 0), checked before it is returned |
+| `api/main.py` | FastAPI `/health`, `/ask`, `/transcribe`, `/translate`: bearer token, input limits, error mapping, startup warm-up |
 | `evaluation/` | `metrics.py`, `run_eval.py` (model bake-off → `results.md`), `corpus.py` (cached vectors), `explain.py` (trace one question), `check_database.py`, `compare_models.py` |
 | `deploy/push_to_space.py` | Uploads only the files the image needs to a Hugging Face Space (allowlist, no history) |
 | `Dockerfile`, `.dockerignore` | The image: CPU-only torch, bge-m3 baked in, offline at run time, non-root, port 8000 |
@@ -167,8 +169,10 @@ concept → why this design → inputs/outputs → common pitfalls*.
 | Slow or stuck provider | Cut off at `PROVIDER_TIMEOUT_SECONDS` (4 s); the whole request stops at `GENERATION_DEADLINE_SECONDS` (7 s) | An HTTP timeout only limits gaps between bytes: one request ran 110 s before this |
 | Any other exception | 500 | It's our bug; don't disguise it as a provider problem |
 | Whisper rate limit, timeout, 5xx | 503 (`SpeechUnavailable`); a rejected key stays 500 | One is temporary, the other is our mistake |
+| Translation is not JSON, names another language, or is empty | 503 (`TranslationFailed`); the web app leaves it empty for an admin to write | Never show a guess; another try may work |
+| Blank / too long text to translate | 400 / 422 (`MAX_TRANSLATE_CHARS`, the same 1000 as a prayer request) | Caps token cost and abuse |
 | Startup with a wrong `DATABASE_URL` | The server exits (`PoolTimeout`) | Fail at deploy time, not on the first question |
-| Logging | One line per request: status, provider, sizes, timings. Never the question text. | Church members' questions are private |
+| Logging | One line per request: status, provider, sizes, timings. Never the question or request text. | Church members' questions and requests are private |
 
 ## Glossary
 | Term | Meaning |

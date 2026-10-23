@@ -33,7 +33,7 @@ def test_timeouts_and_network_errors_mean_busy():
 
 
 def test_stops_waiting_at_the_deadline_even_if_the_provider_never_finishes(monkeypatch):
-    def keeps_sending_keep_alive_bytes(provider, messages):
+    def keeps_sending_keep_alive_bytes(provider, messages, **settings):
         time.sleep(2)  # an HTTP timeout would never fire here: bytes keep arriving
         return "too late"
 
@@ -47,7 +47,7 @@ def test_stops_waiting_at_the_deadline_even_if_the_provider_never_finishes(monke
 
 
 def test_translates_sdk_errors_raised_inside_the_background_call(monkeypatch):
-    def rejects_the_key(provider, messages):
+    def rejects_the_key(provider, messages, **settings):
         raise http_error(401)
 
     monkeypatch.setattr(generate, "complete", rejects_the_key)

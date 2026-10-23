@@ -34,6 +34,7 @@ FILES_THE_IMAGE_NEEDS = [
     "api/*.py",
     "rag/*.py",
     "speech/*.py",
+    "translation/*.py",
 ]
 # Remove server code the Space still has from an earlier upload (a renamed or deleted module).
 STALE_FILES = ["*.py"]

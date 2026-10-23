@@ -1,5 +1,5 @@
 """
-What it does:  Exposes the RAG pipeline over HTTP: GET /health, POST /ask, POST /transcribe.
+What it does:  Exposes the RAG pipeline over HTTP: GET /health, POST /ask, POST /transcribe, POST /translate.
 Concept:       Model serving: the embedding model stays loaded in this long-running process, so each
                request only pays for inference. Only our Next.js server may call it. It proves that with a
                shared secret in the Authorization header ("Bearer <SERVICE_TOKEN>").
@@ -8,7 +8,7 @@ Why this design: Thin endpoints, the same rule as the web app's route.ts files: 
                validate input (and document the API at /docs when SHOW_API_DOCS=1).
                Every route is a plain `def`: FastAPI runs it on a worker thread, so a slow network call
                never freezes the other requests (see the sync decision in architecture.md).
-Inputs/Outputs: JSON / uploaded audio -> JSON. One log line per request (never the question text: it is private).
+Inputs/Outputs: JSON / uploaded audio -> JSON. One log line per request (never the question or request text: it is private).
 Run locally:   uvicorn api.main:app --reload
 Common pitfalls:
   - Comparing tokens with == (timing attacks). Use secrets.compare_digest, on bytes.
@@ -31,6 +31,7 @@ from config import (
     MAX_HISTORY_TURNS,
     MAX_AUDIO_BYTES,
     MAX_QUESTION_CHARS,
+    MAX_TRANSLATE_CHARS,
     SERVICE_TOKEN,
     SHOW_API_DOCS,
 )
@@ -41,6 +42,7 @@ from rag.embeddings import embed_query
 from rag.providers import AllProvidersFailed
 from rag.store import connection_pool
 from speech.transcribe import SpeechUnavailable, transcribe
+from translation.translate import TranslationFailed, translate
 
 # Libraries log warnings only (at INFO, httpx prints every HTTP request we make); our own lines log at INFO.
 logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -98,6 +100,15 @@ class AskResponse(BaseModel):
 
 class TranscribeResponse(BaseModel):
     text: str
+
+
+class TranslateRequest(BaseModel):
+    text: str = Field(max_length=MAX_TRANSLATE_CHARS)  # a prayer request's text only, never its author
+
+
+class TranslateResponse(BaseModel):
+    language: Literal["vi", "en"]  # the original's
+    translation: str  # in the other language
 
 
 def require_token(authorization: str | None = Header(default=None)) -> None:
@@ -174,3 +185,22 @@ def transcribe_audio(audio: UploadFile) -> TranscribeResponse:
 
     log.info("transcribe 200 bytes=%d transcript_chars=%d", len(data), len(text))
     return TranscribeResponse(text=text)
+
+
+@app.post("/translate", dependencies=[Depends(require_token)])
+def translate_text(request: TranslateRequest) -> TranslateResponse:
+    """Detect a prayer request's language (vi or en) and translate it into the other one."""
+    text = request.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required.")
+
+    try:
+        result = translate(text)
+    except (AllProvidersFailed, TranslationFailed) as error:
+        # Both are temporary: the web app leaves the translation empty and an admin can write it.
+        log.warning("translate 503 chars=%d reason=%s", len(text), error)
+        raise HTTPException(status_code=503, detail="Translation is busy. Try again in a minute.")
+
+    log.info("translate 200 provider=%s chars=%d language=%s translation_chars=%d",
+             result.provider, len(text), result.language, len(result.text))
+    return TranslateResponse(language=result.language, translation=result.text)
