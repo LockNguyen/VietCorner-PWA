@@ -350,6 +350,14 @@ kept in localStorage and walked round and round, `playlist.ts`; stopped on leavi
 one stayed put while the bar and the list bounced at the top; it had been `fixed` since 2026-10-19, when the whole page
 scrolled and a sticky row scrolled away on the user's iPhone). After 2 seconds on the tab a short bubble left of play, white space on its left, swaying
 towards it, says "Tôi muốn cầu nguyện bây giờ" / "I want to pray now" until the music is first played.
+Translations (2026-10-23): posting and editing go through `/api/prayer/post` and `/api/prayer/edit`; after the
+answer (`after()`), `translateRequest` sends the text only (never the author) to the AI service's `POST /translate`
+and stores the language (`vi`/`en`) and the translation with the service role, then pushes the reviewers
+(`prayer.translations`, admins). Readers see a translation only once a reviewer approved it on the Admin tab
+("Translations to check": Approve, or Edit at `/admin/translations/<id>` with Submit and Cancel), through
+`review_prayer_translation`; until then, and always for their own requests, the words as written (`shownText.ts`).
+An edit clears the translation in the same update (a trigger) and is translated and reviewed again. A failed
+translation stays empty and listed, for the reviewer to write.
 Tables: `prayer_requests`, `prayer_reminders` (admin configuration, no member grant; a weekly nudge to every approved member).
 
 ### 6.15 staff → [README](../src/features/staff/README.md)
@@ -365,7 +373,8 @@ until `staff/schema.sql` has run.
 A chat with the church's documents: typed or spoken questions, answers with the pages they came from, read
 aloud when the question was spoken. The web feature is thin; the RAG pipeline (ingest → embed → pgvector
 search → grounded answer, plus Whisper and follow-up rewriting) lives in `services/ai` and is reachable only
-with a bearer token. The conversation is stored on the device, keyed by user id. Table: `document_chunks`
+with a bearer token (the one client is `src/lib/aiService.ts`, shared with prayer's translations since 2026-10-23).
+The conversation is stored on the device, keyed by user id. Table: `document_chunks`
 (server-only). Measured retrieval numbers: `services/ai/evaluation/results.md`.
 
 ### 6.16 analytics → [README](../src/features/analytics/README.md)
@@ -409,8 +418,8 @@ what, problems, resources per visit; each list is one Postgres function. Rows ar
 | `event_cancellations` | events | One skipped week of a recurring event. |
 | `weekly_card` | events | One row (`id` true, checked): the Events tab's first card, its title in both languages, the address and the number. Members read; `events.manage` updates; no insert or delete grant. |
 | `event_reminders` | events | Which reminders an event has. Read and written only with `events.manage`; the scheduler reads it with the service role. |
-| `prayer_requests` | prayer | Members insert (2 columns; `group_id` is unused), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. |
-| `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name and picture (`profiles`), without either for an anonymous one, and how many prayed, for every reader (5c, 2026-10-22). |
+| `prayer_requests` | prayer | Members insert (2 columns; `group_id` is unused), edit the words of their own, mark their own answered, delete their own. **No read grant:** reading goes through the view. `language`, `translation`, `translation_reviewed_at` (5d): written by the server and by reviewers through `review_prayer_translation`, never by members; an edit of `body` clears all three (trigger `clear_translation_on_edit`). |
+| `prayer_feed` (view) | prayer | What approved members read: every unanswered request, with the author's name and picture (`profiles`), without either for an anonymous one, and how many prayed, for every reader (5c, 2026-10-22); its language and its translation, the translation only once reviewed (5d, 2026-10-23). |
 | `prayer_reminders` | prayer | A weekly nudge to the whole church, several allowed (rows that still name a group are never sent). Read and written only with `prayer.reminders`. |
 
 Every table a member can reach also carries the restrictive policy "Approved accounts only"
@@ -429,8 +438,8 @@ Every table is covered by `tests/rls.test.ts`.
 | `VAPID_PRIVATE_KEY` | `push/server/sendPush.ts` | **Secret.** Changing it breaks every existing subscription. |
 | `VAPID_SUBJECT` | `push/server/sendPush.ts` | `mailto:` contact for push services |
 | `CRON_SECRET` | `app/api/reminders/send/route.ts` | **Secret.** What the Supabase cron job sends to prove it is the scheduler. Unset = the route refuses everyone. |
-| `AI_SERVICE_URL` | `assistant/server/aiService.ts` | Where the AI service listens (no trailing slash). Server only. |
-| `AI_SERVICE_TOKEN` | `assistant/server/aiService.ts` | **Secret.** The service's `SERVICE_TOKEN`. |
+| `AI_SERVICE_URL` | `lib/aiService.ts` | Where the AI service listens (no trailing slash). Server only. |
+| `AI_SERVICE_TOKEN` | `lib/aiService.ts` | **Secret.** The service's `SERVICE_TOKEN`. |
 
 The AI service has its own settings in `services/ai/.env` (see `.env.example` there).
 
@@ -583,6 +592,12 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 | No RAG framework | Every stage is visible, testable code | We hand-write what frameworks provide |
 | **The service worker saves only `/_next/static/*`, cache-first, by hand (no Workbox)** | Measured: after a restart iOS had dropped 9 of 10 code files and refetching them was 21 of 22.5 s. Their names change with their content, so a saved copy is never stale | Pages still wait on the server (about 1 s, 3–5 s when Netlify is cold); old files are only trimmed past 150, not per deploy |
 | **The service worker also saves Home and shows it at launch, then replaces it with the fresh page (2026-10-17)** | After a few hours away the server's answer took ~10 s (network waking, sign-in renewed, database read), all of it on a blank screen | For about a second the saved Home can be out of date (Admin tile, a setup step); the server checks every action anyway. One saved copy per phone: sign-out and an ended session delete it, and the language toggle does too |
+| **Prayer requests are machine-translated, and a translation is shown only after a reviewer approved it** (2026-10-23, the user) | Members read Vietnamese or English; free models translate imperfectly, and a wrong prayer request is worse than an untranslated one | An admin reviews every new and edited request; until then readers of the other language see the original |
+| Translation runs after the response (`after()` in the post and edit routes), not before it | The author never waits on the AI service, and its failure cannot lose the request | On Netlify it shares the route's ~10 s; cut off there, the translation stays empty and the admin writes it |
+| Only the request's text is sent to the AI service, never its author (the user, 2026-10-22) | The providers are third parties on free tiers | The model cannot use a name to translate a pronoun |
+| Reviewers approve through one database function that takes the words they read (`review_prayer_translation`) | Column grants are per role, not per permission: a grant for reviewers would let every author write their own translation. Comparing the words stops approving a translation of text the author changed meanwhile | A function per action instead of a plain update |
+| The AI service client moved to `src/lib/aiService.ts` | Two features call the service now (assistant, prayer); a feature never imports another's internals | One more shared file in `src/lib` |
+| The AI service's translation has its own provider pool (`translation/translate.py`), not the assistant's | A translation needs a longer answer and temperature 0, and the pool's call takes neither | The two pools rest providers separately: a provider busy for one is tried once more by the other |
 | **Tabs are loaded whole in the background and kept fresh** (`useLoadAhead`; 2026-10-22, the user: "no white loading screen", the main screens only) | A tap on a tab shows its content at once, also after the app sat idle or put away for hours: an expired copy made the first tap wait on the network (measured with 30 s copies: 44 ms locally, longer on weak signal), and Next's `onInvalidate` does not fire when the time runs out (measured), so a check at every change of screen and on return to the app reloads it; a check sends nothing while the copy is fresh (measured) | One request per tab every hour while the app is in use, whether or not the tab is opened; `kind` needs a type from inside Next.js (type only) |
 
 ## 10. Change Log
@@ -759,3 +774,4 @@ Every push to `main` redeploys. Live: https://vietcorners.netlify.app
 - 2026-10-22: weekly card: each group's line links to the group's page (`WeeklyLine.href`, from `app/events/page.tsx`), with a round white button and a blue arrow; checked on a production build: six links, buttons centred on their lines, a tap slides the page in. Port 3000 now runs the production build (the user), restarted after each build.
 - 2026-10-22: music: three states (off, loading with a turning middle button, playing once sound comes out); "The music could not play" only for a real failure (the audio's `error`, or `NotAllowedError`), not for a start cut short by a newer song (`AbortError`, skipping fast) nor a song still on its way (the user: the error showed, then the music played). Measured: Play went off → loading → playing, three fast skips moved the order by three, no error. Navigation: one rule, a step aside (`isStepAside`, `sectionOf`, `Aside`): any non-main screen opened from another section goes back to where it was opened from, at its scroll position (a group's page from the Events card returns to Events; detours as before). Measured: Events → group → back to Events at 225 px; from Groups, back to Groups. Weekly card arrow 24 px bold. 185 tests.
 - 2026-10-22: analytics counts named actions: Pray and the music's play, pause, next and back carry `data-action`; `useTapTracking` records them as kind `action` (schema.sql 4b: the kind's check, `analytics_actions`); "Prayer and music" on the dashboard's first screen (`ActionList`). Prayer imports nothing of analytics. Measured in the pane: play, next, pause queued as `action:music-play`, `music-next`, `music-pause` on /prayer. Pray not tapped (it would pray in the live data). SQL in `docs/sql-to-run-2026-10-22.sql`, to run before use.
+- 2026-10-23: prayer translations (the user). AI service: `POST /translate` (`translation/translate.py`, JSON-shaped answer checked field by field, `TranslationFailed` → 503; `config.TRANSLATION_*`, `MAX_TRANSLATE_CHARS`; `rag/generate.py` `complete`/`call_provider` take a temperature and a length), 14 new tests, 97 in all; tried with the real providers (vi with two lines, en, unaccented vi: right language, 0.2–1.6 s). Web: `prayer/schema.sql` 5d (three columns, the trigger, `prayer.translations` for admins, `prayer_translations_to_review`, `review_prayer_translation`, the view), routes `/api/prayer/post` and `/edit` with `after()` → `translateRequest` → `notifyReviewers`; `shownText.ts` in `PrayerBubble`; Admin tab "Translations to check" and `/admin/translations/<id>`; `src/lib/aiService.ts` (moved from assistant); `COMMON.cancel`. `npm test` 190/190 (5 new, `shownText.test.ts`); an RLS case written, NOT run (needs `docs/sql-to-run-2026-10-23.sql`). NOT seen on a screen: until the SQL runs the Prayer tab is empty.

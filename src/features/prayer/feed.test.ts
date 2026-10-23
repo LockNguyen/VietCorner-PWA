@@ -15,6 +15,8 @@ function request(n: number): PrayerRequest {
     prayer_count: 0,
     author_name: "An",
     author_avatar: null,
+    language: null,
+    translation: null,
   };
 }
 

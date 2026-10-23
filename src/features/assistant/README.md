@@ -33,7 +33,7 @@ tap 🎙️ ─► useVoiceQuestion ─► api.transcribeRecording ─► /api/a
 | State | `hooks/useVoiceQuestion.ts` | Record → transcribe → hand over the text (`onQuestion`) |
 | State | `hooks/useVoiceRecorder.ts` | The microphone only: formats, permission, stopping the tracks |
 | UI | `components/` | `AssistantChat` (wires the hooks), `MessageList`, `MessageBubble`, `QuestionForm`, `VoiceButton` |
-| Server logic | `server/aiService.ts` | The only holder of the service URL + token: timeout, 503 → `AiServiceUnavailable` |
+| Server logic | `src/lib/aiService.ts` (shared with prayer's translations) | The only holder of the service URL + token: timeout, 503 → `AiServiceUnavailable` |
 | Server logic | `server/askQuestion.ts`, `server/transcribeAudio.ts` | One call each; no Next.js imports |
 | Routes | `src/app/api/assistant/{ask,transcribe}/route.ts` | Verify the user, validate input, map errors |
 | Data | `schema.sql` | `document_chunks`: server-only, filled by `services/ai`, never read by the browser |

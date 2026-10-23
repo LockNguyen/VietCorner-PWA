@@ -1,3 +1,5 @@
+import type { Language } from "@/features/i18n/types"; // I18N
+
 // One row of the `prayer_feed` view (schema.sql): a request as every approved member sees it.
 export type PrayerRequest = {
   id: string;
@@ -8,7 +10,25 @@ export type PrayerRequest = {
   prayer_count: number; // how many prayed, for every reader since 2026-10-22 (schema.sql 5c; 5b gave it to the author only)
   author_name: string | null; // null when the request is anonymous
   author_avatar: string | null; // their picture's path in the profiles' AVATAR_BUCKET; null when anonymous or none
+  language: Language | null; // the original's, found by the AI service; null until known (schema.sql 5d)
+  translation: string | null; // into the other language, only once an admin approved it; else null
 };
+
+// One request on the admin's review list (schema.sql 5d `prayer_translations_to_review`): its words, and the
+// translation waiting for approval, which is null when the AI service could not translate it.
+export type TranslationToReview = {
+  id: string;
+  body: string;
+  language: Language | null;
+  translation: string | null;
+  created_at: string;
+};
+
+// Who reviews translations before members see them (schema.sql 5d grants it to admins).
+export const REVIEW_TRANSLATIONS = "prayer.translations";
+
+// why: the database rejects a longer translation (schema.sql 5d); a translation can run longer than its original.
+export const MAX_TRANSLATION_LENGTH = 2000;
 
 // What the composer sends. Who wrote it comes from the login token, never from here.
 export type NewPrayerRequest = {
@@ -16,7 +36,8 @@ export type NewPrayerRequest = {
 };
 
 // The view's columns, named once so the server's first page and the browser's later pages cannot drift.
-export const FEED_COLUMNS = "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count, author_avatar";
+export const FEED_COLUMNS =
+  "id, body, is_anonymous, created_at, is_mine, author_name, prayer_count, author_avatar, language, translation";
 
 // why: enough to fill several screens of a phone, small enough to arrive fast on a slow connection.
 // Older requests load when the reader reaches the bottom.

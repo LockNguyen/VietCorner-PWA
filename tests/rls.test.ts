@@ -1017,6 +1017,67 @@ describe("prayer requests", () => {
     expect(stored).toHaveLength(1); // still one reminder, not two
     expect(removed).toHaveLength(1);
   });
+
+  it("translations reach readers only once a reviewer approved them, and an author can write none (section 5d)", async () => {
+    // Alice holds the admin role by now, and with it "prayer.translations"; Bob is a member and the author here.
+    await bob.client.from("prayer_requests").insert({ body: "Please pray for my exam." });
+    const { data: posted } = await admin
+      .from("prayer_requests")
+      .select("id, translation_reviewed_at")
+      .eq("author_id", bob.id)
+      .single();
+    const id = posted!.id;
+    // What the server does after the post (translateRequest.ts), with the service role.
+    await admin.from("prayer_requests").update({ language: "en", translation: "Xin cầu nguyện cho kỳ thi của tôi." }).eq("id", id);
+    const translationIn = async (reader: TestUser) =>
+      (await reader.client.from("prayer_feed").select("translation").eq("id", id).single()).data?.translation;
+
+    const unreviewed = await translationIn(alice);
+    const { error: authorWrites } = await bob.client.from("prayer_requests").update({ translation: "mine" }).eq("id", id);
+    const { error: authorApproves } = await bob.client
+      .from("prayer_requests")
+      .update({ translation_reviewed_at: new Date().toISOString() })
+      .eq("id", id);
+    const { data: memberReviews } = await bob.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "Please pray for my exam.",
+      translation: "defaced",
+    });
+    const { data: memberList } = await bob.client.rpc("prayer_translations_to_review");
+    const { data: reviewerList } = await alice.client.rpc("prayer_translations_to_review");
+    // A reviewer who read other words (the author edited meanwhile) approves nothing.
+    const { data: staleReview } = await alice.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "older words",
+      translation: "Xin cầu nguyện cho kỳ thi của tôi.",
+    });
+    const { data: review } = await alice.client.rpc("review_prayer_translation", {
+      request_id: id,
+      original: "Please pray for my exam.",
+      translation: "Xin cầu nguyện cho kỳ thi của con.",
+    });
+    const approved = await translationIn(bob);
+    // The author's edit clears the approved translation in the same update, so it never shows under new words.
+    await bob.client.from("prayer_requests").update({ body: "Please pray for my exams." }).eq("id", id);
+    const { data: afterEdit } = await admin
+      .from("prayer_requests")
+      .select("language, translation, translation_reviewed_at")
+      .eq("id", id)
+      .single();
+    await bob.client.from("prayer_requests").delete().eq("id", id);
+
+    expect(posted!.translation_reviewed_at).toBeNull(); // a new request waits for review
+    expect(unreviewed).toBeNull();
+    expect(authorWrites).not.toBeNull();
+    expect(authorApproves).not.toBeNull();
+    expect(memberReviews).toBe(false);
+    expect(memberList).toEqual([]);
+    expect(reviewerList!.map((row: { id: string }) => row.id)).toContain(id);
+    expect(staleReview).toBe(false);
+    expect(review).toBe(true);
+    expect(approved).toBe("Xin cầu nguyện cho kỳ thi của con.");
+    expect(afterEdit).toEqual({ language: null, translation: null, translation_reviewed_at: null });
+  });
 });
 
 describe("group_info: what a group says about itself", () => {

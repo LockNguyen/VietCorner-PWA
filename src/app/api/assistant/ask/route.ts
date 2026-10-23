@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { AiServiceUnavailable } from "@/features/assistant/server/aiService";
+import { AiServiceUnavailable } from "@/lib/aiService";
 import { askQuestion } from "@/features/assistant/server/askQuestion";
 import type { Turn } from "@/features/assistant/types";
 import { createClient } from "@/lib/supabase/server";

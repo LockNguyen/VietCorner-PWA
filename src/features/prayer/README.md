@@ -1,7 +1,8 @@
 # prayer
 
 Prayer requests shared with the whole church: post one (with or without your name), pray for someone else's, and
-be told when someone prays for yours.
+be told when someone prays for yours. Each request is translated between Vietnamese and English, and shown
+translated once an admin has checked it.
 
 System docs: `.claude/architecture.md`. Shape and conventions: `docs/adding-a-feature.md`.
 
@@ -25,21 +26,27 @@ missing file makes Play say "The music could not play."
 | Layer | File | Job |
 |---|---|---|
 | Data | `schema.sql` | Two tables, column grants, RLS, the `prayer_feed` view, `pray_for_request`, reminder seeds, DROPs |
-| Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH` |
+| Types | `types.ts` | `PrayerRequest` (a row of the view), `NewPrayerRequest`, `TranslationToReview`, `REVIEW_TRANSLATIONS`, `FEED_COLUMNS`, `PAGE_SIZE`, `MAX_BODY_LENGTH`, `MAX_TRANSLATION_LENGTH` |
+| Pure logic | `shownText.ts` | The words a reader sees: the approved translation of someone else's request in the other language, else as written (tested) |
 | Pure logic | `reminders.ts` | `isDue`: whether a weekly reminder should go out now (church time) |
 | Pure logic | `feed.ts` | `withNewest`: the list on screen after its newest page is read again |
 | Pure logic | `cooldown.ts` | `canPray`, `withoutExpired`: once per request per day (the phone's midnight), worked out from timestamps |
 | Device | `storage.ts` | When this device last prayed for each request, in localStorage, keyed by user id |
 | Text | `strings.ts` | This feature's labels, and `prayedForYou(count)` for the notification |
-| Reads | `reads.ts` | `getPrayerReminders(supabase)`: shared by the reminders page and its refresh on arrival (2026-10-22) |
-| Browser API | `api.ts` | `getPrayerReminders` (the reminders screen refreshes itself, `useFresh`), `getRequests`, `createRequest`, `editRequest`, `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`) |
-| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen |
+| Reads | `reads.ts` | `getPrayerReminders(supabase)`, `getTranslationsToReview(supabase)`: each shared by its page and its refresh on arrival |
+| Browser API | `api.ts` | `getPrayerReminders`, `getTranslationsToReview` (refreshes, `useFresh`), `getRequests`, `createRequest` (POST `/api/prayer/post`), `editRequest` (POST `/api/prayer/edit`), `markAnswered`, `deleteRequest`, `prayFor` (POST `/api/prayer/pray`), `reviewTranslation` (the `review_prayer_translation` function) |
+| Server reads | `server/queries.ts` | `getLatestRequests(supabase)`: the first page; `getMyRequest`: one of mine, for its edit screen; `getTranslationsToReview` (re-exported) |
+| Server logic | `server/postRequest.ts`, `server/editRequest.ts` | Post, or change the words of my own, as the **user** (RLS decides); answer the id / whether it changed |
+| Server logic | `server/translateRequest.ts` | **Admin** client: the request's text only → the AI service's `/translate` (`src/lib/aiService.ts`) → `language`, `translation`; then `notifyReviewers`. A failure leaves both empty |
+| Server logic | `server/notifyReviewers.ts` | Everyone with `prayer.translations`: "a translation is waiting", per language, one topic |
 | Server logic | `server/prayFor.ts` | Counts the prayer as the **user** (the database decides if it counts), then calls `notifyAuthor` |
 | Server logic | `server/sendDueReminders.ts` | Called by the scheduler: "time to pray" to every approved member, once, per language |
 | Server logic | `server/notifyAuthor.ts` | **Admin** client: the author and the count → `sendPush`, in the author's language (`// PUSH`, `// I18N`) |
 | Routes | `src/app/api/prayer/pray/route.ts` | Verify (401) → validate (400) → `prayFor` → 204 |
+| Routes | `src/app/api/prayer/post/route.ts`, `edit/route.ts` | Verify (401) → validate (400) → `postRequest` / `editRequest` → 204, then `after()`: `translateRequest` |
 | State | `hooks/usePrayerFeed.ts` | The list on screen: older pages, answering, deleting, praying |
 | State | `hooks/useRequestWriting.ts` | Saving a new or edited request from its own screen, then back to the list |
+| State | `hooks/useTranslationEditing.ts` | The translation's edit screen: Submit approves the corrected words and goes back to Admin; Cancel goes back |
 | State | `hooks/useWorshipMusic.ts` | The worship songs: play, pause, `next`, `previous`, the next song on `ended`, stopped on leaving; `state` off / loading / playing from the audio's own events (`playing` = sound coming out); tells the board only of a real failure (`error`, or the phone refusing), never of a start cut short by a newer song (skipping fast) |
 | Logic | `playlist.ts` | `shuffledOrder`, `stepped` (wraps both ways), `keptOrNew` (the phone's order while it fits the songs) (tested) |
 | Device | `storage.ts` | When this device last prayed for each request; the songs' order and place (`loadPlaylist`, `savePlaylist`) |
@@ -55,9 +62,12 @@ missing file makes Play say "The music could not play."
 | UI | `components/RequestOptions.tsx` | The author's sheet: Answered, Edit (opens the edit screen), Delete |
 | UI | `components/RequestEditor.tsx` | The edit screen's form: the words, Save |
 | UI | `components/OlderRequestsMarker.tsx` | The end-of-list marker that loads the next page |
+| UI | `components/TranslationReviews.tsx`, `TranslationReviewRow.tsx` | The Admin tab's "Translations to check": each request with its VI/EN badge, the translation under it, Approve and Edit |
+| UI | `components/TranslationEditor.tsx` | The translation's edit screen: the request, the translation to correct, Submit, Cancel |
 | UI | `components/PrayerReminderAdmin.tsx`, `PrayerReminderRow.tsx` | The admin section: the church's weekly reminders and the row to add one; one reminder, with Remove |
 | Shell | `src/app/prayer/page.tsx`, `AppTabs.tsx`, `src/components/strings.ts` | The Prayer tab |
 | Shell | `src/app/prayer/new/page.tsx`, `src/app/prayer/[requestId]/edit/page.tsx` | Writing and editing a request, each its own screen |
+| Shell | `src/app/admin/page.tsx` (`// PRAYER` lines), `src/app/admin/translations/[requestId]/page.tsx` | The review list on the Admin tab; one translation's edit screen |
 
 ## How anonymity is guaranteed
 RLS hides **rows**, not columns. If members could read `prayer_requests`, any of them could open the browser
@@ -117,7 +127,7 @@ And a small group can guess from timing or wording — no software fixes that.
   foreground (decided 2026-10-09). It reads the newest twenty again: new requests appear on top, and older
   ones the reader had scrolled to stay, so nobody loses their place (`feed.ts`, `withNewest`). A request
   answered or deleted further down than the newest twenty stays until the tab is opened afresh.
-- **Requests are not translated**: members write them, and they are shown as written.
+- **Requests are translated, and a translation is shown only after review** (2026-10-23): see Translations below.
 - **Pages are cut by `created_at`**, not by offset, so a request posted while someone scrolls cannot shift
   the pages and show a row twice.
 
@@ -176,14 +186,43 @@ real notification arriving on a phone.**
   keyboard on the new screens on an iPhone. The toolbar and bubble were seen on `/ui` at 375 px.
 - Two requests created in the same microsecond could straddle a page boundary and one be skipped. Ignored.
 
+## Translations (2026-10-23, the user)
+- **Posting and editing go through routes** (`/api/prayer/post`, `/api/prayer/edit`), because they set off an AI
+  call. The route saves, answers 204, and only then (`after()`) sends **the text alone, never the author**, to the
+  AI service, which answers its language (`vi`/`en`) and a translation into the other one. The server stores
+  both with the service role and pushes "a translation is waiting" to everyone with `prayer.translations`.
+- **Nothing reaches members unreviewed** (the user: free models are not reliable translators). The view sends a
+  translation only once `translation_reviewed_at` is set; until then every reader sees the original.
+- **The admin's list** (Admin tab → "Translations to check", oldest first): the request with a VI or EN badge,
+  the translation under it, Approve (shows it as it is) and Edit (a screen to correct it: Submit approves the
+  corrected words, Cancel leaves it waiting). Answered and deleted requests drop off. A request the AI could not
+  translate is listed with "No translation yet" and Edit only, for the admin to write it.
+- **Only the server and reviewers write a translation.** Members have no grant on the three columns; reviewers
+  use `review_prayer_translation`, which checks the permission. It also takes the words the reviewer read, so a
+  translation of words the author changed meanwhile is never approved (it answers false: "Could not save").
+- **An edit starts over:** the database clears the translation in the same update (a trigger), so an approved
+  translation never shows under new words; the new words are translated and wait for review again.
+- **Who sees what:** someone else's request in the other language, approved → the translation; everything else
+  (my own, my language, not approved, language unknown) → as written (`shownText.ts`).
+- **Requests from before** count as reviewed with no translation, so they show as written and never fill the list.
+- **Edge cases:** the AI service off, busy or unreadable → no translation, still listed for the admin (logged
+  without the text). A translation still on its way when the author edits is dropped: it only lands on the words
+  it was made from. The `after()` work shares the route's time limit on Netlify (~10 s); cut off there, it is the
+  same as a failure.
+- **Expected behavior:** not yet seen on a screen or a phone (2026-10-23): `docs/sql-to-run-2026-10-23.sql` has to
+  be run first, and until it is, the Prayer tab shows no requests (the feed asks for the new columns). The AI
+  service's `/translate` was tried with the real providers: a two-line Vietnamese request, an English one and an
+  unaccented Vietnamese one were each recognised and translated in 0.2–1.6 s (line breaks kept).
+
 ## Not built yet
 - **Moderation:** removing someone else's request (`deleted_at` exists; on hold, backlog B24).
 - **The end-of-year look back** at answered requests (backlog B19). The data is already being kept.
 
 ## Remove
-Delete this folder, `src/app/prayer/` and `src/app/api/prayer/`, `public/audio/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
+Delete this folder, `src/app/prayer/`, `src/app/api/prayer/`, `src/app/admin/translations/` and the `// PRAYER` lines in
+`src/app/admin/page.tsx`, `public/audio/`, the Prayer tab in `AppTabs.tsx`, `prayerTab`
 in `src/components/strings.ts`, and the "prayer requests" block in `tests/rls.test.ts`. Run the DROP
-statements at the bottom of `schema.sql`.
+statements at the bottom of `schema.sql`. The AI service's `translation/` package and `/translate` can stay or go.
 
 ## Shared with the whole church (2026-10-12)
 - **Every request is read by every approved member.** The composer has no group to choose; the Prayer tab

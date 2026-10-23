@@ -27,5 +27,5 @@ export async function getMyRequest(supabase: SupabaseClient, requestId: string):
   return data as PrayerRequest | null;
 }
 
-// The reminders' read is shared with the browser's refresh (api.ts): reads.ts.
-export { getPrayerReminders } from "../reads";
+// The reminders' and the review list's reads are shared with the browser's refresh (api.ts): reads.ts.
+export { getPrayerReminders, getTranslationsToReview } from "../reads";

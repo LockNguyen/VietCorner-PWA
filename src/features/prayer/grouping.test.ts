@@ -16,6 +16,8 @@ function request(createdAt: string, author: string | null, isMine = false): Pray
     prayer_count: 0,
     author_name: author,
     author_avatar: null,
+    language: null,
+    translation: null,
   };
 }
 

@@ -569,9 +569,22 @@ Priority: prove it's possible + textbook-clear code + features removable by dele
       (weekly card compact + big, toolbar grow-in, Pray pills). NOT committed (the user's word). NOT seen: signed in,
       SQL 5c, `test:rls`, the sign-in change end to end, the back step.
 
+- [x] **Prayer translations (2026-10-23, the user).** AI service `POST /translate` (97 tests, tried live with the
+      real providers); prayer schema 5d; posting and editing through routes that translate after the answer
+      (`after()`) and push the reviewers; readers see a translation only once approved; Admin tab "Translations to
+      check" + `/admin/translations/<id>`; `src/lib/aiService.ts` shared. Evidence: 190/190 web tests, types clean.
+      NOT run: SQL 5d, `test:rls` (one new case), any screen signed in, a push to an admin, the AI service
+      redeployed with `/translate` (the web app's `AI_SERVICE_URL` must reach a service that has it).
+      Debt: requests from before stay untranslated (counted as reviewed); the two provider pools rest separately.
+
 ## ➡️ Next 3 Micro-Steps
-R4a. User: run `docs/sql-to-run-2026-10-22.sql` (prayer 5c, group-info 10: members' pictures on the group cards)
-   BEFORE deploying, then `npm run test:rls`.
+T1. User: run `docs/sql-to-run-2026-10-23.sql` BEFORE deploying (until then the Prayer tab is empty), then
+   `npm run test:rls`; redeploy the AI service (`deploy/push_to_space.py`, or restart the local container).
+T2. User + Claude, signed in as an admin: post a Vietnamese request → it shows as written to everyone → Admin tab
+   lists it with VI and an English translation → Approve → an English reader sees the translation; then Edit on
+   another, Submit; edit a request as its author and see it return to the list.
+T3. Decide whether to translate the requests from before (today they show as written, never listed).
+R4a. Done 2026-10-22 (checked 2026-10-23: `analytics_actions` exists).
 R4b. User on a phone (iPhone, in the installed app): scroll, open and close a card far down Groups; switch tabs;
    Admin's own screens slide. The screen now scrolls in its own box (PageSlide): check that scrolling, the
    keyboard on Prayer → write, and the chat's newest message still behave. Turn Tailscale Funnel off when not testing.

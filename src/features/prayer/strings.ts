@@ -55,7 +55,24 @@ export const STRINGS = {
   // The notification everyone gets at that time (server/sendDueReminders.ts), under `notificationTitle`.
   timeToPray: { en: "Time to pray together", vi: "Đến giờ cùng nhau cầu nguyện" } satisfies Text,
 
-  // The title of both notifications: the reminder, and the one an author gets (server/notifyAuthor.ts)
+  // Admin section: translations wait for a reviewer before members see them (schema.sql 5d)
+  translationsHeading: { en: "Translations to check", vi: "Bản dịch cần kiểm tra" } satisfies Text,
+  noTranslation: { en: "No translation yet", vi: "Chưa có bản dịch" } satisfies Text,
+  approveTranslation: { en: "Approve", vi: "Duyệt" } satisfies Text,
+  editTranslation: { en: "Edit", vi: "Sửa" } satisfies Text,
+  translationApproved: { en: "Translation approved", vi: "Đã duyệt bản dịch" } satisfies Text,
+  translationTitle: { en: "Edit translation", vi: "Sửa bản dịch" } satisfies Text, // the edit screen's title
+  originalWords: { en: "Request", vi: "Ý cầu nguyện" } satisfies Text,
+  translationField: { en: "Translation", vi: "Bản dịch" } satisfies Text,
+  submitTranslation: { en: "Submit", vi: "Gửi" } satisfies Text,
+  // The notification reviewers get (server/notifyReviewers.ts), under `notificationTitle`.
+  translationWaiting: {
+    en: "A prayer request's translation is waiting for your review.",
+    vi: "Bản dịch của một ý cầu nguyện đang chờ bạn kiểm tra.",
+  } satisfies Text,
+
+  // The title of all three notifications: the reminder, the one an author gets (server/notifyAuthor.ts), and the
+  // reviewers' one
   notificationTitle: { en: "Prayer", vi: "Cầu nguyện" } satisfies Text,
 };
 
