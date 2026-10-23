@@ -21,6 +21,7 @@ import PhotoStripEnd from "./PhotoStripEnd";
 
 type Props = {
   groupId: string;
+  firstPage: Photo[]; // brought by the page (server/queries.ts `getFirstPhotos`)
   groupName: string;
   canAdd: boolean; // in the group, or a group manager
   canRemove: boolean; // a group manager
@@ -30,9 +31,9 @@ type Props = {
 // view a tap opens (with saving a picture to the phone), adding a picture (the group's people and managers: a +
 // square first in the strip, the user 2026-10-19) and removing one (managers).
 // Nothing at all for a reader of a group that has no pictures.
-export default function GroupPhotos({ groupId, groupName, canAdd, canRemove }: Props) {
+export default function GroupPhotos({ groupId, firstPage, groupName, canAdd, canRemove }: Props) {
   const { t, language } = useLanguage(); // I18N
-  const { photos, hasMore, loadMore, add, remove } = useGroupPhotos(groupId);
+  const { photos, hasMore, loadMore, add, remove } = useGroupPhotos(groupId, firstPage);
   const [openId, setOpenId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
   const { pending, save } = useSave<"remove">();

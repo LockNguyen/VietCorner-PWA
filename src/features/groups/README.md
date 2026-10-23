@@ -137,7 +137,8 @@ at the bottom of `schema.sql`.
 - **A new picture is a new file with a new name**, then the old file is erased: a phone that kept the old
   address can never show the old picture in place of the new one.
 - **Shrunk on the phone** to 1600 pixels at the best quality under 400 KB (`src/lib/shrinkImage.ts`
-  `shrinkUnder`, `PICTURE_SIDE` in types.ts): it fills a card the phone's width. The bucket refuses anything
+  `shrinkUnder`, `PICTURE_SIDE` in types.ts): it fills a card the phone's width; a picture too detailed to fit
+  is made a fifth smaller until it does (2026-10-22). The bucket refuses anything
   over 500 KB or not a JPEG (schema.sql 2f, 2026-10-21; it was 400 pixels and 200 KB, soft on a card).
 - **Order of a change:** the file, then the path on the row, then the old file. A failure in between leaves
   a file nobody sees, never a row pointing at nothing.

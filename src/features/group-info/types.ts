@@ -1,3 +1,9 @@
+// One member's circle on a group's card: their picture if they chose one, else their initials (2026-10-22).
+export type MemberFace = {
+  initials: string; // "AN"
+  avatar: string | null; // their picture's path in the profiles' AVATAR_BUCKET; null = none chosen
+};
+
 // One row of `group_directory()` (schema.sql): a group as the Groups page shows it.
 export type DirectoryGroup = {
   id: string;
@@ -13,7 +19,7 @@ export type DirectoryGroup = {
   location_en: string | null; // in English; null = not yet
   notes: string | null; // "Read Matthew 3 before next week"
   contact_phone: string | null; // whom to call about the group, as typed: "(336) 555-0101"
-  member_initials: string[]; // of the people in it who have the app, for the circles on its card
+  members: MemberFace[]; // the people in it who have the app, for the circles on its card (schema.sql 10)
 };
 
 // Everything the group editor saves with its one Save: the name and size (on `groups`, the groups feature's

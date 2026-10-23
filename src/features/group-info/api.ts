@@ -1,11 +1,10 @@
 import { createClient } from "@/lib/supabase/client";
+import { photosPage } from "./photos";
 import { shrinkImage, shrinkUnder } from "@/lib/shrinkImage";
 import {
   FULL_MAX_BYTES,
   FULL_SIDE,
   PHOTO_BUCKET,
-  PHOTO_PAGE_SIZE,
-  PHOTO_URL_SECONDS,
   photoPaths,
   SMALL_SIDE,
   type DirectoryGroup,
@@ -54,34 +53,10 @@ export async function saveGroupInfo(groupId: string, draft: GroupInfoDraft): Pro
   if (error) throw new Error(error.message);
 }
 
-// GET one page of a group's pictures, newest first, each with addresses that work for an hour. Pass the
-// `created_at` of the oldest one on screen to get the page after it; pass nothing for the newest page.
-// Two trips: the rows, then one request that signs every file of the page.
-export async function getPhotos(groupId: string, olderThan?: string): Promise<Photo[]> {
-  const supabase = createClient();
-  let query = supabase
-    .from("group_photos")
-    .select("id, taken_on, caption, created_at")
-    .eq("group_id", groupId)
-    .order("created_at", { ascending: false })
-    .limit(PHOTO_PAGE_SIZE);
-  if (olderThan) query = query.lt("created_at", olderThan);
-
-  const { data: rows, error } = await query;
-  if (error) throw new Error(error.message);
-  if (rows.length === 0) return [];
-
-  // The bucket is private, so a picture is shown through a signed address. Small then full, per picture.
-  const paths = rows.flatMap((row) => [photoPaths(groupId, row.id).small, photoPaths(groupId, row.id).full]);
-  const { data: signed, error: signError } = await supabase.storage.from(PHOTO_BUCKET).createSignedUrls(paths, PHOTO_URL_SECONDS);
-  if (signError) throw new Error(signError.message);
-
-  return rows.map((row, index) => ({
-    ...row,
-    // Empty when a file is missing (an upload cut short): the picture then draws as its grey square.
-    smallUrl: signed[index * 2].signedUrl ?? "",
-    fullUrl: signed[index * 2 + 1].signedUrl ?? "",
-  }));
+// GET the next page of a group's pictures (the strip scrolled to its end, or again after adding one). The first
+// page comes with the group's page itself (server/queries.ts), so opening a group asks for nothing more.
+export function getPhotos(groupId: string, olderThan?: string): Promise<Photo[]> {
+  return photosPage(createClient(), groupId, olderThan);
 }
 
 // POST a picture to a group: shrunk on this device, its two files stored, then its row. For someone in

@@ -315,6 +315,62 @@ $$;
 revoke execute on function public.group_directory () from public, anon;
 grant execute on function public.group_directory () to authenticated;
 
+-- 10. Members' pictures on the cards (2026-10-22, the user) ---------------------
+-- This section can be run again by itself. Run it after section 9, and after features/profiles/schema.sql
+-- section 6 (it reads `profiles.avatar_path`).
+-- Each member's circle shows their own picture when they chose one, else their initials. So the card now tells
+-- every approved member WHO is in a group, by face: section 7 handed out initials only, on purpose. Given up at
+-- the user's request (the architecture's Key Decisions); still no names, and still approved members only.
+-- One list of people, each with both, so a picture can never land on someone else's circle.
+create or replace function public.group_member_faces(group_id uuid) returns jsonb
+language sql stable security definer set search_path = '' as $$
+  select coalesce(jsonb_agg(jsonb_build_object(
+           'initials', upper(left(btrim(p.name), 1)
+                 || case when btrim(p.name) like '% %' then left(regexp_replace(btrim(p.name), '^.*\s', ''), 1) else '' end),
+           'avatar', p.avatar_path)
+           order by m.joined_at), '[]'::jsonb)
+  from public.group_members m
+  join public.profiles p on p.user_id = m.user_id
+  where m.group_id = group_member_faces.group_id and (select public.has_permission('app.use'));
+$$;
+revoke execute on function public.group_member_faces (uuid) from public, anon;
+grant execute on function public.group_member_faces (uuid) to authenticated;
+
+-- The Groups page's one read, with `members` (initials and picture) in place of `member_initials`.
+drop function if exists public.group_directory ();
+create function public.group_directory()
+returns table (
+  id uuid, name text, name_en text, member_count integer, thumbnail_path text, is_member boolean,
+  meets_at text, meets_weekday smallint, meets_time time, location text, location_en text, notes text,
+  contact_phone text, members jsonb
+)
+language sql stable set search_path = '' as $$
+  select
+    g.id,
+    g.name,
+    g.name_en,
+    g.member_count,
+    g.thumbnail_path,
+    exists (select 1 from public.group_members m where m.group_id = g.id and m.user_id = auth.uid()),
+    i.meets_at,
+    i.meets_weekday,
+    i.meets_time,
+    i.location,
+    i.location_en,
+    i.notes,
+    i.contact_phone,
+    public.group_member_faces(g.id)
+  from public.groups g
+  left join public.group_info i on i.group_id = g.id
+  where g.deleted_at is null
+  order by g.name;
+$$;
+revoke execute on function public.group_directory () from public, anon;
+grant execute on function public.group_directory () to authenticated;
+
+-- Nothing calls it any more: the faces replace it.
+drop function if exists public.group_member_initials (uuid);
+
 -- 6. Undo (removing the feature) ------------------------------------------
 -- Empty the bucket in the dashboard first (Storage → group-photos): a bucket with files cannot be deleted.
 -- drop policy if exists "Approved members look at group pictures" on storage.objects;
@@ -323,5 +379,6 @@ grant execute on function public.group_directory () to authenticated;
 -- delete from storage.buckets where id = 'group-photos';
 -- drop table if exists public.group_photos;
 -- drop function if exists public.group_directory ();
+-- drop function if exists public.group_member_faces (uuid);
 -- drop table if exists public.group_info;
 -- drop function if exists public.may_add_group_photo (uuid);

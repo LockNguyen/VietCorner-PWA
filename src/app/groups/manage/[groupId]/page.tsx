@@ -3,7 +3,7 @@ import PageHeader from "@/components/PageHeader";
 import RefreshOnArrival from "@/components/RefreshOnArrival";
 import GroupInfoForm from "@/features/group-info/components/GroupInfoForm"; // GROUP-INFO
 import GroupPhotos from "@/features/group-info/components/GroupPhotos"; // GROUP-INFO
-import { getGroupDirectory } from "@/features/group-info/server/queries"; // GROUP-INFO
+import { getFirstPhotos, getGroupDirectory } from "@/features/group-info/server/queries"; // GROUP-INFO
 import GroupPeople from "@/features/groups/components/GroupPeople";
 import GroupThumbnail from "@/features/groups/components/GroupThumbnail";
 import NewGroupForm from "@/features/groups/components/NewGroupForm";
@@ -34,10 +34,11 @@ export default async function GroupEditorPage({ params }: { params: Promise<{ gr
   }
 
   // Read together: each feature brings its half of the group.
-  const [groups, people, directory] = await Promise.all([
+  const [groups, people, directory, photos] = await Promise.all([
     getGroups(supabase),
     getGroupPeople(supabase),
     getGroupDirectory(supabase), // GROUP-INFO
+    getFirstPhotos(supabase, groupId), // GROUP-INFO
   ]);
   const group = groups.find((each) => each.id === groupId);
   const info = directory.find((each) => each.id === groupId); // GROUP-INFO
@@ -57,7 +58,7 @@ export default async function GroupEditorPage({ params }: { params: Promise<{ gr
           others={people.filter((person) => !person.group_ids.includes(group.id))}
         />
         {/* GROUP-INFO */}
-        <GroupPhotos groupId={group.id} groupName={group.name} canAdd canRemove />
+        <GroupPhotos groupId={group.id} firstPage={photos} groupName={group.name} canAdd canRemove />
         <RemoveGroupButton groupId={group.id} />
       </div>
     </>
